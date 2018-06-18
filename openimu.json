@@ -1,0 +1,184 @@
+{
+    "name" : "OpenIMU300-EZ",
+    "type" : "imu",
+    "description" : "9-axis OpenIMU with triaxial rate, acceleration, and magnetic measurement",
+    "userConfiguration" : [
+        { "paramId": 0, "paramType" : "disabled", "type" : "uint64", "name": "Data CRC"  },
+        { "paramId": 1, "paramType" : "disabled", "type" : "uint64", "name": "Data Size" },
+        { "paramId": 2, "paramType" : "select", "type" : "int64", "name": "Baud Rate", "options" : [38400, 57600, 115200]},
+        { "paramId": 3, "paramType" : "select", "type" : "char8", "name": "Packet Type", "options" : ["z1", "zT"]},
+        { "paramId": 4, "paramType" : "select", "type" : "int64", "name": "Packet Rate", "options" : [100, 50, 20, 10, 0]},
+        { "paramId": 5, "paramType" : "select", "type" : "int64", "name": "Accel LPF", "options" : [50, 25, 40, 20, 10, 5, 2]},
+        { "paramId": 6, "paramType" : "select", "type" : "int64", "name": "Rate LPF", "options" : [50, 25, 40, 20, 10, 5, 2]},
+        { "paramId": 7, "paramType" : "select", "type" : "char8", "name": "Orientation", "options" : ["+X+Y+Z"]}
+    ],
+    "userMessages" : { 
+          "inputPackets" : [
+              {
+                "name" : "gA",
+                "description" : "Get All Configuration Parameters",
+                "inputPayload" : {},
+                "responsePayload" : { 
+                    "type" : "userConfiguration",
+                    "name" : "Full Current Configuration"
+                }
+              },
+              {
+                "name" : "gP",
+                "description" : "Get a Configuration Parameter",
+                "inputPayload" : {
+                    "type" : "paramId",
+                    "name" : "Request Parameter Id"
+                },
+                "responsePayload" : { 
+                    "type" : "userParameter",
+                    "name" : "User Parameter"
+                }
+              },
+              {
+                "name" : "sC",
+                "description" : "Save Conifguration Parameters to Flash",
+                "inputPayload" : {},
+                "responsePayload" : {}
+              },
+              {
+                "name" : "uP",
+                "description" : "Update Configuration Parameter",
+                "inputPayload" : {
+                    "type" : "userParameter",
+                    "name" : "Parameter to be Updated" 
+                },
+                "responsePayload" : {
+                    "type" : "paramId",
+                    "name" : "ID of the Updated Parameter"
+                }
+              }
+          ],
+          "outputPackets" : [
+            {
+                "name": "z1",
+                "description": "Scaled 9-Axis IMU",	
+                "payload" : [
+                    {
+                        "type" : "float",
+                        "name" : "time",
+                        "unit" : "s"
+                    },
+                    {
+                        "type" : "float",
+                        "name" : "xAccel",
+                        "unit" : "m/s/s"
+                    },
+                    {
+                        "type" : "float",
+                        "name" : "yAccel",
+                        "unit" : "m/s/s"
+                    },
+                    {
+                        "type" : "float",
+                        "name" : "zAccel",
+                        "unit" : "m/s/s"
+                    },
+                    {
+                        "type" : "float",
+                        "name" : "xRate",
+                        "unit" : "rad/s"
+                    },
+                    {
+                        "type" : "float",
+                        "name" : "yRate",
+                        "unit" : "rad/s"
+                    },
+                    {
+                        "type" : "float",
+                        "name" : "zRate",
+                        "unit" : "rad/s"
+                    },
+                    {
+                        "type" : "float",
+                        "name" : "xMag",
+                        "unit" : "Gauss"
+                    },
+                    {
+                        "type" : "float",
+                        "name" : "yMag",
+                        "unit" : "Gauss"
+                    },
+                    {
+                        "type" : "float",
+                        "name" : "zMag",
+                        "unit" : "Gauss"
+                    }
+                ],
+                "graphs" : [
+                    { 
+                        "name" : "Acceleration",
+                        "units" : "m/s/s",
+                        "xAxis" : "Time (s)",
+                        "yAxes" : [ "xAccel", "yAccel", "zAccel"],
+                        "colors" : [ "#FF0000", "#00FF00", "#0000FF" ],
+                        "yMax" : 80
+                    },
+                    {
+                        "name" : "Angular Rate",
+                        "units" : "deg/s",
+                        "xAxis" : "Time (s)",
+                        "yAxes" : [ "xRate", "yRate", "zRate"],
+                        "colors" : [ "#FF0000", "#00FF00", "#0000FF" ],
+                        "yMax" : 400
+                    }
+                ]
+            },
+            {
+                "name": "z2",
+                "description": "Scaled 6-Axis IMU Values",	
+                "payload" : [
+                    {
+                        "type" : "float",
+                        "name" : "time",
+                        "unit" : "s"
+                    },
+                    {
+                        "type" : "float",
+                        "name" : "xAccel",
+                        "unit" : "m/s/s"
+                    },
+                    {
+                        "type" : "float",
+                        "name" : "yAccel",
+                        "unit" : "m/s/s"
+                    },
+                    {
+                        "type" : "float",
+                        "name" : "zAccel",
+                        "unit" : "m/s/s"
+                    },
+                    {
+                        "type" : "float",
+                        "name" : "xRate",
+                        "unit" : "rad/s"
+                    },
+                    {
+                        "type" : "float",
+                        "name" : "yRate",
+                        "unit" : "rad/s"
+                    },
+                    {
+                        "type" : "float",
+                        "name" : "zRate",
+                        "unit" : "rad/s"
+                    }
+                ],
+                "graphs" : [
+                    {
+                        "name" : "Angular Rate",
+                        "units" : "deg/s",
+                        "xAxis" : "Time (s)",
+                        "yAxes" : [ "xRate", "yRate", "zRate"],
+                        "colors" : [ "#FF0000", "#00FF00", "#0000FF" ],
+                        "yMax" : 400
+                    }
+                ]
+            }]  
+    }    
+}
