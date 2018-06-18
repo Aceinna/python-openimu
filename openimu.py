@@ -391,20 +391,21 @@ class OpenIMU:
     def openimu_unpack_input_packet(self, input_message, payload):
         if input_message['type'] == 'userConfiguration':
             user_configuration = self.imu_properties['userConfiguration']
+            params = []
             for parameter in user_configuration:
                 id = parameter['paramId']
                 type = parameter['type']
                 name = parameter['name']
                 value = self.openimu_unpack_one(type, payload[id*8:(id+1)*8])
                 print('{0}: {1}'.format(name,value))
-                # do something useful here
+                params.append({ "id": param_id, "name": param['name'], "value": param_value })
+            return params
         elif input_message['type'] == 'userParameter':
             user_configuration = self.imu_properties['userConfiguration']
             param_id = self.openimu_unpack_one('uint32', payload[0:4]) 
             param = user_configuration[param_id]
             param_value = self.openimu_unpack_one(param['type'], payload[4:12])
             print('{0}: {1}'.format(param['name'], param_value))
-            # do something useful here
             return { "id": param_id, "name": param['name'], "value": param_value }
         elif input_message['type'] == 'paramId':
             user_configuration = self.imu_properties['userConfiguration']
@@ -412,7 +413,6 @@ class OpenIMU:
             param = user_configuration[param_id]
             print('{0} Updated'.format(param['name']))
             return { "id": paramId }
-            # do something useful here
 
     def openimu_unpack_one(self, type, data):
         if type == 'uint64':
