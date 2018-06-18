@@ -70,6 +70,7 @@ class OpenIMU:
         '''
         while not self.autobaud(self.find_ports()):
             time.sleep(0.05)
+        
 
     def find_ports(self):
         ''' Lists serial port names. Code from
@@ -136,14 +137,21 @@ class OpenIMU:
         else: 
             return { 'error' : 'not streaming' }
     
-    def start_log(self, data):
+    def start_log(self, data = False):
         '''Creates file or cloud logger.  Autostarts log activity if ws (websocket) set to false
         '''
-        self.logging = 1
-        self.logger = file_storage.LogIMU380Data(self,data)
-        if self.ws == False and self.odr_setting != 0:
-            self.connect()
-    
+        if self.ws == False: 
+            if not self.device_id:
+                self.find_device()
+            if self.odr_setting:
+                print('start logging')
+                self.logger = file_storage.OpenIMULog(self,data)
+                self.logging = 1
+                self.connect()
+        elif self.connected and self.odr_setting:
+            self.logger = file_storage.OpenIMULog(self,data)
+            self.logging = 1
+                
     def stop_log(self):
         '''Stops file or cloud logger
         '''
@@ -194,14 +202,13 @@ class OpenIMU:
     def connect(self):
         '''Continous data collection loop to get and process data packets
         '''
-        self.find_device()
+        if not self.device_id:
+            self.find_device()
         self.connected = 1
-        print(self.connected)
-        print(self.synced)
         while self.odr_setting and self.connected:
             if self.stream_mode:
                 self.get_packet()
-            else:
+            elif self.ws:
                 time.sleep(0.05)
       
     def disconnect(self):
@@ -345,8 +352,8 @@ class OpenIMU:
         bytes = []
         try: 
             bytes = self.ser.read(n)
-        except:
-        # except (OSError, serial.SerialException):
+        #except:
+        except (OSError, serial.SerialException):
             self.disconnect()    # sets connected to 0, and other related parameters to initial values
             print('serial exception read') 
             self.connect() 
@@ -431,7 +438,8 @@ class OpenIMU:
 
 if __name__ == "__main__":
     grab = OpenIMU()
-    grab.find_device()
+    grab.start_log()
+
     #grab.openimu_update_param(6,20)
     #grab.openimu_get_param(6)
     #grab.openimu_save_config()
