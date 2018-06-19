@@ -15,6 +15,25 @@
     "userMessages" : { 
           "inputPackets" : [
               {
+                "name" : "pG",
+                "description" : "Get device serial number & factory ID",
+                "inputPayload" : {
+                },
+                "responsePayload" : { 
+                    "type" : "string",
+                    "name" : "Device ID and SN"
+                }
+              },
+              {
+                "name" : "gV",
+                "description" : "Get user app version",
+                "inputPayload" : {},
+                "responsePayload" : { 
+                    "type" : "string",
+                    "name" : "User Version"
+                }
+              },
+              {
                 "name" : "gA",
                 "description" : "Get All Configuration Parameters",
                 "inputPayload" : {},

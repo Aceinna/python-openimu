@@ -116,7 +116,7 @@ class OpenIMU:
             for baud in [38400, 57600, 115200]:
                 print(baud)
                 self.ser.baudrate = baud
-                self.device_id = self.openimu_get_device_id()
+                self.device_id = self.openimu_get_device_id()               
                 if (self.device_id):
                     print('Connected ....{0}'.format(self.device_id))
                     baud_rate = next((x for x in self.imu_properties['userConfiguration'] if x['name'] == 'Packet Rate'), None)
@@ -184,21 +184,19 @@ class OpenIMU:
         return self.response_data  
 
     def openimu_get_device_id(self):
-        ''' Executes GP command and requests ID data from 380
-            :returns:
-                id string of connected device, or false if failed
-        '''
-        # Use Old Style Packet Formation
-        C = [0x55, 0x55, ord('G'), ord('P'), 0x02, ord('I'), ord('D') ]
-        crc = self.calc_crc(C[2:C[4]+5])   
-        crc_msb = (crc & 0xFF00) >> 8
-        crc_lsb = (crc & 0x00FF)
-        C.insert(len(C), crc_msb)
-        C.insert(len(C), crc_lsb)
-        self.write(C)
-        self.sync(sync_type='ID')
-        return self.response_data  
-          
+        C = InputPacket(self.imu_properties, 'pG')
+        self.write(C.bytes)
+        self.synced = 0
+        self.sync(sync_type='pG')
+        return self.response_data     
+
+    def openimu_get_user_app_id(self): 
+        C = InputPacket(self.imu_properties, 'gV')
+        self.write(C.bytes)
+        self.synced = 0
+        self.sync(sync_type='gV')
+        return self.response_data    
+
     def connect(self):
         '''Continous data collection loop to get and process data packets
         '''
@@ -405,7 +403,7 @@ class OpenIMU:
                 name = parameter['name']
                 value = self.openimu_unpack_one(type, payload[id*8:(id+1)*8])
                 print('{0}: {1}'.format(name,value))
-                params.append({ "id": param_id, "name": param['name'], "value": param_value })
+                params.append({ "id": id, "name": name, "value": value})
             return params
         elif input_message['type'] == 'userParameter':
             user_configuration = self.imu_properties['userConfiguration']
@@ -420,6 +418,8 @@ class OpenIMU:
             param = user_configuration[param_id]
             print('{0} Updated'.format(param['name']))
             return { "id": paramId }
+        elif input_message['type'] == 'string':
+            return payload
 
     def openimu_unpack_one(self, type, data):
         if type == 'uint64':
@@ -438,8 +438,9 @@ class OpenIMU:
 
 if __name__ == "__main__":
     grab = OpenIMU()
-    grab.start_log()
-
+    grab.find_device()
+    user_fw_id = grab.openimu_get_user_app_id()
+    print(user_fw_id)
     #grab.openimu_update_param(6,20)
     #grab.openimu_get_param(6)
     #grab.openimu_save_config()
