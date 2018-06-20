@@ -28,10 +28,9 @@ class InputPacket:
                 payload = list(struct.unpack("4B", struct.pack("<L", param)))
                 if self.imu_properties['userConfiguration'][param]['type'] == 'char8':
                     length = len(value)
-                    payload += list(struct.unpack('{0}B'.format(length), value))
+                    payload += list(struct.unpack('{0}B'.format(length), bytearray(value,'utf-8')))
                     for i in range(8-length):
                         payload += [0x00]
-                    print(payload) 
                 elif self.imu_properties['userConfiguration'][param]['type'] == 'int64':
                     payload += list(struct.unpack("8B", struct.pack("<q", value)))
                 return payload

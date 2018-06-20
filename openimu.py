@@ -43,6 +43,7 @@ import glob
 import struct
 import json
 from imu_input_packet import InputPacket
+from bootloader_input_packet import BootloaderInputPacket
 
 class OpenIMU:
     def __init__(self, ws=False):
@@ -70,8 +71,8 @@ class OpenIMU:
         '''
         while not self.autobaud(self.find_ports()):
             time.sleep(0.05)
+        return True
         
-
     def find_ports(self):
         ''' Lists serial port names. Code from
             https://stackoverflow.com/questions/12090503/listing-available-com-ports-with-python
@@ -116,11 +117,16 @@ class OpenIMU:
             for baud in [38400, 57600, 115200]:
                 print(baud)
                 self.ser.baudrate = baud
-                self.device_id = self.openimu_get_device_id()               
+                self.device_id = self.openimu_get_device_id() 
+                if "Bootloader" in self.device_id:
+                    print('BOOTLOADER MODE') 
+                    print('Connected ....{0}'.format(self.device_id))
+                    print('Please Upgrade FW with upgrade_fw function')
+                    return True
                 if (self.device_id):
                     print('Connected ....{0}'.format(self.device_id))
-                    baud_rate = next((x for x in self.imu_properties['userConfiguration'] if x['name'] == 'Packet Rate'), None)
-                    odr_param = self.openimu_get_param(baud_rate['paramId'])
+                    packet_rate = next((x for x in self.imu_properties['userConfiguration'] if x['name'] == 'Packet Rate'), None)
+                    odr_param = self.openimu_get_param(packet_rate['paramId'])
                     self.odr_setting = odr_param['value']
                     if self.odr_setting:
                         self.stream_mode = 1
@@ -255,7 +261,8 @@ class OpenIMU:
             syncs to the packet stream, or finds the next command response message of type sync_type
         '''
         S = self.read(1)
-      
+        data = []
+
         if not S:
             return False
         if S[0] == 85 and prev_byte == 85:      # VALID HEADER FOUND
@@ -304,6 +311,9 @@ class OpenIMU:
         '''
         output_packet = next((x for x in self.imu_properties['userMessages']['outputPackets'] if x['name'] == self.packet_type), None)
         input_packet = next((x for x in self.imu_properties['userMessages']['inputPackets'] if x['name'] == self.packet_type), None)
+        bootloader_packet = next((x for x in self.imu_properties['bootloaderMessages'] if x['name'] == self.packet_type), None)
+        
+        print(output_packet)
 
         if output_packet != None:
             data = self.openimu_unpack_output_packet(output_packet, payload)
@@ -318,9 +328,10 @@ class OpenIMU:
             data = self.openimu_unpack_input_packet(input_packet['responsePayload'], payload)
             return data
 
-        elif self.packet_type == 'ID':
-            sn = int(payload[0] << 24) + int(payload[1] << 16) + int(payload[2] << 8) + int(payload[3])
-            return '{0} {1}'.format(sn,payload[4:].decode())
+        elif bootloader_packet != None:
+
+            data = self.openimu_unpack_bootloader_packet(bootloader_packet['responsePayload'], payload)
+            return data
 
     def calc_crc(self,payload):
         '''Calculates CRC per 380 manual
@@ -339,11 +350,12 @@ class OpenIMU:
 
     def open(self, port, baud = 57600):
         try:
-            self.ser = serial.Serial(port, baud, timeout = 0.1)
+            self.ser = serial.Serial(port, baud, timeout = 1.0)
         except (OSError, serial.SerialException):
             print('serial port open exception' + port)
 
     def close(self):
+            self.ser.reset_input_buffer()
             self.ser.close()
     
     def read(self,n):
@@ -414,12 +426,17 @@ class OpenIMU:
             return { "id": param_id, "name": param['name'], "value": param_value }
         elif input_message['type'] == 'paramId':
             user_configuration = self.imu_properties['userConfiguration']
-            param_id = self.openimu_unpack_one('uint32', payload[0:4]) 
-            param = user_configuration[param_id]
-            print('{0} Updated'.format(param['name']))
-            return { "id": paramId }
+            error = self.openimu_unpack_one('uint32', payload[0:4]) 
+            if not error:
+                print("Successfully Updated")
+            return { "error": error }
         elif input_message['type'] == 'string':
             return payload
+
+    def openimu_unpack_bootloader_packet(self, bootloader_message, payload):
+        if bootloader_message['type'] == 'ack':
+            print('Success')
+            return { "error": 0 }
 
     def openimu_unpack_one(self, type, data):
         if type == 'uint64':
@@ -434,13 +451,70 @@ class OpenIMU:
         elif type == 'char8':
             return struct.pack('8B', *data)
 
+ #####
+
+    def openimu_start_bootloader(self):
+        packet = BootloaderInputPacket(self.imu_properties, 'JI')
+        self.write(packet.bytes)
+        self.sync(sync_type='JI')
+        bootloader_id = self.openimu_get_device_id()
+        print(bootloader_id)
+        return True
+        #self.disconnect()
+        #self.close()
+        #self.find_device()
         
+    def openimu_start_app(self):
+        '''Starts app
+        '''
+        packet = BootloaderInputPacket(self.imu_properties, 'JA')
+        self.write(packet.bytes)
+        self.sync(sync_type='JA')
+        return True
+
+    def openimu_write_block(self, data_len, addr, data):
+        print(data_len, addr)
+        packet = BootloaderInputPacket(self.imu_properties, 'WA', data_len, addr, data)
+        self.write(packet.bytes)
+        if addr == 0:
+            time.sleep(10)
+        self.sync(sync_type='WA')
+         
+    def openimu_upgrade_fw(self,file):
+        '''Upgrades firmware of connected 380 device to file provided in argument
+        '''
+        if not self.openimu_start_bootloader():
+            print('Bootloader Start Failed')
+            return False
+
+        print('upgrade fw')
+        max_data_len = 240
+        addr = 0
+        fw = open(file, 'rb').read()
+        fs_len = len(fw)
+       
+        
+        while (addr < fs_len):
+            packet_data_len = max_data_len if (fs_len - addr) > max_data_len else (fs_len-addr)
+            data = fw[addr:(addr+packet_data_len)]
+            self.openimu_write_block(packet_data_len, addr, data)
+            addr += packet_data_len
+        # Start new app
+        self.openimu_start_app()
+
+
+
+ #####       
 
 if __name__ == "__main__":
     grab = OpenIMU()
     grab.find_device()
+    #grab.openimu_update_param(3,'zT')
     user_fw_id = grab.openimu_get_user_app_id()
     print(user_fw_id)
+    grab.openimu_upgrade_fw('firmware22.bin')
+    user_fw_id = grab.openimu_get_user_app_id()
+    #print(user_fw_id)
     #grab.openimu_update_param(6,20)
     #grab.openimu_get_param(6)
     #grab.openimu_save_config()
