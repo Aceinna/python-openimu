@@ -118,7 +118,7 @@ class OpenIMU:
                 print(baud)
                 self.ser.baudrate = baud
                 self.device_id = self.openimu_get_device_id() 
-                if "Bootloader" in self.device_id:
+                if "Bootloader" in bytearray(self.device_id):
                     print('BOOTLOADER MODE') 
                     print('Connected ....{0}'.format(self.device_id))
                     print('Please Upgrade FW with upgrade_fw function')
