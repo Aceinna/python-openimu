@@ -115,10 +115,10 @@ class OpenIMU:
             self.open(port)
             # TODO: change this to intelligently use openimu.json.  even save the last configuration 
             for baud in [38400, 57600, 115200]:
-                print(baud)
                 self.ser.baudrate = baud
-                self.device_id = self.openimu_get_device_id() 
-                if "Bootloader" in bytearray(self.device_id):
+                self.device_id = self.openimu_get_device_id()
+                print(self.device_id) 
+                if "Bootloader" in self.device_id:
                     print('BOOTLOADER MODE') 
                     print('Connected ....{0}'.format(self.device_id))
                     print('Please Upgrade FW with upgrade_fw function')
@@ -194,7 +194,7 @@ class OpenIMU:
         self.write(C.bytes)
         self.synced = 0
         self.sync(sync_type='pG')
-        return self.response_data     
+        return self.response_data 
 
     def openimu_get_user_app_id(self): 
         C = InputPacket(self.imu_properties, 'gV')
@@ -469,6 +469,7 @@ class OpenIMU:
         '''
         packet = BootloaderInputPacket(self.imu_properties, 'JA')
         self.write(packet.bytes)
+        time.sleep(2)
         self.sync(sync_type='JA')
         return True
 
@@ -477,7 +478,7 @@ class OpenIMU:
         packet = BootloaderInputPacket(self.imu_properties, 'WA', data_len, addr, data)
         self.write(packet.bytes)
         if addr == 0:
-            time.sleep(10)
+            time.sleep(5)
         self.sync(sync_type='WA')
          
     def openimu_upgrade_fw(self,file):
@@ -512,9 +513,14 @@ if __name__ == "__main__":
     #grab.openimu_update_param(3,'zT')
     user_fw_id = grab.openimu_get_user_app_id()
     print(user_fw_id)
-    grab.openimu_upgrade_fw('firmware22.bin')
+    grab.openimu_upgrade_fw('firmware11.bin')
     user_fw_id = grab.openimu_get_user_app_id()
-    #print(user_fw_id)
+    print(user_fw_id)
+    user_fw_id = grab.openimu_get_user_app_id()
+    print(user_fw_id)
+    user_fw_id = grab.openimu_get_user_app_id()
+    print(user_fw_id)
+
     #grab.openimu_update_param(6,20)
     #grab.openimu_get_param(6)
     #grab.openimu_save_config()
