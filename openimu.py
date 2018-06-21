@@ -98,7 +98,7 @@ class OpenIMU:
             if "Bluetooth" in port:
                 continue
             try:
-                print('Trying: ' + port)
+                #print('Trying: ' + port)
                 s = serial.Serial(port)
                 s.close()
                 result.append(port)
@@ -399,6 +399,33 @@ class OpenIMU:
             if value['type'] == 'float':
                 pack_fmt += 'f'
                 length += 4
+            elif value['type'] == 'uint32':
+                pack_fmt += 'I'
+                length += 4
+            elif value['type'] == 'int32':
+                pack_fmt += 'i'
+                length += 4
+            elif value['type'] == 'int16':
+                pack_fmt += 'h'
+                length += 2
+            elif value['type'] == 'uint16':
+                pack_fmt += 'H'
+                length += 2
+            elif value['type'] == 'double':
+                pack_fmt += 'd'
+                length += 8
+            elif value['type'] == 'int64':
+                pack_fmt += 'q'
+                length += 8
+            elif value['type'] == 'uint64':
+                pack_fmt += 'Q'
+                length += 8
+            elif value['type'] == 'char':
+                pack_fmt += 'c'
+                length += 1
+            elif value['type'] == 'uchar':
+                pack_fmt += 'B'
+                length += 1
         len_fmt = '{0}B'.format(length)
         b = struct.pack(len_fmt, *payload)
         data = struct.unpack(pack_fmt, b)
@@ -514,18 +541,28 @@ if __name__ == "__main__":
     grab = OpenIMU()
     grab.find_device()
     #grab.openimu_update_param(3,'zT')
-    user_fw_id = grab.openimu_get_user_app_id()
-    print(user_fw_id)
-    grab.openimu_upgrade_fw('firmware11.bin')
-    user_fw_id = grab.openimu_get_user_app_id()
-    print(user_fw_id)
-    #grab.openimu_update_param(6,20)
-    #grab.openimu_get_param(6)
-    #grab.openimu_save_config()
-
-    #grab.openimu_save_config()
+    #user_fw_id = grab.openimu_get_user_app_id()
+    #print(user_fw_id)
+    #grab.openimu_upgrade_fw('firmware44.bin')
+    #user_fw_id = grab.openimu_get_user_app_id()
+    #print(user_fw_id)
+    #grab.openimu_update_param(0,0)
+    #grab.openimu_update_param(1,0)
+    #grab.openimu_update_param(2,115200)
+    grab.openimu_update_param(3,'z2')
+    grab.openimu_update_param(4,10)
+    #grab.openimu_update_param(5,20)
+    #grab.openimu_update_param(6,25)
+    #for i in range(0,6):
+    #    grab.openimu_get_param(i)
+    #grab.openimu_get_all_param()
+	#grab.openimu_save_config()
     #grab.upgrade_fw('MTLT305D_19.0.6.bin')
-    #grab.start_log()
+	# Examples for logging
+    time.sleep(2)
+    grab.start_log()
+    time.sleep(10)
+    grab.stop_log()
     # Test for WS Server
     #grab.read_fields([0x0001, 0x0002, 0x0003])
     #grab.get_fields([0x0001, 0x0002, 0x0003])

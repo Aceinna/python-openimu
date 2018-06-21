@@ -45,7 +45,7 @@
         }
     ],
     "userMessages" : { 
-          "inputPackets" : [
+         "inputPackets" : [
               {
                 "name" : "pG",
                 "description" : "Get device serial number & factory ID",
@@ -104,46 +104,46 @@
                     "name" : "ID of the Updated Parameter"
                 }
               }
-          ],
-          "outputPackets" : [
+         ],
+         "outputPackets" : [
             {
                 "name": "z1",
                 "description": "Scaled 9-Axis IMU",	
                 "payload" : [
                     {
-                        "type" : "float",
+                        "type" : "uint32",
                         "name" : "time",
                         "unit" : "s"
                     },
                     {
                         "type" : "float",
                         "name" : "xAccel",
-                        "unit" : "m/s/s"
+                        "unit" : "G"
                     },
                     {
                         "type" : "float",
                         "name" : "yAccel",
-                        "unit" : "m/s/s"
+                        "unit" : "G"
                     },
                     {
                         "type" : "float",
                         "name" : "zAccel",
-                        "unit" : "m/s/s"
+                        "unit" : "G"
                     },
                     {
                         "type" : "float",
                         "name" : "xRate",
-                        "unit" : "rad/s"
+                        "unit" : "deg/s"
                     },
                     {
                         "type" : "float",
                         "name" : "yRate",
-                        "unit" : "rad/s"
+                        "unit" : "deg/s"
                     },
                     {
                         "type" : "float",
                         "name" : "zRate",
-                        "unit" : "rad/s"
+                        "unit" : "deg/s"
                     },
                     {
                         "type" : "float",
@@ -185,9 +185,55 @@
                 "description": "Scaled 6-Axis IMU Values",	
                 "payload" : [
                     {
-                        "type" : "float",
+                        "type" : "uint32",
                         "name" : "time",
                         "unit" : "s"
+                    },
+                    {
+                        "type" : "uchar",
+                        "name" : "c",
+                        "unit" : ""
+                    },
+                    {
+                        "type" : "int16",
+                        "name" : "s",
+                        "unit" : ""
+                    },
+                    {
+                        "type" : "int32",
+                        "name" : "i",
+                        "unit" : ""
+                    },
+                    {
+                        "type" : "int64",
+                        "name" : "ll",
+                        "unit" : ""
+                    },
+                    {
+                        "type" : "double",
+                        "name" : "d",
+                        "unit" : ""
+                    }
+                ],
+                "graphs" : [
+                    {
+                        "name" : "Angular Rate",
+                        "units" : "deg/s",
+                        "xAxis" : "Time (s)",
+                        "yAxes" : [ "xRate", "yRate", "zRate"],
+                        "colors" : [ "#FF0000", "#00FF00", "#0000FF" ],
+                        "yMax" : 400
+                    }
+                ]
+            },
+            {
+                "name": "z3",
+                "description": "Scaled 6-Axis IMU Values",	
+                "payload" : [
+                    {
+                        "type" : "int",
+                        "name" : "timestamp",
+                        "unit" : "ms"
                     },
                     {
                         "type" : "float",
@@ -222,14 +268,15 @@
                 ],
                 "graphs" : [
                     {
-                        "name" : "Angular Rate",
-                        "units" : "deg/s",
-                        "xAxis" : "Time (s)",
-                        "yAxes" : [ "xRate", "yRate", "zRate"],
+                        "name"   : "Acceleration",
+                        "units"  : "m/s/s",
+                        "xAxis"  : "timestamp (ms)",
+                        "yAxes"  : [ "xRate", "yRate", "zRate"],
                         "colors" : [ "#FF0000", "#00FF00", "#0000FF" ],
-                        "yMax" : 400
+                        "yMax"   : 100
                     }
                 ]
-            }]  
+            }
+		]  
     }    
 }
