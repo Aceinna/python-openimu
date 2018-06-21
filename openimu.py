@@ -192,6 +192,7 @@ class OpenIMU:
     def openimu_get_device_id(self):
         C = InputPacket(self.imu_properties, 'pG')
         self.write(C.bytes)
+        time.sleep(1)
         self.synced = 0
         self.sync(sync_type='pG')
         return self.response_data 
@@ -469,7 +470,7 @@ class OpenIMU:
         '''
         packet = BootloaderInputPacket(self.imu_properties, 'JA')
         self.write(packet.bytes)
-        time.sleep(2)
+        time.sleep(5)
         self.sync(sync_type='JA')
         return True
 
@@ -513,11 +514,14 @@ if __name__ == "__main__":
     #grab.openimu_update_param(3,'zT')
     user_fw_id = grab.openimu_get_user_app_id()
     print(user_fw_id)
-    grab.openimu_upgrade_fw('firmware11.bin')
+    grab.openimu_upgrade_fw('firmware33.bin')
+    time.sleep(1)
     user_fw_id = grab.openimu_get_user_app_id()
     print(user_fw_id)
+    time.sleep(1)
     user_fw_id = grab.openimu_get_user_app_id()
     print(user_fw_id)
+    time.sleep(1)
     user_fw_id = grab.openimu_get_user_app_id()
     print(user_fw_id)
 
