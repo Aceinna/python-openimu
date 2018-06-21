@@ -182,7 +182,7 @@
             },
             {
                 "name": "z2",
-                "description": "Scaled 6-Axis IMU Values",	
+                "description": "Arbitrary type Values",	
                 "payload" : [
                     {
                         "type" : "uint32",
