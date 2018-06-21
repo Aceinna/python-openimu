@@ -114,7 +114,7 @@ class OpenIMU:
         for port in ports:
             self.open(port)
             # TODO: change this to intelligently use openimu.json.  even save the last configuration 
-            for baud in [38400, 57600, 115200]:
+            for baud in [57600, 115200]:
                 self.ser.baudrate = baud
                 self.device_id = self.openimu_get_device_id()
                 if (sys.version_info > (3, 0)) and bytes("Bootloader", 'utf-8') in self.device_id \
@@ -192,7 +192,7 @@ class OpenIMU:
     def openimu_get_device_id(self):
         C = InputPacket(self.imu_properties, 'pG')
         self.write(C.bytes)
-        time.sleep(0.5)
+        time.sleep(0.05)
         self.synced = 0
         self.sync(sync_type='pG')
         return self.response_data 

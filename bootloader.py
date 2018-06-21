@@ -3,7 +3,6 @@ def start_bootloader(self):
             :returns:
                 True if bootloader mode entered, False if failed
         '''
-        self.set_quiet()
         C = [0x55, 0x55, ord('J'), ord('I'), 0x00 ]
         crc = self.calc_crc(C[2:4] + [0x00])    # for some reason must add a payload byte to get correct CRC
         crc_msb = (crc & 0xFF00) >> 8
@@ -29,7 +28,6 @@ def start_bootloader(self):
 def start_app(self):
     '''Starts app
     '''
-    self.set_quiet()
     C = [0x55, 0x55, ord('J'), ord('A'), 0x00 ]
     crc = self.calc_crc(C[2:4] + [0x00])    # for some reason must add a payload byte to get correct CRC
     crc_msb = (crc & 0xFF00) >> 8
