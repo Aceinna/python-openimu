@@ -117,13 +117,13 @@ class OpenIMU:
             for baud in [38400, 57600, 115200]:
                 self.ser.baudrate = baud
                 self.device_id = self.openimu_get_device_id()
-                print(self.device_id) 
-                if "Bootloader" in self.device_id:
+                if (sys.version_info > (3, 0)) and bytes("Bootloader", 'utf-8') in self.device_id \
+                    or (sys.version_info < (3, 0)) and  "Bootloader" in self.device_id:
                     print('BOOTLOADER MODE') 
                     print('Connected ....{0}'.format(self.device_id))
                     print('Please Upgrade FW with upgrade_fw function')
                     return True
-                if (self.device_id):
+                elif self.device_id:
                     print('Connected ....{0}'.format(self.device_id))
                     packet_rate = next((x for x in self.imu_properties['userConfiguration'] if x['name'] == 'Packet Rate'), None)
                     odr_param = self.openimu_get_param(packet_rate['paramId'])
@@ -192,7 +192,7 @@ class OpenIMU:
     def openimu_get_device_id(self):
         C = InputPacket(self.imu_properties, 'pG')
         self.write(C.bytes)
-        time.sleep(1)
+        time.sleep(0.5)
         self.synced = 0
         self.sync(sync_type='pG')
         return self.response_data 
@@ -219,6 +219,8 @@ class OpenIMU:
     def disconnect(self):
         '''Ends data collection loop.  Reset settings
         '''
+        self.data = {}
+        self.response_data = {}
         self.connected = 0
         self.device_id = 0
         self.odr_setting = 0
@@ -314,8 +316,6 @@ class OpenIMU:
         input_packet = next((x for x in self.imu_properties['userMessages']['inputPackets'] if x['name'] == self.packet_type), None)
         bootloader_packet = next((x for x in self.imu_properties['bootloaderMessages'] if x['name'] == self.packet_type), None)
         
-        print(output_packet)
-
         if output_packet != None:
             data = self.openimu_unpack_output_packet(output_packet, payload)
 
@@ -458,20 +458,23 @@ class OpenIMU:
         packet = BootloaderInputPacket(self.imu_properties, 'JI')
         self.write(packet.bytes)
         self.sync(sync_type='JI')
+        self.ser.baudrate = 57600   # Force baud rate to 57600
         bootloader_id = self.openimu_get_device_id()
         print(bootloader_id)
         return True
-        #self.disconnect()
-        #self.close()
-        #self.find_device()
+    
         
     def openimu_start_app(self):
         '''Starts app
         '''
         packet = BootloaderInputPacket(self.imu_properties, 'JA')
         self.write(packet.bytes)
+        print('Restarting app ...')
         time.sleep(5)
-        self.sync(sync_type='JA')
+        self.disconnect()
+        self.reset_buffer()
+        self.close()
+        self.find_device()      # Must go thru reconnect process because baud rate may have changed during firmware load
         return True
 
     def openimu_write_block(self, data_len, addr, data):
@@ -494,7 +497,6 @@ class OpenIMU:
         addr = 0
         fw = open(file, 'rb').read()
         fs_len = len(fw)
-       
         
         while (addr < fs_len):
             packet_data_len = max_data_len if (fs_len - addr) > max_data_len else (fs_len-addr)
@@ -514,17 +516,9 @@ if __name__ == "__main__":
     #grab.openimu_update_param(3,'zT')
     user_fw_id = grab.openimu_get_user_app_id()
     print(user_fw_id)
-    grab.openimu_upgrade_fw('firmware33.bin')
-    time.sleep(1)
+    grab.openimu_upgrade_fw('firmware11.bin')
     user_fw_id = grab.openimu_get_user_app_id()
     print(user_fw_id)
-    time.sleep(1)
-    user_fw_id = grab.openimu_get_user_app_id()
-    print(user_fw_id)
-    time.sleep(1)
-    user_fw_id = grab.openimu_get_user_app_id()
-    print(user_fw_id)
-
     #grab.openimu_update_param(6,20)
     #grab.openimu_get_param(6)
     #grab.openimu_save_config()

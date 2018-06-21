@@ -1,5 +1,6 @@
 import json 
 import struct
+import sys
 
 class BootloaderInputPacket:
 
@@ -21,7 +22,6 @@ class BootloaderInputPacket:
 
     def block_payload(self, data_len, addr, data):
         C = []
-        print(data_len)
         addr_3 = (addr & 0xFF000000) >> 24
         addr_2 = (addr & 0x00FF0000) >> 16
         addr_1 = (addr & 0x0000FF00) >> 8
@@ -32,7 +32,10 @@ class BootloaderInputPacket:
         C.insert(len(C), addr_0)
         C.insert(len(C), data_len)
         for i in range(data_len):
-            C.insert(len(C), ord(data[i]))
+            if (sys.version_info > (3, 0)):
+                C.insert(len(C), data[i])
+            else:
+                C.insert(len(C), ord(data[i]))
         return C
     
     def calc_crc(self,payload):
