@@ -31,6 +31,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         # Except for a few exceptions stop the automatic message transmission if a message is received
         if message['messageType'] != 'serverStatus' and list(message['data'].keys())[0] != 'startLog' and list(message['data'].keys())[0] != 'stopLog':
             self.callback.stop()
+            imu.connected = 0
             time.sleep(1)
         if message['messageType'] == 'serverStatus':
             if imu.logging:
@@ -42,7 +43,19 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                                                                                             'deviceId' : imu.device_id.decode(), 'deviceProperties' : imu.imu_properties, 'logging' : imu.logging, 'fileName' : fileName }}))
             else:
                 self.write_message(json.dumps({ 'messageType' : 'serverStatus', 'data' : { 'serverVersion' : server_version, 'serverUpdateRate' : callback_rate,
+        
                                                                                             'deviceId' : imu.device_id, 'logging' : imu.logging, 'fileName' : fileName }}))
+        elif message['messageType'] == 'requestAction':
+            if list(message['data'].keys())[0] == 'gA':
+                data = imu.openimu_get_all_param()
+                self.write_message(json.dumps({ "messageType" : "requestAction", "data" : { "gA" : data }}))
+            elif list(message['data'].keys())[0] == 'uP':
+                data = imu.openimu_update_param(message['data']['uP']['paramId'], message['data']['uP']['value'])
+                self.write_message(json.dumps({ "messageType" : "requestAction", "data" : { "uP" : data }}))
+            elif list(message['data'].keys())[0] == 'sC':
+                imu.openimu_save_config()
+                self.write_message(json.dumps({ "messageType" : "requestAction", "data" : { "sC" : {} }}))
+
         elif message['messageType'] == 'requestAction':
             if list(message['data'].keys())[0] == 'getFields':
                 data = imu.get_fields(list(map(int,message['data']['getFields'].keys())), True)

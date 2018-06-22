@@ -443,7 +443,7 @@ class OpenIMU:
                 name = parameter['name']
                 value = self.openimu_unpack_one(type, payload[id*8:(id+1)*8])
                 print('{0}: {1}'.format(name,value))
-                params.append({ "id": id, "name": name, "value": value})
+                params.append({ "paramId": id, "name": name, "value": value})
             return params
         elif input_message['type'] == 'userParameter':
             user_configuration = self.imu_properties['userConfiguration']
@@ -451,7 +451,7 @@ class OpenIMU:
             param = user_configuration[param_id]
             param_value = self.openimu_unpack_one(param['type'], payload[4:12])
             print('{0}: {1}'.format(param['name'], param_value))
-            return { "id": param_id, "name": param['name'], "value": param_value }
+            return { "paramId": param_id, "name": param['name'], "value": param_value }
         elif input_message['type'] == 'paramId':
             user_configuration = self.imu_properties['userConfiguration']
             error = self.openimu_unpack_one('uint32', payload[0:4]) 
@@ -540,6 +540,10 @@ class OpenIMU:
 if __name__ == "__main__":
     grab = OpenIMU()
     grab.find_device()
+    #grab.openimu_update_param(4,10)
+    #grab.openimu_save_config()
+    data = grab.openimu_get_all_param()
+    print(data)
     #grab.openimu_update_param(3,'zT')
     #user_fw_id = grab.openimu_get_user_app_id()
     #print(user_fw_id)
@@ -549,8 +553,9 @@ if __name__ == "__main__":
     #grab.openimu_update_param(0,0)
     #grab.openimu_update_param(1,0)
     #grab.openimu_update_param(2,115200)
-    grab.openimu_update_param(3,'z2')
-    grab.openimu_update_param(4,10)
+    #grab.openimu_update_param(3,'z2')
+    grab.openimu_update_param(4,0)
+    grab.openimu_save_config()
     #grab.openimu_update_param(5,20)
     #grab.openimu_update_param(6,25)
     #for i in range(0,6):
@@ -559,10 +564,10 @@ if __name__ == "__main__":
 	#grab.openimu_save_config()
     #grab.upgrade_fw('MTLT305D_19.0.6.bin')
 	# Examples for logging
-    time.sleep(2)
-    grab.start_log()
-    time.sleep(10)
-    grab.stop_log()
+    #time.sleep(2)
+    #grab.start_log()
+    #time.sleep(10)
+    #grab.stop_log()
     # Test for WS Server
     #grab.read_fields([0x0001, 0x0002, 0x0003])
     #grab.get_fields([0x0001, 0x0002, 0x0003])
