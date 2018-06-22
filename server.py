@@ -37,10 +37,9 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                 fileName = imu.logger.user['fileName']
             else:
                 fileName = ''
-            if 1:
-            #if imu.device_id:
+            if imu.device_id:
                 self.write_message(json.dumps({ 'messageType' : 'serverStatus', 'data' : { 'serverVersion' : server_version, 'serverUpdateRate' : callback_rate, 'packetType' : imu.packet_type,
-                                                                                            'deviceId' : imu.device_id, 'deviceProperties' : imu.imu_properties, 'logging' : imu.logging, 'fileName' : fileName }}))
+                                                                                            'deviceId' : imu.device_id.decode(), 'deviceProperties' : imu.imu_properties, 'logging' : imu.logging, 'fileName' : fileName }}))
             else:
                 self.write_message(json.dumps({ 'messageType' : 'serverStatus', 'data' : { 'serverVersion' : server_version, 'serverUpdateRate' : callback_rate,
                                                                                             'deviceId' : imu.device_id, 'logging' : imu.logging, 'fileName' : fileName }}))
