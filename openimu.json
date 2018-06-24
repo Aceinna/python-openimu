@@ -7,7 +7,7 @@
         { "paramId": 1, "paramType" : "disabled", "type" : "uint64", "name": "Data Size" },
         { "paramId": 2, "paramType" : "select", "type" : "int64", "name": "Baud Rate", "options" : [38400, 57600, 115200]},
         { "paramId": 3, "paramType" : "select", "type" : "char8", "name": "Packet Type", "options" : ["z1", "zT"]},
-        { "paramId": 4, "paramType" : "select", "type" : "int64", "name": "Packet Rate", "options" : [100, 50, 20, 10, 0]},
+        { "paramId": 4, "paramType" : "select", "type" : "int64", "name": "Packet Rate", "options" : [200, 100, 50, 20, 10, 0]},
         { "paramId": 5, "paramType" : "select", "type" : "int64", "name": "Accel LPF", "options" : [50, 25, 40, 20, 10, 5, 2]},
         { "paramId": 6, "paramType" : "select", "type" : "int64", "name": "Rate LPF", "options" : [50, 25, 40, 20, 10, 5, 2]},
         { "paramId": 7, "paramType" : "select", "type" : "char8", "name": "Orientation", "options" : ["+X+Y+Z"]}

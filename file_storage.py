@@ -23,33 +23,77 @@ class OpenIMULog:
             if self.user['fileName'] == '':
                 self.user['fileName'] = self.name
         # decode converts out of byte array
+        self.ws = imu.ws
         self.sn = imu.device_id.split(" ")[0]
         self.pn = imu.device_id.split(" ")[1]
         self.device_id = imu.device_id
         self.odr_setting = imu.odr_setting
         self.packet_type = imu.packet_type
         self.imu_properties = imu.imu_properties
-        self.sample_rate = self.odr_setting
 
-    def log(self, data, odr_setting): 
+    # Parse the data, read in from the unit, and generate a data file using
+    #   the json properties file to create a header and specify the precision
+    #   of the data in the resulting data file.
+    def log(self, imu, data):
+        #
+        output_packet = next((x for x in imu.imu_properties['userMessages']['outputPackets'] if x['name'] == imu.packet_type), None)
+
         '''Write row of CSV file based on data received.  Uses dictionary keys for column titles
         '''
         if not self.first_row:
             self.first_row = 1
-            labels = ''.join('{0:s},'.format(key) for key in data)
+
+            # Loop through each item in the data dictionary and create a header from the json
+            #   properties that correspond to the items in the dictionary
+            labels = ''
+            keyIdx = -1
+            for key in data:
+                keyIdx= keyIdx + 1
+                dataStr = output_packet['payload'][keyIdx]['name'] + \
+                          ' [' + \
+                          output_packet['payload'][keyIdx]['unit'] + \
+                          ']'
+                labels = labels + '{0:s},'.format(dataStr)
+            
+            # Remove the comma at the end of the string and append a new-line character
             labels = labels[:-1]
             header = labels + '\n'
         else:
             self.first_row += 1
             header = ''
-        
+
+
+        # Loop through the items in the data dictionary and append to an output string
+        #   (with precision based on the data type defined in the json properties file)
         str = ''
+        keyIdx = -1
         for key in data:
-            # TODO update this to use json file to determine formatting
-            if key == 'BITstatus' or key == 'GPSITOW' or key == 'counter' or key == 'timeITOW':
+            keyIdx= keyIdx + 1
+            outputPcktType = output_packet['payload'][keyIdx]['type']
+
+            if outputPcktType == 'uint32' or outputPcktType == 'int32' or \
+               outputPcktType == 'uint16' or outputPcktType == 'int16' or \
+               outputPcktType == 'uint64' or outputPcktType == 'int64':
+                # integers and unsigned integers
                 str += '{0:d},'.format(data[key])
+            elif outputPcktType == 'double':
+                # double
+                str += '{0:15.12f},'.format(data[key])
+            elif outputPcktType == 'float':
+                # print(3) #key + str(2))
+                str += '{0:12.8f},'.format(data[key])
+            elif outputPcktType == 'uint8':
+                # byte
+                str += '{0:d},'.format(data[key])
+            elif outputPcktType == 'uchar' or outputPcktType == 'char':
+                # character
+                str += '{:},'.format(data[key])
             else:
+                # unknown
+                print(0)
                 str += '{0:3.5f},'.format(data[key])
+
+        # 
         str = str[:-1]
         str = str + '\n'
         self.file.write(header+str)
@@ -73,8 +117,8 @@ class OpenIMULog:
 
     def record_to_ansplatform(self):
         data = { "pn" : self.pn, "sn": self.sn, "fileName" : self.user['fileName'],  "url" : self.name, "imuProperties" : json.dumps(self.imu_properties),
-                 "sampleRate" : self.sample_rate, "packetType" : self.packet_type, "userId" : self.user['id'] }
-        url = "https://ans-platform.azurewebsites.net/api/datafiles/replaceOrCreate"
+                 "sampleRate" : self.odr_setting, "packetType" : self.packet_type, "userId" : self.user['id'] }
+        url = "https://api.aceinna.com/api/datafiles/replaceOrCreate"
         data_json = json.dumps(data)
         headers = {'Content-type': 'application/json', 'Authorization' : self.user['access_token'] }
         response = requests.post(url, data=data_json, headers=headers)
@@ -96,7 +140,7 @@ class OpenIMULog:
 
     def close(self):
         time.sleep(0.1)
-        if self.imu.ws:
+        if self.ws:
             threading.Thread(target=self.write_to_azure).start()
         else:
             self.file.close()
