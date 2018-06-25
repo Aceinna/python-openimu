@@ -102,10 +102,13 @@ class OpenIMU:
                 continue
             else:
                 print('Testing port ' + port)
-                s = serial.Serial(port)
-                if s:
-                    s.close()
-                    result.append(port)
+                try:
+                    s = serial.Serial(port)
+                    if s:
+                        s.close()
+                        result.append(port)
+                except:
+                    pass
         return result
 
     def autobaud(self, ports):
@@ -463,7 +466,8 @@ class OpenIMU:
             return struct.unpack('<L', b)[0]
         elif type == 'char8':
             try:
-                return struct.pack('8B', *data)
+                b = struct.pack('8B', *data)
+                return b.decode()
             except:
                 return False 
         elif type == 'string':
@@ -577,9 +581,10 @@ class OpenIMU:
 if __name__ == "__main__":
     imu = OpenIMU()
     imu.find_device()
-    imu.start_log()
-    time.sleep(20)
-    imu.stop_log()
+    imu.openimu_get_all_param()
+    #imu.start_log()
+    #time.sleep(20)
+    #imu.stop_log()
   
 	
     
