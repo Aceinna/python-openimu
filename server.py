@@ -37,13 +37,15 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                 fileName = imu.logger.user['fileName']
             else:
                 fileName = ''
+            # Load the openimu.json on each request to support dynamic debugging
+            with open('openimu.json') as json_data:
+                imu.imu_properties = json.load(json_data)
             self.write_message(json.dumps({ 'messageType' : 'serverStatus', 'data' : { 'serverVersion' : server_version, 'serverUpdateRate' : callback_rate,  'packetType' : imu.packet_type,
                                                                                         'deviceProperties' : imu.imu_properties, 'deviceId' : imu.device_id, 'logging' : imu.logging, 'fileName' : fileName }}))
         elif message['messageType'] == 'requestAction':
             if list(message['data'].keys())[0] == 'gA':
                 print('requesting')
                 data = imu.openimu_get_all_param()
-                print(data)
                 self.write_message(json.dumps({ "messageType" : "requestAction", "data" : { "gA" : data }}))
             elif list(message['data'].keys())[0] == 'uP':
                 data = imu.openimu_update_param(message['data']['uP']['paramId'], message['data']['uP']['value'])
@@ -63,6 +65,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             elif list(message['data'].keys())[0] == 'stopLog' and imu.logging == 1: 
                 imu.stop_log()                
                 self.write_message(json.dumps({ "messageType" : "requestAction", "data" : { "logfile" : '' }}))
+        # OLD CODE REVIEW FOR DELETION
         elif  0 and message['messageType'] == 'requestAction':
             if list(message['data'].keys())[0] == 'startStream':
                 imu.restore_odr()

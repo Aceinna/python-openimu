@@ -565,7 +565,7 @@ class OpenIMU:
                 if len(self.packet_buffer) == self.packet_buffer[2] + 5:
                     packet_crc = 256 * self.packet_buffer[-2] + self.packet_buffer[-1]    
                     if packet_crc == self.calc_crc(self.packet_buffer[:-2]):
-                        if not isinstance(packet_type, str):
+                        if not isinstance(packet_type, str) and not isinstance(packet_type, unicode):
                             self.packet_type = bytearray(packet_type).decode()
                         else:
                             self.packet_type = packet_type
@@ -582,9 +582,9 @@ if __name__ == "__main__":
     imu = OpenIMU()
     imu.find_device()
     imu.openimu_get_all_param()
-    #imu.start_log()
-    #time.sleep(20)
-    #imu.stop_log()
+    imu.start_log()
+    time.sleep(20)
+    imu.stop_log()
   
 	
     

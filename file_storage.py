@@ -49,10 +49,11 @@ class OpenIMULog:
             keyIdx = -1
             for key in data:
                 keyIdx= keyIdx + 1
-                dataStr = output_packet['payload'][keyIdx]['name'] + \
+                '''dataStr = output_packet['payload'][keyIdx]['name'] + \
                           ' [' + \
                           output_packet['payload'][keyIdx]['unit'] + \
-                          ']'
+                          ']'''
+                dataStr = output_packet['payload'][keyIdx]['name']
                 labels = labels + '{0:s},'.format(dataStr)
             
             # Remove the comma at the end of the string and append a new-line character
