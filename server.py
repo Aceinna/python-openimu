@@ -67,18 +67,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                 self.write_message(json.dumps({ "messageType" : "requestAction", "data" : { "logfile" : '' }}))
         # OLD CODE REVIEW FOR DELETION
         elif  0 and message['messageType'] == 'requestAction':
-            if list(message['data'].keys())[0] == 'startStream':
-                imu.restore_odr()
-                self.callback.start()  
-            elif list(message['data'].keys())[0] == 'stopStream':
-                imu.set_quiet()
-            elif list(message['data'].keys())[0] == 'startLog' and imu.logging == 0: 
-                data = message['data']['startLog']
-                imu.start_log(data) 
-                self.write_message(json.dumps({ "messageType" : "requestAction", "data" : { "logfile" : imu.logger.name }}))
-            elif list(message['data'].keys())[0] == 'stopLog' and imu.logging == 1: 
-                imu.stop_log()                
-                self.write_message(json.dumps({ "messageType" : "requestAction", "data" : { "logfile" : '' }}))
+            # Send and receive file list from local server
             elif list(message['data'].keys())[0] == 'listFiles':
                 logfiles = [f for f in os.listdir('data') if os.path.isfile(os.path.join('data', f)) and f.endswith(".csv")]
                 self.write_message(json.dumps({ "messageType" : "requestAction", "data" : { "listFiles" : logfiles }}))
