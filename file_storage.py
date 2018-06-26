@@ -124,10 +124,8 @@ class OpenIMULog:
         headers = {'Content-type': 'application/json', 'Authorization' : self.user['access_token'] }
         response = requests.post(url, data=data_json, headers=headers)
         response = response.json()
-        print(response)
        
         # clean up
-        self.file.close()
         self.name = ''
 
         return  #ends thread
@@ -142,6 +140,7 @@ class OpenIMULog:
     def close(self):
         time.sleep(0.1)
         if self.ws:
+            self.file.close()
             threading.Thread(target=self.write_to_azure).start()
         else:
             self.file.close()
