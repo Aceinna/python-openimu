@@ -16,12 +16,14 @@ class OpenIMULog:
         '''Initialize and create a CSV file
         '''
         self.name = 'data-' + datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S') + '.csv'
-        self.file = open('data/' + self.name, 'w')
-        self.first_row = 0
         if user:
             self.user = user
             if self.user['fileName'] == '':
                 self.user['fileName'] = self.name
+            else:
+                self.user['fileName'] += '.csv'
+        self.file = open('data/' + self.user['fileName'], 'w')
+        self.first_row = 0
         # decode converts out of byte array
         self.ws = imu.ws
         self.sn = imu.device_id.split(" ")[0]
@@ -107,7 +109,8 @@ class OpenIMULog:
         # record file to cloud
         self.append_blob_service = AppendBlobService(account_name='navview', account_key='+roYuNmQbtLvq2Tn227ELmb6s1hzavh0qVQwhLORkUpM0DN7gxFc4j+DF/rEla1EsTN2goHEA1J92moOM/lfxg==', protocol='http')
         self.append_blob_service.create_blob(container_name='data', blob_name=self.name,  content_settings=ContentSettings(content_type='text/plain'))
-        f = open("data/" + self.name,"r")
+        # f = open("data/" + self.name,"r")
+        f = open("data/" + self.user['fileName'], "r")
         self.append_blob_service.append_blob_from_text('data',self.name, f.read())
 
         # TODO: check if success
