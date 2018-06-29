@@ -68,7 +68,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         # OLD CODE REVIEW FOR DELETION
         elif  0 and message['messageType'] == 'requestAction':
             # Send and receive file list from local server
-            elif list(message['data'].keys())[0] == 'listFiles':
+            if list(message['data'].keys())[0] == 'listFiles':
                 logfiles = [f for f in os.listdir('data') if os.path.isfile(os.path.join('data', f)) and f.endswith(".csv")]
                 self.write_message(json.dumps({ "messageType" : "requestAction", "data" : { "listFiles" : logfiles }}))
             elif list(message['data'].keys())[0] == 'loadFile':
