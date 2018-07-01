@@ -1,6 +1,6 @@
 {
     "name" : "OpenIMU300-EZ",
-    "type" : "imu",
+    "type" : "openimu",
     "description" : "9-axis OpenIMU with triaxial rate, acceleration, and magnetic measurement",
     "userConfiguration" : [
         { "paramId": 0, "paramType" : "disabled", "type" : "uint64", "name": "Data CRC"  },
@@ -11,38 +11,6 @@
         { "paramId": 5, "paramType" : "select", "type" : "int64", "name": "Accel LPF", "options" : [50, 25, 40, 20, 10, 5, 2]},
         { "paramId": 6, "paramType" : "select", "type" : "int64", "name": "Rate LPF", "options" : [50, 25, 40, 20, 10, 5, 2]},
         { "paramId": 7, "paramType" : "select", "type" : "char8", "name": "Orientation", "options" : ["+X+Y+Z"]}
-    ],
-    "bootloaderMessages": [
-        {
-            "name" : "JI",
-            "description" : "Jump to Bootloader",
-            "inputPayload" : {},
-            "responsePayload" : {
-                "type" : "ack",
-                "response" : "Acknowledgement"
-            }
-        },
-        {
-            "name" : "JA",
-            "description" : "Jump to App",
-            "inputPayload" : {},
-            "responsePayload" : {
-                "type" : "none",
-                "response" : "Empty"
-            }
-        },
-        {
-            "name" : "WA",
-            "description" : "Write App Block",
-            "inputPayload" : {
-                "type" : "block",
-                "name" : "4 byte block address followed by up to 240 bytes data"
-            },
-            "responsePayload" : {
-                "type": "ack",
-                "response" : "Acknowledgement"
-            }
-        }
     ],
     "userMessages" : { 
          "inputPackets" : [
@@ -278,5 +246,37 @@
                 ]
             }
 		]  
-    }    
+    },
+    "bootloaderMessages": [
+        {
+            "name" : "JI",
+            "description" : "Jump to Bootloader",
+            "inputPayload" : {},
+            "responsePayload" : {
+                "type" : "ack",
+                "response" : "Acknowledgement"
+            }
+        },
+        {
+            "name" : "JA",
+            "description" : "Jump to App",
+            "inputPayload" : {},
+            "responsePayload" : {
+                "type" : "none",
+                "response" : "Empty"
+            }
+        },
+        {
+            "name" : "WA",
+            "description" : "Write App Block",
+            "inputPayload" : {
+                "type" : "block",
+                "name" : "4 byte block address followed by up to 240 bytes data"
+            },
+            "responsePayload" : {
+                "type": "ack",
+                "response" : "Acknowledgement"
+            }
+        }
+    ]  
 }
