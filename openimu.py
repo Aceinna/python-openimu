@@ -45,6 +45,7 @@ import json
 import threading
 from imu_input_packet import InputPacket
 from bootloader_input_packet import BootloaderInputPacket
+from azure.storage.blob import BlockBlobService
 
 class OpenIMU:
     def __init__(self, ws=False):
@@ -514,6 +515,9 @@ class OpenIMU:
         if not self.openimu_start_bootloader():
             print('Bootloader Start Failed')
             return False
+
+        self.block_blob_service = BlockBlobService(account_name='navview', account_key='+roYuNmQbtLvq2Tn227ELmb6s1hzavh0qVQwhLORkUpM0DN7gxFc4j+DF/rEla1EsTN2goHEA1J92moOM/lfxg==', protocol='http')
+        self.block_blob_service.get_blob_to_path('apps', file, file)
 
         print('upgrade fw')
         max_data_len = 240

@@ -117,8 +117,8 @@ class OpenIMULog:
 
         # record record to ansplatform
         self.record_to_ansplatform()
-
-
+        
+        
     def record_to_ansplatform(self):
         data = { "pn" : self.pn, "sn": self.sn, "fileName" : self.user['fileName'],  "url" : self.name, "imuProperties" : json.dumps(self.imu_properties),
                  "sampleRate" : self.odr_setting, "packetType" : self.packet_type, "userId" : self.user['id'] }

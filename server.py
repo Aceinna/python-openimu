@@ -65,6 +65,11 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             elif list(message['data'].keys())[0] == 'stopLog' and imu.logging == 1: 
                 imu.stop_log()                
                 self.write_message(json.dumps({ "messageType" : "requestAction", "data" : { "logfile" : '' }}))
+            # add by dave, app download page
+            elif list(message['data'].keys())[0] == 'upgradeFramework':
+                fileName = message['data']['upgradeFramework']
+                imu.openimu_upgrade_fw(fileName)
+                self.write_message(json.dumps({ "messageType" : "requestAction", "data" : { "upgradeFramework" : fileName }}))
         # OLD CODE REVIEW FOR DELETION
         elif  0 and message['messageType'] == 'requestAction':
             # Send and receive file list from local server
@@ -75,7 +80,6 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                 print(message['data']['loadFile']['graph_id'])
                 f = open("data/" + message['data']['loadFile']['graph_id'],"r")
                 self.write_message(json.dumps({ "messageType" : "requestAction", "data" : { "loadFile" :  f.read() }}))
-
 
     def on_close(self):
         self.callback.stop()
