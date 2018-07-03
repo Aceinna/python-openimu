@@ -53,6 +53,10 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             elif list(message['data'].keys())[0] == 'sC':
                 imu.openimu_save_config()
                 self.write_message(json.dumps({ "messageType" : "requestAction", "data" : { "sC" : {} }}))
+            # added by dave, for connect page to show version
+            elif list(message['data'].keys())[0] == 'gV':
+                data = imu.openimu_get_user_app_id()
+                self.write_message(json.dumps({ "messageType" : "completeAction", "data" : { "gV" : data }}))
             elif list(message['data'].keys())[0] == 'startStream':
                 imu.connect()
                 self.callback.start()  
@@ -65,7 +69,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             elif list(message['data'].keys())[0] == 'stopLog' and imu.logging == 1: 
                 imu.stop_log()                
                 self.write_message(json.dumps({ "messageType" : "requestAction", "data" : { "logfile" : '' }}))
-            # add by dave, app download page
+            # added by dave, app download page
             elif list(message['data'].keys())[0] == 'upgradeFramework':
                 fileName = message['data']['upgradeFramework']
                 imu.openimu_upgrade_fw(fileName)
