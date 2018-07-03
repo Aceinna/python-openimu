@@ -69,7 +69,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             elif list(message['data'].keys())[0] == 'upgradeFramework':
                 fileName = message['data']['upgradeFramework']
                 imu.openimu_upgrade_fw(fileName)
-                self.write_message(json.dumps({ "messageType" : "requestAction", "data" : { "upgradeFramework" : fileName }}))
+                self.write_message(json.dumps({ "messageType" : "completeAction", "data" : { "upgradeFramework" : fileName }}))
         # OLD CODE REVIEW FOR DELETION
         elif  0 and message['messageType'] == 'requestAction':
             # Send and receive file list from local server
