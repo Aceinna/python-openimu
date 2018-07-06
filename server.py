@@ -56,7 +56,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             # added by dave, for connect page to show version
             elif list(message['data'].keys())[0] == 'gV':
                 data = imu.openimu_get_user_app_id()
-                self.write_message(json.dumps({ "messageType" : "completeAction", "data" : { "gV" : data }}))
+                self.write_message(json.dumps({ "messageType" : "completeAction", "data" : { "gV" : str(data) }}))
             elif list(message['data'].keys())[0] == 'startStream':
                 imu.connect()
                 self.callback.start()  
@@ -64,16 +64,24 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                 imu.pause()
             elif list(message['data'].keys())[0] == 'startLog' and imu.logging == 0: 
                 data = message['data']['startLog']
-                imu.start_log(data) 
+                imu.start_log(data)
                 self.write_message(json.dumps({ "messageType" : "requestAction", "data" : { "logfile" : imu.logger.name }}))
             elif list(message['data'].keys())[0] == 'stopLog' and imu.logging == 1: 
                 imu.stop_log()                
                 self.write_message(json.dumps({ "messageType" : "requestAction", "data" : { "logfile" : '' }}))
-            # added by dave, app download page
+            
+            # added by Dave, app download page
             elif list(message['data'].keys())[0] == 'upgradeFramework':
                 fileName = message['data']['upgradeFramework']
-                imu.openimu_upgrade_fw(fileName)
+                
+                if imu.openimu_upgrade_fw_prepare(fileName):
+                    while not imu.openimu_finish_upgrade_fw():
+                        imu.openimu_upgrade_fw(fileName)
+                        self.write_message(json.dumps({ "messageType" : "processAction", "data" : { "addr" : imu.addr, "fs_len": imu.fs_len }}))
+                    imu.openimu_start_app()
+                
                 self.write_message(json.dumps({ "messageType" : "completeAction", "data" : { "upgradeFramework" : fileName }}))
+
         # OLD CODE REVIEW FOR DELETION
         elif  0 and message['messageType'] == 'requestAction':
             # Send and receive file list from local server

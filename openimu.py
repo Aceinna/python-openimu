@@ -509,29 +509,34 @@ class OpenIMU:
             time.sleep(5)
         self.openimu_get_packet('WA')    
        
-    def openimu_upgrade_fw(self,file):
-        '''Upgrades firmware of connected 380 device to file provided in argument
-        '''
+    def openimu_upgrade_fw_prepare(self, file):
         if not self.openimu_start_bootloader():
             print('Bootloader Start Failed')
             return False
 
-        self.block_blob_service = BlockBlobService(account_name='navview', account_key='+roYuNmQbtLvq2Tn227ELmb6s1hzavh0qVQwhLORkUpM0DN7gxFc4j+DF/rEla1EsTN2goHEA1J92moOM/lfxg==', protocol='http')
+        self.block_blob_service = BlockBlobService(account_name='navview',
+                                                    account_key='+roYuNmQbtLvq2Tn227ELmb6s1hzavh0qVQwhLORkUpM0DN7gxFc4j+DF/rEla1EsTN2goHEA1J92moOM/lfxg==',
+                                                    protocol='http')
         self.block_blob_service.get_blob_to_path('apps', file, file)
 
         print('upgrade fw: %s' % file)
-        max_data_len = 240
-        addr = 0
-        fw = open(file, 'rb').read()
-        fs_len = len(fw)
-        
-        while (addr < fs_len):
-            packet_data_len = max_data_len if (fs_len - addr) > max_data_len else (fs_len-addr)
-            data = fw[addr:(addr+packet_data_len)]
-            self.openimu_write_block(packet_data_len, addr, data)
-            addr += packet_data_len
-        # Start new app
-        self.openimu_start_app()
+        self.max_data_len = 240
+        self.addr = 0
+        self.fw = open(file, 'rb').read()
+        self.fs_len = len(self.fw)
+
+        return True
+
+    def openimu_finish_upgrade_fw(self):
+        return self.addr >= self.fs_len
+
+    def openimu_upgrade_fw(self, file):
+        '''Upgrades firmware of connected 380 device to file provided in argument
+        '''
+        packet_data_len = self.max_data_len if (self.fs_len - self.addr) > self.max_data_len else (self.fs_len - self.addr)
+        data = self.fw[self.addr : (self.addr + packet_data_len)]
+        self.openimu_write_block(packet_data_len, self.addr, data)
+        self.addr += packet_data_len
 
     def openimu_get_packet(self,packet_type):
         if not packet_type:
