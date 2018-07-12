@@ -22,7 +22,9 @@ class OpenIMULog:
                 self.user['fileName'] = self.name
             else:
                 self.user['fileName'] += '.csv'
-        self.file = open('data/' + self.user['fileName'], 'w')
+            self.file = open('data/' + self.user['fileName'], 'w')
+        else:
+            self.file = open('data/' + self.name, 'w')
         self.first_row = 0
         # decode converts out of byte array
         self.ws = imu.ws
