@@ -437,5 +437,188 @@
                 "response" : "Acknowledgement"
             }
         }
-    ]      
+    ],      
+    "CLICommands": [     
+        {
+            "name" : "help",
+            "description" : "CLI help menu",
+            "function" : "help_handler",
+            "arguments" : {}
+        },
+        {
+            "name" : "exit",
+            "description" : "exit CLI",
+            "function" : "",
+            "arguments" : {}
+        },
+        {
+            "name" : "run",
+            "description" : "operations defined by users",
+            "function" : "run_handler",
+            "arguments" : {}
+        },
+        {
+            "name" : "save",
+            "description" : "Save the configuration into EEPROM",
+            "function" : "save_handler",
+            "arguments" : {}
+        },
+        {
+            "name" : "connect",
+            "description" : "Find OpenIMU device",
+            "function" : "connect_handler",
+            "arguments" : {}
+        },
+        {
+            "name" : "upgrade",
+            "description" : "Upgrade firmware",
+            "function" : "upgrade_handler",
+            "arguments" : {
+                "name" : "Binary File Name",
+                "description" : "Updated version of firmware file",
+                "parameter" : {}
+            }
+        },
+        {
+            "name" : "record",
+            "description" : "Record output data of OpenIMU",
+            "function" : "record_handler",
+            "arguments" : {}
+        },
+        {
+            "name" : "get",
+            "description" : "Read the current configuration and output data",
+            "function" : "get_handler",
+            "arguments" : [
+                {
+                    "description" : "Serial number of OpenIMU device",
+                    "parameter" : "dev_id" 
+                },
+                {
+                    "description" : "Hardware, software and system status",
+                    "parameter" : "bit_status"
+                },
+                {
+                    "description" : "baud rate of serial port",
+                    "parameter" : "baud_rate"
+                },
+                {
+                    "description" : "the type of output packets",
+                    "parameter" : "type"
+                },
+                { 
+                    "description" : "the rate of output packets",
+                    "parameter" : "rate"
+                },
+                {
+                    "description" : "the frequency of accelerometer's low-pass filter",
+                    "parameter" : "xl_lpf"
+                },
+                {
+                    "description" : "the frequency of gyro's low-pass filter",
+                    "parameter" : "rate_lpf"
+                },
+                {
+                    "description" : "the coordinate system of OpenIMU device",
+                    "parameter" : "orien"
+                }
+            ]
+        },
+        {
+            "name" : "set",
+            "description" : "configure OpenIMU device",
+            "function" : "set_handler", 
+            "arguments" : [
+                {
+                    "description" : "the baud rate of serial port",
+                    "parameter" : "baud_rate",
+                    "options" : [
+                        "38400",
+                        "57600",
+                        "115200",
+                        "230400"
+                    ]
+                },
+                {
+                    "description" : "the types of output packets",
+                    "parameter" : "type",
+                    "options" : [
+                        "s0",
+                        "s1",
+                        "a1",
+                        "a2"
+                    ]
+                },
+                {
+                    "description" : "the rate of output packets",
+                    "parameter" : "rate",
+                    "options" : [
+                        "0",
+                        "5",
+                        "10",
+                        "25",
+                        "50",
+                        "100",
+                        "200"
+                    ]
+                },
+                {
+                    "description" : "the frequency of accelerometer's low-pass filter",
+                    "parameter" : "xl_lpf",
+                    "options" : [
+                        "2",
+                        "5",
+                        "10",
+                        "20",
+                        "25",
+                        "40",
+                        "50"
+                    ]
+                },
+                {
+                    "description" : "the frequency of gyro's low-pass filter",
+                    "parameter" : "rate_lpf",
+                    "options" : [
+                        "2",
+                        "5",
+                        "10",
+                        "20",
+                        "25",
+                        "40",
+                        "50"
+                     ]
+                },
+                {
+                    "description" : "the coordinate system of OpenIMU device",
+                    "parameter" : "orien",
+                    "options" : [
+                        "0",
+                        "9",
+                        "35",
+                        "42",
+                        "65",
+                        "72",
+                        "98",
+                        "107",
+                        "133",
+                        "140",
+                        "146",
+                        "155",
+                        "196",
+                        "205",
+                        "211",
+                        "218",
+                        "273",
+                        "280",
+                        "292",
+                        "301",
+                        "336",
+                        "345",
+                        "357",
+                        "364"
+                    ]     
+                }
+            ]
+        }
+    ]
 }
