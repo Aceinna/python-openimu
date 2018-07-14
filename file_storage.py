@@ -109,13 +109,20 @@ class OpenIMULog:
         #    return False
 
         # record file to cloud
-        self.append_blob_service = AppendBlobService(account_name='navview', account_key='+roYuNmQbtLvq2Tn227ELmb6s1hzavh0qVQwhLORkUpM0DN7gxFc4j+DF/rEla1EsTN2goHEA1J92moOM/lfxg==', protocol='http')
-        self.append_blob_service.create_blob(container_name='data', blob_name=self.name,  content_settings=ContentSettings(content_type='text/plain'))
         # f = open("data/" + self.name,"r")
         f = open("data/" + self.user['fileName'], "r")
-        self.append_blob_service.append_blob_from_text('data',self.name, f.read())
+        text = f.read()
+        try: 
+            self.append_blob_service = AppendBlobService(account_name='navview', account_key='+roYuNmQbtLvq2Tn227ELmb6s1hzavh0qVQwhLORkUpM0DN7gxFc4j+DF/rEla1EsTN2goHEA1J92moOM/lfxg==', protocol='http')
+            self.append_blob_service.create_blob(container_name='data', blob_name=self.name,  content_settings=ContentSettings(content_type='text/plain'))
+            self.append_blob_service.append_blob_from_text('data',self.name, text)
+        except:
+            # Try again!
+            print('trying to write again due to exception')
+            self.append_blob_service = AppendBlobService(account_name='navview', account_key='+roYuNmQbtLvq2Tn227ELmb6s1hzavh0qVQwhLORkUpM0DN7gxFc4j+DF/rEla1EsTN2goHEA1J92moOM/lfxg==', protocol='http')
+            self.append_blob_service.create_blob(container_name='data', blob_name=self.name,  content_settings=ContentSettings(content_type='text/plain'))
+            self.append_blob_service.append_blob_from_text('data',self.name, text)
 
-        # TODO: check if success
 
         # record record to ansplatform
         self.record_to_ansplatform()
