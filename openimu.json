@@ -10,7 +10,8 @@
         { "paramId": 4, "paramType" : "select", "type" : "int64", "name": "Packet Rate", "options" : [200, 100, 50, 20, 10, 5, 2, 0]},
         { "paramId": 5, "paramType" : "select", "type" : "int64", "name": "Accel LPF", "options" : [50, 25, 40, 20, 10, 5, 2]},
         { "paramId": 6, "paramType" : "select", "type" : "int64", "name": "Rate LPF", "options" : [50, 25, 40, 20, 10, 5, 2]},
-        { "paramId": 7, "paramType" : "select", "type" : "char8", "name": "Orientation", "options" : ["+X+Y+Z"]}
+        { "paramId": 7, "paramType" : "select", "type" : "char8", "name": "Orientation", "options" : ["+X+Y+Z"]},
+        { "paramId": 8, "paramType" : "select", "type" : "uint64", "name": "Bit Status", "options" : []}
     ],
     "userMessages" : { 
          "inputPackets" : [
@@ -543,10 +544,11 @@
                     "description" : "the types of output packets",
                     "parameter" : "type",
                     "options" : [
-                        "s0",
-                        "s1",
+                        "z1",
+                        "zT",
                         "a1",
-                        "a2"
+                        "l1",
+                        "z2"
                     ]
                 },
                 {
@@ -592,30 +594,7 @@
                     "description" : "the coordinate system of OpenIMU device",
                     "parameter" : "orien",
                     "options" : [
-                        "0",
-                        "9",
-                        "35",
-                        "42",
-                        "65",
-                        "72",
-                        "98",
-                        "107",
-                        "133",
-                        "140",
-                        "146",
-                        "155",
-                        "196",
-                        "205",
-                        "211",
-                        "218",
-                        "273",
-                        "280",
-                        "292",
-                        "301",
-                        "336",
-                        "345",
-                        "357",
-                        "364"
+                        "+x+y+z"
                     ]     
                 }
             ]
