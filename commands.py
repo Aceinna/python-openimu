@@ -132,8 +132,8 @@ class OpenIMU_CLI:
             self.orien = orien_param    
         elif (x['parameter'] == "bit_status"):
             bit_status = next((x for x in imu.imu_properties['userConfiguration'] if x['name'] == 'Bit Status'), None)
-            bit_status_param = imu.openimu_get_param(bit_status['paramId'])
-            self.bit_status = 0 
+            #bit_status_param = imu.openimu_get_param(bit_status['paramId'])
+            #self.bit_status = 0 
         return True
    
     def set_packet(self, command, value):
