@@ -11,7 +11,7 @@
         { "paramId": 5, "paramType" : "select", "type" : "int64", "name": "Accel LPF", "options" : [50, 25, 40, 20, 10, 5, 2]},
         { "paramId": 6, "paramType" : "select", "type" : "int64", "name": "Rate LPF", "options" : [50, 25, 40, 20, 10, 5, 2]},
         { "paramId": 7, "paramType" : "select", "type" : "char8", "name": "Orientation", "options" : ["+X+Y+Z"]},
-        { "paramId": 8, "paramType" : "select", "type" : "uint64", "name": "Bit Status", "options" : []}
+        { "paramId": 8, "paramType" : "select", "type" : "int64", "name": "Bit Status", "options" : []}
     ],
     "userMessages" : { 
          "inputPackets" : [
@@ -594,7 +594,7 @@
                     "description" : "the coordinate system of OpenIMU device",
                     "parameter" : "orien",
                     "options" : [
-                        "+x+y+z"
+                        "+X+Y+Z"
                     ]     
                 }
             ]
