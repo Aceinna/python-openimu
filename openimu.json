@@ -10,7 +10,8 @@
         { "paramId": 4, "paramType" : "select", "type" : "int64", "name": "Packet Rate", "options" : [200, 100, 50, 20, 10, 5, 2, 0]},
         { "paramId": 5, "paramType" : "select", "type" : "int64", "name": "Accel LPF", "options" : [50, 25, 40, 20, 10, 5, 2]},
         { "paramId": 6, "paramType" : "select", "type" : "int64", "name": "Rate LPF", "options" : [50, 25, 40, 20, 10, 5, 2]},
-        { "paramId": 7, "paramType" : "select", "type" : "char8", "name": "Orientation", "options" : ["+X+Y+Z"]}
+        { "paramId": 7, "paramType" : "select", "type" : "char8", "name": "Orientation", "options" : ["+X+Y+Z"]},
+        { "paramId": 8, "paramType" : "select", "type" : "int64", "name": "Bit Status", "options" : []}
     ],
     "userMessages" : { 
          "inputPackets" : [
@@ -437,5 +438,166 @@
                 "response" : "Acknowledgement"
             }
         }
-    ]      
+    ],      
+    "CLICommands": [     
+        {
+            "name" : "help",
+            "description" : "CLI help menu",
+            "function" : "help_handler",
+            "arguments" : {}
+        },
+        {
+            "name" : "exit",
+            "description" : "exit CLI",
+            "function" : "",
+            "arguments" : {}
+        },
+        {
+            "name" : "run",
+            "description" : "operations defined by users",
+            "function" : "run_handler",
+            "arguments" : {}
+        },
+        {
+            "name" : "save",
+            "description" : "Save the configuration into EEPROM",
+            "function" : "save_handler",
+            "arguments" : {}
+        },
+        {
+            "name" : "connect",
+            "description" : "Find OpenIMU device",
+            "function" : "connect_handler",
+            "arguments" : {}
+        },
+        {
+            "name" : "upgrade",
+            "description" : "Upgrade firmware",
+            "function" : "upgrade_handler",
+            "arguments" : {
+                "name" : "Binary File Name",
+                "description" : "Updated version of firmware file",
+                "parameter" : {}
+            }
+        },
+        {
+            "name" : "record",
+            "description" : "Record output data of OpenIMU",
+            "function" : "record_handler",
+            "arguments" : {}
+        },
+        {
+            "name" : "get",
+            "description" : "Read the current configuration and output data",
+            "function" : "get_handler",
+            "arguments" : [
+                {
+                    "description" : "Serial number of OpenIMU device",
+                    "parameter" : "dev_id" 
+                },
+                {
+                    "description" : "Hardware, software and system status",
+                    "parameter" : "bit_status"
+                },
+                {
+                    "description" : "baud rate of serial port",
+                    "parameter" : "baud_rate"
+                },
+                {
+                    "description" : "the type of output packets",
+                    "parameter" : "type"
+                },
+                { 
+                    "description" : "the rate of output packets",
+                    "parameter" : "rate"
+                },
+                {
+                    "description" : "the frequency of accelerometer's low-pass filter",
+                    "parameter" : "xl_lpf"
+                },
+                {
+                    "description" : "the frequency of gyro's low-pass filter",
+                    "parameter" : "rate_lpf"
+                },
+                {
+                    "description" : "the coordinate system of OpenIMU device",
+                    "parameter" : "orien"
+                }
+            ]
+        },
+        {
+            "name" : "set",
+            "description" : "configure OpenIMU device",
+            "function" : "set_handler", 
+            "arguments" : [
+                {
+                    "description" : "the baud rate of serial port",
+                    "parameter" : "baud_rate",
+                    "options" : [
+                        "38400",
+                        "57600",
+                        "115200",
+                        "230400"
+                    ]
+                },
+                {
+                    "description" : "the types of output packets",
+                    "parameter" : "type",
+                    "options" : [
+                        "z1",
+                        "zT",
+                        "a1",
+                        "l1",
+                        "z2"
+                    ]
+                },
+                {
+                    "description" : "the rate of output packets",
+                    "parameter" : "rate",
+                    "options" : [
+                        "0",
+                        "5",
+                        "10",
+                        "25",
+                        "50",
+                        "100",
+                        "200"
+                    ]
+                },
+                {
+                    "description" : "the frequency of accelerometer's low-pass filter",
+                    "parameter" : "xl_lpf",
+                    "options" : [
+                        "2",
+                        "5",
+                        "10",
+                        "20",
+                        "25",
+                        "40",
+                        "50"
+                    ]
+                },
+                {
+                    "description" : "the frequency of gyro's low-pass filter",
+                    "parameter" : "rate_lpf",
+                    "options" : [
+                        "2",
+                        "5",
+                        "10",
+                        "20",
+                        "25",
+                        "40",
+                        "50"
+                     ]
+                },
+                {
+                    "description" : "the coordinate system of OpenIMU device",
+                    "parameter" : "orien",
+                    "options" : [
+                        "+X+Y+Z"
+                    ]     
+                }
+            ]
+        }
+    ]
 }
