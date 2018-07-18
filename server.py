@@ -69,17 +69,14 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             elif list(message['data'].keys())[0] == 'stopLog' and imu.logging == 1: 
                 imu.stop_log()                
                 self.write_message(json.dumps({ "messageType" : "requestAction", "data" : { "logfile" : '' }}))
-            
             # added by Dave, app download page
             elif list(message['data'].keys())[0] == 'upgradeFramework':
                 fileName = message['data']['upgradeFramework']
-                
                 if imu.openimu_upgrade_fw_prepare(fileName):
                     while not imu.openimu_finish_upgrade_fw():
                         imu.openimu_upgrade_fw(fileName)
                         self.write_message(json.dumps({ "messageType" : "processAction", "data" : { "addr" : imu.addr, "fs_len": imu.fs_len }}))
                     imu.openimu_start_app()
-                
                 self.write_message(json.dumps({ "messageType" : "completeAction", "data" : { "upgradeFramework" : fileName }}))
 
         # OLD CODE REVIEW FOR DELETION
