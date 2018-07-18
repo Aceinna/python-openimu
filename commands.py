@@ -31,7 +31,7 @@ class OpenIMU_CLI:
         self.bit_status = 0
 
     def help_handler(self):
-        print("Usage: help menu")
+        print("Usage: ")
         for x in self.cli_properties:
             print(x['name'] + " : " + x['description']) 
         
@@ -40,8 +40,6 @@ class OpenIMU_CLI:
     def connect_handler(self):
         '''connect command is used to find OpenIMU device
         '''
-        print("Connecting...")
-
         imu.find_device()
 
         return True
@@ -49,7 +47,6 @@ class OpenIMU_CLI:
     def upgrade_handler(self):
         '''upgrade command is used for firmware upgrade and followed by file name
         '''
-        print("Upgrading...")
         input_args = len(self.input_string)
         if (input_args == 1):
             print("Usage:")
@@ -62,8 +59,13 @@ class OpenIMU_CLI:
     def record_handler(self):
         '''record command is used to save the outputs into local machine
         '''
-        print("Recording...")
         imu.start_log()
+        return True
+
+    def stop_handler(self):
+        '''record command is used to save the outputs into local machine
+        '''
+        imu.stop_log()
         return True
 
     def run_handler(self):
@@ -76,113 +78,53 @@ class OpenIMU_CLI:
     def get_handler(self):
         '''get configuration or data from OpenIMU device
         '''
-        print("Getting...")
         input_args = len(self.input_string)
         get_properties = self.current_command
+        param_properties = imu.imu_properties['userConfiguration']
  
         if (input_args == 1):
             print("Usage: get [options]")
-            for x in get_properties['arguments']:
-                print(x['parameter'] + " : " + x['description'])
+            i = 2
+            while i < len(param_properties):
+                print(param_properties[i]['argument'] + " : " + get_properties['arguments'][i-2])
+                i += 1
             return True
         else:
-            for x in get_properties['arguments']:
-                if (x['parameter'] == self.input_string[1]):
+            i = 2
+            while i < len(param_properties):
+                x = param_properties[i]
+                if (x['argument'] == self.input_string[1]):
                     break
-
-        if (x['parameter'] == "dev_id"):
-            imu.openimu_get_device_id()
-        elif (x['parameter'] == "rate"):
-            packet_rate = next((x for x in imu.imu_properties['userConfiguration'] if x['name'] == 'Packet Rate'), None)
-            odr_param = imu.openimu_get_param(packet_rate['paramId'])
+                i += 1
+                if (i == len(param_properties) - 1):
+                    return True
+        
+        param = imu.openimu_get_param(x['paramId'])
+        if (x['argument'] == "rate"):
             try:
-                imu.odr_setting = odr_param['value']
+                imu.odr_setting = param['value']
             except:
                 imu.odr_setting = 0
+            print("get rate ")
             print(imu.odr_setting)
-        elif (x['parameter'] == "type"):
-            packet_type = next((x for x in imu.imu_properties['userConfiguration'] if x['name'] == 'Packet Type'), None)
-            packet_type_param = imu.openimu_get_param(packet_type['paramId'])
+        elif (x['argument'] == "type"):
             try: 
-                imu.packet_type = packet_type_param['value'][0:2]    
+                imu.packet_type = param['value'][0:2]    
             except:
                 imu.packet_type = 0
-            print(imu.packet_type)
-        elif (x['parameter'] == "baud_rate"):
-            baud_rate = next((x for x in imu.imu_properties['userConfiguration'] if x['name'] == 'Baud Rate'), None)
-            baud_rate_param = imu.openimu_get_param(baud_rate['paramId'])
-            print(baud_rate_param)
-            self.baud_rate = baud_rate_param    
-            print(self.baud_rate)
-        elif (x['parameter'] == "xl_lpf"):
-            xl_lpf = next((x for x in imu.imu_properties['userConfiguration'] if x['name'] == 'Accel LPF'), None)
-            xl_lpf_param = imu.openimu_get_param(xl_lpf['paramId'])
-            print(xl_lpf_param)
-            self.accel_lpf = xl_lpf_param    
+        elif (x['argument'] == "baud_rate"):
+            self.baud_rate = param    
+        elif (x['argument'] == "xl_lpf"):
+            self.accel_lpf = param    
             print(self.accel_lpf)
-        elif (x['parameter'] == "rate_lpf"):
-            gyro_lpf = next((x for x in imu.imu_properties['userConfiguration'] if x['name'] == 'Rate LPF'), None)
-            gyro_lpf_param = imu.openimu_get_param(gyro_lpf['paramId'])
-            print(gyro_lpf_param)
-            self.rate_lpf = gyro_lpf_param    
+        elif (x['argument'] == "rate_lpf"):
+            self.rate_lpf = param    
             print(self.rate_lpf)
-        elif (x['parameter'] == "orien"):
-            orien = next((x for x in imu.imu_properties['userConfiguration'] if x['name'] == 'Orientation'), None)
-            orien_param = imu.openimu_get_param(orien['paramId'])
-            self.orien = orien_param    
-        elif (x['parameter'] == "bit_status"):
-            bit_status = next((x for x in imu.imu_properties['userConfiguration'] if x['name'] == 'Bit Status'), None)
-            #bit_status_param = imu.openimu_get_param(bit_status['paramId'])
-            #self.bit_status = 0 
-        return True
-   
-    def set_packet(self, command, value):
-        '''pack the configuration following up Aceinna's format
-        ''' 
-        if command == "baud_rate":
-            field0 = 2
-            field0Data = int(value)
-        elif command == "type":
-            field0 = 3
-            if value == "s0":
-                field0Data = ord('S') * 256
-                field0Data += ord('0')
-            elif value == "s1":
-                field0Data = ord('S') * 256
-                field0Data += ord('1')
-            elif value == "a1":
-                field0Data = ord('A') * 256
-                field0Data += ord('1')
-            elif value == "a2":
-                field0Data = ord('A') * 256
-                field0Data += ord('2')
-            else:
-                field0Data = ord('F') * 256
-                field0Data += ord('1')
-        elif command == "rate":
-            field0 = 1
-            field0Data = int(value)
-        elif command == "xl_lpf":
-            field0 = 6
-            field0Data = int(value)
-        elif command == "rate_lpf":
-            field0 = 5
-            field0Data = int(value)
-        elif command == "orien":
-            field0 = 7
-            field0Data = int(value)
-        else:
-            print("Usage: set [options] <value>") 
-            return True
-        
-        print(field0Data)    
-        numFields = 1
-        C = InputPacket(imu.imu_properties, 'uP', False, False)
-
-        packet = [0x55, 0x55, 0x53, 0x46] + [5] + [numFields, field0, field0Data]
-        C.bytes = packet + C.calc_crc(packet[2:8])
-        imu.write(C.bytes)
-        time.sleep(0.05)
+        elif (x['argument'] == "orien"):
+            self.orien = param    
+        elif (x['argument'] == "bit_status"):
+            # self_bit_status = param
+            self.bit_status = 0 
         return True
    
     def set_param(self, command, value):
@@ -193,21 +135,6 @@ class OpenIMU_CLI:
             rate_param = next((x for x in imu.imu_properties['userConfiguration'] if x['name'] == 'Packet Rate'), None)
             imu.openimu_update_param(rate_param['paramId'], int(value))
         elif command == "type":
-            if value == "z1":
-                packet_id = ord('z') * 256
-                packet_id += ord('1')
-            elif value == "z2":
-                packet_id = ord('z') * 256
-                packet_id += ord('2')
-            elif value == "a1":
-                packet_id= ord('A') * 256
-                packet_id += ord('1')
-            elif value == "l1":
-                packet_id = ord('l') * 256
-                packet_id += ord('1')
-            else:
-                packet_id = ord('z') * 256
-                packet_id += ord('2')
             type_param = next((x for x in imu.imu_properties['userConfiguration'] if x['name'] == 'Packet Type'), None)
             imu.openimu_update_param(type_param['paramId'], value) 
         elif command == "xl_lpf":
@@ -227,26 +154,31 @@ class OpenIMU_CLI:
     def set_handler(self):
         '''set parameters' values
         '''
-        print("Setting...")
-
         input_args = len(self.input_string)
         set_properties = self.current_command
+        param_properties = imu.imu_properties['userConfiguration']
 
         if (input_args < 3):
             print("Usage: set <options> <values>")
-            for x in set_properties['arguments']:
-                print(x['parameter'] + " : " + x['description'])
+            i = 2
+            while i < len(param_properties) - 1:
+                print(param_properties[i]['argument'] + " : " + set_properties['arguments'][i-2])
+                i += 1
             return True
         else:
-            for x in set_properties['arguments']:
-                if (x['parameter'] == self.input_string[1]):
+            i = 2
+            while i < len(param_properties) - 1:
+                x = param_properties[i] 
+                if (x['argument'] == self.input_string[1]):
                     break
+                i += 1
 
-        if self.input_string[2] not in x['options']:
-            print("Usage: set " + x['parameter'] + " <values>")
-            print("values: ")
-            print(' '.join(x['options']))
-            return True
+        if ((x['type'] == "char8" and self.input_string[2] not in x['options']) or 
+            (x['type'] == "int64" and int(self.input_string[2]) not in x['options'])):
+                print("Usage: set " + x['argument'] + " <values>")
+                print("values: ") 
+                print(x['options'])
+                return True
         else:
             self.set_param(self.input_string[1], self.input_string[2])
 
