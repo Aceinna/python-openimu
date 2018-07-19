@@ -63,6 +63,9 @@ class OpenIMU:
         self.data = {}              # placeholder imu measurements of last converted packeted
         self.data_buffer = []       # serial read buffer
         self.packet_buffer = []     # packet parsing buffer
+        self.sync_state = 0
+        self.sync_pattern = collections.deque(4*[0], 4)  # create 4 byte FIFO 
+
         with open('openimu.json') as json_data:
             self.imu_properties = json.load(json_data)
 
@@ -256,13 +259,6 @@ class OpenIMU:
         self.paused = 0
         threading.Thread(target=self.start_collection_task).start()
     
-    def start_collection_task(self):
-        while self.odr_setting and not self.paused:
-            if self.odr_setting:
-                self.data = self.openimu_get_packet(self.packet_type)
-        print('End Collection Task')
-        return False  # End Thread
-
     def pause(self):
         ''' Will End the data collection task and thread
         '''
@@ -296,8 +292,7 @@ class OpenIMU:
             data = self.openimu_unpack_output_packet(output_packet, payload)
             if self.logging == 1 and self.logger is not None:
                 self.logger.log(self, data)
-
-
+              
         elif input_packet != None:
             
             data = self.openimu_unpack_input_packet(input_packet['responsePayload'], payload)
@@ -326,7 +321,7 @@ class OpenIMU:
     def open(self, port = False, baud = 57600):
         # simple open
         try:
-            self.ser = serial.Serial(port, baud, timeout = 0.005)
+            self.ser = serial.Serial(port, baud, timeout = 0.05)
         except Exception as e:
             print('serial port open exception' + port)
             self.ser = False
@@ -538,23 +533,26 @@ class OpenIMU:
         self.openimu_write_block(packet_data_len, self.addr, data)
         self.addr += packet_data_len
 
-    def openimu_get_packet(self,packet_type):
+    def start_collection_task(self):
+        while self.odr_setting and not self.paused:
+            if self.odr_setting:
+                self.data = self.openimu_get_packet(self.packet_type, True)     # get packet in stream mode
+        print('End Collection Task')
+        return False  # End Thread
+
+    def openimu_get_packet(self,packet_type, stream = False):
         if not packet_type:
             return False
         data = False
         trys = 0
-        self.busy = 1
         while not data and trys < 200: 
             self.data_buffer = self.read(10000)
             if self.data_buffer:
-                data = self.parse_buffer(packet_type)
+                data = self.parse_buffer(packet_type, stream)
             trys += 1
-        self.busy = 0
         return data
 
-    def parse_buffer(self, packet_type):
-        block = collections.deque(4*[0], 4)
-        match = 0
+    def parse_buffer(self, packet_type, stream = False):
         if (sys.version_info > (3, 0)) and not isinstance(packet_type, str):
             packet_type_0 = packet_type[0]  
             packet_type_1 = packet_type[1]
@@ -562,14 +560,11 @@ class OpenIMU:
             packet_type_0 = ord(packet_type[0])
             packet_type_1 = ord(packet_type[1])
         for i,new_byte in enumerate(self.data_buffer):
-            block.append(new_byte)
-            if list(block) == [85, 85, packet_type_0, packet_type_1]:
+            self.sync_pattern.append(new_byte)
+            if list(self.sync_pattern) == [85, 85, packet_type_0, packet_type_1]:
                 self.packet_buffer = [packet_type_0, packet_type_1]
-                match = 1
-            elif match == 1:
-                match = 2
-                self.packet_buffer.append(new_byte)
-            elif match == 2:
+                self.sync_state = 1
+            elif self.sync_state == 1:
                 self.packet_buffer.append(new_byte)
                 if len(self.packet_buffer) == self.packet_buffer[2] + 5:
                     packet_crc = 256 * self.packet_buffer[-2] + self.packet_buffer[-1]    
@@ -579,10 +574,13 @@ class OpenIMU:
                         else:
                             self.packet_type = packet_type
                         data = self.parse_payload()
-                        return data
-                    match = 0
-            else:
-                match = 0
+                        if not stream:
+                            return data
+                        else:
+                            self.packet_buffer = []
+                            self.sync_state = 0
+                    else:
+                        self.sync_state = 0  # CRC did not match
          
 
  #####       
