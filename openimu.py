@@ -289,7 +289,7 @@ class OpenIMU:
         bootloader_packet = next((x for x in self.imu_properties['bootloaderMessages'] if x['name'] == self.packet_type), None)
         
         if output_packet != None:
-            data = self.openimu_unpack_output_packet(output_packet, payload)
+            self.data = self.openimu_unpack_output_packet(output_packet, payload)
             if self.logging == 1 and self.logger is not None:
                 self.logger.log(self, data)
               
@@ -536,7 +536,7 @@ class OpenIMU:
     def start_collection_task(self):
         while self.odr_setting and not self.paused:
             if self.odr_setting:
-                self.data = self.openimu_get_packet(self.packet_type, True)     # get packet in stream mode
+                self.openimu_get_packet(self.packet_type, True)     # get packet in stream mode
         print('End Collection Task')
         return False  # End Thread
 
