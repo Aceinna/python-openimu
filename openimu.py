@@ -321,7 +321,7 @@ class OpenIMU:
     def open(self, port = False, baud = 57600):
         # simple open
         try:
-            self.ser = serial.Serial(port, baud, timeout = 0.05)
+            self.ser = serial.Serial(port, baud, timeout = 0.005)
         except Exception as e:
             print('serial port open exception' + port)
             self.ser = False
