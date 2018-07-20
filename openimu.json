@@ -10,8 +10,7 @@
         { "paramId": 4, "paramType" : "select", "type" : "int64", "name": "Packet Rate", "argument" : "rate", "options" : [200, 100, 50, 20, 10, 5, 2, 0]},
         { "paramId": 5, "paramType" : "select", "type" : "int64", "name": "Accel LPF", "argument" : "xl_lpf", "options" : [50, 25, 40, 20, 10, 5, 2]},
         { "paramId": 6, "paramType" : "select", "type" : "int64", "name": "Rate LPF", "argument" : "rate_lpf", "options" : [50, 25, 40, 20, 10, 5, 2]},
-        { "paramId": 7, "paramType" : "select", "type" : "char8", "name": "Orientation", "argument" : "orien", "options" : ["+X+Y+Z"]},
-        { "paramId": 8, "paramType" : "select", "type" : "int64", "name": "Bit Status", "argument" : "bit_status"}
+        { "paramId": 7, "paramType" : "select", "type" : "char8", "name": "Orientation", "argument" : "orien", "options" : ["+X+Y+Z"]}
     ],
     "userMessages" : { 
          "inputPackets" : [
@@ -485,31 +484,24 @@
             "function" : "stop_handler"
         },
         {
+            "name" : "server_start",
+            "description" : "start server",
+            "function" : "server_start_handler"
+        },
+        {
+            "name" : "server_stop",
+            "description" : "stop server",
+            "function" : "server_stop_handler"
+        },
+        {
             "name" : "get",
             "description" : "Read the current configuration and output data",
-            "function" : "get_handler",
-            "arguments" : [
-                 "baud rate of serial port",
-                 "the type of output packets",
-                 "the rate of output packets",
-                 "the frequency of accelerometer's low-pass filter",
-                 "the frequency of gyro's low-pass filter",
-                 "the coordinate system of OpenIMU device",
-                 "Hardware, software and system status"
-            ]
+            "function" : "get_handler"
         },
         {
             "name" : "set",
             "description" : "configure OpenIMU device",
-            "function" : "set_handler", 
-            "arguments" : [
-                "baud rate of serial port",
-                "the types of output packets",
-                "the rate of output packets",
-                "the frequency of accelerometer's low-pass filter",
-                "the frequency of gyro's low-pass filter",
-                "the coordinate system of OpenIMU device"
-            ]
+            "function" : "set_handler" 
         }
     ]
 }

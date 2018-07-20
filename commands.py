@@ -9,12 +9,20 @@ import string
 import time
 import json
 import time
+import threading
 import math
 import os
 import sys
+import tornado.websocket
+import tornado.ioloop
+import tornado.httpserver
+import tornado.web
+import psutil
 
-from openimu import OpenIMU
 from imu_input_packet import InputPacket
+from server import WSHandler
+from global_vars import imu
+from os import getpid
 
 class OpenIMU_CLI:
     def __init__(self):
@@ -22,13 +30,14 @@ class OpenIMU_CLI:
         '''
         self.command = "help"         # set default command to help
         self.input_string = []        # define input_string
-        self.cli_properties = imu.imu_properties['CLICommands']
+        self.cli_properties = [] 
         self.current_command =[]
         self.baud_rate = 0
         self.accel_lpf = 0
         self.rate_lpf = 0
         self.orien = 0
-        self.bit_status = 0
+        self.thread = threading.Thread(target=self.start_tornado)
+        self.http_server = None
 
     def help_handler(self):
         print("Usage: ")
@@ -59,6 +68,7 @@ class OpenIMU_CLI:
     def record_handler(self):
         '''record command is used to save the outputs into local machine
         '''
+        imu.ws = False
         imu.start_log()
         return True
 
@@ -79,14 +89,14 @@ class OpenIMU_CLI:
         '''get configuration or data from OpenIMU device
         '''
         input_args = len(self.input_string)
-        get_properties = self.current_command
         param_properties = imu.imu_properties['userConfiguration']
  
         if (input_args == 1):
             print("Usage: get [options]")
+            print("Option: ")
             i = 2
             while i < len(param_properties):
-                print(param_properties[i]['argument'] + " : " + get_properties['arguments'][i-2])
+                print(param_properties[i]['argument'])
                 i += 1
             return True
         else:
@@ -96,7 +106,7 @@ class OpenIMU_CLI:
                 if (x['argument'] == self.input_string[1]):
                     break
                 i += 1
-                if (i == len(param_properties) - 1):
+                if (i == len(param_properties)):
                     return True
         
         param = imu.openimu_get_param(x['paramId'])
@@ -122,9 +132,6 @@ class OpenIMU_CLI:
             print(self.rate_lpf)
         elif (x['argument'] == "orien"):
             self.orien = param    
-        elif (x['argument'] == "bit_status"):
-            # self_bit_status = param
-            self.bit_status = 0 
         return True
    
     def set_param(self, command, value):
@@ -155,19 +162,19 @@ class OpenIMU_CLI:
         '''set parameters' values
         '''
         input_args = len(self.input_string)
-        set_properties = self.current_command
         param_properties = imu.imu_properties['userConfiguration']
 
         if (input_args < 3):
             print("Usage: set <options> <values>")
             i = 2
-            while i < len(param_properties) - 1:
-                print(param_properties[i]['argument'] + " : " + set_properties['arguments'][i-2])
+            while i < len(param_properties):
+                x = param_properties[i] 
+                print(x['argument'])
                 i += 1
             return True
         else:
             i = 2
-            while i < len(param_properties) - 1:
+            while i < len(param_properties):
                 x = param_properties[i] 
                 if (x['argument'] == self.input_string[1]):
                     break
@@ -187,10 +194,36 @@ class OpenIMU_CLI:
     def save_handler(self):
         C = InputPacket(imu.imu_properties, 'sC')
         imu.write(C.bytes)
-    
+        return True
+   
+    def start_tornado(self):
+        application = tornado.web.Application([(r'/', WSHandler)])
+        self.http_server = tornado.httpserver.HTTPServer(application)
+        self.http_server.listen(8000)
+        tornado.ioloop.IOLoop.instance().start()
+         
+    def server_start_handler(self):
+        imu.ws = True
+        self.thread.start()
+        return True
+
+    def server_stop_handler(self):
+        print("server stops")
+        if self.http_server is not None:
+           self.http_server.stop()
+        ioloop = tornado.ioloop.IOLoop.instance() 
+        ioloop.add_callback(ioloop.stop)
+        time.sleep(1)
+        imu.ws = False
+        pid = getpid()
+        p = psutil.Process(pid)
+        p.kill() 
+
     def command_handler(self):
         '''main routine to handle input command
         '''       
+        self.cli_properties = imu.imu_properties['CLICommands']
+
         while True:
             if sys.version_info[0] < 3:
                 token = raw_input(">>")
@@ -199,18 +232,18 @@ class OpenIMU_CLI:
             self.input_string = token.split(" ")
              
             if token.strip() == 'exit':
-                break;
+                break
             for x in self.cli_properties:
                 if x['name'] == self.input_string[0]:
                     self.current_command = x
                     eval('self.%s()'%(x['function']))
-                    break;
+                    break
             else:
                 self.help_handler()    
 
         return True 
 
 if __name__ == "__main__":
-    imu = OpenIMU(ws=False)
+    imu.find_device()
     cli = OpenIMU_CLI()
     cli.command_handler()
