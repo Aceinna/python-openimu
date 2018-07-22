@@ -125,11 +125,12 @@ class OpenIMU:
             self.open(port)
             # TODO: change this to intelligently use openimu.json.  even save the last configuration 
             for baud in [57600, 115200]:
-                self.ser.baudrate = baud
-                self.device_id = self.openimu_get_device_id()
-                if self.device_id:
-                    self.set_connection_details()
-                    return True
+                if self.ser:
+                    self.ser.baudrate = baud
+                    self.device_id = self.openimu_get_device_id()
+                    if self.device_id:
+                        self.set_connection_details()
+                        return True
         return False
     
     def set_connection_details(self):
@@ -291,7 +292,7 @@ class OpenIMU:
         if output_packet != None:
             self.data = self.openimu_unpack_output_packet(output_packet, payload)
             if self.logging == 1 and self.logger is not None:
-                self.logger.log(self, data)
+                self.logger.log(self, self.data)
               
         elif input_packet != None:
             
