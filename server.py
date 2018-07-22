@@ -6,7 +6,7 @@ import json
 import time
 import math
 import os
-from openimu import OpenIMU
+from global_vars import imu 
 
 server_version = '1.0 Beta'
 
@@ -99,7 +99,6 @@ class WSHandler(tornado.websocket.WebSocketHandler):
  
 if __name__ == "__main__":
     # Create IMU
-    imu = OpenIMU(ws=True)
     imu.find_device()    
     # Set up Websocket server on Port 8000
     # Port can be changed
