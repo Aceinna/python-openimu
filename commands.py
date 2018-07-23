@@ -38,6 +38,7 @@ class OpenIMU_CLI:
         self.orien = 0
         self.thread = threading.Thread(target=self.start_tornado)
         self.http_server = None
+        self.http_server_running = False
 
     def help_handler(self):
         print("Usage: ")
@@ -111,10 +112,7 @@ class OpenIMU_CLI:
         
         param = imu.openimu_get_param(x['paramId'])
         if (x['argument'] == "rate"):
-            try:
-                imu.odr_setting = param['value']
-            except:
-                imu.odr_setting = 0
+            imu.odr_setting = param['value']
             print("get rate ")
             print(imu.odr_setting)
         elif (x['argument'] == "type"):
@@ -199,15 +197,19 @@ class OpenIMU_CLI:
     def start_tornado(self):
         application = tornado.web.Application([(r'/', WSHandler)])
         self.http_server = tornado.httpserver.HTTPServer(application)
+        if sys.version_info[0] > 2:
+            import asyncio
+            asyncio.set_event_loop(asyncio.new_event_loop())
         self.http_server.listen(8000)
         tornado.ioloop.IOLoop.instance().start()
          
     def server_start_handler(self):
         imu.ws = True
         self.thread.start()
+        self.http_server_running = True
         return True
 
-    def server_stop_handler(self):
+    def server_stop(self):
         print("server stops")
         if self.http_server is not None:
            self.http_server.stop()
@@ -232,7 +234,11 @@ class OpenIMU_CLI:
             self.input_string = token.split(" ")
              
             if token.strip() == 'exit':
-                break
+                if self.http_server_running == True:
+                    self.http_server_running = False
+                    self.server_stop()
+                else:
+                    break
             for x in self.cli_properties:
                 if x['name'] == self.input_string[0]:
                     self.current_command = x

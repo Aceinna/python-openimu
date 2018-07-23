@@ -489,11 +489,6 @@
             "function" : "server_start_handler"
         },
         {
-            "name" : "server_stop",
-            "description" : "stop server",
-            "function" : "server_stop_handler"
-        },
-        {
             "name" : "get",
             "description" : "Read the current configuration and output data",
             "function" : "get_handler"

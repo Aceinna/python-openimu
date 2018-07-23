@@ -423,6 +423,8 @@ class OpenIMU:
         elif input_message['type'] == 'userParameter':
             user_configuration = self.imu_properties['userConfiguration']
             param_id = self.openimu_unpack_one('uint32', payload[0:4]) 
+            if param_id >= len(user_configuration):
+                return False
             param = user_configuration[param_id]
             param_value = self.openimu_unpack_one(param['type'], payload[4:12])
             print('{0}: {1}'.format(param['name'], param_value))
