@@ -114,24 +114,19 @@ class OpenIMU_CLI:
         return True
    
     def set_param(self, command, value):
-        if command == "baud_rate":
-            baud_rate_param = next((x for x in imu.imu_properties['userConfiguration'] if x['name'] == 'Baud Rate'), None)
-            imu.openimu_update_param(baud_rate_param['paramId'], int(value))
-        elif command == "rate":
-            rate_param = next((x for x in imu.imu_properties['userConfiguration'] if x['name'] == 'Packet Rate'), None)
-            imu.openimu_update_param(rate_param['paramId'], int(value))
-        elif command == "type":
-            type_param = next((x for x in imu.imu_properties['userConfiguration'] if x['name'] == 'Packet Type'), None)
-            imu.openimu_update_param(type_param['paramId'], value) 
-        elif command == "xl_lpf":
-            xl_param = next((x for x in imu.imu_properties['userConfiguration'] if x['name'] == 'Accel LPF'), None)
-            imu.openimu_update_param(xl_param['paramId'], int(value))
-        elif command == "rate_lpf":
-            rate_param = next((x for x in imu.imu_properties['userConfiguration'] if x['name'] == 'Rate LPF'), None)
-            imu.openimu_update_param(rate_param['paramId'], int(value))
-        elif command == "orien":
-            orien_param = next((x for x in imu.imu_properties['userConfiguration'] if x['name'] == 'Orientation'), None)
-            imu.openimu_update_param(orien_param['paramId'], value)
+        param_properties = imu.imu_properties['userConfiguration']
+        i = 2
+        while i < len(param_properties):
+            x = param_properties[i] 
+            if (x['argument'] == command):
+               break
+            i += 1
+
+        if i < len(param_properties):
+            if command == "type" or command == "orien":
+                imu.openimu_update_param(x['paramId'], value)
+            else:
+                imu.openimu_update_param(x['paramId'], int(value))
         else:
             print("Usage: set [options] <value>") 
             
@@ -143,7 +138,7 @@ class OpenIMU_CLI:
         input_args = len(self.input_string)
         param_properties = imu.imu_properties['userConfiguration']
 
-        if (input_args < 3):
+        if input_args == 1:
             print("Usage: set <options> <values>")
             i = 2
             while i < len(param_properties):
@@ -158,6 +153,12 @@ class OpenIMU_CLI:
                 if (x['argument'] == self.input_string[1]):
                     break
                 i += 1
+
+        if input_args == 2:
+            print("Usage: set " + x['argument'] + " <values>")
+            print("values: ") 
+            print(x['options'])
+            return True
 
         if ((x['type'] == "char8" and self.input_string[2] not in x['options']) or 
             (x['type'] == "int64" and int(self.input_string[2]) not in x['options'])):

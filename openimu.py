@@ -64,6 +64,7 @@ class OpenIMU:
         self.data_buffer = []       # serial read buffer
         self.packet_buffer = []     # packet parsing buffer
         self.sync_state = 0
+        self.fs_len = 0
         self.sync_pattern = collections.deque(4*[0], 4)  # create 4 byte FIFO 
 
         with open('openimu.json') as json_data:
@@ -288,7 +289,7 @@ class OpenIMU:
         output_packet = next((x for x in self.imu_properties['userMessages']['outputPackets'] if x['name'] == self.packet_type), None)
         input_packet = next((x for x in self.imu_properties['userMessages']['inputPackets'] if x['name'] == self.packet_type), None)
         bootloader_packet = next((x for x in self.imu_properties['bootloaderMessages'] if x['name'] == self.packet_type), None)
-        
+      
         if output_packet != None:
             self.data = self.openimu_unpack_output_packet(output_packet, payload)
             if self.logging == 1 and self.logger is not None:
