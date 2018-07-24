@@ -62,8 +62,11 @@ class OpenIMU_CLI:
             print("Usage:")
             print("upgrade file_name")
         else:
-            imu.openimu_upgrade_fw(self.input_string[1])
-
+            file_name = self.input_string[1]
+            if file_name is not " ":
+                if imu.openimu_upgrade_fw_prepare(file_name):
+                    while not imu.openimu_finish_upgrade_fw():
+                        imu.openimu_upgrade_fw(file_name)
         return True
 
     def record_handler(self):
