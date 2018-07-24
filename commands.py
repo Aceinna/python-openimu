@@ -111,25 +111,6 @@ class OpenIMU_CLI:
                     return True
         
         param = imu.openimu_get_param(x['paramId'])
-        if (x['argument'] == "rate"):
-            imu.odr_setting = param['value']
-            print("get rate ")
-            print(imu.odr_setting)
-        elif (x['argument'] == "type"):
-            try: 
-                imu.packet_type = param['value'][0:2]    
-            except:
-                imu.packet_type = 0
-        elif (x['argument'] == "baud_rate"):
-            self.baud_rate = param    
-        elif (x['argument'] == "xl_lpf"):
-            self.accel_lpf = param    
-            print(self.accel_lpf)
-        elif (x['argument'] == "rate_lpf"):
-            self.rate_lpf = param    
-            print(self.rate_lpf)
-        elif (x['argument'] == "orien"):
-            self.orien = param    
         return True
    
     def set_param(self, command, value):
