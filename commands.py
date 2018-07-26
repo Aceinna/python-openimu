@@ -67,6 +67,7 @@ class OpenIMU_CLI:
                 if imu.openimu_upgrade_fw_prepare(file_name):
                     while not imu.openimu_finish_upgrade_fw():
                         imu.openimu_upgrade_fw(file_name)
+                    imu.openimu_start_app()
         return True
 
     def record_handler(self):
@@ -158,9 +159,17 @@ class OpenIMU_CLI:
                 i += 1
 
         if input_args == 2:
-            print("Usage: set " + x['argument'] + " <values>")
-            print("values: ") 
-            print(x['options'])
+            if i == len(param_properties):
+                print("Usage: set <options> <values>")
+                i = 2
+                while i < len(param_properties):
+                    x = param_properties[i] 
+                    print(x['argument'])
+                    i += 1
+            else:
+                print("Usage: set " + x['argument'] + " <values>")
+                print("values: ") 
+                print(x['options'])
             return True
 
         if ((x['type'] == "char8" and self.input_string[2] not in x['options']) or 
