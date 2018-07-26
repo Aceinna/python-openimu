@@ -63,6 +63,7 @@ class OpenIMU_CLI:
             print("upgrade file_name")
         else:
             file_name = self.input_string[1]
+            imu.ws = False
             if file_name is not " ":
                 if imu.openimu_upgrade_fw_prepare(file_name):
                     while not imu.openimu_finish_upgrade_fw():

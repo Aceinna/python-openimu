@@ -64,7 +64,6 @@ class OpenIMU:
         self.data_buffer = []       # serial read buffer
         self.packet_buffer = []     # packet parsing buffer
         self.sync_state = 0
-        self.fs_len = 0
         self.sync_pattern = collections.deque(4*[0], 4)  # create 4 byte FIFO 
 
         with open('openimu.json') as json_data:
@@ -513,10 +512,11 @@ class OpenIMU:
             print('Bootloader Start Failed')
             return False
 
-        self.block_blob_service = BlockBlobService(account_name='navview',
+        if self.ws == True:
+            self.block_blob_service = BlockBlobService(account_name='navview',
                                                     account_key='+roYuNmQbtLvq2Tn227ELmb6s1hzavh0qVQwhLORkUpM0DN7gxFc4j+DF/rEla1EsTN2goHEA1J92moOM/lfxg==',
                                                     protocol='http')
-        self.block_blob_service.get_blob_to_path('apps', file, file)
+            self.block_blob_service.get_blob_to_path('apps', file, file)
 
         print('upgrade fw: %s' % file)
         self.max_data_len = 240
