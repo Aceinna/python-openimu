@@ -5,11 +5,11 @@
     "userConfiguration" : [
         { "paramId": 0, "paramType" : "disabled", "type" : "uint64", "name": "Data CRC"  },
         { "paramId": 1, "paramType" : "disabled", "type" : "uint64", "name": "Data Size" },
-        { "paramId": 2, "paramType" : "select", "type" : "int64", "name": "Baud Rate", "argument" : "baud_rate", "options" : [38400, 57600, 115200]},
+        { "paramId": 2, "paramType" : "select", "type" : "int64", "name": "Baud Rate", "argument" : "baud_rate", "options" : [38400, 57600, 115200, 230400]},
         { "paramId": 3, "paramType" : "select", "type" : "char8", "name": "Packet Type", "argument" : "type", "options" : ["z1", "zT", "a1", "l1","z2"]},
         { "paramId": 4, "paramType" : "select", "type" : "int64", "name": "Packet Rate", "argument" : "rate", "options" : [200, 100, 50, 20, 10, 5, 2, 0]},
-        { "paramId": 5, "paramType" : "select", "type" : "int64", "name": "Accel LPF", "argument" : "xl_lpf", "options" : [50, 25, 40, 20, 10, 5, 2]},
-        { "paramId": 6, "paramType" : "select", "type" : "int64", "name": "Rate LPF", "argument" : "rate_lpf", "options" : [50, 25, 40, 20, 10, 5, 2]},
+        { "paramId": 5, "paramType" : "select", "type" : "int64", "name": "Accel LPF", "argument" : "xl_lpf", "options" : [50, 40, 25, 20, 10, 5, 2]},
+        { "paramId": 6, "paramType" : "select", "type" : "int64", "name": "Rate LPF", "argument" : "rate_lpf", "options" : [50, 40, 25, 20, 10, 5, 2]},
         { "paramId": 7, "paramType" : "select", "type" : "char8", "name": "Orientation", "argument" : "orien", "options" : ["+X+Y+Z"]}
     ],
     "userMessages" : { 
@@ -451,7 +451,7 @@
         },
         {
             "name" : "run",
-            "description" : "operations defined by users",
+            "description" : "Operations defined by users",
             "function" : "run_handler"
         },
         {
@@ -467,25 +467,21 @@
         {
             "name" : "upgrade",
             "description" : "Upgrade firmware",
-            "function" : "upgrade_handler",
-            "arguments" : {
-                "name" : "Binary File Name",
-                "description" : "Updated version of firmware file"
-            }
+            "function" : "upgrade_handler"
         },
         {
             "name" : "record",
-            "description" : "Record output data of OpenIMU",
+            "description" : "Record output data of OpenIMU on local machine",
             "function" : "record_handler"
         },
         {
             "name" : "stop",
-            "description" : "stop recording",
+            "description" : "stop recording outputs on local machine",
             "function" : "stop_handler"
         },
         {
             "name" : "server_start",
-            "description" : "start server",
+            "description" : "start server thread and must use exit command to quit",
             "function" : "server_start_handler"
         },
         {
@@ -495,7 +491,7 @@
         },
         {
             "name" : "set",
-            "description" : "configure OpenIMU device",
+            "description" : "Write parameters to OpenIMU",
             "function" : "set_handler" 
         }
     ]

@@ -124,12 +124,14 @@ class OpenIMU:
         for port in ports:
             self.open(port)
             # TODO: change this to intelligently use openimu.json.  even save the last configuration 
-            for baud in [57600, 115200]:
+            for baud in [115200, 57600]:
                 if self.ser:
                     self.ser.baudrate = baud
                     self.device_id = self.openimu_get_device_id()
                     if self.device_id:
                         self.set_connection_details()
+                        if sys.platform.startswith('win'):
+                            self.ser.set_buffer_size(rx_size = 128000, tx_size = 128000)
                         return True
         return False
     
@@ -508,6 +510,11 @@ class OpenIMU:
         self.openimu_get_packet('WA')    
        
     def openimu_upgrade_fw_prepare(self, file):
+        try:
+            self.fw = open(file, 'rb').read()
+        except IOError, e:
+            return False
+
         if not self.openimu_start_bootloader():
             print('Bootloader Start Failed')
             return False
@@ -521,7 +528,6 @@ class OpenIMU:
         print('upgrade fw: %s' % file)
         self.max_data_len = 240
         self.addr = 0
-        self.fw = open(file, 'rb').read()
         self.fs_len = len(self.fw)
 
         return True
