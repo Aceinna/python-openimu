@@ -205,13 +205,13 @@ class OpenIMU:
     def openimu_update_param(self, param, value):
         C = InputPacket(self.imu_properties, 'uP', param, value)
         self.write(C.bytes)
-        time.sleep(0.05)
+        #time.sleep(0.05)
         return self.openimu_get_packet('uP')  
 
     def openimu_get_param(self, param,):
         C = InputPacket(self.imu_properties, 'gP', param)
         self.write(C.bytes)
-        time.sleep(0.05)
+        #time.sleep(0.05)
         return self.openimu_get_packet('gP')  
 
     def openimu_save_config(self):
@@ -222,7 +222,7 @@ class OpenIMU:
     def openimu_get_all_param(self):
         C = InputPacket(self.imu_properties, 'gA')
         self.write(C.bytes)
-        time.sleep(0.05)
+        #time.sleep(0.05)
         return self.openimu_get_packet('gA')  
 
     def openimu_get_device_id(self):
