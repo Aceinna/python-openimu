@@ -43,6 +43,7 @@ import glob
 import struct
 import json
 import threading
+from pathlib import Path
 from imu_input_packet import InputPacket
 from bootloader_input_packet import BootloaderInputPacket
 from azure.storage.blob import BlockBlobService
@@ -228,7 +229,7 @@ class OpenIMU:
     def openimu_get_device_id(self):
         C = InputPacket(self.imu_properties, 'pG')
         self.write(C.bytes)
-        time.sleep(0.05)
+        #time.sleep(0.05)
         device_id = self.openimu_get_packet('pG')
         if device_id:
             device_id = device_id.decode()
@@ -239,7 +240,7 @@ class OpenIMU:
     def openimu_get_user_app_id(self): 
         C = InputPacket(self.imu_properties, 'gV')
         self.write(C.bytes)
-        time.sleep(0.05)
+        #time.sleep(0.05)
         return self.openimu_get_packet('gV')    
 
     def connect(self):
@@ -510,9 +511,15 @@ class OpenIMU:
         self.openimu_get_packet('WA')    
        
     def openimu_upgrade_fw_prepare(self, file):
-        try:
+        if sys.platform.startswith('win'):
+            fw_file = Path(".\file")
+        else:
+            fw_file = Path("./file")
+
+        if fw_file.is_file():
             self.fw = open(file, 'rb').read()
-        except IOError, e:
+        else:
+            print("file doesn't exist")
             return False
 
         if not self.openimu_start_bootloader():
