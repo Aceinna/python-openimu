@@ -65,10 +65,12 @@ class OpenIMU_CLI:
             file_name = self.input_string[1]
             imu.ws = False
             if file_name is not " ":
-                if imu.openimu_upgrade_fw_prepare(file_name):
+                if imu.openimu_upgrade_fw_prepare(file_name) == True:
                     while not imu.openimu_finish_upgrade_fw():
                         imu.openimu_upgrade_fw(file_name)
                     imu.openimu_start_app()
+                else:
+                    print("Error: file doesn't exist")  
         return True
 
     def record_handler(self):
@@ -82,6 +84,7 @@ class OpenIMU_CLI:
         '''record command is used to save the outputs into local machine
         '''
         imu.stop_log()
+        time.sleep(2)
         return True
 
     def run_handler(self):
@@ -113,6 +116,12 @@ class OpenIMU_CLI:
                     break
                 i += 1
                 if (i == len(param_properties)):
+                    print("Usage: get [options]")
+                    print("Option: ")
+                    i = 2
+                    while i < len(param_properties):
+                        print(param_properties[i]['argument'])
+                        i += 1
                     return True
         
         param = imu.openimu_get_param(x['paramId'])
@@ -208,9 +217,6 @@ class OpenIMU_CLI:
         print("server stops")
         if self.http_server is not None:
            self.http_server.stop()
-        ioloop = tornado.ioloop.IOLoop.instance() 
-        ioloop.add_callback(ioloop.stop)
-        time.sleep(1)
         imu.ws = False
         pid = getpid()
         p = psutil.Process(pid)
@@ -234,6 +240,10 @@ class OpenIMU_CLI:
                     self.server_stop()
                 else:
                     break
+            if self.http_server_running == True:
+                print("server is on-going, please stop it")
+                continue
+
             for x in self.cli_properties:
                 if x['name'] == self.input_string[0]:
                     self.current_command = x
