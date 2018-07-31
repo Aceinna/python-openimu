@@ -512,10 +512,7 @@ class OpenIMU:
        
     def openimu_upgrade_fw_prepare(self, file):
         if self.ws == False:
-            if sys.platform.startswith('win'):
-                fw_file = Path("file")
-            else:
-                fw_file = Path("./file")
+            fw_file = Path(file)
 
             if fw_file.is_file():
                 self.fw = open(file, 'rb').read()
