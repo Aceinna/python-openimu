@@ -190,7 +190,7 @@ class OpenIMU:
             if self.odr_setting:
                 if not os.path.exists("data"):
                     print("Create data/ ")
-                    os.makedirs("data", 0766)
+                    os.makedirs("data")
                 print('Logging Started ...')
                 self.logger = file_storage.OpenIMULog(self,data)
                 self.logging = 1
