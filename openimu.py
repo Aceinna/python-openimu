@@ -38,7 +38,7 @@ import string
 import time
 import sys
 import os
-import file_storage
+from file_storage import OpenIMULog
 import collections
 import glob
 import struct
@@ -192,10 +192,10 @@ class OpenIMU:
                     print("Create data/ ")
                     os.makedirs("data")
                 print('Logging Started ...')
-                self.logger = file_storage.OpenIMULog(self,data)
+                self.logger = OpenIMULog(self,data)
                 self.logging = 1
         elif not self.paused and self.odr_setting:
-            self.logger = file_storage.OpenIMULog(self,data)
+            self.logger = OpenIMULog(self,data)
             self.logging = 1
                 
     def stop_log(self):
