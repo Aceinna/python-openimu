@@ -532,6 +532,7 @@ class OpenIMU:
                                                     account_key='+roYuNmQbtLvq2Tn227ELmb6s1hzavh0qVQwhLORkUpM0DN7gxFc4j+DF/rEla1EsTN2goHEA1J92moOM/lfxg==',
                                                     protocol='http')
             self.block_blob_service.get_blob_to_path('apps', file, file)
+            self.fw = open(file, 'rb').read()
 
         print('upgrade fw: %s' % file)
         self.max_data_len = 240
