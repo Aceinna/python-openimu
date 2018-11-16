@@ -68,8 +68,12 @@ class OpenIMU:
         self.sync_state = 0
         self.sync_pattern = collections.deque(4*[0], 4)  # create 4 byte FIFO 
 
+        print("in init")
         with open('openimu.json') as json_data:
+            print("open json")
             self.imu_properties = json.load(json_data)
+            print(self.imu_properties)
+
 
     def find_device(self):
         ''' Finds active ports and then autobauds units
@@ -79,7 +83,7 @@ class OpenIMU:
             return True
         else:
             while not self.autobaud(self.find_ports()):
-                time.sleep(0.1)
+                time.sleep(0.5)
         return True
         
     def find_ports(self):
@@ -93,7 +97,10 @@ class OpenIMU:
         '''
         print('scanning ports')
         if sys.platform.startswith('win'):
-            ports = ['COM%s' % (i + 1) for i in range(256)]
+            #ports = ['COM%s' % (i + 1) for i in range(256)]
+            ports = ['COM%s' % (i + 1) for i in range(30, 40, 1)]
+            #print(ports)
+            #return True
         elif sys.platform.startswith('linux') or sys.platform.startswith('cygwin'):
             # this excludes your current terminal "/dev/tty"
             ports = glob.glob('/dev/tty[A-Za-z]*')
