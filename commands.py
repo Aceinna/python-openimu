@@ -255,7 +255,6 @@ class OpenIMU_CLI:
         return True 
 
 if __name__ == "__main__":
-    print("In main")
     imu.find_device()
     cli = OpenIMU_CLI()
     cli.command_handler()
