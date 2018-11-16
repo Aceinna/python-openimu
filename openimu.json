@@ -685,7 +685,23 @@
 					}
 				],
 				"graphs": [
-          {
+                    {
+						"name": "Euler Angles (Roll and Pitch)",
+						"units": "deg",
+						"xAxis": "Time (s)",
+						"yAxes": ["roll", "pitch"],
+						"colors": ["#FF0000", "#00FF00"],
+						"yMax": 90
+					},
+                    {
+						"name": "Euler Angles (Heading)",
+						"units": "deg",
+						"xAxis": "Time (s)",
+						"yAxes": ["heading"],
+						"colors": ["#FF0000"],
+						"yMax": 190
+				    },
+                    {
 						"name": "Acceleration",
 						"units": "g",
 						"xAxis": "Time (s)",
@@ -877,7 +893,23 @@
 					}
 				],
 				"graphs": [
-          {
+                    {
+						"name": "Euler Angles (Roll and Pitch)",
+						"units": "deg",
+						"xAxis": "Time (s)",
+						"yAxes": ["roll", "pitch"],
+						"colors": ["#FF0000", "#00FF00"],
+						"yMax": 90
+					},
+                    {
+						"name": "Euler Angles (Heading)",
+						"units": "deg",
+						"xAxis": "Time (s)",
+						"yAxes": ["heading"],
+						"colors": ["#FF0000"],
+						"yMax": 190
+                    },
+					{
 						"name": "Acceleration",
 						"units": "g",
 						"xAxis": "Time (s)",
