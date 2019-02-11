@@ -5,8 +5,16 @@ import tornado.web
 import json
 import time
 import math
+import sys
 import os
-from global_vars import imu 
+# import urllib.request
+import urllib
+import ssl
+
+if sys.version_info[0] > 2:
+    from openimu.global_vars import imu 
+else:
+    from global_vars import imu 
 
 server_version = '1.0 Beta'
 
@@ -17,7 +25,8 @@ class WSHandler(tornado.websocket.WebSocketHandler):
     def open(self):
         self.callback = tornado.ioloop.PeriodicCallback(self.send_data, callback_rate)
         self.callback.start()
-        
+        self.userAppId = imu.openimu_get_user_app_id()
+
     def send_data(self):
         if not imu.paused:
             d = imu.get_latest()
@@ -26,6 +35,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             return False
 
     def on_message(self, message):
+        ssl._create_default_https_context = ssl._create_unverified_context
         global imu
         message = json.loads(message)
         # Except for a few exceptions stop the automatic message transmission if a message is received
@@ -37,9 +47,48 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                 fileName = imu.logger.user['fileName']
             else:
                 fileName = ''
+
             # Load the openimu.json on each request to support dynamic debugging
-            with open('openimu.json') as json_data:
-                imu.imu_properties = json.load(json_data)
+            '''Dyanamically load .json from local, app or Github'''
+
+            if type(self.userAppId) is bytes:
+
+                try:
+                    userAppId = self.userAppId.decode("utf-8")
+                except:
+                    userAppId = ''
+
+            if (userAppId) is None:
+                userAppId = ''
+
+            userAppId = userAppId.replace(" ", "_")
+            userAppId = userAppId.replace(".", "_")
+
+            jsonLink = 'https://navview.blob.core.windows.net/json/' + userAppId + '.json'
+
+            try:
+                if (os.path.isfile('openimu.json')):
+                    with open('openimu.json') as json_data:
+                        self.imu_properties = json.load(json_data)
+
+                else:
+                    print(jsonLink)
+                    # with urllib.request.urlopen(jsonLink, 'r') as url:
+                    url = urllib.urlopen(jsonLink)
+                    response_json = url.read()
+                    output = json.loads(response_json)
+                    self.imu_properties = output
+
+
+            except :
+                # with urllib.request.urlopen("https://raw.githubusercontent.com/Aceinna/python-openimu/master/openimu.json") as url:
+                url = urllib.urlopen("https://raw.githubusercontent.com/Aceinna/python-openimu/master/openimu.json")
+                response_json = url.read()
+                output = json.loads(response_json)
+                self.imu_properties = output
+    
+
+
             self.write_message(json.dumps({ 'messageType' : 'serverStatus', 'data' : { 'serverVersion' : server_version, 'serverUpdateRate' : callback_rate,  'packetType' : imu.packet_type,
                                                                                         'deviceProperties' : imu.imu_properties, 'deviceId' : imu.device_id, 'logging' : imu.logging, 'fileName' : fileName }}))
         elif message['messageType'] == 'requestAction':

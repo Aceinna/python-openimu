@@ -38,15 +38,28 @@ import string
 import time
 import sys
 import os
-from file_storage import OpenIMULog
+if sys.version_info[0] > 2:
+    from openimu.file_storage import OpenIMULog
+else:
+    from file_storage import OpenIMULog
 import collections
 import glob
 import struct
 import json
 import threading
+# import urllib.request
+import urllib
+import ssl
+
 from pathlib import Path
-from imu_input_packet import InputPacket
-from bootloader_input_packet import BootloaderInputPacket
+if sys.version_info[0] > 2:
+
+    from openimu.imu_input_packet import InputPacket
+    from openimu.bootloader_input_packet import BootloaderInputPacket
+else:
+    from imu_input_packet import InputPacket
+    from bootloader_input_packet import BootloaderInputPacket
+
 from azure.storage.blob import BlockBlobService
 
 class OpenIMU:
@@ -66,10 +79,22 @@ class OpenIMU:
         self.data_buffer = []       # serial read buffer
         self.packet_buffer = []     # packet parsing buffer
         self.sync_state = 0
-        self.sync_pattern = collections.deque(4*[0], 4)  # create 4 byte FIFO 
+        self.sync_pattern = collections.deque(4*[0], 4)  # create 4 byte FIFO
 
-        with open('openimu.json') as json_data:
-            self.imu_properties = json.load(json_data)
+        ssl._create_default_https_context = ssl._create_unverified_context
+
+        try:
+            with open('openimu.json') as json_data:
+                self.imu_properties = json.load(json_data)
+                print ('Referring to openimu.json on local')
+        except:
+            # with urllib.request.urlopen("https://raw.githubusercontent.com/Aceinna/python-openimu/master/openimu.json") as url:
+            url = urllib.urlopen("https://raw.githubusercontent.com/Aceinna/python-openimu/master/openimu.json")
+            response_json = url.read()
+            output = json.loads(response_json)
+            self.imu_properties = output
+            print ('Referring to openimu.json on github .If you want modify JSON data, please store the openimu.json in root of your terminal')
+
 
     def find_device(self):
         ''' Finds active ports and then autobauds units
@@ -245,7 +270,7 @@ class OpenIMU:
         C = InputPacket(self.imu_properties, 'gV')
         self.write(C.bytes)
         #time.sleep(0.05)
-        return self.openimu_get_packet('gV')    
+        return self.openimu_get_packet('gV')
 
     def connect(self):
         '''Continous data collection loop to get and process data packets

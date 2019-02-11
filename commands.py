@@ -19,10 +19,16 @@ import tornado.httpserver
 import tornado.web
 import psutil
 
-from imu_input_packet import InputPacket
-from server import WSHandler
-from global_vars import imu
 from os import getpid
+### for openimu python3
+if sys.version_info[0] > 2:
+    from openimu.imu_input_packet import InputPacket
+    from openimu.server import WSHandler
+    from openimu.global_vars import imu
+else:
+    from imu_input_packet import InputPacket
+    from server import WSHandler
+    from global_vars import imu
 
 class OpenIMU_CLI:
     def __init__(self):
