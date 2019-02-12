@@ -81,7 +81,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                 response = requests.get(url)
                 output = response.json()
                 self.imu_properties = output
-                print ('Referring to openimu.json on GitHub. If you want modify the OpenIMU JSON data, please store an openimu.json in root of your terminal')
+                # print ('Referring to openimu.json on GitHub. If you want modify the OpenIMU JSON data, please store an openimu.json in root of your terminal')
 
             self.write_message(json.dumps({ 'messageType' : 'serverStatus', 'data' : { 'serverVersion' : server_version, 'serverUpdateRate' : callback_rate,  'packetType' : imu.packet_type,
                                                                                         'deviceProperties' : imu.imu_properties, 'deviceId' : imu.device_id, 'logging' : imu.logging, 'fileName' : fileName }}))
@@ -139,7 +139,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
 
     def check_origin(self, origin):
         return True
- 
+
 if __name__ == "__main__":
     # Create IMU
     imu.find_device()    
