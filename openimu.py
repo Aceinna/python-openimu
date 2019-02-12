@@ -47,9 +47,8 @@ import glob
 import struct
 import json
 import threading
-# import urllib.request
-import urllib
 import ssl
+import requests
 
 from pathlib import Path
 if sys.version_info[0] > 2:
@@ -80,20 +79,21 @@ class OpenIMU:
         self.packet_buffer = []     # packet parsing buffer
         self.sync_state = 0
         self.sync_pattern = collections.deque(4*[0], 4)  # create 4 byte FIFO
+        self.userAppid = ''
 
         ssl._create_default_https_context = ssl._create_unverified_context
+
 
         try:
             with open('openimu.json') as json_data:
                 self.imu_properties = json.load(json_data)
                 print ('Referring to openimu.json on local')
         except:
-            # with urllib.request.urlopen("https://raw.githubusercontent.com/Aceinna/python-openimu/master/openimu.json") as url:
-            url = urllib.urlopen("https://raw.githubusercontent.com/Aceinna/python-openimu/master/openimu.json")
-            response_json = url.read()
-            output = json.loads(response_json)
+            url = "https://raw.githubusercontent.com/Aceinna/python-openimu/master/openimu.json"
+            response = requests.get(url)
+            output = response.json()
             self.imu_properties = output
-            print ('Referring to openimu.json on github .If you want modify JSON data, please store the openimu.json in root of your terminal')
+            print ('Referring to openimu.json on GitHub. If you want modify the OpenIMU JSON data, please store an openimu.json in root of your terminal')
 
 
     def find_device(self):
@@ -270,6 +270,7 @@ class OpenIMU:
         C = InputPacket(self.imu_properties, 'gV')
         self.write(C.bytes)
         #time.sleep(0.05)
+        self.userAppid = self.openimu_get_packet('gV')
         return self.openimu_get_packet('gV')
 
     def connect(self):

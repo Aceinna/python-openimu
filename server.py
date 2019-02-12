@@ -7,8 +7,7 @@ import time
 import math
 import sys
 import os
-# import urllib.request
-import urllib
+import requests
 import ssl
 
 if sys.version_info[0] > 2:
@@ -64,30 +63,25 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             userAppId = userAppId.replace(" ", "_")
             userAppId = userAppId.replace(".", "_")
 
+            userAppId = 'IMU_1_0_0'
             jsonLink = 'https://navview.blob.core.windows.net/json/' + userAppId + '.json'
 
             try:
                 if (os.path.isfile('openimu.json')):
                     with open('openimu.json') as json_data:
                         self.imu_properties = json.load(json_data)
-
                 else:
                     print(jsonLink)
-                    # with urllib.request.urlopen(jsonLink, 'r') as url:
-                    url = urllib.urlopen(jsonLink)
-                    response_json = url.read()
-                    output = json.loads(response_json)
+                    response = requests.get(jsonLink)
+                    output = response.json()
                     self.imu_properties = output
 
-
             except :
-                # with urllib.request.urlopen("https://raw.githubusercontent.com/Aceinna/python-openimu/master/openimu.json") as url:
-                url = urllib.urlopen("https://raw.githubusercontent.com/Aceinna/python-openimu/master/openimu.json")
-                response_json = url.read()
-                output = json.loads(response_json)
+                url = "https://raw.githubusercontent.com/Aceinna/python-openimu/master/openimu.json"
+                response = requests.get(url)
+                output = response.json()
                 self.imu_properties = output
-    
-
+                print ('Referring to openimu.json on GitHub. If you want modify the OpenIMU JSON data, please store an openimu.json in root of your terminal')
 
             self.write_message(json.dumps({ 'messageType' : 'serverStatus', 'data' : { 'serverVersion' : server_version, 'serverUpdateRate' : callback_rate,  'packetType' : imu.packet_type,
                                                                                         'deviceProperties' : imu.imu_properties, 'deviceId' : imu.device_id, 'logging' : imu.logging, 'fileName' : fileName }}))
