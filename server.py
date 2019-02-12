@@ -63,18 +63,18 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             userAppId = userAppId.replace(" ", "_")
             userAppId = userAppId.replace(".", "_")
 
-            userAppId = 'IMU_1_0_0'
             jsonLink = 'https://navview.blob.core.windows.net/json/' + userAppId + '.json'
 
             try:
                 if (os.path.isfile('openimu.json')):
                     with open('openimu.json') as json_data:
                         self.imu_properties = json.load(json_data)
+
                 else:
-                    print(jsonLink)
                     response = requests.get(jsonLink)
                     output = response.json()
                     self.imu_properties = output
+
 
             except :
                 url = "https://raw.githubusercontent.com/Aceinna/python-openimu/master/openimu.json"

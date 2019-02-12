@@ -79,10 +79,8 @@ class OpenIMU:
         self.packet_buffer = []     # packet parsing buffer
         self.sync_state = 0
         self.sync_pattern = collections.deque(4*[0], 4)  # create 4 byte FIFO
-        self.userAppid = ''
 
         ssl._create_default_https_context = ssl._create_unverified_context
-
 
         try:
             with open('openimu.json') as json_data:
@@ -93,8 +91,8 @@ class OpenIMU:
             response = requests.get(url)
             output = response.json()
             self.imu_properties = output
-            print ('Referring to openimu.json on GitHub. If you want modify the OpenIMU JSON data, please store an openimu.json in root of your terminal')
-
+            print (
+                'Referring to openimu.json on GitHub. If you want modify the OpenIMU JSON data, please store an openimu.json in root of your terminal')
 
     def find_device(self):
         ''' Finds active ports and then autobauds units
@@ -270,7 +268,6 @@ class OpenIMU:
         C = InputPacket(self.imu_properties, 'gV')
         self.write(C.bytes)
         #time.sleep(0.05)
-        self.userAppid = self.openimu_get_packet('gV')
         return self.openimu_get_packet('gV')
 
     def connect(self):
