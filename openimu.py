@@ -72,7 +72,7 @@ class OpenIMU:
         self.paused = 1             # imu is successfully connected to a com port, kind of redundant with device_id property
         self.logging = 0            # logging on or off
         self.logger = None          # the file logger instance
-        self.packet_size = 0        # expected size of packet 
+        self.packet_size = 0        # expected size of packet
         self.packet_type = 0        # expected type of packet
         self.data = {}              # placeholder imu measurements of last converted packeted
         self.data_buffer = []       # serial read buffer
@@ -82,14 +82,26 @@ class OpenIMU:
 
         ssl._create_default_https_context = ssl._create_unverified_context
 
+        url = "https://raw.githubusercontent.com/Aceinna/python-openimu/master/openimu.json"
+        response = requests.get(url)
+        output = response.json()
+        self.imu_properties = output
+
+        self.find_device()
+        userAppId = self.openimu_get_user_app_id()
+        userAppId = userAppId.replace(" ", "_")
+        userAppId = userAppId.replace(".", "_")
+        jsonLink = 'https://navview.blob.core.windows.net/json/' + userAppId + '.json'
+
         try:
-            with open('openimu.json') as json_data:
-                self.imu_properties = json.load(json_data)
-                print ('Referring to openimu.json on local')
+            if (os.path.isfile('openimu.json')):
+                with open('openimu.json') as json_data:
+                    self.imu_properties = json.load(json_data)
+            else:
+                response = requests.get(jsonLink)
+                output = response.json()
+                self.imu_properties = output
         except:
-            url = "https://raw.githubusercontent.com/Aceinna/python-openimu/master/openimu.json"
-            response = requests.get(url)
-            output = response.json()
             self.imu_properties = output
             print (
                 'Referring to openimu.json on GitHub. If you want modify the OpenIMU JSON data, please store an openimu.json in root of your terminal')
@@ -611,7 +623,7 @@ class OpenIMU:
             elif self.sync_state == 1:
                 self.packet_buffer.append(new_byte)
                 if len(self.packet_buffer) == self.packet_buffer[2] + 5:
-                    packet_crc = 256 * self.packet_buffer[-2] + self.packet_buffer[-1]    
+                    packet_crc = 256 * self.packet_buffer[-2] + self.packet_buffer[-1]
                     if packet_crc == self.calc_crc(self.packet_buffer[:-2]):
                         if not isinstance(packet_type, str) and not isinstance(packet_type, unicode):
                             self.packet_type = bytearray(packet_type).decode()
