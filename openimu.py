@@ -481,18 +481,20 @@ class OpenIMU:
             except:
                 return False
             return struct.unpack('<Q', b)[0]
-        elif type == 'int64':
-            try:
-                b = struct.pack('8B', *data)
-            except:
-                return False
-            return struct.unpack('<q', b)[0]
         elif type == 'uint32':
             try: 
                 b = struct.pack('4B', *data)
             except:
                 return False
             return struct.unpack('<L', b)[0]
+        elif type == 'int64':
+            try:
+                b = struct.pack('8B', *data)
+            except:
+                return False
+            return struct.unpack('<q', b)[0]
+        elif type == 'double':
+            return struct.unpack('<d', bytearray(data))[0]
         elif type == 'char8':
             try:
                 b = struct.pack('8B', *data)
@@ -634,6 +636,3 @@ if __name__ == "__main__":
     imu.start_log()
     time.sleep(20)
     imu.stop_log()
-  
-	
-    
