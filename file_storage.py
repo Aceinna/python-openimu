@@ -15,7 +15,6 @@ class OpenIMULog:
     def __init__(self, imu, user = False):
         '''Initialize and create a CSV file
         '''
-
         self.name = 'data-' + datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S') + '.csv'
         if user:
             self.user = user
@@ -157,4 +156,3 @@ class OpenIMULog:
             threading.Thread(target=self.write_to_azure).start()
         else:
             self.file.close()
-

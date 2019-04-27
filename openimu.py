@@ -38,27 +38,15 @@ import string
 import time
 import sys
 import os
-if sys.version_info[0] > 2:
-    from openimu.file_storage import OpenIMULog
-else:
-    from file_storage import OpenIMULog
+from file_storage import OpenIMULog
 import collections
 import glob
 import struct
 import json
 import threading
-import ssl
-import requests
-
 from pathlib import Path
-if sys.version_info[0] > 2:
-
-    from openimu.imu_input_packet import InputPacket
-    from openimu.bootloader_input_packet import BootloaderInputPacket
-else:
-    from imu_input_packet import InputPacket
-    from bootloader_input_packet import BootloaderInputPacket
-
+from imu_input_packet import InputPacket
+from bootloader_input_packet import BootloaderInputPacket
 from azure.storage.blob import BlockBlobService
 
 class OpenIMU:
@@ -72,39 +60,16 @@ class OpenIMU:
         self.paused = 1             # imu is successfully connected to a com port, kind of redundant with device_id property
         self.logging = 0            # logging on or off
         self.logger = None          # the file logger instance
-        self.packet_size = 0        # expected size of packet
+        self.packet_size = 0        # expected size of packet 
         self.packet_type = 0        # expected type of packet
         self.data = {}              # placeholder imu measurements of last converted packeted
         self.data_buffer = []       # serial read buffer
         self.packet_buffer = []     # packet parsing buffer
         self.sync_state = 0
-        self.sync_pattern = collections.deque(4*[0], 4)  # create 4 byte FIFO
+        self.sync_pattern = collections.deque(4*[0], 4)  # create 4 byte FIFO 
 
-        ssl._create_default_https_context = ssl._create_unverified_context
-
-        url = "https://raw.githubusercontent.com/Aceinna/python-openimu/master/openimu.json"
-        response = requests.get(url)
-        output = response.json()
-        self.imu_properties = output
-
-        self.find_device()
-        userAppId = self.openimu_get_user_app_id()
-        userAppId = userAppId.replace(" ", "_")
-        userAppId = userAppId.replace(".", "_")
-        jsonLink = 'https://navview.blob.core.windows.net/json/' + userAppId + '.json'
-
-        try:
-            if (os.path.isfile('openimu.json')):
-                with open('openimu.json') as json_data:
-                    self.imu_properties = json.load(json_data)
-            else:
-                response = requests.get(jsonLink)
-                output = response.json()
-                self.imu_properties = output
-        except:
-            self.imu_properties = output
-            print (
-                'Referring to openimu.json on GitHub. If you want modify the OpenIMU JSON data, please store an openimu.json in root of your terminal')
+        with open('openimu.json') as json_data:
+            self.imu_properties = json.load(json_data)
 
     def find_device(self):
         ''' Finds active ports and then autobauds units
@@ -280,7 +245,7 @@ class OpenIMU:
         C = InputPacket(self.imu_properties, 'gV')
         self.write(C.bytes)
         #time.sleep(0.05)
-        return self.openimu_get_packet('gV')
+        return self.openimu_get_packet('gV')    
 
     def connect(self):
         '''Continous data collection loop to get and process data packets
@@ -493,20 +458,18 @@ class OpenIMU:
             except:
                 return False
             return struct.unpack('<Q', b)[0]
-        elif type == 'uint32':
-            try: 
-                b = struct.pack('4B', *data)
-            except:
-                return False
-            return struct.unpack('<L', b)[0]
         elif type == 'int64':
             try:
                 b = struct.pack('8B', *data)
             except:
                 return False
             return struct.unpack('<q', b)[0]
-        elif type == 'double':
-            return struct.unpack('<d', bytearray(data))[0]
+        elif type == 'uint32':
+            try: 
+                b = struct.pack('4B', *data)
+            except:
+                return False
+            return struct.unpack('<L', b)[0]
         elif type == 'char8':
             try:
                 b = struct.pack('8B', *data)
@@ -623,7 +586,7 @@ class OpenIMU:
             elif self.sync_state == 1:
                 self.packet_buffer.append(new_byte)
                 if len(self.packet_buffer) == self.packet_buffer[2] + 5:
-                    packet_crc = 256 * self.packet_buffer[-2] + self.packet_buffer[-1]
+                    packet_crc = 256 * self.packet_buffer[-2] + self.packet_buffer[-1]    
                     if packet_crc == self.calc_crc(self.packet_buffer[:-2]):
                         if not isinstance(packet_type, str) and not isinstance(packet_type, unicode):
                             self.packet_type = bytearray(packet_type).decode()
@@ -648,3 +611,6 @@ if __name__ == "__main__":
     imu.start_log()
     time.sleep(20)
     imu.stop_log()
+  
+	
+    

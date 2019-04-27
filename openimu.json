@@ -1,7 +1,6 @@
 {
 	"name": "OpenIMU300-EZ",
 	"type": "openimu",
-	"appName":"IMU 1.0.0",
 	"description": "9-axis OpenIMU with triaxial rate, acceleration, and magnetic measurement",
 	"userConfiguration": [
     { "paramId": 0, "paramType": "disabled", "type": "uint64", "name": "Data CRC" },
