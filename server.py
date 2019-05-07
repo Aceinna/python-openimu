@@ -1,3 +1,4 @@
+import sys
 import tornado.websocket
 import tornado.ioloop
 import tornado.httpserver
@@ -7,6 +8,7 @@ import time
 import math
 import os
 from global_vars import imu 
+
 
 server_version = '1.0 Beta'
 
@@ -40,6 +42,35 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             # Load the openimu.json on each request to support dynamic debugging
             with open('openimu.json') as json_data:
                 imu.imu_properties = json.load(json_data)
+
+            # load application type from firmware 
+            datatype_custimze = imu.openimu_get_user_app_id()
+            divide_list = imu.imu_properties['userConfiguration']
+            application_type = datatype_custimze[0:7]
+            # load package type from json file
+            package_type_ListFromOptions = []
+            for x in imu.imu_properties['userConfiguration']:
+                if x['paramId'] == 3:
+                    package_type_ListFromOptions = x['options']
+            divide_list[3]['options'] = package_type_ListFromOptions
+            # VG-AHRS application
+            if bytes.decode(application_type) == 'VG_AHRS':
+                divide_list[3]['options'] = ['zT','z1','a1','a2','s1','e1']
+            # Compass application
+            elif bytes.decode(application_type) == 'Compass':
+                divide_list[3]['options'] = ['zT','z1','s1','c1']
+            # Framework application
+            elif bytes.decode(application_type) == 'OpenIMU':
+                divide_list[3]['options'] = ['zT','z1','z2']
+            # IMU application
+            elif bytes.decode(application_type) == 'IMU 1.0':
+                divide_list[3]['options'] = ['zT','z1','z2','s1']
+            # INS application
+            elif bytes.decode(application_type) == 'INS 1.0':
+                divide_list[3]['options'] = ['zT','z1','a1','a2','s1','e1','e2']
+            # Lever application    
+            elif bytes.decode(application_type) == 'StaticL':
+                divide_list[3]['options'] = ['zT','z1','s1','l1']    
             self.write_message(json.dumps({ 'messageType' : 'serverStatus', 'data' : { 'serverVersion' : server_version, 'serverUpdateRate' : callback_rate,  'packetType' : imu.packet_type,
                                                                                         'deviceProperties' : imu.imu_properties, 'deviceId' : imu.device_id, 'logging' : imu.logging, 'fileName' : fileName }}))
         elif message['messageType'] == 'requestAction':
@@ -90,8 +121,14 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                 f = open("data/" + message['data']['loadFile']['graph_id'],"r")
                 self.write_message(json.dumps({ "messageType" : "requestAction", "data" : { "loadFile" :  f.read() }}))
 
-    def on_close(self):
+    def on_close(self):  #
         self.callback.stop()
+
+        # try:
+        #     os._exit(0)
+        # except:
+        #    print('Program is off.')
+
         return False
 
     def check_origin(self, origin):
@@ -99,11 +136,20 @@ class WSHandler(tornado.websocket.WebSocketHandler):
  
 if __name__ == "__main__":
     # Create IMU
-    imu.find_device()    
-    # Set up Websocket server on Port 8000
-    # Port can be changed
-    application = tornado.web.Application([(r'/', WSHandler)])
-    http_server = tornado.httpserver.HTTPServer(application)
-    http_server.listen(8000)
-    tornado.ioloop.IOLoop.instance().start()
+    try: 
+        imu.find_device()    
+        # Set up Websocket server on Port 8000
+        # Port can be changed
+        application = tornado.web.Application([(r'/', WSHandler)])
+        http_server = tornado.httpserver.HTTPServer(application)
+        http_server.listen(8000)
+        
+        tornado.ioloop.IOLoop.instance().start()
+    
+    except KeyboardInterrupt:  # response for KeyboardInterrupt such as Ctrl+C
+        print('User stop this program by KeyboardInterrupt! File:[{0}], Line:[{1}]'.format(__file__, sys._getframe().f_lineno))
+        os._exit(1)
+    except Exception as e:
+        print(e)    
+
     

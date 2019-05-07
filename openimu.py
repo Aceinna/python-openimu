@@ -33,6 +33,7 @@ write
 reset_buffer
 """
 import serial
+import serial.tools.list_ports
 import math
 import string
 import time
@@ -48,6 +49,9 @@ from pathlib import Path
 from imu_input_packet import InputPacket
 from bootloader_input_packet import BootloaderInputPacket
 from azure.storage.blob import BlockBlobService
+import webbrowser # used for open ANS website by system browser
+
+
 
 class OpenIMU:
     def __init__(self, ws=False):
@@ -69,7 +73,7 @@ class OpenIMU:
         self.sync_pattern = collections.deque(4*[0], 4)  # create 4 byte FIFO 
 
         with open('openimu.json') as json_data:
-            self.imu_properties = json.load(json_data)
+            self.imu_properties = json.load(json_data)           
 
     def find_device(self):
         ''' Finds active ports and then autobauds units
@@ -92,8 +96,14 @@ class OpenIMU:
                 A list of the serial ports available on the system
         '''
         print('scanning ports')
+        
         if sys.platform.startswith('win'):
-            ports = ['COM%s' % (i + 1) for i in range(256)]
+            #fond windows available ports already found
+            portlist = list(serial.tools.list_ports.comports())
+            ports = [ p.device for p in portlist]
+            # if len(ports) == 0:
+            #     ports = ['COM%s' % (i + 1) for i in range(256)]
+            
         elif sys.platform.startswith('linux') or sys.platform.startswith('cygwin'):
             # this excludes your current terminal "/dev/tty"
             ports = glob.glob('/dev/tty[A-Za-z]*')
@@ -108,12 +118,35 @@ class OpenIMU:
                 continue
             else:
                 print('Testing port ' + port)
+                s = None
                 try:
                     s = serial.Serial(port)
                     if s:
                         s.close()
                         result.append(port)
-                except:
+                # except:
+                except Exception as e:
+                    print(e)
+                    # str = '\xbe\xdc\xbe\xf8\xb7\xc3\xce\xca\xa1\xa3'
+                    # b = repr(str)
+                    # print unicode(eval(b),"gbk")
+                    if sys.version_info[0] > 2:
+                        if e.args[0].find('WindowsError') >= 0:
+                            try:
+                                if s:
+                                    s.close()
+                            except Exception as ee:
+                                print (ee)
+                                # self.disconnect()
+                            
+                    else:   
+                        if e.message.find('Error') >= 0:
+                            try:
+                                if s:
+                                    s.close()
+                            except Exception as ee:
+                                print (ee)
+                                # self.disconnect()
                     pass
         return result
 
@@ -126,10 +159,19 @@ class OpenIMU:
         for port in ports:
             self.open(port)
             # TODO: change this to intelligently use openimu.json.  even save the last configuration 
-            for baud in [115200, 57600]:
+            # user_configuration = self.imu_properties['userConfiguration']
+
+            # ustrj = [x for x in self.imu_properties['userConfiguration'] if x['paramId'] == "2"]
+            bandListFromOptions = []
+            for x in self.imu_properties['userConfiguration']:
+                if x['paramId'] == 2:
+                    bandListFromOptions = x['options']
+            for baud in bandListFromOptions:
                 if self.ser:
                     self.ser.baudrate = baud
                     self.device_id = self.openimu_get_device_id()
+                    if self.device_id:
+                        print(self.device_id)
                     if self.device_id:
                         self.set_connection_details()
                         if sys.platform.startswith('win'):
@@ -145,6 +187,10 @@ class OpenIMU:
         elif self.device_id:
             print('Connected ....{0}'.format(self.device_id))
         self.save_last_port()
+        
+        # open the webside ans automatically by system browser
+        time.sleep(0.3)
+        # webbrowser.open("http://40.118.233.18:8080/record", new=0, autoraise=True) 
 
     def try_last_port(self):
         connection = None
@@ -266,7 +312,7 @@ class OpenIMU:
             self.packet_type = 0
         self.paused = 0
         threading.Thread(target=self.start_collection_task).start()
-    
+            
     def pause(self):
         ''' Will End the data collection task and thread
         '''
