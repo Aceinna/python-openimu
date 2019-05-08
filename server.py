@@ -43,33 +43,25 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                 imu.imu_properties = json.load(json_data)
 
             # load application type from firmware 
-            datatype_custimze = imu.openimu_get_user_app_id()
-            divide_list = imu.imu_properties['userConfiguration']
-            application_type = datatype_custimze[0:7]
-            # load package type from json file
-            package_type_ListFromOptions = []
-            for x in imu.imu_properties['userConfiguration']:
-                if x['paramId'] == 3:
-                    package_type_ListFromOptions = x['options']
-            divide_list[3]['options'] = package_type_ListFromOptions
-            # VG-AHRS application
-            if bytes.decode(application_type) == 'VG_AHRS':
-                divide_list[3]['options'] = ['zT','z1','a1','a2','s1','e1']
+            strVersion = bytes.decode(imu.openimu_get_user_app_id())
+            # change divide_list[3]['options'] based on FW version: VG-AHRS application
+            if 'VG_AHRS' in strVersion:
+                imu.imu_properties['userConfiguration'][3]['options'] = ['zT','z1','a1','a2','s1','e1']
             # Compass application
-            elif bytes.decode(application_type) == 'Compass':
-                divide_list[3]['options'] = ['zT','z1','s1','c1']
+            elif 'Compass'in strVersion:
+                imu.imu_properties['userConfiguration'][3]['options'] = ['zT','z1','s1','c1']
             # Framework application
-            elif bytes.decode(application_type) == 'OpenIMU':
-                divide_list[3]['options'] = ['zT','z1','z2']
+            elif 'OpenIMU'in strVersion:
+                imu.imu_properties['userConfiguration'][3]['options'] = ['zT','z1','z2']
             # IMU application
-            elif bytes.decode(application_type) == 'IMU 1.0':
-                divide_list[3]['options'] = ['zT','z1','z2','s1']
+            elif 'IMU'in strVersion and not 'OpenIMU'in strVersion:
+                imu.imu_properties['userConfiguration'][3]['options'] = ['zT','z1','z2','s1']
             # INS application
-            elif bytes.decode(application_type) == 'INS 1.0':
-                divide_list[3]['options'] = ['zT','z1','a1','a2','s1','e1','e2']
+            elif 'INS'in strVersion:
+                imu.imu_properties['userConfiguration'][3]['options'] = ['zT','z1','a1','a2','s1','e1','e2']
             # Lever application    
-            elif bytes.decode(application_type) == 'StaticL':
-                divide_list[3]['options'] = ['zT','z1','s1','l1']    
+            elif 'StaticL'in strVersion:
+                imu.imu_properties['userConfiguration'][3]['options'] = ['zT','z1','s1','l1']    
             self.write_message(json.dumps({ 'messageType' : 'serverStatus', 'data' : { 'serverVersion' : server_version, 'serverUpdateRate' : callback_rate,  'packetType' : imu.packet_type,
                                                                                         'deviceProperties' : imu.imu_properties, 'deviceId' : imu.device_id, 'logging' : imu.logging, 'fileName' : fileName }}))
         elif message['messageType'] == 'requestAction':
