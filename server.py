@@ -8,7 +8,6 @@ import time
 import math
 import os
 from global_vars import imu 
-#123
 
 server_version = '1.0 Beta'
 
