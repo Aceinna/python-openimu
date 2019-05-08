@@ -96,10 +96,10 @@ class OpenIMU:
                 A list of the serial ports available on the system
         '''
         print('scanning ports')
-        
-        #fond windows available ports already found
-        portlist = list(serial.tools.list_ports.comports())
-        ports = [ p.device for p in portlist]
+
+        #find system available ports
+        portList = list(serial.tools.list_ports.comports())
+        ports = [ p.device for p in portList]
 
         # if sys.platform.startswith('win'):
         #     #fond windows available ports already found
