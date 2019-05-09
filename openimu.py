@@ -457,11 +457,14 @@ class OpenIMU:
                 pack_fmt += 'B'
                 length += 1
         len_fmt = '{0}B'.format(length)
-        b = struct.pack(len_fmt, *payload)
-        data = struct.unpack(pack_fmt, b)
-        out = [(value['name'],data[idx]) for idx,value in enumerate(output_message['payload'])]
-        data = collections.OrderedDict(out)
-        return data
+        try:
+            b = struct.pack(len_fmt, *payload)
+            data = struct.unpack(pack_fmt, b)
+            out = [(value['name'],data[idx]) for idx,value in enumerate(output_message['payload'])]
+            data = collections.OrderedDict(out)
+            return data
+        except Exception as e:
+            print("error happened when decode the payload, pls restart IMU firmware: {0}".format(e))    
     
     def openimu_unpack_input_packet(self, input_message, payload):
         if input_message['type'] == 'userConfiguration':
