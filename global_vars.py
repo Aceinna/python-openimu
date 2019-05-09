@@ -5,4 +5,4 @@ Created on 07-19-2018
 
 from openimu import OpenIMU
 
-imu = OpenIMU(ws=False)
+imu = OpenIMU(ws=True)
