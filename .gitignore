@@ -8,3 +8,4 @@ data/*.*
 chromedriver.exe
 running openimu bugfix.bat
 server.spec
+connection.json
