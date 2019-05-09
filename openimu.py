@@ -191,7 +191,7 @@ class OpenIMU:
         self.save_last_port()
         
         # open the webside ans automatically by system browser
-        time.sleep(0.3)
+        # time.sleep(0.3)
         # webbrowser.open("http://40.118.233.18:8080/record", new=0, autoraise=True) 
 
     def try_last_port(self):
