@@ -9,3 +9,7 @@ chromedriver.exe
 running openimu bugfix.bat
 server.spec
 connection.json
+data/.gitignore
+1557465383178314.bin
+1543452378400134.BIN
+imu.bin
