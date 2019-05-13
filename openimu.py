@@ -50,6 +50,7 @@ from imu_input_packet import InputPacket
 from bootloader_input_packet import BootloaderInputPacket
 from azure.storage.blob import BlockBlobService
 import webbrowser # used for open ANS website by system browser
+import requests
 
 
 
@@ -72,6 +73,18 @@ class OpenIMU:
         self.sync_state = 0
         self.sync_pattern = collections.deque(4*[0], 4)  # create 4 byte FIFO 
 
+        #if no data folder, then creat one
+        if not os.path.isdir("data"):
+            print('creat data folder for store measure data in future')
+            os.makedirs("data")
+        #if no json folder, then copy one from githbug phton-openimu master
+        if not os.path.exists("openimu.json"):
+            print('try to copy openimu.json file from python-openimu/bugfix to local same foler')
+            url = 'https://raw.githubusercontent.com/Aceinna/python-openimu/bugfix/openimu.json' 
+            r = requests.get(url) 
+            with open("openimu.json", "wb") as code:
+                code.write(r.content)            
+        
         with open('openimu.json') as json_data:
             self.imu_properties = json.load(json_data)           
 

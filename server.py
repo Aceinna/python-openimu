@@ -137,7 +137,7 @@ if __name__ == "__main__":
         # Port can be changed
         application = tornado.web.Application([(r'/', WSHandler)])
         http_server = tornado.httpserver.HTTPServer(application)
-        http_server.listen(8000)
+        http_server.listen(8000)        
         
         tornado.ioloop.IOLoop.instance().start()
     
