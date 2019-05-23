@@ -8,7 +8,6 @@ import time
 import math
 import os
 from global_vars import imu 
-# import serial
 
 server_version = '1.0 Beta'
 
@@ -86,6 +85,9 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                 # print("gA,  paused: =======",imu.paused==1)
                 # print('requesting+++++++++++++++++{0}'.format(self.count))
                 data = imu.openimu_get_all_param()
+                # data[3]['value'] = data[3]['value'].strip(b'\x00'.decode())
+                # data[7]['value'] = data[3]['value'].strip(b'\x00'.decode())
+                time.sleep(0.5)
                 self.write_message(json.dumps({ "messageType" : "requestAction", "data" : { "gA" : data }}))
                 print('requesting ok ---------------{0}'.format(self.count))
                 # self.count = self.count + 1
@@ -93,7 +95,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                 data = imu.openimu_update_param(message['data']['uP']['paramId'], message['data']['uP']['value'])
                 self.write_message(json.dumps({ "messageType" : "requestAction", "data" : { "uP" : data }}))
             elif list(message['data'].keys())[0] == 'sC':
-                imu.openimu_save_config()
+                imu.openimu_save_config()                               
                 time.sleep(0.5)
                 self.write_message(json.dumps({ "messageType" : "requestAction", "data" : { "sC" : {} }}))
             # added by dave, for connect page to show version
@@ -101,7 +103,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                 data = imu.openimu_get_user_app_id()
                 self.write_message(json.dumps({ "messageType" : "completeAction", "data" : { "gV" : str(data) }}))
             elif list(message['data'].keys())[0] == 'startStream':
-                # print("start actived 0000000000000000000000000000000000000")
+                # print("start actived 0000000000000000000000000000000000000")                
                 imu.connect()
                 self.callback.start()  
                 self.callback2.stop()
