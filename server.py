@@ -8,21 +8,34 @@ import time
 import math
 import os
 from global_vars import imu 
+# import serial
 
 server_version = '1.0 Beta'
 
 callback_rate = 50
-
 class WSHandler(tornado.websocket.WebSocketHandler):
+    count = 0
         
     def open(self):
         self.callback = tornado.ioloop.PeriodicCallback(self.send_data, callback_rate)
         self.callback.start()
-        
+        self.callback2 = tornado.ioloop.PeriodicCallback(self.detect_status, 500)
+        self.callback2.start()
+
+    def detect_status(self):        
+        if not imu.read(200):
+            self.write_message(json.dumps({ "messageType": "queryResponse","data": {"packetType": "DeviceStatus","packet": { "returnStatus":1}}}))
+            # print("disconnect flag in pause !!!!!!!!!!!!!!!!!!!!!")                    
+
     def send_data(self):
+        if not imu.device_id:
+            # print("disconnect flag in  playing!!!!!!!!!!!!!!!!!!!!!")
+            self.write_message(json.dumps({ "messageType": "queryResponse","data": {"packetType": "DeviceStatus","packet": { "returnStatus":1}}}))
+            time.sleep(1)
         if not imu.paused:
             d = imu.get_latest()
-            self.write_message(json.dumps({ 'messageType' : 'event',  'data' : { 'newOutput' : d }}))
+            self.write_message(json.dumps({ 'messageType' : 'event',  'data' : { 'newOutput' : d }}))               
+                   
         else:
             return False
 
@@ -70,24 +83,31 @@ class WSHandler(tornado.websocket.WebSocketHandler):
 
         elif message['messageType'] == 'requestAction':
             if list(message['data'].keys())[0] == 'gA':
-                print('requesting')
+                # print("gA,  paused: =======",imu.paused==1)
+                # print('requesting+++++++++++++++++{0}'.format(self.count))
                 data = imu.openimu_get_all_param()
                 self.write_message(json.dumps({ "messageType" : "requestAction", "data" : { "gA" : data }}))
+                print('requesting ok ---------------{0}'.format(self.count))
+                # self.count = self.count + 1
             elif list(message['data'].keys())[0] == 'uP':
                 data = imu.openimu_update_param(message['data']['uP']['paramId'], message['data']['uP']['value'])
                 self.write_message(json.dumps({ "messageType" : "requestAction", "data" : { "uP" : data }}))
             elif list(message['data'].keys())[0] == 'sC':
                 imu.openimu_save_config()
+                time.sleep(0.5)
                 self.write_message(json.dumps({ "messageType" : "requestAction", "data" : { "sC" : {} }}))
             # added by dave, for connect page to show version
             elif list(message['data'].keys())[0] == 'gV':
                 data = imu.openimu_get_user_app_id()
                 self.write_message(json.dumps({ "messageType" : "completeAction", "data" : { "gV" : str(data) }}))
             elif list(message['data'].keys())[0] == 'startStream':
+                # print("start actived 0000000000000000000000000000000000000")
                 imu.connect()
                 self.callback.start()  
+                self.callback2.stop()
             elif list(message['data'].keys())[0] == 'stopStream':
                 imu.pause()
+                self.callback2.start()
             elif list(message['data'].keys())[0] == 'startLog' and imu.logging == 0: 
                 data = message['data']['startLog']
                 imu.start_log(data)
