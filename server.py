@@ -59,22 +59,22 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                 strVersion = bytes.decode(imu.openimu_get_user_app_id())
                 # change divide_list[3]['options'] based on FW version: VG-AHRS application
                 if 'VG_AHRS' in strVersion:
-                    imu.imu_properties['userConfiguration'][3]['options'] = ['zT','z1','a1','a2','s1','e1']
+                    imu.imu_properties['userConfiguration'][3]['options'] = ['z1','a1','a2','s1','e1']
                 # Compass application
                 elif 'Compass'in strVersion:
-                    imu.imu_properties['userConfiguration'][3]['options'] = ['zT','z1','s1','c1']
+                    imu.imu_properties['userConfiguration'][3]['options'] = ['z1','s1','c1']
                 # Framework application
                 elif 'OpenIMU'in strVersion:
-                    imu.imu_properties['userConfiguration'][3]['options'] = ['zT','z1','z2']
+                    imu.imu_properties['userConfiguration'][3]['options'] = ['z1']
                 # IMU application
                 elif 'IMU'in strVersion and not 'OpenIMU'in strVersion:
-                    imu.imu_properties['userConfiguration'][3]['options'] = ['zT','z1','z2','s1']
+                    imu.imu_properties['userConfiguration'][3]['options'] = ['z1','s1']
                 # INS application
                 elif 'INS'in strVersion:
-                    imu.imu_properties['userConfiguration'][3]['options'] = ['zT','z1','a1','a2','s1','e1','e2']
+                    imu.imu_properties['userConfiguration'][3]['options'] = ['z1','a1','a2','s1','e1','e2']
                 # Lever application    
                 elif 'StaticL'in strVersion:
-                    imu.imu_properties['userConfiguration'][3]['options'] = ['zT','z1','s1','l1']    
+                    imu.imu_properties['userConfiguration'][3]['options'] = ['z1','s1','l1']    
                 self.write_message(json.dumps({ 'messageType' : 'serverStatus', 'data' : { 'serverVersion' : server_version, 'serverUpdateRate' : callback_rate,  'packetType' : imu.packet_type,
                                                                                             'deviceProperties' : imu.imu_properties, 'deviceId' : imu.device_id, 'logging' : imu.logging, 'fileName' : fileName }}))
             except Exception as e:
@@ -87,7 +87,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                 data = imu.openimu_get_all_param()
                 # data[3]['value'] = data[3]['value'].strip(b'\x00'.decode())
                 # data[7]['value'] = data[3]['value'].strip(b'\x00'.decode())
-                time.sleep(0.5)
+                time.sleep(0.2)
                 self.write_message(json.dumps({ "messageType" : "requestAction", "data" : { "gA" : data }}))
                 print('requesting ok ---------------{0}'.format(self.count))
                 # self.count = self.count + 1
