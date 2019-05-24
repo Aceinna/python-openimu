@@ -71,7 +71,7 @@ class OpenIMU:
         self.data_buffer = []       # serial read buffer
         self.packet_buffer = []     # packet parsing buffer
         self.sync_state = 0
-        self.sync_pattern = collections.deque(4*[0], 4)  # create 4 byte FIFO 
+        self.sync_pattern = collections.deque(4*[0], 4)  # create 4 byte FIFO         
 
         #if no data folder, then creat one
         if not os.path.isdir("data"):
@@ -91,6 +91,7 @@ class OpenIMU:
     def find_device(self):
         ''' Finds active ports and then autobauds units
         '''
+        # print("device disconnected, try to connecting")
         if self.try_last_port():
             self.set_connection_details()
             return True
@@ -201,8 +202,7 @@ class OpenIMU:
             print('Please Upgrade FW with upgrade_fw function')
         elif self.device_id:
             print('Connected ....{0}'.format(self.device_id))
-        self.save_last_port()
-        
+        self.save_last_port()        
         # open the webside ans automatically by system browser
         # time.sleep(0.3)
         # webbrowser.open("http://40.118.233.18:8080/record", new=0, autoraise=True) 
@@ -326,6 +326,7 @@ class OpenIMU:
         except:
             self.packet_type = 0
         self.paused = 0
+        # print("connect,  3333333333333333333333333333333")
         threading.Thread(target=self.start_collection_task).start()
             
     def pause(self):
@@ -617,6 +618,7 @@ class OpenIMU:
         self.addr += packet_data_len
 
     def start_collection_task(self):
+        # print("start collect task:, paused ========= ", self.paused == 1)
         while self.odr_setting and not self.paused:
             if self.odr_setting:
                 self.openimu_get_packet(self.packet_type, True)     # get packet in stream mode
@@ -664,6 +666,7 @@ class OpenIMU:
                             self.sync_state = 0
                     else:
                         self.sync_state = 0  # CRC did not match
+                        # print("crc error***************************************")
          
 
  #####       
