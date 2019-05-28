@@ -56,29 +56,34 @@ class WSHandler(tornado.websocket.WebSocketHandler):
 
             # load application type from firmware 
             try:
-                strVersion = bytes.decode(imu.openimu_get_user_app_id())
-                # change divide_list[3]['options'] based on FW version: VG-AHRS application
-                if 'VG_AHRS' in strVersion:
-                    imu.imu_properties['userConfiguration'][3]['options'] = ['z1','a1','a2','s1','e1']
-                # Compass application
-                elif 'Compass'in strVersion:
-                    imu.imu_properties['userConfiguration'][3]['options'] = ['z1','s1','c1']
-                # Framework application
-                elif 'OpenIMU'in strVersion:
-                    imu.imu_properties['userConfiguration'][3]['options'] = ['z1']
-                # IMU application
-                elif 'IMU'in strVersion and not 'OpenIMU'in strVersion:
-                    imu.imu_properties['userConfiguration'][3]['options'] = ['z1','s1']
-                # INS application
-                elif 'INS'in strVersion:
-                    imu.imu_properties['userConfiguration'][3]['options'] = ['z1','a1','a2','s1','e1','e2']
-                # Lever application    
-                elif 'StaticL'in strVersion:
-                    imu.imu_properties['userConfiguration'][3]['options'] = ['z1','s1','l1']    
-                self.write_message(json.dumps({ 'messageType' : 'serverStatus', 'data' : { 'serverVersion' : server_version, 'serverUpdateRate' : callback_rate,  'packetType' : imu.packet_type,
-                                                                                            'deviceProperties' : imu.imu_properties, 'deviceId' : imu.device_id, 'logging' : imu.logging, 'fileName' : fileName }}))
+                if imu.paused == 1:
+                    strVersion = bytes.decode(imu.openimu_get_user_app_id())
+                    # change divide_list[3]['options'] based on FW version: VG-AHRS application
+                    if 'VG_AHRS' in strVersion:
+                        imu.imu_properties['userConfiguration'][3]['options'] = ['z1','a1','a2','s1','e1']
+                    # Compass application
+                    elif 'Compass'in strVersion:
+                        imu.imu_properties['userConfiguration'][3]['options'] = ['z1','s1','c1']
+                    # Framework application
+                    elif 'OpenIMU'in strVersion:
+                        imu.imu_properties['userConfiguration'][3]['options'] = ['z1']
+                    # IMU application
+                    elif 'IMU'in strVersion and not 'OpenIMU'in strVersion:
+                        imu.imu_properties['userConfiguration'][3]['options'] = ['z1','s1']
+                    # INS application
+                    elif 'INS'in strVersion:
+                        imu.imu_properties['userConfiguration'][3]['options'] = ['z1','a1','a2','s1','e1','e2']
+                    # Lever application    
+                    elif 'StaticL'in strVersion:
+                        imu.imu_properties['userConfiguration'][3]['options'] = ['z1','s1','l1']    
+                    self.write_message(json.dumps({ 'messageType' : 'serverStatus', 'data' : { 'serverVersion' : server_version, 'serverUpdateRate' : callback_rate,  'packetType' : imu.packet_type,
+                                                                                                'deviceProperties' : imu.imu_properties, 'deviceId' : imu.device_id, 'logging' : imu.logging, 'fileName' : fileName }}))
+                else:
+                    self.write_message(json.dumps({ "messageType": "queryResponse","data": {"packetType": "DeviceStatus","packet": { "returnStatus":2}}}))
+                    imu.pause()
             except Exception as e:
-                print(e)    
+                print(e) 
+                imu.pause()   
 
         elif message['messageType'] == 'requestAction':
             if list(message['data'].keys())[0] == 'gA':
@@ -142,6 +147,8 @@ class WSHandler(tornado.websocket.WebSocketHandler):
 
     def on_close(self):  #
         self.callback.stop()
+        self.callback2.stop()
+        imu.pause()
 
         # try:
         #     os._exit(0)
