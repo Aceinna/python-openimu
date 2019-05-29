@@ -297,6 +297,7 @@ class OpenIMU:
         #time.sleep(0.05)
         device_id = self.openimu_get_packet('pG')
         if device_id:
+            # print('git device id')
             device_id = device_id.decode()
             return device_id
         else: 
@@ -304,7 +305,8 @@ class OpenIMU:
 
     def openimu_get_user_app_id(self): 
         C = InputPacket(self.imu_properties, 'gV')
-        self.write(C.bytes)
+        # print('get id--------------1')
+        self.write(C.bytes)        
         #time.sleep(0.05)
         return self.openimu_get_packet('gV')    
 
@@ -538,7 +540,8 @@ class OpenIMU:
         elif type == 'char8':
             try:
                 b = struct.pack('8B', *data)
-                return b.decode()
+                # print('unpack one---------0000')
+                return b.decode()    
             except:
                 return False 
         elif type == 'string':
@@ -655,6 +658,7 @@ class OpenIMU:
                     packet_crc = 256 * self.packet_buffer[-2] + self.packet_buffer[-1]    
                     if packet_crc == self.calc_crc(self.packet_buffer[:-2]):
                         if not isinstance(packet_type, str) and not isinstance(packet_type, unicode):
+                            # print('parse buffer---------')
                             self.packet_type = bytearray(packet_type).decode()
                         else:
                             self.packet_type = packet_type

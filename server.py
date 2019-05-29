@@ -56,8 +56,12 @@ class WSHandler(tornado.websocket.WebSocketHandler):
 
             # load application type from firmware 
             try:
-                if imu.paused == 1:
+                if imu.paused == 1 and not imu.openimu_get_user_app_id() == None:
+                    # print("++++++++++++++++++++++")
+                    # print('!!!',imu.openimu_get_user_app_id())
+                    # print("---------------------")
                     strVersion = bytes.decode(imu.openimu_get_user_app_id())
+                    # print("2222---------------------")
                     # change divide_list[3]['options'] based on FW version: VG-AHRS application
                     if 'VG_AHRS' in strVersion:
                         imu.imu_properties['userConfiguration'][3]['options'] = ['z1','a1','a2','s1','e1']
@@ -65,6 +69,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                     elif 'Compass'in strVersion:
                         imu.imu_properties['userConfiguration'][3]['options'] = ['z1','s1','c1']
                     # Framework application
+
                     elif 'OpenIMU'in strVersion:
                         imu.imu_properties['userConfiguration'][3]['options'] = ['z1']
                     # IMU application
@@ -82,9 +87,9 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                     self.write_message(json.dumps({ "messageType": "queryResponse","data": {"packetType": "DeviceStatus","packet": { "returnStatus":2}}}))
                     imu.pause()
             except Exception as e:
-                print(e) 
-                imu.pause()   
-
+                print(e)                 
+                self.write_message(json.dumps({ "messageType": "queryResponse","data": {"packetType": "DeviceStatus","packet": { "returnStatus":2}}}))
+                imu.pause()
         elif message['messageType'] == 'requestAction':
             if list(message['data'].keys())[0] == 'gA':
                 # print("gA,  paused: =======",imu.paused==1)
@@ -146,10 +151,12 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                 self.write_message(json.dumps({ "messageType" : "requestAction", "data" : { "loadFile" :  f.read() }}))
 
     def on_close(self):  #
+        imu.pause()
         self.callback.stop()
         self.callback2.stop()
-        imu.pause()
-
+        time.sleep(1)
+        
+        
         # try:
         #     os._exit(0)
         # except:
