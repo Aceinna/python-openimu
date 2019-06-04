@@ -80,18 +80,20 @@ class OpenIMU:
         #if no json folder, then copy one from githbug phton-openimu master
         if not os.path.exists("openimu.json"):
             print('try to copy openimu.json file from python-openimu/bugfix to local same foler')
-            url = 'https://raw.githubusercontent.com/Aceinna/python-openimu/bugfix/openimu.json' 
-            r = requests.get(url) 
-            with open("openimu.json", "wb") as code:
-                code.write(r.content)            
+            url = 'https://raw.githubusercontent.com/Aceinna/python-openimu/master/openimu.json' 
+            try:
+                r = requests.get(url) 
+                with open("openimu.json", "wb") as code:
+                    code.write(r.content)     
+            except Exception as e:
+                print(e)       
         
         with open('openimu.json') as json_data:
             self.imu_properties = json.load(json_data)           
 
     def find_device(self):
         ''' Finds active ports and then autobauds units
-        '''
-        # print("device disconnected, try to connecting")
+        '''        
         if self.try_last_port():
             self.set_connection_details()
             return True
@@ -142,10 +144,7 @@ class OpenIMU:
                         result.append(port)
                 # except:
                 except Exception as e:
-                    print(e)
-                    # str = '\xbe\xdc\xbe\xf8\xb7\xc3\xce\xca\xa1\xa3'
-                    # b = repr(str)
-                    # print unicode(eval(b),"gbk")
+                    print(e)                    
                     if sys.version_info[0] > 2:
                         if e.args[0].find('WindowsError') >= 0:
                             try:
@@ -203,8 +202,7 @@ class OpenIMU:
         elif self.device_id:
             print('Connected ....{0}'.format(self.device_id))
         self.save_last_port()        
-        # open the webside ans automatically by system browser
-        # time.sleep(0.3)
+        # open the webside ans automatically by system browser        
         # webbrowser.open("http://40.118.233.18:8080/record", new=0, autoraise=True) 
 
     def try_last_port(self):
@@ -341,6 +339,8 @@ class OpenIMU:
     def disconnect(self):
         '''Ends data collection loop and Reset settings
         '''
+        if(self.logging == 1):
+            self.stop_log() 
         self.pause()
         self.close()
         self.data = {}
