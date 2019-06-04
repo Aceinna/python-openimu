@@ -9,7 +9,7 @@ import math
 import os
 from global_vars import imu 
 
-server_version = '1.0 Beta'
+server_version = '1.0.0'
 
 callback_rate = 50
 class WSHandler(tornado.websocket.WebSocketHandler):
