@@ -122,11 +122,14 @@ class OpenIMULog:
         self.block_blob_service = BlockBlobService(account_name='navview',
                                                     sas_token=self.sas_token, # account_key
                                                     protocol='http')
-        self.block_blob_service.create_blob_from_text(container_name='data-1000',
+        self.block_blob_service.create_blob_from_text(container_name='data',
                                                     blob_name=self.name,
                                                     text=text,
                                                     content_settings=ContentSettings(content_type='text/plain'))
-
+        # self.block_blob_service.create_blob_from_text(container_name='data-1000',
+        #                                             blob_name=self.name,
+        #                                             text=text,
+        #                                             content_settings=ContentSettings(content_type='text/plain'))
 
 
         # record record to ansplatform
@@ -151,7 +154,8 @@ class OpenIMULog:
                         "imuProperties" : json.dumps(self.imu_properties)
                     } 
                 }
-        host_address='http://40.118.233.18:3000/'
+        # host_address='http://40.118.233.18:3000/'
+        host_address='https://api.aceinna.com/'        
         url = host_address + "api/recordLogs/post" #"https://api.aceinna.com/api/datafiles/replaceOrCreate"
         data_json = json.dumps(data)
         headers = {'Content-type': 'application/json', 'Authorization' : self.user['access_token'] }
@@ -174,7 +178,8 @@ class OpenIMULog:
     def get_sas_token(self):
         print('user token',self.user['access_token'])
         try:
-            host_address='http://40.118.233.18:3000/'
+            # host_address='http://40.118.233.18:3000/'
+            host_address='https://api.aceinna.com/'
             url = host_address+"token/storagesas"
             headers = {'Content-type': 'application/json', 'Authorization':  self.user['access_token']}
             response = requests.post(url, headers=headers)

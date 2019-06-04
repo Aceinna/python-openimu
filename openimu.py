@@ -339,7 +339,7 @@ class OpenIMU:
     def disconnect(self):
         '''Ends data collection loop and Reset settings
         '''
-        if(self.logging == 1):
+        if(self.logging == 1 ):
             self.stop_log() 
         self.pause()
         self.close()
