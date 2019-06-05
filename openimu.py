@@ -49,7 +49,7 @@ from pathlib import Path
 from imu_input_packet import InputPacket
 from bootloader_input_packet import BootloaderInputPacket
 from azure.storage.blob import BlockBlobService
-import webbrowser # used for open ANS website by system browser
+# import webbrowser # used for open ANS website by system browser
 import requests
 
 
