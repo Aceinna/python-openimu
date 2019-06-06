@@ -14,8 +14,7 @@ server_version = '1.0.0'
 
 callback_rate = 50
 class WSHandler(tornado.websocket.WebSocketHandler):
-    count = 0
-        
+    count = 0        
     def open(self):
         self.callback = tornado.ioloop.PeriodicCallback(self.send_data, callback_rate)
         self.callback.start()
