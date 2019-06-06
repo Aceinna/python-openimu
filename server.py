@@ -82,7 +82,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                     self.write_message(json.dumps({ "messageType": "queryResponse","data": {"packetType": "DeviceStatus","packet": { "returnStatus":2}}}))
                     imu.pause()
             except Exception as e:
-                print(e)                 
+                # print(e)                 
                 self.write_message(json.dumps({ "messageType": "queryResponse","data": {"packetType": "DeviceStatus","packet": { "returnStatus":2}}}))
                 imu.pause()
         elif message['messageType'] == 'requestAction':
@@ -91,7 +91,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                 # data[7]['value'] = data[3]['value'].strip(b'\x00'.decode())
                 time.sleep(0.2)
                 self.write_message(json.dumps({ "messageType" : "requestAction", "data" : { "gA" : data }}))
-                print('requesting ok ---------------{0}'.format(self.count))                
+                # print('requesting ok ---------------{0}'.format(self.count))                
             elif list(message['data'].keys())[0] == 'uP':
                 data = imu.openimu_update_param(message['data']['uP']['paramId'], message['data']['uP']['value'])
                 self.write_message(json.dumps({ "messageType" : "requestAction", "data" : { "uP" : data }}))
