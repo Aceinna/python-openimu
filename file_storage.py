@@ -9,20 +9,22 @@ import threading
 
 from azure.storage.blob import AppendBlobService
 from azure.storage.blob import ContentSettings
+from azure.storage.blob import BlockBlobService
 
 class OpenIMULog:
     
     def __init__(self, imu, user = False):
         '''Initialize and create a CSV file
         '''
-
         self.name = 'data-' + datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S') + '.csv'
         if user:
             self.user = user
             if self.user['fileName'] == '':
                 self.user['fileName'] = self.name
             else:
-                self.user['fileName'] += '.csv'
+                # self.user['fileName'] += '.csv'
+                timeStrSaveFile = time.strftime("_%Y_%m_%d_%H_%M_%S", time.localtime()) + '.csv'
+                self.user['fileName'] += timeStrSaveFile
             self.file = open('data/' + self.user['fileName'], 'w')
         else:
             self.file = open('data/' + self.name, 'w')
@@ -113,16 +115,21 @@ class OpenIMULog:
         # f = open("data/" + self.name,"r")
         f = open("data/" + self.user['fileName'], "r")
         text = f.read()
-        try: 
-            self.append_blob_service = AppendBlobService(account_name='navview', account_key='+roYuNmQbtLvq2Tn227ELmb6s1hzavh0qVQwhLORkUpM0DN7gxFc4j+DF/rEla1EsTN2goHEA1J92moOM/lfxg==', protocol='http')
-            self.append_blob_service.create_blob(container_name='data', blob_name=self.name,  content_settings=ContentSettings(content_type='text/plain'))
-            self.append_blob_service.append_blob_from_text('data',self.name, text)
-        except:
-            # Try again!
-            print('trying to write again due to exception')
-            self.append_blob_service = AppendBlobService(account_name='navview', account_key='+roYuNmQbtLvq2Tn227ELmb6s1hzavh0qVQwhLORkUpM0DN7gxFc4j+DF/rEla1EsTN2goHEA1J92moOM/lfxg==', protocol='http')
-            self.append_blob_service.create_blob(container_name='data', blob_name=self.name,  content_settings=ContentSettings(content_type='text/plain'))
-            self.append_blob_service.append_blob_from_text('data',self.name, text)
+       
+
+
+
+        self.block_blob_service = BlockBlobService(account_name='navview',
+                                                    sas_token=self.sas_token, # account_key
+                                                    protocol='http')
+        self.block_blob_service.create_blob_from_text(container_name='data',
+                                                    blob_name=self.name,
+                                                    text=text,
+                                                    content_settings=ContentSettings(content_type='text/plain'))
+        # self.block_blob_service.create_blob_from_text(container_name='data-1000',
+        #                                             blob_name=self.name,
+        #                                             text=text,
+        #                                             content_settings=ContentSettings(content_type='text/plain'))
 
 
         # record record to ansplatform
@@ -130,9 +137,26 @@ class OpenIMULog:
         
         
     def record_to_ansplatform(self):
-        data = { "pn" : self.pn, "sn": self.sn, "fileName" : self.user['fileName'],  "url" : self.name, "imuProperties" : json.dumps(self.imu_properties),
-                 "sampleRate" : self.odr_setting, "packetType" : self.packet_type, "userId" : self.user['id'] }
-        url = "https://api.aceinna.com/api/datafiles/replaceOrCreate"
+        # data = { "pn" : self.pn, "sn": self.sn, "fileName" : self.user['fileName'],  "url" : self.name, "imuProperties" : json.dumps(self.imu_properties),
+        #          "sampleRate" : self.odr_setting, "packetType" : self.packet_type, "userId" : self.user['id'] }
+        data = { 
+                    "type":"IMU", 
+                    "fileName" : self.user['fileName'], 
+                    "url" : self.name,
+                    "userId" : self.user['id'], 
+                    "model" : "IMU300",
+                    "logInfo": {
+                        "pn" : self.pn, 
+                        "sn": self.sn, 
+                        "sampleRate" : self.odr_setting, 
+                        "packetType" : self.packet_type,
+                        "appVersion" : self.imu_properties['appName'] if 'appName' in self.imu_properties else '',
+                        "imuProperties" : json.dumps(self.imu_properties)
+                    } 
+                }
+        # host_address='http://40.118.233.18:3000/'
+        host_address='https://api.aceinna.com/'        
+        url = host_address + "api/recordLogs/post" #"https://api.aceinna.com/api/datafiles/replaceOrCreate"
         data_json = json.dumps(data)
         headers = {'Content-type': 'application/json', 'Authorization' : self.user['access_token'] }
         response = requests.post(url, data=data_json, headers=headers)
@@ -150,11 +174,29 @@ class OpenIMULog:
         except urllib2.URLError as err: 
             return False
 
+
+    def get_sas_token(self):
+        print('user token',self.user['access_token'])
+        try:
+            # host_address='http://40.118.233.18:3000/'
+            host_address='https://api.aceinna.com/'
+            url = host_address+"token/storagesas"
+            headers = {'Content-type': 'application/json', 'Authorization':  self.user['access_token']}
+            response = requests.post(url, headers=headers)
+            rev = response.json()
+            if 'token' in rev:
+                self.sas_token = rev['token']
+            else:
+                self.sas_token = ''
+                print('Error: Get sas token failed!')
+        except Exception as e:
+            print('Exception when get_sas_token:', e)
+
     def close(self):
         time.sleep(0.1)
         if self.ws:
             self.file.close()
+            self.get_sas_token()
             threading.Thread(target=self.write_to_azure).start()
         else:
             self.file.close()
-

@@ -33,33 +33,26 @@ write
 reset_buffer
 """
 import serial
+import serial.tools.list_ports
 import math
 import string
 import time
 import sys
 import os
-if sys.version_info[0] > 2:
-    from openimu.file_storage import OpenIMULog
-else:
-    from file_storage import OpenIMULog
+from file_storage import OpenIMULog
 import collections
 import glob
 import struct
 import json
 import threading
-import ssl
+from pathlib import Path
+from imu_input_packet import InputPacket
+from bootloader_input_packet import BootloaderInputPacket
+from azure.storage.blob import BlockBlobService
+# import webbrowser # used for open ANS website by system browser
 import requests
 
-from pathlib import Path
-if sys.version_info[0] > 2:
 
-    from openimu.imu_input_packet import InputPacket
-    from openimu.bootloader_input_packet import BootloaderInputPacket
-else:
-    from imu_input_packet import InputPacket
-    from bootloader_input_packet import BootloaderInputPacket
-
-from azure.storage.blob import BlockBlobService
 
 class OpenIMU:
     def __init__(self, ws=False):
@@ -72,43 +65,35 @@ class OpenIMU:
         self.paused = 1             # imu is successfully connected to a com port, kind of redundant with device_id property
         self.logging = 0            # logging on or off
         self.logger = None          # the file logger instance
-        self.packet_size = 0        # expected size of packet
+        self.packet_size = 0        # expected size of packet 
         self.packet_type = 0        # expected type of packet
         self.data = {}              # placeholder imu measurements of last converted packeted
         self.data_buffer = []       # serial read buffer
         self.packet_buffer = []     # packet parsing buffer
         self.sync_state = 0
-        self.sync_pattern = collections.deque(4*[0], 4)  # create 4 byte FIFO
+        self.sync_pattern = collections.deque(4*[0], 4)  # create 4 byte FIFO         
 
-        ssl._create_default_https_context = ssl._create_unverified_context
-
-        url = "https://raw.githubusercontent.com/Aceinna/python-openimu/master/openimu.json"
-        response = requests.get(url)
-        output = response.json()
-        self.imu_properties = output
-
-        self.find_device()
-        userAppId = self.openimu_get_user_app_id()
-        userAppId = userAppId.replace(" ", "_")
-        userAppId = userAppId.replace(".", "_")
-        jsonLink = 'https://navview.blob.core.windows.net/json/' + userAppId + '.json'
-
-        try:
-            if (os.path.isfile('openimu.json')):
-                with open('openimu.json') as json_data:
-                    self.imu_properties = json.load(json_data)
-            else:
-                response = requests.get(jsonLink)
-                output = response.json()
-                self.imu_properties = output
-        except:
-            self.imu_properties = output
-            print (
-                'Referring to openimu.json on GitHub. If you want modify the OpenIMU JSON data, please store an openimu.json in root of your terminal')
+        #if no data folder, then creat one
+        if not os.path.isdir("data"):
+            print('creat data folder for store measure data in future')
+            os.makedirs("data")
+        #if no json folder, then copy one from githbug phton-openimu master
+        if not os.path.exists("openimu.json"):
+            print('try to copy openimu.json file from python-openimu/bugfix to local same foler')
+            url = 'https://raw.githubusercontent.com/Aceinna/python-openimu/master/openimu.json' 
+            try:
+                r = requests.get(url) 
+                with open("openimu.json", "wb") as code:
+                    code.write(r.content)     
+            except Exception as e:
+                print(e)       
+        
+        with open('openimu.json') as json_data:
+            self.imu_properties = json.load(json_data)           
 
     def find_device(self):
         ''' Finds active ports and then autobauds units
-        '''
+        '''        
         if self.try_last_port():
             self.set_connection_details()
             return True
@@ -127,15 +112,23 @@ class OpenIMU:
                 A list of the serial ports available on the system
         '''
         print('scanning ports')
-        if sys.platform.startswith('win'):
-            ports = ['COM%s' % (i + 1) for i in range(256)]
-        elif sys.platform.startswith('linux') or sys.platform.startswith('cygwin'):
-            # this excludes your current terminal "/dev/tty"
-            ports = glob.glob('/dev/tty[A-Za-z]*')
-        elif sys.platform.startswith('darwin'):
-            ports = glob.glob('/dev/tty.*')
-        else:
-            raise EnvironmentError('Unsupported platform')
+
+        #find system available ports
+        portList = list(serial.tools.list_ports.comports())
+        ports = [ p.device for p in portList]
+
+        # if sys.platform.startswith('win'):
+        #     #fond windows available ports already found
+        #     portlist = list(serial.tools.list_ports.comports())
+        #     ports = [ p.device for p in portlist]
+            
+        # elif sys.platform.startswith('linux') or sys.platform.startswith('cygwin'):
+        #     # this excludes your current terminal "/dev/tty"
+        #     ports = glob.glob('/dev/tty[A-Za-z]*')
+        # elif sys.platform.startswith('darwin'):
+        #     ports = glob.glob('/dev/tty.*')
+        # else:
+        #     raise EnvironmentError('Unsupported platform')
 
         result = []
         for port in ports:
@@ -143,12 +136,32 @@ class OpenIMU:
                 continue
             else:
                 print('Testing port ' + port)
+                s = None
                 try:
                     s = serial.Serial(port)
                     if s:
                         s.close()
                         result.append(port)
-                except:
+                # except:
+                except Exception as e:
+                    print(e)                    
+                    if sys.version_info[0] > 2:
+                        if e.args[0].find('WindowsError') >= 0:
+                            try:
+                                if s:
+                                    s.close()
+                            except Exception as ee:
+                                print (ee)
+                                # self.disconnect()
+                            
+                    else:   
+                        if e.message.find('Error') >= 0:
+                            try:
+                                if s:
+                                    s.close()
+                            except Exception as ee:
+                                print (ee)
+                                # self.disconnect()
                     pass
         return result
 
@@ -161,10 +174,19 @@ class OpenIMU:
         for port in ports:
             self.open(port)
             # TODO: change this to intelligently use openimu.json.  even save the last configuration 
-            for baud in [115200, 57600]:
+            # user_configuration = self.imu_properties['userConfiguration']
+
+            # ustrj = [x for x in self.imu_properties['userConfiguration'] if x['paramId'] == "2"]
+            bandListFromOptions = []
+            for x in self.imu_properties['userConfiguration']:
+                if x['paramId'] == 2:
+                    bandListFromOptions = x['options']
+            for baud in bandListFromOptions:
                 if self.ser:
                     self.ser.baudrate = baud
                     self.device_id = self.openimu_get_device_id()
+                    if self.device_id:
+                        print(self.device_id)
                     if self.device_id:
                         self.set_connection_details()
                         if sys.platform.startswith('win'):
@@ -179,7 +201,9 @@ class OpenIMU:
             print('Please Upgrade FW with upgrade_fw function')
         elif self.device_id:
             print('Connected ....{0}'.format(self.device_id))
-        self.save_last_port()
+        self.save_last_port()        
+        # open the webside ans automatically by system browser        
+        # webbrowser.open("http://40.118.233.18:8080/record", new=0, autoraise=True) 
 
     def try_last_port(self):
         connection = None
@@ -271,6 +295,7 @@ class OpenIMU:
         #time.sleep(0.05)
         device_id = self.openimu_get_packet('pG')
         if device_id:
+            # print('git device id')
             device_id = device_id.decode()
             return device_id
         else: 
@@ -278,9 +303,10 @@ class OpenIMU:
 
     def openimu_get_user_app_id(self): 
         C = InputPacket(self.imu_properties, 'gV')
-        self.write(C.bytes)
+        # print('get id--------------1')
+        self.write(C.bytes)        
         #time.sleep(0.05)
-        return self.openimu_get_packet('gV')
+        return self.openimu_get_packet('gV')    
 
     def connect(self):
         '''Continous data collection loop to get and process data packets
@@ -300,8 +326,9 @@ class OpenIMU:
         except:
             self.packet_type = 0
         self.paused = 0
+        # print("connect,  3333333333333333333333333333333")
         threading.Thread(target=self.start_collection_task).start()
-    
+            
     def pause(self):
         ''' Will End the data collection task and thread
         '''
@@ -312,6 +339,8 @@ class OpenIMU:
     def disconnect(self):
         '''Ends data collection loop and Reset settings
         '''
+        if(self.logging == 1 ):
+            self.stop_log() 
         self.pause()
         self.close()
         self.data = {}
@@ -444,11 +473,14 @@ class OpenIMU:
                 pack_fmt += 'B'
                 length += 1
         len_fmt = '{0}B'.format(length)
-        b = struct.pack(len_fmt, *payload)
-        data = struct.unpack(pack_fmt, b)
-        out = [(value['name'],data[idx]) for idx,value in enumerate(output_message['payload'])]
-        data = collections.OrderedDict(out)
-        return data
+        try:
+            b = struct.pack(len_fmt, *payload)
+            data = struct.unpack(pack_fmt, b)
+            out = [(value['name'],data[idx]) for idx,value in enumerate(output_message['payload'])]
+            data = collections.OrderedDict(out)
+            return data
+        except Exception as e:
+            print("error happened when decode the payload, pls restart IMU firmware: {0}".format(e))    
     
     def openimu_unpack_input_packet(self, input_message, payload):
         if input_message['type'] == 'userConfiguration':
@@ -493,24 +525,23 @@ class OpenIMU:
             except:
                 return False
             return struct.unpack('<Q', b)[0]
-        elif type == 'uint32':
-            try: 
-                b = struct.pack('4B', *data)
-            except:
-                return False
-            return struct.unpack('<L', b)[0]
         elif type == 'int64':
             try:
                 b = struct.pack('8B', *data)
             except:
                 return False
             return struct.unpack('<q', b)[0]
-        elif type == 'double':
-            return struct.unpack('<d', bytearray(data))[0]
+        elif type == 'uint32':
+            try: 
+                b = struct.pack('4B', *data)
+            except:
+                return False
+            return struct.unpack('<L', b)[0]
         elif type == 'char8':
             try:
                 b = struct.pack('8B', *data)
-                return b.decode()
+                # print('unpack one---------0000')
+                return b.decode()    
             except:
                 return False 
         elif type == 'string':
@@ -590,6 +621,7 @@ class OpenIMU:
         self.addr += packet_data_len
 
     def start_collection_task(self):
+        # print("start collect task:, paused ========= ", self.paused == 1)
         while self.odr_setting and not self.paused:
             if self.odr_setting:
                 self.openimu_get_packet(self.packet_type, True)     # get packet in stream mode
@@ -623,9 +655,10 @@ class OpenIMU:
             elif self.sync_state == 1:
                 self.packet_buffer.append(new_byte)
                 if len(self.packet_buffer) == self.packet_buffer[2] + 5:
-                    packet_crc = 256 * self.packet_buffer[-2] + self.packet_buffer[-1]
+                    packet_crc = 256 * self.packet_buffer[-2] + self.packet_buffer[-1]    
                     if packet_crc == self.calc_crc(self.packet_buffer[:-2]):
                         if not isinstance(packet_type, str) and not isinstance(packet_type, unicode):
+                            # print('parse buffer---------')
                             self.packet_type = bytearray(packet_type).decode()
                         else:
                             self.packet_type = packet_type
@@ -637,6 +670,7 @@ class OpenIMU:
                             self.sync_state = 0
                     else:
                         self.sync_state = 0  # CRC did not match
+                        # print("crc error***************************************")
          
 
  #####       
@@ -648,3 +682,6 @@ if __name__ == "__main__":
     imu.start_log()
     time.sleep(20)
     imu.stop_log()
+  
+	
+    
