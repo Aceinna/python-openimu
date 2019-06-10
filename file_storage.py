@@ -176,7 +176,7 @@ class OpenIMULog:
 
 
     def get_sas_token(self):
-        print('user token',self.user['access_token'])
+        # print('user token',self.user['access_token'])
         try:
             # host_address='http://40.118.233.18:3000/'
             host_address='https://api.aceinna.com/'
