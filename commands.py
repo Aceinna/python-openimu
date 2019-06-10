@@ -83,7 +83,13 @@ class OpenIMU_CLI:
     def stop_handler(self):
         '''record command is used to save the outputs into local machine
         '''
-        imu.stop_log()
+        if imu.logging == 1 or self.http_server_running == True:
+            if imu.logging == 1:
+                imu.stop_log()
+            if self.http_server_running ==True:
+                self.server_stop()
+        else:
+            print("no ongoing recording or server not running now!")
         time.sleep(2)
         return True
 
@@ -91,7 +97,7 @@ class OpenIMU_CLI:
         '''used by customers
         '''
         print("Running...")
-
+        self.server_start_handler()
         return True
 
     def get_handler(self):
@@ -218,6 +224,7 @@ class OpenIMU_CLI:
         if self.http_server is not None:
            self.http_server.stop()
         imu.ws = False
+        self.http_server_running = False
         pid = getpid()
         p = psutil.Process(pid)
         p.kill() 
@@ -240,7 +247,7 @@ class OpenIMU_CLI:
                     self.server_stop()
                 else:
                     break
-            if self.http_server_running == True:
+            if self.http_server_running == True and token.strip() != 'stop':
                 print("server is on-going, please stop it")
                 continue
 
