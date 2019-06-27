@@ -5,7 +5,7 @@
 	"userConfiguration": [
     { "paramId": 0, "paramType": "disabled", "type": "uint64", "name": "Data CRC" },
 		{ "paramId": 1, "paramType": "disabled", "type": "uint64", "name": "Data Size" },
-		{ "paramId": 2, "paramType": "select", "type": "int64", "name": "Baud Rate", "argument": "baud_rate", "options": [38400, 57600, 115200, 230400] },
+		{ "paramId": 2, "paramType": "select", "type": "int64", "name": "Baud Rate", "argument": "baud_rate", "options": [115200, 57600, 230400, 38400] },
 		{ "paramId": 3, "paramType": "select", "type": "char8", "name": "Packet Type", "argument": "type", "options": ["z1", "zT", "a1", "a2", "c1", "l1", "z2", "s1", "e1", "e2"] },
 		{ "paramId": 4, "paramType": "select", "type": "int64", "name": "Packet Rate", "argument": "rate", "options": [200, 100, 50, 20, 10, 5, 2, 0] },
 		{ "paramId": 5, "paramType": "select", "type": "int64", "name": "Accel LPF", "argument": "xl_lpf", "options": [50, 40, 25, 20, 10, 5, 2] },
