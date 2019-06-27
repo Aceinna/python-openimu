@@ -144,7 +144,7 @@ class OpenIMU:
                         result.append(port)
                 # except:
                 except Exception as e:
-                    print(e)                    
+                    # print(e)                    
                     if sys.version_info[0] > 2:
                         if e.args[0].find('WindowsError') >= 0:
                             try:
