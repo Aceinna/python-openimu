@@ -551,6 +551,12 @@ class OpenIMU:
                 return b
             except:
                 return False
+        elif type == 'double':
+            try:
+                b = struct.pack('8B', *data)
+            except:
+                return False
+            return struct.unpack('d', b)[0]
 
     def openimu_start_bootloader(self):
         packet = BootloaderInputPacket(self.imu_properties, 'JI')

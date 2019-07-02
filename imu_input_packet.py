@@ -33,6 +33,8 @@ class InputPacket:
                         payload += [0x00]
                 elif self.imu_properties['userConfiguration'][param]['type'] == 'int64':
                     payload += list(struct.unpack("8B", struct.pack("<q", value)))
+                elif self.imu_properties['userConfiguration'][param]['type'] == 'double':
+                    payload += list(struct.unpack("8B", struct.pack("<d", float(value))))
                 return payload
     
     def calc_crc(self,payload):
