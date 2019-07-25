@@ -82,17 +82,17 @@
 					{
 						"type": "float",
 						"name": "xAccel",
-						"unit": "G"
+						"unit": "m/s/s"
 					},
 					{
 						"type": "float",
 						"name": "yAccel",
-						"unit": "G"
+						"unit": "m/s/s"
 					},
 					{
 						"type": "float",
 						"name": "zAccel",
-						"unit": "G"
+						"unit": "m/s/s"
 					},
 					{
 						"type": "float",
