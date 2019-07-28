@@ -114,21 +114,18 @@ class OpenIMU:
         print('scanning ports')
 
         #find system available ports
-        portList = list(serial.tools.list_ports.comports())
-        ports = [ p.device for p in portList]
-
-        # if sys.platform.startswith('win'):
-        #     #fond windows available ports already found
-        #     portlist = list(serial.tools.list_ports.comports())
-        #     ports = [ p.device for p in portlist]
-            
-        # elif sys.platform.startswith('linux') or sys.platform.startswith('cygwin'):
-        #     # this excludes your current terminal "/dev/tty"
-        #     ports = glob.glob('/dev/tty[A-Za-z]*')
-        # elif sys.platform.startswith('darwin'):
-        #     ports = glob.glob('/dev/tty.*')
-        # else:
-        #     raise EnvironmentError('Unsupported platform')
+        if sys.platform.startswith('win'):
+            # windows available ports already found
+            portlist = list(serial.tools.list_ports.comports())
+            ports = [ p.device for p in portlist]
+            # note: should change the IMU serial port access right to 777 manually     
+        elif sys.platform.startswith('linux') or sys.platform.startswith('cygwin'):
+            # this excludes your current terminal "/dev/tty"
+            ports = glob.glob('/dev/tty[A-Za-z]*')
+        elif sys.platform.startswith('darwin'):
+            ports = glob.glob('/dev/tty.*')
+        else:
+            raise EnvironmentError('Unsupported platform')
 
         result = []
         for port in ports:
