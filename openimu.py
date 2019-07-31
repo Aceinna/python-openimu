@@ -285,6 +285,7 @@ class OpenIMU:
 
     def openimu_get_all_param(self):
         C = InputPacket(self.imu_properties, 'gA')
+        print  C
         self.write(C.bytes)
         #time.sleep(0.05)
         return self.openimu_get_packet('gA')  
@@ -306,7 +307,8 @@ class OpenIMU:
         # print('get id--------------1')
         self.write(C.bytes)        
         #time.sleep(0.05)
-        return self.openimu_get_packet('gV')    
+        return self.openimu_get_packet('gV')
+
 
     def connect(self):
         '''Continous data collection loop to get and process data packets
@@ -328,6 +330,9 @@ class OpenIMU:
         self.paused = 0
         # print("connect,  3333333333333333333333333333333")
         threading.Thread(target=self.start_collection_task).start()
+
+
+
             
     def pause(self):
         ''' Will End the data collection task and thread
@@ -634,13 +639,16 @@ class OpenIMU:
         print('End Collection Task')
         return False  # End Thread
 
+
     def openimu_get_packet(self,packet_type, stream = False):
         if not packet_type:
             return False
         data = False
         trys = 0
-        while not data and trys < 200: 
+
+        while not data and trys < 200:
             self.data_buffer = self.read(10000)
+
             if self.data_buffer:
                 data = self.parse_buffer(packet_type, stream)
             trys += 1
