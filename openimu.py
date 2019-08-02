@@ -285,7 +285,6 @@ class OpenIMU:
 
     def openimu_get_all_param(self):
         C = InputPacket(self.imu_properties, 'gA')
-        print  C
         self.write(C.bytes)
         #time.sleep(0.05)
         return self.openimu_get_packet('gA')  

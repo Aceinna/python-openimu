@@ -33,7 +33,6 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             time.sleep(1)
         if not imu.paused:
             d = imu.get_latest()
-            print d
             self.write_message(json.dumps({ 'messageType' : 'event',  'data' : { 'newOutput' : d }}))               
                    
         else:
@@ -134,15 +133,15 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                 self.write_message(json.dumps({ "messageType" : "completeAction", "data" : { "upgradeFramework" : fileName }}))
         elif message['messageType'] == 'magAction':
             openIMUMagneticAlign = OpenIMUMagneticAlign()
-            if (message['data'].values()[0] == 'start'):
+            if (list (message['data'].values())[0] == 'start'):
                 openIMUMagneticAlign.start()
-                print 'started'
+                print ('mag align started')
                 self.write_message(json.dumps({"messageType": "magAction", "data": {"start": {}}}))
-            elif (message['data'].values()[0] == 'abort'):
+            elif (list(message['data'].values())[0] == 'abort'):
                 openIMUMagneticAlign.abort()
-                print 'abort'
+                print ('mag align aborted')
                 self.write_message(json.dumps({"messageType": "magAction", "data": {"abort": {}}}))
-            elif (message['data'].values()[0] == 'status'):
+            elif (list(message['data'].values())[0] == 'status'):
                 status = openIMUMagneticAlign.status()
 
                 if status == 1:
