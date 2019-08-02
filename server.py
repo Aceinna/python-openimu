@@ -7,7 +7,9 @@ import json
 import time
 import math
 import os
-from global_vars import imu 
+from global_vars import imu
+from magnetic_align import OpenIMUMagneticAlign
+import binascii
 
 
 server_version = '1.0.0'
@@ -38,6 +40,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
 
     def on_message(self, message):
         global imu
+
         message = json.loads(message)
         # Except for a few exceptions stop the automatic message transmission if a message is received
         if message['messageType'] != 'serverStatus' and list(message['data'].keys())[0] != 'startLog' and list(message['data'].keys())[0] != 'stopLog':
@@ -86,7 +89,8 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                 imu.pause()
         elif message['messageType'] == 'requestAction':
             if list(message['data'].keys())[0] == 'gA':                
-                data = imu.openimu_get_all_param()                
+                data = imu.openimu_get_all_param()
+
                 # data[7]['value'] = data[3]['value'].strip(b'\x00'.decode())
                 time.sleep(0.2)
                 self.write_message(json.dumps({ "messageType" : "requestAction", "data" : { "gA" : data }}))
@@ -127,6 +131,30 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                         self.write_message(json.dumps({ "messageType" : "processAction", "data" : { "addr" : imu.addr, "fs_len": imu.fs_len }}))
                     imu.openimu_start_app()
                 self.write_message(json.dumps({ "messageType" : "completeAction", "data" : { "upgradeFramework" : fileName }}))
+        elif message['messageType'] == 'magAction':
+            openIMUMagneticAlign = OpenIMUMagneticAlign()
+            if (list (message['data'].values())[0] == 'start'):
+                openIMUMagneticAlign.start()
+                print ('mag align started')
+                self.write_message(json.dumps({"messageType": "magAction", "data": {"start": {}}}))
+            elif (list(message['data'].values())[0] == 'abort'):
+                openIMUMagneticAlign.abort()
+                print ('mag align aborted')
+                self.write_message(json.dumps({"messageType": "magAction", "data": {"abort": {}}}))
+            elif (list(message['data'].values())[0] == 'status'):
+                status = openIMUMagneticAlign.status()
+
+                if status == 1:
+                    openIMUMagneticAlign.save()
+                    time.sleep(1)
+                    data = imu.openimu_get_all_param()
+                    self.write_message(json.dumps({"messageType": "magAction", "data": {"status": "complete","value":data}}))
+                    return
+
+                self.write_message(json.dumps({"messageType": "magAction", "data": {"status": "incomplete"}}))
+
+
+
 
         # OLD CODE REVIEW FOR DELETION
         elif  0 and message['messageType'] == 'requestAction':
