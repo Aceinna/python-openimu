@@ -10,10 +10,12 @@ class OpenIMUMagneticAlign:
 
     def start(self):
         # C = "55556D610101E10F".decode("hex")
+        command = imu.imu_properties['MagCommands'][0]['start']
+
         if self.version < 3:
-            C = "55556D610101E10F".decode("hex")
+            C = command.decode("hex")
         else:
-            C = bytes.fromhex('55556D610101E10F')
+            C = bytes.fromhex(command)
 
         print (C)
         imu.write(C)
@@ -21,27 +23,30 @@ class OpenIMUMagneticAlign:
 
     def abort(self):
         # C = "55556D61010691E8".decode("hex")
+        command = imu.imu_properties['MagCommands'][1]['abort']
         if self.version < 3:
-            C = "55556D61010691E8".decode("hex")
+            C =command.decode("hex")
         else:
-            C = bytes.fromhex('55556D61010691E8')
+            C = bytes.fromhex(command)
         imu.write(C)
 
     def save(self):
         # C = "55556d610105A18B".decode("hex")
+        command = imu.imu_properties['MagCommands'][3]['save']
         if self.version < 3:
-            C = "55556d610105A18B".decode("hex")
+            C = command.decode("hex")
         else:
-            C = bytes.fromhex('55556d610105A18B')
+            C = bytes.fromhex(command)
 
         imu.write(C)
 
     def status(self):
         # C = "55556D610100F12E".decode("hex")
+        command = imu.imu_properties['MagCommands'][2]['status']
         if self.version < 3:
-            C = "55556D610100F12E".decode("hex")
+            C = command.decode("hex")
         else:
-            C = bytes.fromhex('55556D610100F12E')
+            C = bytes.fromhex(command)
 
         imu.write(C)
 
