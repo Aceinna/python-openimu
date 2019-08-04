@@ -22,12 +22,7 @@
 		{ "paramId": 16, "category": "Advanced","paramType": "input", "type": "double", "name": "lever arm z", "argument": "lever_arm_z", "value_range":[-1,1],"value_accuracy":6,"options": [-10, 0, 10] },
 		{ "paramId": 17, "category": "Advanced","paramType": "input", "type": "double", "name": "point of interest x", "argument": "poi_x", "value_range":[-1,1],"value_accuracy":6,"options": [-10, 0, 10] },
 		{ "paramId": 18, "category": "Advanced","paramType": "input", "type": "double", "name": "point of interest y", "argument": "poi_y", "value_range":[-1,1],"value_accuracy":6,"options": [-10, 0, 10] },
-		{ "paramId": 19, "category": "Advanced","paramType": "input", "type": "double", "name": "point of interest z", "argument": "poi_z", "value_range":[-1,1],"value_accuracy":6,"options": [-10, 0, 10] },
-		{ "paramId": 20, "category": "BIT Configuration","paramType": "input", "type": "double", "name": "TODO", "argument": "TODO", "value_range":[-1,1],"value_accuracy":6,"options": [1, 2, 3] },
-		{ "paramId": 23, "category": "Port Usage","paramType": "input", "type": "double", "name": "TODO", "argument": "TODO", "value_range":[-1,1],"value_accuracy":6,"options": [1, 2, 3] },
-		{ "paramId": 24, "category": "Tile Alarm","paramType": "input", "type": "double", "name": "TODO", "argument": "TODO", "value_range":[-1,1],"value_accuracy":6,"options": [1, 2, 3] },
-		{ "paramId": 25, "category": "CAN Parameter","paramType": "input", "type": "double", "name": "TODO", "argument": "TODO", "value_range":[-1,1],"value_accuracy":6,"options": [1, 2, 3] },
-		{ "paramId": 26, "category": "SPI Parameter","paramType": "input", "type": "double", "name": "TODO", "argument": "TODO", "value_range":[-1,1],"value_accuracy":6,"options": [1, 2, 3] }
+		{ "paramId": 19, "category": "Advanced","paramType": "input", "type": "double", "name": "point of interest z", "argument": "poi_z", "value_range":[-1,1],"value_accuracy":6,"options": [-10, 0, 10] }
 	],
 	"userMessages": {
 		"inputPackets": [{
