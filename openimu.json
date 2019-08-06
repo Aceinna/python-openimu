@@ -40,6 +40,29 @@
 				}
 			},
 			{
+				"name": "ma",
+				"description": "Magnetic alignment control commands",
+				"inputPayload": [
+					{
+						"actionID":  0,
+						"actionName": "status"
+					},
+					{
+
+						"actionID":  1,
+						"actionName": "start"
+					},
+					{
+						"actionID":  5,
+						"actionName": "save"
+					},
+					{
+						"actionID":  6,
+						"actionName": "abort"
+					}
+				]
+			},
+			{
 				"name": "gV",
 				"description": "Get user app version",
 				"inputPayload": {},
@@ -72,12 +95,6 @@
 			{
 				"name": "sC",
 				"description": "Save Conifguration Parameters to Flash",
-				"inputPayload": {},
-				"responsePayload": {}
-			},
-			{
-				"name": "ma01",
-				"description": "Start Mag Align",
 				"inputPayload": {},
 				"responsePayload": {}
 			},
@@ -454,6 +471,7 @@
 					{
 						"name": "Attitude and DG Indicators",
 						"units": "deg",
+						"renderType": "indicator",
 						"xAxis": "Time (s)",
 						"yAxes": ["roll", "pitch","heading"],
 						"colors": ["#FF0000"],
@@ -1200,13 +1218,6 @@
 			"description": "Write parameters to OpenIMU",
 			"function": "set_handler"
 		}
-	],
-	"MagCommands":[
-		{"start": "55556D610101E10F"},
-		{"abort":"55556D61010691E8" },
-		{"status":"55556D610100F12E"},
-		{"save": "55556d610105A18B"}
-
 	]
 }
 

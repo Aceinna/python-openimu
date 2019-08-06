@@ -17,11 +17,14 @@ class InputPacket:
         else:
             payload = self.unpack_payload(param, value)
             S = [0x55, 0x55] + name_bytes + [len(payload)] + payload
-            self.bytes = S + self.calc_crc(S[2:S[4]+5])   
+            self.bytes = S + self.calc_crc(S[2:S[4]+5])
 
     def unpack_payload(self, param = False, value = False):
         input_packet = next((x for x in self.imu_properties['userMessages']['inputPackets'] if x['name'] == self.name), None)
-        if input_packet != None:
+        if self.name == 'ma':
+            input_action = next((x for x in input_packet['inputPayload'] if x['actionName'] == param), None)
+            return [input_action['actionID']]
+        elif input_packet != None:
             if input_packet['inputPayload']['type'] == 'paramId':
                 return list(struct.unpack("4B", struct.pack("<L", param)))
             elif input_packet['inputPayload']['type'] == 'userParameter':

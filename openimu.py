@@ -51,6 +51,7 @@ from bootloader_input_packet import BootloaderInputPacket
 from azure.storage.blob import BlockBlobService
 # import webbrowser # used for open ANS website by system browser
 import requests
+import binascii
 
 
 
@@ -276,7 +277,22 @@ class OpenIMU:
         C = InputPacket(self.imu_properties, 'gP', param)
         self.write(C.bytes)
         #time.sleep(0.05)
-        return self.openimu_get_packet('gP')  
+        return self.openimu_get_packet('gP')
+
+    def magneticAlignCmd(self,action):
+        C = InputPacket(self.imu_properties, 'ma', action)
+        self.write(C.bytes)
+
+        if action == 'status':
+            returnedStatus = self.ser.readline().strip()
+            if sys.version_info[0] < 3:
+                decodedStatus = binascii.hexlify(returnedStatus)
+            else:
+                decodedStatus = str(binascii.hexlify(returnedStatus), 'utf-8')
+
+            print decodedStatus
+            if 'f12e' in decodedStatus:
+                return 1
 
     def openimu_save_config(self):
         C = InputPacket(self.imu_properties, 'sC')

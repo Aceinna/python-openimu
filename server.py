@@ -8,7 +8,6 @@ import time
 import math
 import os
 from global_vars import imu
-from magnetic_align import OpenIMUMagneticAlign
 import binascii
 
 
@@ -132,20 +131,21 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                     imu.openimu_start_app()
                 self.write_message(json.dumps({ "messageType" : "completeAction", "data" : { "upgradeFramework" : fileName }}))
         elif message['messageType'] == 'magAction':
-            openIMUMagneticAlign = OpenIMUMagneticAlign()
             if (list (message['data'].values())[0] == 'start'):
-                openIMUMagneticAlign.start()
+                imu.magneticAlignCmd('start')
+                # openIMUMagneticAlign.start()
                 print ('mag align started')
                 self.write_message(json.dumps({"messageType": "magAction", "data": {"start": {}}}))
             elif (list(message['data'].values())[0] == 'abort'):
-                openIMUMagneticAlign.abort()
+                imu.magneticAlignCmd('abort')
                 print ('mag align aborted')
                 self.write_message(json.dumps({"messageType": "magAction", "data": {"abort": {}}}))
             elif (list(message['data'].values())[0] == 'status'):
-                status = openIMUMagneticAlign.status()
+                # status = openIMUMagneticAlign.status()
+                status = imu.magneticAlignCmd('status')
 
                 if status == 1:
-                    openIMUMagneticAlign.save()
+                    imu.magneticAlignCmd('save')
                     time.sleep(1)
                     data = imu.openimu_get_all_param()
                     self.write_message(json.dumps({"messageType": "magAction", "data": {"status": "complete","value":data}}))
