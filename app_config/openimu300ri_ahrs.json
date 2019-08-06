@@ -1,7 +1,7 @@
 {
-	"name": "OpenIMU300-EZ",
+	"name": "OpenIMU300RI_AHRS",
 	"type": "openimu",
-	"description": "9-axis OpenIMU with triaxial rate, acceleration, and magnetic measurement",
+	"description": "9-axis OpenIMU with AHRS application, CAN interface",
 	"userConfiguration": [
     { "paramId": 0,"category": "General", "paramType": "disabled", "type": "uint64", "name": "Data CRC" },
 		{ "paramId": 1,"category": "General", "paramType": "disabled", "type": "uint64", "name": "Data Size" },
@@ -11,18 +11,10 @@
 		{ "paramId": 5, "category": "General","paramType": "select", "type": "int64", "name": "Accel LPF", "argument": "xl_lpf", "value_range":[-1,1],"value_accuracy":6,"options": [50, 40, 25, 20, 10, 5, 2] },
 		{ "paramId": 6, "category": "General","paramType": "select", "type": "int64", "name": "Rate LPF", "argument": "rate_lpf", "value_range":[-1,1],"value_accuracy":6,"options": [50, 40, 25, 20, 10, 5, 2] },
 		{ "paramId": 7, "category": "General","paramType": "select", "type": "char8", "name": "Orientation", "argument": "orien", "value_range":[-1,1],"value_accuracy":6,"options": ["+X+Y+Z"] },
-		{ "paramId": 8, "category": "Advanced","paramType": "select", "type": "int64", "name": "GPS Baud Rate", "argument": "gps_baud_rate", "value_range":[-1,1],"value_accuracy":6,"options": [38400, 57600, 115200, 230400 ] },
-		{ "paramId": 9, "category": "Advanced","paramType": "select", "type": "int64", "name": "GPS Protocol", "argument": "gps_protocal", "value_range":[-1,1],"value_accuracy":6,"options": [1,2,3,4,0 ] },
 		{ "paramId": 10,"category": "Advanced","paramType": "input", "type": "double", "name": "hard iron x", "argument": "hard_iron_x", "value_range":[-1,1],"value_accuracy":6,"options": [0.0 ] },
 		{ "paramId": 11, "category": "Advanced","paramType": "input", "type": "double", "name": "hard iron y", "argument": "hard_iron_y", "value_range":[-1,1],"value_accuracy":6,"options": [0.0 ] },
 		{ "paramId": 12, "category": "Advanced","paramType": "input", "type": "double", "name": "soft iron ratio", "argument": "soft_iron_ratio", "value_range":[-1,1],"value_accuracy":6,"options": [1.0 ] },
-		{ "paramId": 13, "category": "Advanced","paramType": "input", "type": "double", "name": "soft iron angle", "argument": "soft_iron_angle", "value_range":[-1,1],"value_accuracy":6,"options": [0.0 ] },
-		{ "paramId": 14, "category": "Advanced","paramType": "input", "type": "double", "name": "lever arm x", "argument": "lever_arm_x", "value_range":[-1,1],"value_accuracy":6,"options": [-10, 0, 10] },
-		{ "paramId": 15, "category": "Advanced","paramType": "input", "type": "double", "name": "lever arm y", "argument": "lever_arm_y", "value_range":[-1,1],"value_accuracy":6,"options": [-10, 0, 10] },
-		{ "paramId": 16, "category": "Advanced","paramType": "input", "type": "double", "name": "lever arm z", "argument": "lever_arm_z", "value_range":[-1,1],"value_accuracy":6,"options": [-10, 0, 10] },
-		{ "paramId": 17, "category": "Advanced","paramType": "input", "type": "double", "name": "point of interest x", "argument": "poi_x", "value_range":[-1,1],"value_accuracy":6,"options": [-10, 0, 10] },
-		{ "paramId": 18, "category": "Advanced","paramType": "input", "type": "double", "name": "point of interest y", "argument": "poi_y", "value_range":[-1,1],"value_accuracy":6,"options": [-10, 0, 10] },
-		{ "paramId": 19, "category": "Advanced","paramType": "input", "type": "double", "name": "point of interest z", "argument": "poi_z", "value_range":[-1,1],"value_accuracy":6,"options": [-10, 0, 10] }
+		{ "paramId": 13, "category": "Advanced","paramType": "input", "type": "double", "name": "soft iron angle", "argument": "soft_iron_angle", "value_range":[-1,1],"value_accuracy":6,"options": [0.0 ] }
 	],
 	"userMessages": {
 		"inputPackets": [{
@@ -33,29 +25,6 @@
 					"type": "string",
 					"name": "Device ID and SN"
 				}
-			},
-			{
-				"name": "ma",
-				"description": "Magnetic alignment control commands",
-				"inputPayload": [
-					{
-						"actionID":  0,
-						"actionName": "status"
-					},
-					{
-
-						"actionID":  1,
-						"actionName": "start"
-					},
-					{
-						"actionID":  5,
-						"actionName": "save"
-					},
-					{
-						"actionID":  6,
-						"actionName": "abort"
-					}
-				]
 			},
 			{
 				"name": "gV",
@@ -90,6 +59,12 @@
 			{
 				"name": "sC",
 				"description": "Save Conifguration Parameters to Flash",
+				"inputPayload": {},
+				"responsePayload": {}
+			},
+			{
+				"name": "ma01",
+				"description": "Start Mag Align",
 				"inputPayload": {},
 				"responsePayload": {}
 			},
@@ -466,7 +441,6 @@
 					{
 						"name": "Attitude and DG Indicators",
 						"units": "deg",
-						"renderType": "indicator",
 						"xAxis": "Time (s)",
 						"yAxes": ["roll", "pitch","heading"],
 						"colors": ["#FF0000"],
@@ -1213,6 +1187,13 @@
 			"description": "Write parameters to OpenIMU",
 			"function": "set_handler"
 		}
+	],
+	"MagCommands":[
+		{"start": "55556D610101E10F"},
+		{"abort":"55556D61010691E8" },
+		{"status":"55556D610100F12E"},
+		{"save": "55556d610105A18B"}
+
 	]
 }
 
