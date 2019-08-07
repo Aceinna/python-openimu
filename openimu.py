@@ -290,7 +290,7 @@ class OpenIMU:
             else:
                 decodedStatus = str(binascii.hexlify(returnedStatus), 'utf-8')
 
-            print decodedStatus
+            print(decodedStatus)
             if 'f12e' in decodedStatus:
                 return 1
 
