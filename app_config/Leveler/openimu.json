@@ -1,7 +1,7 @@
 {
-	"name": "OpenIMU300ZA_INS",
+	"name": "OpenIMU300_Leveler",
 	"type": "openimu",
-	"description": "9-axis OpenIMU with INS application",
+	"description": "9-axis OpenIMU with triaxial rate, acceleration, and magnetic measurement",
 	"userConfiguration": [
     { "paramId": 0,"category": "General", "paramType": "disabled", "type": "uint64", "name": "Data CRC" },
 		{ "paramId": 1,"category": "General", "paramType": "disabled", "type": "uint64", "name": "Data Size" },
@@ -33,6 +33,29 @@
 					"type": "string",
 					"name": "Device ID and SN"
 				}
+			},
+			{
+				"name": "ma",
+				"description": "Magnetic alignment control commands",
+				"inputPayload": [
+					{
+						"actionID":  0,
+						"actionName": "status"
+					},
+					{
+
+						"actionID":  1,
+						"actionName": "start"
+					},
+					{
+						"actionID":  5,
+						"actionName": "save"
+					},
+					{
+						"actionID":  6,
+						"actionName": "abort"
+					}
+				]
 			},
 			{
 				"name": "gV",
@@ -67,12 +90,6 @@
 			{
 				"name": "sC",
 				"description": "Save Conifguration Parameters to Flash",
-				"inputPayload": {},
-				"responsePayload": {}
-			},
-			{
-				"name": "ma01",
-				"description": "Start Mag Align",
 				"inputPayload": {},
 				"responsePayload": {}
 			},
@@ -449,6 +466,7 @@
 					{
 						"name": "Attitude and DG Indicators",
 						"units": "deg",
+						"renderType": "indicator",
 						"xAxis": "Time (s)",
 						"yAxes": ["roll", "pitch","heading"],
 						"colors": ["#FF0000"],
@@ -1195,13 +1213,6 @@
 			"description": "Write parameters to OpenIMU",
 			"function": "set_handler"
 		}
-	],
-	"MagCommands":[
-		{"start": "55556D610101E10F"},
-		{"abort":"55556D61010691E8" },
-		{"status":"55556D610100F12E"},
-		{"save": "55556d610105A18B"}
-
 	]
 }
 
