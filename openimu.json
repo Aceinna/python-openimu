@@ -54,6 +54,10 @@
 					{
 						"actionID":  6,
 						"actionName": "abort"
+					},
+					{
+						"actionID": 7,
+						"actionName": "stored"
 					}
 				]
 			},

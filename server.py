@@ -15,7 +15,9 @@ server_version = '1.0.0'
 
 callback_rate = 50
 class WSHandler(tornado.websocket.WebSocketHandler):
-    count = 0        
+    count = 0
+    magProgress = 0
+
     def open(self):
         self.callback = tornado.ioloop.PeriodicCallback(self.send_data, callback_rate)
         self.callback.start()
@@ -39,6 +41,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
 
     def on_message(self, message):
         global imu
+
 
         message = json.loads(message)
         # Except for a few exceptions stop the automatic message transmission if a message is received
@@ -133,25 +136,45 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         elif message['messageType'] == 'magAction':
             if (list (message['data'].values())[0] == 'start'):
                 imu.magneticAlignCmd('start')
+                self.magProgress = 1
                 # openIMUMagneticAlign.start()
                 print ('mag align started')
                 self.write_message(json.dumps({"messageType": "magAction", "data": {"start": {}}}))
             elif (list(message['data'].values())[0] == 'abort'):
+                time.sleep(2)
                 imu.magneticAlignCmd('abort')
+                self.magProgress = 0
                 print ('mag align aborted')
                 self.write_message(json.dumps({"messageType": "magAction", "data": {"abort": {}}}))
+                return
+
             elif (list(message['data'].values())[0] == 'status'):
                 # status = openIMUMagneticAlign.status()
-                status = imu.magneticAlignCmd('status')
+                if (self.magProgress == 1):
+                    status = imu.magneticAlignCmd('status')
 
-                if status == 1:
-                    imu.magneticAlignCmd('save')
-                    time.sleep(1)
-                    data = imu.openimu_get_all_param()
-                    self.write_message(json.dumps({"messageType": "magAction", "data": {"status": "complete","value":data}}))
-                    return
+                    if status == 1:
+                        time.sleep(1)
+                        storedValue = imu.magneticAlignCmd('stored')
+                        self.write_message(
+                            json.dumps({"messageType": "magAction", "data": {"status": "complete", "value": storedValue}}))
 
-                self.write_message(json.dumps({"messageType": "magAction", "data": {"status": "incomplete"}}))
+                        # imu.magneticAlignCmd('save')
+                        # time.sleep(1)
+                        # data = imu.openimu_get_all_param()
+                        # self.write_message(json.dumps({"messageType": "magAction", "data": {"status": "complete","value":data}}))
+                        return
+
+
+                    self.write_message(json.dumps({"messageType": "magAction", "data": {"status": "incomplete"}}))
+
+            elif (list(message['data'].values())[0] == 'save'):
+                imu.magneticAlignCmd('save')
+                time.sleep(1)
+                self.magProgress = 0
+                data = imu.openimu_get_all_param()
+                self.write_message(json.dumps({"messageType": "magAction", "data": {"status": "saved","value":data}}))
+                return
 
 
 

@@ -52,6 +52,7 @@ from azure.storage.blob import BlockBlobService
 # import webbrowser # used for open ANS website by system browser
 import requests
 import binascii
+import json
 
 
 
@@ -283,6 +284,14 @@ class OpenIMU:
         C = InputPacket(self.imu_properties, 'ma', action)
         self.write(C.bytes)
 
+        if action == 'stored':
+            print ('here')
+            time.sleep(1)
+            returnedStatus = self.ser.readline().strip()
+            decodedStatus = binascii.hexlify(returnedStatus)
+
+            return self.decodeOutput(decodedStatus)
+
         if action == 'status':
             returnedStatus = self.ser.readline().strip()
             if sys.version_info[0] < 3:
@@ -290,9 +299,67 @@ class OpenIMU:
             else:
                 decodedStatus = str(binascii.hexlify(returnedStatus), 'utf-8')
 
-            print decodedStatus
+            print (decodedStatus)
             if 'f12e' in decodedStatus:
                 return 1
+
+    def decodeOutput(self, value):
+        hard_iron_x = dict()
+        hard_iron_y = dict()
+        soft_iron_ratio = dict()
+        soft_iron_angle = dict()
+
+        # output['hardIronX'] = self.hardIronCal(value[10:14], 'axis')
+        # output['hardIronY'] = self.hardIronCal(value[14:18], 'axis')
+        # output['SoftIronRatio'] = self.hardIronCal(value[18:22], 'ratio')
+        # output['SoftIronAngle'] = self.hardIronCal(value[22:26], 'angle')
+
+        hard_iron_x['value'] = self.hardIronCal(value[26:30], 'axis')
+        hard_iron_x['name'] = 'Hard Iron X'
+        hard_iron_x['argument'] = 'hard_iron_x'
+
+        hard_iron_y['value'] = self.hardIronCal(value[30:34], 'axis')
+        hard_iron_y['name'] = 'Hard Iron Y'
+        hard_iron_y['argument'] = 'hard_iron_y'
+
+        soft_iron_ratio['value'] = self.hardIronCal(value[34:38], 'ratio')
+        soft_iron_ratio['name'] = 'Soft Iron Ratio'
+        soft_iron_ratio['argument'] = 'soft_iron_ratio'
+
+        soft_iron_angle['value'] = self.hardIronCal(value[38:42], 'angle')
+        soft_iron_angle['name'] = 'Soft Iron Angle'
+        soft_iron_angle['argument'] = 'soft_iron_angle'
+
+        # output['hard_iron_y'] = self.hardIronCal(value[30:34], 'axis')
+        # output['soft_iron_ratio'] = self.hardIronCal(value[34:38], 'ratio')
+        # output['soft_iron_angle'] = self.hardIronCal(value[38:42], 'angle')
+
+        output = [hard_iron_x,hard_iron_y,soft_iron_ratio,soft_iron_angle]
+
+        return output
+
+    def hardIronCal(self, value, type):
+
+        decodedValue = int(value, 16)
+
+        if type == 'axis':
+            if decodedValue > 2 ** 15:
+                newDecodedValue = (decodedValue - 2 ** 16)
+                return newDecodedValue / float(2 ** 15) * 8
+            else:
+                return decodedValue / float(2 ** 15) * 8
+
+        if type == 'ratio':
+            return decodedValue / float(2 ** 16 - 1)
+
+        if type == 'angle':
+            if decodedValue > 2 ** 15:
+                decodedValue = decodedValue - 2 ** 16
+                piValue = 2 ** 15 / math.pi
+                return decodedValue / piValue
+
+            piValue = 2 ** 15 / math.pi
+            return decodedValue / piValue
 
     def openimu_save_config(self):
         C = InputPacket(self.imu_properties, 'sC')
