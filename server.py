@@ -9,8 +9,10 @@ import math
 import os
 from global_vars import imu
 import binascii
+import global_vars as gl
 
 
+# note: version string update should follow the updating rule
 server_version = '1.0.0'
 
 callback_rate = 50
@@ -53,33 +55,69 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                 fileName = imu.logger.user['fileName']
             else:
                 fileName = ''
-            # Load the openimu.json on each request to support dynamic debugging
+
+            # Load the basic openimu.json, FIXME: should be delete and left the app config json files only and samplify
             with open('openimu.json') as json_data:
                 imu.imu_properties = json.load(json_data)
+            
+            application_type = bytes.decode(imu.openimu_get_user_app_id())  
+            if not os.path.exists('app_config'):
+                print('downloading config json files from github, please waiting for a while')
+                os.makedirs('app_config')
+                for app_name in gl.get_app_names:
+                    os.makedirs('app_config'+ '/' + app_name)
+                print('downloading config json files from github, please waiting for a while')
+                i = 0
+                for url in gl.get_app_urls:
+                    i= i+1
+                    filepath = 'app_config' + '/' + app_names[i] + '/' + 'openimu.json'
+                    try:
+                        r = requests.get(url) 
+                        with open(filepath, "wb") as code:
+                            code.write(r.content)     
+                    except Exception as e:
+                        print(e) 
+            else:
+                print('load config json files from local folder')
 
             # load application type from firmware 
             try:
-                if imu.paused == 1 and not imu.openimu_get_user_app_id() == None:                    
-                    strVersion = bytes.decode(imu.openimu_get_user_app_id())                    
+                if imu.paused == 1 and not imu.openimu_get_user_app_id() == None:                                      
                     # change divide_list[3]['options'] based on FW version: VG-AHRS application
-                    if 'VG_AHRS' in strVersion:
-                        imu.imu_properties['userConfiguration'][3]['options'] = ['z1','a1','a2','s1','e1']
                     # Compass application
-                    elif 'Compass'in strVersion:
+                    if 'Compass'in application_type:
+                        with open('app_config/Compass/openimu.json') as json_data:
+                        # with open('openimu.json') as json_data:
+                            imu.imu_properties = json.load(json_data)
                         imu.imu_properties['userConfiguration'][3]['options'] = ['z1','s1','c1']
+                    # VG_AHRS application
+                    elif 'VG_AHRS' in application_type:
+                        with open('app_config/VG_AHRS/openimu.json') as json_data:
+                            imu.imu_properties = json.load(json_data)
+                        imu.imu_properties['userConfiguration'][3]['options'] = ['z1','a1','a2','s1','e1']
                     # Framework application
-
-                    elif 'OpenIMU'in strVersion:
+                    elif 'OpenIMU'in application_type:
+                        with open('app_config/OpenIMU/openimu.json') as json_data:
+                            imu.imu_properties = json.load(json_data)
                         imu.imu_properties['userConfiguration'][3]['options'] = ['z1']
                     # IMU application
-                    elif 'IMU'in strVersion and not 'OpenIMU'in strVersion:
+                    elif 'IMU'in application_type and not 'OpenIMU'in application_type:
+                        with open('app_config/IMU/openimu.json') as json_data:
+                        # with open('openimu.json') as json_data:
+                            imu.imu_properties = json.load(json_data)
+                            time.sleep(1)
                         imu.imu_properties['userConfiguration'][3]['options'] = ['z1','s1']
                     # INS application
-                    elif 'INS'in strVersion:
+                    elif 'INS'in application_type:
+                        with open('app_config/INS/openimu.json') as json_data:
+                            imu.imu_properties = json.load(json_data)
                         imu.imu_properties['userConfiguration'][3]['options'] = ['z1','a1','a2','s1','e1','e2']
                     # Lever application    
-                    elif 'StaticL'in strVersion:
-                        imu.imu_properties['userConfiguration'][3]['options'] = ['z1','s1','l1']    
+                    elif 'StaticL'in application_type:
+                        with open('app_config/Leveler/openimu.json') as json_data:
+                            imu.imu_properties = json.load(json_data)
+                        imu.imu_properties['userConfiguration'][3]['options'] = ['z1','s1','l1']   
+
                     self.write_message(json.dumps({ 'messageType' : 'serverStatus', 'data' : { 'serverVersion' : server_version, 'serverUpdateRate' : callback_rate,  'packetType' : imu.packet_type,
                                                                                                 'deviceProperties' : imu.imu_properties, 'deviceId' : imu.device_id, 'logging' : imu.logging, 'fileName' : fileName }}))
                 else:

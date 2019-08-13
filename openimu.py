@@ -53,6 +53,7 @@ from azure.storage.blob import BlockBlobService
 import requests
 import binascii
 import json
+import global_vars as gl
 
 
 
@@ -80,6 +81,7 @@ class OpenIMU:
             print('creat data folder for store measure data in future')
             os.makedirs("data")
         #if no json folder, then copy one from githbug phton-openimu master
+        # note: sometimes the server raw.githubusercontent.com in amazon cloud will be blocked somehow!
         if not os.path.exists("openimu.json"):
             print('try to copy openimu.json file from python-openimu/bugfix to local same foler')
             url = 'https://raw.githubusercontent.com/Aceinna/python-openimu/master/openimu.json' 
@@ -90,8 +92,61 @@ class OpenIMU:
             except Exception as e:
                 print(e)       
         
+        # Load the basic openimu.json, FIXME: should be delete and left the app config json files only
         with open('openimu.json') as json_data:
-            self.imu_properties = json.load(json_data)           
+            self.imu_properties = json.load(json_data)  
+            
+        if not os.path.exists('app_config'):
+            print('downloading config json files from github, please waiting for a while')
+            os.makedirs('app_config')
+            for app_name in gl.get_app_names:
+                os.makedirs('app_config'+ '/' + app_name)
+            print('downloading config json files from github, please waiting for a while')
+            i = 0
+            for url in gl.get_app_urls:
+                i= i+1
+                filepath = 'app_config' + '/' + app_names[i] + '/' + 'openimu.json'
+                try:
+                    r = requests.get(url) 
+                    with open(filepath, "wb") as code:
+                        code.write(r.content)     
+                except Exception as e:
+                    print(e) 
+        else:
+            print('load config json files from local folder')
+
+        # FIXME: get app id should call two times, or there will be None return
+        apptyp = self.openimu_get_user_app_id()
+        time.sleep(1)
+        apptyp = self.openimu_get_user_app_id()
+        application_type = bytes.decode(apptyp) 
+        
+        # Compass application
+        if 'Compass'in application_type:
+            with open('app_config/Compass/openimu.json') as json_data:
+                self.imu_properties = json.load(json_data)
+        # VG_AHRS application
+        elif 'VG_AHRS' in application_type:
+            with open('app_config/VG_AHRS/openimu.json') as json_data:
+                self.imu_properties = json.load(json_data)
+        # Framework application
+        elif 'OpenIMU'in application_type:
+            with open('app_config/OpenIMU/openimu.json') as json_data:
+                self.imu_properties = json.load(json_data)
+        # IMU application
+        elif 'IMU'in application_type and not 'OpenIMU'in application_type:
+            # with open('app_config/IMU/openimu.json') as json_data:
+            with open('openimu.json') as json_data:
+                self.imu_properties = json.load(json_data)
+        # INS application
+        elif 'INS'in application_type:
+            with open('app_config/INS/openimu.json') as json_data:
+                self.imu_properties = json.load(json_data)
+        # Lever application    
+        elif 'StaticL'in application_type:
+            with open('app_config/Leveler/openimu.json') as json_data:
+                self.imu_properties = json.load(json_data)
+
 
     def find_device(self):
         ''' Finds active ports and then autobauds units
