@@ -83,8 +83,10 @@ class OpenIMU:
         #if no json folder, then copy one from githbug phton-openimu master
         # note: sometimes the server raw.githubusercontent.com in amazon cloud will be blocked somehow!
         if not os.path.exists("openimu.json"):
-            print('try to copy openimu.json file from python-openimu/bugfix to local same foler')
-            url = 'https://raw.githubusercontent.com/Aceinna/python-openimu/master/openimu.json' 
+            print('try to copy openimu.json file from python-openimu/bugfix to local same folder')
+            # url = 'https://raw.githubusercontent.com/Aceinna/python-openimu/master/openimu.json'
+            url = 'https://navview.blob.core.windows.net/openimujson/openimu.json'
+
             try:
                 r = requests.get(url) 
                 with open("openimu.json", "wb") as code:
