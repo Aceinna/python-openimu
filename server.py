@@ -190,10 +190,6 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                         self.write_message(
                             json.dumps({"messageType": "magAction", "data": {"status": "complete", "value": storedValue}}))
 
-                        # imu.magneticAlignCmd('save')
-                        # time.sleep(1)
-                        # data = imu.openimu_get_all_param()
-                        # self.write_message(json.dumps({"messageType": "magAction", "data": {"status": "complete","value":data}}))
                         return
 
 

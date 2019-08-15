@@ -312,9 +312,9 @@ class OpenIMU:
         self.write(C.bytes)
 
         if action == 'stored':
-            print ('here')
             time.sleep(1)
-            returnedStatus = self.ser.readline().strip()
+            returnedStatus = self.read(10000)
+
             decodedStatus = binascii.hexlify(returnedStatus)
             return self.decodeOutput(decodedStatus)
 
@@ -339,6 +339,8 @@ class OpenIMU:
         # output['hardIronY'] = self.hardIronCal(value[14:18], 'axis')
         # output['SoftIronRatio'] = self.hardIronCal(value[18:22], 'ratio')
         # output['SoftIronAngle'] = self.hardIronCal(value[22:26], 'angle')
+
+
 
         hard_iron_x['value'] = self.hardIronCal(value[26:30], 'axis')
         hard_iron_x['name'] = 'Hard Iron X'
@@ -366,6 +368,7 @@ class OpenIMU:
 
     def hardIronCal(self, value, type):
         decodedValue = int(value, 16)
+        print (decodedValue)
         if type == 'axis':
             if decodedValue > 2 ** 15:
                 newDecodedValue = (decodedValue - 2 ** 16)
