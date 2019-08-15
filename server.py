@@ -13,7 +13,7 @@ import global_vars as gl
 
 
 # note: version string update should follow the updating rule
-server_version = '1.1.0'
+server_version = '1.0.0'
 
 callback_rate = 50
 class WSHandler(tornado.websocket.WebSocketHandler):
