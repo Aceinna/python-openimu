@@ -54,8 +54,7 @@ import requests
 import binascii
 import json
 import global_vars as gl
-
-
+ 
 
 class OpenIMU:
     def __init__(self, ws=False):
@@ -102,12 +101,12 @@ class OpenIMU:
         if not os.path.exists('app_config'):
             print('downloading config json files from github, please waiting for a while')
             os.makedirs('app_config')
-            for app_name in gl.get_app_names:
+            for app_name in gl.get_app_names():
                 os.makedirs('app_config'+ '/' + app_name)
             i = 0
-            for url in gl.get_app_urls:
+            for url in gl.get_app_urls():
+                filepath = 'app_config' + '/' + gl.get_app_names()[i] + '/' + 'openimu.json'
                 i= i+1
-                filepath = 'app_config' + '/' + app_names[i] + '/' + 'openimu.json'
                 try:
                     r = requests.get(url) 
                     with open(filepath, "wb") as code:
@@ -115,7 +114,7 @@ class OpenIMU:
                 except Exception as e:
                     print(e) 
         else:
-            print('load basic config json file from local folder')
+            print('load basic config json locally')
 
         # Load the basic openimu.json(IMU application)
         with open('app_config/IMU/openimu.json') as json_data:

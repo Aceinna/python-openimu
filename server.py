@@ -54,23 +54,23 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             else:
                 fileName = ''
 
-            if not os.path.exists('app_config'):
-                print('downloading config json files from github, please waiting for a while')
-                os.makedirs('app_config')
-                for app_name in gl.get_app_names:
-                    os.makedirs('app_config'+ '/' + app_name)
-                i = 0
-                for url in gl.get_app_urls:
-                    i= i+1
-                    filepath = 'app_config' + '/' + app_names[i] + '/' + 'openimu.json'
-                    try:
-                        r = requests.get(url) 
-                        with open(filepath, "wb") as code:
-                            code.write(r.content)     
-                    except Exception as e:
-                        print(e) 
-            else:
-                print('load config json files from local folder')
+            # if not os.path.exists('app_config'):
+            #     print('downloading config json files from github, please waiting for a while')
+            #     os.makedirs('app_config')
+            #     for app_name in gl.get_app_names:
+            #         os.makedirs('app_config'+ '/' + app_name)
+            #     i = 0
+            #     for url in gl.get_app_urls:
+            #         i= i+1
+            #         filepath = 'app_config' + '/' + app_names[i] + '/' + 'openimu.json'
+            #         try:
+            #             r = requests.get(url) 
+            #             with open(filepath, "wb") as code:
+            #                 code.write(r.content)     
+            #         except Exception as e:
+            #             print(e) 
+            # else:
+            #     print('load config json files locally')
 
             # Load the basic openimu.json(IMU application)
             with open('app_config/IMU/openimu.json') as json_data:
