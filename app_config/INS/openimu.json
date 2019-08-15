@@ -21,7 +21,8 @@
 		{ "paramId": 19, "category": "Advanced","paramType": "input", "type": "double", "name": "point of interest z", "argument": "poi_z", "value_range":[-1,1],"value_accuracy":6,"options": [-10, 0, 10] }
 	],
 	"userMessages": {
-		"inputPackets": [{
+		"inputPackets": [
+			{
 				"name": "pG",
 				"description": "Get device serial number & factory ID",
 				"inputPayload": {},
@@ -669,7 +670,18 @@
 					}
 				],
 				"graphs": [
-                    {
+					{
+						"name": "Geo Map",
+						"renderType":"map",
+						"fields":[
+							{ "name":"lat" , "display": "Latitude" },
+							{ "name":"lon" , "display": "Longitude" }
+						],
+						"options":{
+							"hasTrajectory":false
+						}     
+					},
+					{
 						"name": "Euler Angles (Roll and Pitch)",
 						"units": "deg",
 						"xAxis": "Time (s)",
