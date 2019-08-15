@@ -104,7 +104,6 @@ class OpenIMU:
             os.makedirs('app_config')
             for app_name in gl.get_app_names:
                 os.makedirs('app_config'+ '/' + app_name)
-            print('downloading config json files from github, please waiting for a while')
             i = 0
             for url in gl.get_app_urls:
                 i= i+1
@@ -116,44 +115,11 @@ class OpenIMU:
                 except Exception as e:
                     print(e) 
         else:
-            print('load config json files from local folder')
+            print('load basic config json file from local folder')
 
         # Load the basic openimu.json(IMU application)
         with open('app_config/IMU/openimu.json') as json_data:
             self.imu_properties = json.load(json_data)
-
-        # FIXME: get app id will call two times, or there will be None return
-        apptyp = self.openimu_get_user_app_id()
-        time.sleep(1)
-        apptyp = self.openimu_get_user_app_id()
-        application_type = bytes.decode(apptyp) 
-        
-        # Compass application
-        if 'Compass'in application_type:
-            with open('app_config/Compass/openimu.json') as json_data:
-                self.imu_properties = json.load(json_data)
-        # VG_AHRS application
-        elif 'VG_AHRS' in application_type:
-            with open('app_config/VG_AHRS/openimu.json') as json_data:
-                self.imu_properties = json.load(json_data)
-        # Framework application
-        elif 'OpenIMU'in application_type:
-            with open('app_config/OpenIMU/openimu.json') as json_data:
-                self.imu_properties = json.load(json_data)
-        # IMU application
-        elif 'IMU'in application_type and not 'OpenIMU'in application_type:
-            # with open('app_config/IMU/openimu.json') as json_data:
-            with open('app_config/IMU/openimu.json') as json_data:
-                self.imu_properties = json.load(json_data)
-        # INS application
-        elif 'INS'in application_type:
-            with open('app_config/INS/openimu.json') as json_data:
-                self.imu_properties = json.load(json_data)
-        # Lever application    
-        elif 'StaticL'in application_type:
-            with open('app_config/Leveler/openimu.json') as json_data:
-                self.imu_properties = json.load(json_data)
-
 
     def find_device(self):
         ''' Finds active ports and then autobauds units
@@ -351,7 +317,6 @@ class OpenIMU:
             time.sleep(1)
             returnedStatus = self.ser.readline().strip()
             decodedStatus = binascii.hexlify(returnedStatus)
-
             return self.decodeOutput(decodedStatus)
 
         if action == 'status':
@@ -401,9 +366,7 @@ class OpenIMU:
         return output
 
     def hardIronCal(self, value, type):
-
         decodedValue = int(value, 16)
-
         if type == 'axis':
             if decodedValue > 2 ** 15:
                 newDecodedValue = (decodedValue - 2 ** 16)
@@ -452,7 +415,6 @@ class OpenIMU:
         self.write(C.bytes)        
         #time.sleep(0.05)
         return self.openimu_get_packet('gV')
-
 
     def connect(self):
         '''Continous data collection loop to get and process data packets
