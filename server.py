@@ -29,7 +29,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
     def detect_status(self):        
         if not imu.read(200):
             self.write_message(json.dumps({ "messageType": "queryResponse","data": {"packetType": "DeviceStatus","packet": { "returnStatus":1}}}))
-                      
+
     def send_data(self):
         if not imu.device_id:            
             self.write_message(json.dumps({ "messageType": "queryResponse","data": {"packetType": "DeviceStatus","packet": { "returnStatus":1}}}))
@@ -37,13 +37,11 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         if not imu.paused:
             d = imu.get_latest()
             self.write_message(json.dumps({ 'messageType' : 'event',  'data' : { 'newOutput' : d }}))               
-                   
         else:
             return False
 
     def on_message(self, message):
         global imu
-
 
         message = json.loads(message)
         # Except for a few exceptions stop the automatic message transmission if a message is received
@@ -56,17 +54,11 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             else:
                 fileName = ''
 
-            # Load the basic openimu.json, FIXME: should be delete and left the app config json files only and samplify
-            with open('openimu.json') as json_data:
-                imu.imu_properties = json.load(json_data)
-            
-            application_type = bytes.decode(imu.openimu_get_user_app_id())  
             if not os.path.exists('app_config'):
                 print('downloading config json files from github, please waiting for a while')
                 os.makedirs('app_config')
                 for app_name in gl.get_app_names:
                     os.makedirs('app_config'+ '/' + app_name)
-                print('downloading config json files from github, please waiting for a while')
                 i = 0
                 for url in gl.get_app_urls:
                     i= i+1
@@ -80,14 +72,17 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             else:
                 print('load config json files from local folder')
 
+            # Load the basic openimu.json(IMU application)
+            with open('app_config/IMU/openimu.json') as json_data:
+                imu.imu_properties = json.load(json_data)
+            application_type = bytes.decode(imu.openimu_get_user_app_id())  
+
             # load application type from firmware 
             try:
                 if imu.paused == 1 and not imu.openimu_get_user_app_id() == None:                                      
-                    # change divide_list[3]['options'] based on FW version: VG-AHRS application
                     # Compass application
                     if 'Compass'in application_type:
                         with open('app_config/Compass/openimu.json') as json_data:
-                        # with open('openimu.json') as json_data:
                             imu.imu_properties = json.load(json_data)
                         imu.imu_properties['userConfiguration'][3]['options'] = ['z1','s1','c1']
                     # VG_AHRS application
@@ -103,7 +98,6 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                     # IMU application
                     elif 'IMU'in application_type and not 'OpenIMU'in application_type:
                         with open('app_config/IMU/openimu.json') as json_data:
-                        # with open('openimu.json') as json_data:
                             imu.imu_properties = json.load(json_data)
                             time.sleep(1)
                         imu.imu_properties['userConfiguration'][3]['options'] = ['z1','s1']

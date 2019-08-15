@@ -80,23 +80,24 @@ class OpenIMU:
         if not os.path.isdir("data"):
             print('creat data folder for store measure data in future')
             os.makedirs("data")
-        #if no json folder, then copy one from githbug phton-openimu master
-        # note: sometimes the server raw.githubusercontent.com in amazon cloud will be blocked somehow!
-        if not os.path.exists("openimu.json"):
-            print('try to copy openimu.json file from python-openimu/bugfix to local same folder')
-            # url = 'https://raw.githubusercontent.com/Aceinna/python-openimu/master/openimu.json'
-            url = 'https://navview.blob.core.windows.net/openimujson/openimu.json'
 
-            try:
-                r = requests.get(url) 
-                with open("openimu.json", "wb") as code:
-                    code.write(r.content)     
-            except Exception as e:
-                print(e)       
+        # #if no json folder, then copy one from githbug phton-openimu master
+        # # note: sometimes the server raw.githubusercontent.com in amazon cloud will be blocked somehow!
+        # if not os.path.exists("openimu.json"):
+        #     print('try to copy openimu.json file from python-openimu/bugfix to local same folder')
+        #     # url = 'https://raw.githubusercontent.com/Aceinna/python-openimu/master/openimu.json'
+        #     url = 'https://navview.blob.core.windows.net/openimujson/openimu.json'
+
+        #     try:
+        #         r = requests.get(url) 
+        #         with open("openimu.json", "wb") as code:
+        #             code.write(r.content)     
+        #     except Exception as e:
+        #         print(e)       
         
         # Load the basic openimu.json, FIXME: should be delete and left the app config json files only
-        with open('openimu.json') as json_data:
-            self.imu_properties = json.load(json_data)  
+        # with open('openimu.json') as json_data:
+        #     self.imu_properties = json.load(json_data)  
             
         if not os.path.exists('app_config'):
             print('downloading config json files from github, please waiting for a while')
@@ -117,7 +118,11 @@ class OpenIMU:
         else:
             print('load config json files from local folder')
 
-        # FIXME: get app id should call two times, or there will be None return
+        # Load the basic openimu.json(IMU application)
+        with open('app_config/IMU/openimu.json') as json_data:
+            self.imu_properties = json.load(json_data)
+
+        # FIXME: get app id will call two times, or there will be None return
         apptyp = self.openimu_get_user_app_id()
         time.sleep(1)
         apptyp = self.openimu_get_user_app_id()
@@ -138,7 +143,7 @@ class OpenIMU:
         # IMU application
         elif 'IMU'in application_type and not 'OpenIMU'in application_type:
             # with open('app_config/IMU/openimu.json') as json_data:
-            with open('openimu.json') as json_data:
+            with open('app_config/IMU/openimu.json') as json_data:
                 self.imu_properties = json.load(json_data)
         # INS application
         elif 'INS'in application_type:
