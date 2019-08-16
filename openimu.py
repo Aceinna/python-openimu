@@ -184,7 +184,7 @@ class OpenIMU:
                                 # self.disconnect()
                             
                     else:   
-                        if e.message.find('Error') >= 0:
+                        if e.args[0].find('Error') >= 0:
                             try:
                                 if s:
                                     s.close()
@@ -210,6 +210,7 @@ class OpenIMU:
             for x in self.imu_properties['userConfiguration']:
                 if x['paramId'] == 2:
                     bandListFromOptions = x['options']
+                    break
             for baud in bandListFromOptions:
                 if self.ser:
                     self.ser.baudrate = baud
@@ -247,7 +248,7 @@ class OpenIMU:
                         print('autoconnected')
                         return True
                     else:
-                        print('no port')
+                        print('no port available in record connection.jsop')
                         return False
                 else:
                     return False
