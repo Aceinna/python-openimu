@@ -75,7 +75,8 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             # Load the basic openimu.json(IMU application)
             with open('app_config/IMU/openimu.json') as json_data:
                 imu.imu_properties = json.load(json_data)
-            application_type = bytes.decode(imu.openimu_get_user_app_id())  
+            # application_type = bytes.decode(imu.openimu_get_user_app_id())  
+            application_type = imu.device_id
 
             # load application type from firmware 
             try:
