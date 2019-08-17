@@ -109,13 +109,14 @@ class OpenIMU:
                 i= i+1
                 try:
                     r = requests.get(url) 
+                    # r = requests.session().get(url)
                     with open(filepath, "wb") as code:
                         code.write(r.content)     
                 except Exception as e:
                     print(e) 
-        else:
-            print('load basic config json locally')
-
+        # else:
+        #     print('load basic config json locally')
+        
         # Load the basic openimu.json(IMU application)
         with open('app_config/IMU/openimu.json') as json_data:
             self.imu_properties = json.load(json_data)
@@ -237,10 +238,16 @@ class OpenIMU:
 
     def try_last_port(self):
         connection = None
+        portList = list(serial.tools.list_ports.comports())
+        ports = [ p.device for p in portList]
+
         try:
             with open('connection.json') as json_data:
                 connection = json.load(json_data)
             if connection:
+                if not connection['port'] in ports:
+                    return False
+                print("try port saved in connection.json last time")
                 self.open(port=connection['port'], baud=connection['baud'])
                 if self.ser:
                     self.device_id = self.openimu_get_device_id()
@@ -509,7 +516,7 @@ class OpenIMU:
         try:
             self.ser = serial.Serial(port, baud, timeout = 0.005)
         except Exception as e:
-            print('serial port open exception' + port)
+            print('serial port open exception: ' + port)
             self.ser = False
 
     def close(self):

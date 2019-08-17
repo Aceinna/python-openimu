@@ -239,7 +239,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
  
 if __name__ == "__main__":
     # Create IMU
-    print(server_version)
+    print("server_versio:",server_version)
     try: 
         imu.find_device()    
         # Set up Websocket server on Port 8000
