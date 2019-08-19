@@ -185,7 +185,7 @@ class OpenIMU:
                                 # self.disconnect()
                             
                     else:   
-                        if e.args[0].find('Error') >= 0:
+                        if e.message.find('Error') >= 0:
                             try:
                                 if s:
                                     s.close()
@@ -242,12 +242,12 @@ class OpenIMU:
         ports = [ p.device for p in portList]
 
         try:
-            with open('connection.json') as json_data:
+            with open('app_config/connection.json') as json_data:
                 connection = json.load(json_data)
             if connection:
                 if not connection['port'] in ports:
                     return False
-                print("try port saved in connection.json last time")
+                print("try port saved in app_config/connection.json last time")
                 self.open(port=connection['port'], baud=connection['baud'])
                 if self.ser:
                     self.device_id = self.openimu_get_device_id()
@@ -255,7 +255,7 @@ class OpenIMU:
                         print('autoconnected')
                         return True
                     else:
-                        print('no port available in last recorded connection.json')
+                        print('no port available in last recorded app_config/connection.json')
                         return False
                 else:
                     return False
@@ -264,7 +264,7 @@ class OpenIMU:
 
     def save_last_port(self):
         connection = { "port" : self.ser.port, "baud" : self.ser.baudrate }
-        with open('connection.json', 'w') as outfile:
+        with open('app_config/connection.json', 'w') as outfile:
             json.dump(connection, outfile)
     
     def get_latest(self):
