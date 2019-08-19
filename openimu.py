@@ -255,7 +255,7 @@ class OpenIMU:
                         print('autoconnected')
                         return True
                     else:
-                        print('no port available in record connection.jsop')
+                        print('no port available in last recorded connection.json')
                         return False
                 else:
                     return False
