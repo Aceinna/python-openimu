@@ -485,6 +485,7 @@ class OpenIMU:
             self.data = self.openimu_unpack_output_packet(output_packet, payload)
             if self.logging == 1 and self.logger is not None:
                 self.logger.log(self, self.data)
+                # print(self.data['lat'])
               
         elif input_packet != None:
             
