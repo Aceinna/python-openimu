@@ -13,7 +13,7 @@ import global_vars as gl
 
 
 # note: version string update should follow the updating rule
-server_version = '1.0.0'
+server_version = '1.1.0'
 
 callback_rate = 50
 class WSHandler(tornado.websocket.WebSocketHandler):
@@ -134,7 +134,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                 data = imu.openimu_update_param(message['data']['uP']['paramId'], message['data']['uP']['value'])
                 self.write_message(json.dumps({ "messageType" : "requestAction", "data" : { "uP" : data }}))
             elif list(message['data'].keys())[0] == 'sC':
-                imu.openimu_save_config()                               
+                imu.openimu_save_config()
                 time.sleep(0.5)
                 self.write_message(json.dumps({ "messageType" : "requestAction", "data" : { "sC" : {} }}))
             # added by dave, for connect page to show version
