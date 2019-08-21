@@ -348,8 +348,6 @@ class OpenIMU:
         # output['SoftIronRatio'] = self.hardIronCal(value[18:22], 'ratio')
         # output['SoftIronAngle'] = self.hardIronCal(value[22:26], 'angle')
 
-
-
         hard_iron_x['value'] = self.hardIronCal(value[26:30], 'axis')
         hard_iron_x['name'] = 'Hard Iron X'
         hard_iron_x['argument'] = 'hard_iron_x'
@@ -425,6 +423,12 @@ class OpenIMU:
         self.write(C.bytes)        
         #time.sleep(0.05)
         return self.openimu_get_packet('gV')
+
+    def openimu_version_compare(self, fw_version, js_version):
+        if fw_version == js_version:
+            print('fw & json version match')
+        else:
+            print('fw & json version mismatch')
 
     def connect(self):
         '''Continous data collection loop to get and process data packets
