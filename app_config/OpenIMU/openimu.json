@@ -106,22 +106,22 @@
 				"payload": [{
 						"type": "uint32",
 						"name": "time",
-						"unit": "s"
+						"unit": "ms"
 					},
 					{
 						"type": "float",
 						"name": "xAccel",
-						"unit": "G"
+						"unit": "m/s/s"
 					},
 					{
 						"type": "float",
 						"name": "yAccel",
-						"unit": "G"
+						"unit": "m/s/s"
 					},
 					{
 						"type": "float",
 						"name": "zAccel",
-						"unit": "G"
+						"unit": "m/s/s"
 					},
 					{
 						"type": "float",

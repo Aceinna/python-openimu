@@ -25,7 +25,8 @@
 		{ "paramId": 19, "category": "Advanced","paramType": "input", "type": "double", "name": "point of interest z", "argument": "poi_z", "value_range":[-1,1],"value_accuracy":6,"options": [-10, 0, 10] }
 	],
 	"userMessages": {
-		"inputPackets": [{
+		"inputPackets": [
+			{
 				"name": "pG",
 				"description": "Get device serial number & factory ID",
 				"inputPayload": {},
@@ -112,121 +113,6 @@
 				"payload": [{
 						"type": "uint32",
 						"name": "time",
-						"unit": "s"
-					},
-					{
-						"type": "float",
-						"name": "xAccel",
-						"unit": "G"
-					},
-					{
-						"type": "float",
-						"name": "yAccel",
-						"unit": "G"
-					},
-					{
-						"type": "float",
-						"name": "zAccel",
-						"unit": "G"
-					},
-					{
-						"type": "float",
-						"name": "xRate",
-						"unit": "deg/s"
-					},
-					{
-						"type": "float",
-						"name": "yRate",
-						"unit": "deg/s"
-					},
-					{
-						"type": "float",
-						"name": "zRate",
-						"unit": "deg/s"
-					},
-					{
-						"type": "float",
-						"name": "xMag",
-						"unit": "Gauss"
-					},
-					{
-						"type": "float",
-						"name": "yMag",
-						"unit": "Gauss"
-					},
-					{
-						"type": "float",
-						"name": "zMag",
-						"unit": "Gauss"
-					}
-				],
-				"graphs": [{
-						"name": "Acceleration",
-						"units": "m/s/s",
-						"xAxis": "Time (s)",
-						"yAxes": ["xAccel", "yAccel", "zAccel"],
-						"colors": ["#FF0000", "#00FF00", "#0000FF"],
-						"yMax": 80
-					},
-					{
-						"name": "Angular Rate",
-						"units": "deg/s",
-						"xAxis": "Time (s)",
-						"yAxes": ["xRate", "yRate", "zRate"],
-						"colors": ["#FF0000", "#00FF00", "#0000FF"],
-						"yMax": 400
-					}
-				]
-			},
-			{
-				"name": "z2",
-				"description": "Arbitrary type Values",
-				"payload": [{
-						"type": "uint32",
-						"name": "time",
-						"unit": "s"
-					},
-					{
-						"type": "uchar",
-						"name": "c",
-						"unit": ""
-					},
-					{
-						"type": "int16",
-						"name": "s",
-						"unit": ""
-					},
-					{
-						"type": "int32",
-						"name": "i",
-						"unit": ""
-					},
-					{
-						"type": "int64",
-						"name": "ll",
-						"unit": ""
-					},
-					{
-						"type": "double",
-						"name": "d",
-						"unit": ""
-					}
-				],
-				"graphs": [{
-					"name": "Angular Rate",
-					"units": "deg/s",
-					"xAxis": "Time (s)",
-					"yAxes": ["xRate", "yRate", "zRate"],
-					"colors": ["#FF0000", "#00FF00", "#0000FF"],
-					"yMax": 400
-				}]
-			},
-			{
-				"name": "z3",
-				"description": "Scaled 6-Axis IMU Values",
-				"payload": [{
-						"type": "int",
-						"name": "timestamp",
 						"unit": "ms"
 					},
 					{
@@ -247,290 +133,32 @@
 					{
 						"type": "float",
 						"name": "xRate",
-						"unit": "rad/s"
+						"unit": "deg/s"
 					},
 					{
 						"type": "float",
 						"name": "yRate",
-						"unit": "rad/s"
+						"unit": "deg/s"
 					},
 					{
 						"type": "float",
 						"name": "zRate",
-						"unit": "rad/s"
-					}
-				],
-				"graphs": [{
-					"name": "Acceleration",
-					"units": "m/s/s",
-					"xAxis": "timestamp (ms)",
-					"yAxes": ["xRate", "yRate", "zRate"],
-					"colors": ["#FF0000", "#00FF00", "#0000FF"],
-					"yMax": 100
-				}]
-			},
-			{
-				"name": "a1",
-				"description": "VG Output Message",
-				"payload": [{
-						"type": "uint32",
-						"name": "timeITOW",
-						"unit": "msec"
-					},
-					{
-						"type": "double",
-						"name": "time",
-						"unit": "s"
-					},
-					{
-						"type": "float",
-						"name": "roll",
-						"unit": "rad"
-					},
-					{
-						"type": "float",
-						"name": "pitch",
-						"unit": "rad"
-					},
-					{
-						"type": "float",
-						"name": "xRate",
-						"unit": "rad/s"
-					},
-					{
-						"type": "float",
-						"name": "yRate",
-						"unit": "rad/s"
-					},
-					{
-						"type": "float",
-						"name": "zRate",
-						"unit": "rad/s"
-					},
-					{
-						"type": "float",
-						"name": "xAccel",
-						"unit": "m/s/s"
-					},
-					{
-						"type": "float",
-						"name": "yAccel",
-						"unit": "m/s/s"
-					},
-					{
-						"type": "float",
-						"name": "zAccel",
-						"unit": "m/s/s"
-					},
-					{
-						"type": "uint8",
-						"name": "opMode",
-						"unit": "unitless"
-					},
-					{
-						"type": "uint8",
-						"name": "linAccSw",
-						"unit": "unitless"
-					},
-					{
-						"type": "uint8",
-						"name": "turnSw",
-						"unit": "unitless"
-					}
-				],
-				"graphs": [{
-						"name": "Acceleration",
-						"units": "m/s/s",
-						"xAxis": "Time (s)",
-						"yAxes": ["xAccel", "yAccel", "zAccel"],
-						"colors": ["#FF0000", "#00FF00", "#0000FF"],
-						"yMax": 80
-					},
-					{
-						"name": "Angular Rate",
-						"units": "deg",
-						"xAxis": "Time (s)",
-						"yAxes": ["xRate", "yRate", "zRate"],
-						"colors": ["#FF0000", "#00FF00", "#0000FF"],
-						"yMax": 400
-					},
-					{
-						"name": "Attitude (Roll and Pitch)",
-						"units": "deg",
-						"xAxis": "Time (s)",
-						"yAxes": ["roll", "pitch"],
-						"colors": ["#FF0000", "#00FF00"],
-						"yMax": 90
-					},
-					{
-						"name": "Operational Flags",
-						"units": "N/A",
-						"xAxis": "Time (s)",
-						"yAxes": ["opMode", "linAccSw", "turnSw"],
-						"colors": ["#FF0000", "#00FF00", "#0000FF"],
-						"yMax": 5
-					}
-				]
-			},
-			{
-				"name": "a2",
-				"description": "VG Output Message",
-				"payload": [{
-						"type": "uint32",
-						"name": "timeITOW",
-						"unit": "msec"
-					},
-					{
-						"type": "double",
-						"name": "time",
-						"unit": "s"
-					},
-					{
-						"type": "float",
-						"name": "roll",
-						"unit": "rad"
-					},
-					{
-						"type": "float",
-						"name": "pitch",
-						"unit": "rad"
-					},
-					{
-						"type": "float",
-						"name": "heading",
-						"unit": "rad"
-					},
-					{
-						"type": "float",
-						"name": "xRate",
-						"unit": "rad/s"
-					},
-					{
-						"type": "float",
-						"name": "yRate",
-						"unit": "rad/s"
-					},
-					{
-						"type": "float",
-						"name": "zRate",
-						"unit": "rad/s"
-					},
-					{
-						"type": "float",
-						"name": "xAccel",
-						"unit": "m/s/s"
-					},
-					{
-						"type": "float",
-						"name": "yAccel",
-						"unit": "m/s/s"
-					},
-					{
-						"type": "float",
-						"name": "zAccel",
-						"unit": "m/s/s"
-					}
-				],
-				"graphs": [{
-						"name": "Acceleration",
-						"units": "m/s/s",
-						"xAxis": "Time (s)",
-						"yAxes": ["xAccel", "yAccel", "zAccel"],
-						"colors": ["#FF0000", "#00FF00", "#0000FF"],
-						"yMax": 80
-					},
-					{
-						"name": "Angular Rate",
-						"units": "deg",
-						"xAxis": "Time (s)",
-						"yAxes": ["xRate", "yRate", "zRate"],
-						"colors": ["#FF0000", "#00FF00", "#0000FF"],
-						"yMax": 400
-					},
-					{
-						"name": "Attitude (Roll and Pitch)",
-						"units": "deg",
-						"xAxis": "Time (s)",
-						"yAxes": ["roll", "pitch"],
-						"colors": ["#FF0000", "#00FF00"],
-						"yMax": 90
-					},
-					{
-						"name": "Heading",
-						"units": "deg",
-						"xAxis": "Time (s)",
-						"yAxes": ["heading"],
-						"colors": ["#FF0000"],
-						"yMax": 200
-					},
-					{
-						"name": "Attitude and DG Indicators",
-						"units": "deg",
-						"renderType": "indicator",
-						"xAxis": "Time (s)",
-						"yAxes": ["roll", "pitch","heading"],
-						"colors": ["#FF0000"],
-						"yMax": 200
-					}
-				]
-			},
-			{
-				"name": "c1",
-				"description": "Leveler Output Message",
-				"payload": [{
-						"type": "uint32",
-						"name": "timeITOW",
-						"unit": "msec"
-					},
-					{
-						"type": "double",
-						"name": "time",
-						"unit": "s"
-					},
-					{
-						"type": "float",
-						"name": "roll",
-						"unit": "rad"
-					},
-					{
-						"type": "float",
-						"name": "pitch",
-						"unit": "rad"
-					},
-					{
-						"type": "float",
-						"name": "heading",
-						"unit": "rad"
-					},
-					{
-						"type": "float",
-						"name": "xAccel",
-						"unit": "m/s/s"
-					},
-					{
-						"type": "float",
-						"name": "yAccel",
-						"unit": "m/s/s"
-					},
-					{
-						"type": "float",
-						"name": "zAccel",
-						"unit": "m/s/s"
+						"unit": "deg/s"
 					},
 					{
 						"type": "float",
 						"name": "xMag",
-						"unit": "G"
+						"unit": "Gauss"
 					},
 					{
 						"type": "float",
 						"name": "yMag",
-						"unit": "G"
+						"unit": "Gauss"
 					},
 					{
 						"type": "float",
 						"name": "zMag",
-						"unit": "G"
+						"unit": "Gauss"
 					}
 				],
 				"graphs": [{
@@ -542,38 +170,22 @@
 						"yMax": 80
 					},
 					{
-						"name": "Attitude (Roll and Pitch)",
-						"units": "deg",
+						"name": "Angular Rate",
+						"units": "deg/s",
 						"xAxis": "Time (s)",
-						"yAxes": ["roll", "pitch"],
-						"colors": ["#FF0000", "#00FF00"],
-						"yMax": 90
-					},
-					{
-						"name": "Heading",
-						"units": "deg",
-						"xAxis": "Time (s)",
-						"yAxes": ["heading"],
-						"colors": ["#FF0000"],
-						"yMax": 200
-					},
-					{
-						"name": "Magnetic-Field",
-						"units": "G",
-						"xAxis": "Time (s)",
-						"yAxes": ["xMag", "yMag", "zMag"],
+						"yAxes": ["xRate", "yRate", "zRate"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
-						"yMax": 10
+						"yMax": 400
 					}
 				]
-			},
+			},			
 			{
 				"name": "l1",
 				"description": "Leveler Output Message",
 				"payload": [{
 						"type": "uint32",
 						"name": "timeITOW",
-						"unit": "msec"
+						"unit": "ms"
 					},
 					{
 						"type": "double",
@@ -583,12 +195,12 @@
 					{
 						"type": "float",
 						"name": "roll",
-						"unit": "rad"
+						"unit": "deg"
 					},
 					{
 						"type": "float",
 						"name": "pitch",
-						"unit": "rad"
+						"unit": "deg"
 					},
 					{
 						"type": "float",
@@ -623,417 +235,14 @@
 						"yMax": 20
 					}
 				]
-			},
-			{
-				"name": "e1",
-				"description": "VG/AHRS Output Message",
-				"payload": [{
-						"type": "uint32",
-						"name": "timeCntr",
-						"unit": "msec"
-					},
-					{
-						"type": "double",
-						"name": "time",
-						"unit": "s"
-					},
-					{
-						"type": "float",
-						"name": "roll",
-						"unit": "rad"
-					},
-					{
-						"type": "float",
-						"name": "pitch",
-						"unit": "rad"
-					},
-					{
-						"type": "float",
-						"name": "heading",
-						"unit": "rad"
-					},
-					{
-						"type": "float",
-						"name": "xAccel",
-						"unit": "g"
-					},
-					{
-						"type": "float",
-						"name": "yAccel",
-						"unit": "g"
-					},
-					{
-						"type": "float",
-						"name": "zAccel",
-						"unit": "g"
-					},
-					{
-						"type": "float",
-						"name": "xRate",
-						"unit": "deg/s"
-					},
-					{
-						"type": "float",
-						"name": "yRate",
-						"unit": "deg/s"
-					},
-					{
-						"type": "float",
-						"name": "zRate",
-						"unit": "deg/s"
-					},
-					{
-						"type": "float",
-						"name": "xRateBias",
-						"unit": "deg/s"
-					},
-					{
-						"type": "float",
-						"name": "yRateBias",
-						"unit": "deg/s"
-					},
-					{
-						"type": "float",
-						"name": "zRateBias",
-						"unit": "deg/s"
-					},
-					{
-						"type": "float",
-						"name": "xMag",
-						"unit": "G"
-					},
-					{
-						"type": "float",
-						"name": "yMag",
-						"unit": "G"
-					},
-					{
-						"type": "float",
-						"name": "zMag",
-						"unit": "G"
-					},
-					{
-						"type": "uint8",
-						"name": "opMode",
-						"unit": "unitless"
-					},
-					{
-						"type": "uint8",
-						"name": "linAccSw",
-						"unit": "unitless"
-					},
-					{
-						"type": "uint8",
-						"name": "turnSw",
-						"unit": "unitless"
-					}
-				],
-				"graphs": [
-                    {
-						"name": "Euler Angles (Roll and Pitch)",
-						"units": "deg",
-						"xAxis": "Time (s)",
-						"yAxes": ["roll", "pitch"],
-						"colors": ["#FF0000", "#00FF00"],
-						"yMax": 90
-					},
-                    {
-						"name": "Euler Angles (Heading)",
-						"units": "deg",
-						"xAxis": "Time (s)",
-						"yAxes": ["heading"],
-						"colors": ["#FF0000"],
-						"yMax": 190
-				    },
-                    {
-						"name": "Acceleration",
-						"units": "g",
-						"xAxis": "Time (s)",
-						"yAxes": ["xAccel", "yAccel", "zAccel"],
-						"colors": ["#FF0000", "#00FF00", "#0000FF"],
-						"yMax": 5
-					},
-					{
-						"name": "Angular-Rate",
-						"units": "deg/s",
-						"xAxis": "Time (s)",
-						"yAxes": ["xRate", "yRate", "zRate"],
-						"colors": ["#FF0000", "#00FF00", "#0000FF"],
-						"yMax": 200
-					},
-					{
-						"name": "Angular-Rate Bias",
-						"units": "deg/s",
-						"xAxis": "Time (s)",
-						"yAxes": ["xRateBias", "yRateBias", "zRateBias"],
-						"colors": ["#FF0000", "#00FF00", "#0000FF"],
-						"yMax": 200
-					},
-					{
-						"name": "Magnetic-Field",
-						"units": "G",
-						"xAxis": "Time (s)",
-						"yAxes": ["xMag", "yMag", "zMag"],
-						"colors": ["#FF0000", "#00FF00", "#0000FF"],
-						"yMax": 20
-					},
-					{
-						"name": "Operational Flags",
-						"units": "unitless",
-						"xAxis": "Time (s)",
-						"yAxes": ["opMode", "linAccSw", "turnSw"],
-						"colors": ["#FF0000", "#00FF00", "#0000FF"],
-						"yMax": 5
-					}
-				]
-			},
-			{
-				"name": "e2",
-				"description": "INS Output Message",
-				"payload": [{
-						"type": "uint32",
-						"name": "timeCntr",
-						"unit": "msec"
-					},
-					{
-						"type": "double",
-						"name": "time",
-						"unit": "s"
-					},
-					{
-						"type": "float",
-						"name": "roll",
-						"unit": "rad"
-					},
-					{
-						"type": "float",
-						"name": "pitch",
-						"unit": "rad"
-					},
-					{
-						"type": "float",
-						"name": "heading",
-						"unit": "rad"
-					},
-					{
-						"type": "float",
-						"name": "xAccel",
-						"unit": "g"
-					},
-					{
-						"type": "float",
-						"name": "yAccel",
-						"unit": "g"
-					},
-					{
-						"type": "float",
-						"name": "zAccel",
-						"unit": "g"
-					},
-					{
-						"type": "float",
-						"name": "xAccelBias",
-						"unit": "g"
-					},
-					{
-						"type": "float",
-						"name": "yAccelBias",
-						"unit": "g"
-					},
-					{
-						"type": "float",
-						"name": "zAccelBias",
-						"unit": "g"
-					},
-					{
-						"type": "float",
-						"name": "xRate",
-						"unit": "deg/s"
-					},
-					{
-						"type": "float",
-						"name": "yRate",
-						"unit": "deg/s"
-					},
-					{
-						"type": "float",
-						"name": "zRate",
-						"unit": "deg/s"
-					},
-					{
-						"type": "float",
-						"name": "xRateBias",
-						"unit": "deg/s"
-					},
-					{
-						"type": "float",
-						"name": "yRateBias",
-						"unit": "deg/s"
-					},
-					{
-						"type": "float",
-						"name": "zRateBias",
-						"unit": "deg/s"
-					},
-					{
-						"type": "float",
-						"name": "velNorth",
-						"unit": "m/s"
-					},
-					{
-						"type": "float",
-						"name": "velEast",
-						"unit": "m/s"
-					},
-					{
-						"type": "float",
-						"name": "velDown",
-						"unit": "m/s"
-					},
-					{
-						"type": "float",
-						"name": "xMag",
-						"unit": "G"
-					},
-					{
-						"type": "float",
-						"name": "yMag",
-						"unit": "G"
-					},
-					{
-						"type": "float",
-						"name": "zMag",
-						"unit": "G"
-					},
-					{
-						"type": "double",
-						"name": "lat",
-						"unit": "deg"
-					},
-					{
-						"type": "double",
-						"name": "lon",
-						"unit": "deg"
-					},
-					{
-						"type": "double",
-						"name": "alt",
-						"unit": "m"
-					},
-					{
-						"type": "uint8",
-						"name": "opMode",
-						"unit": "unitless"
-					},
-					{
-						"type": "uint8",
-						"name": "linAccSw",
-						"unit": "unitless"
-					},
-					{
-						"type": "uint8",
-						"name": "turnSw",
-						"unit": "unitless"
-					}
-				],
-				"graphs": [
-                    {
-						"name": "Euler Angles (Roll and Pitch)",
-						"units": "deg",
-						"xAxis": "Time (s)",
-						"yAxes": ["roll", "pitch"],
-						"colors": ["#FF0000", "#00FF00"],
-						"yMax": 90
-					},
-                    {
-						"name": "Euler Angles (Heading)",
-						"units": "deg",
-						"xAxis": "Time (s)",
-						"yAxes": ["heading"],
-						"colors": ["#FF0000"],
-						"yMax": 190
-                    },
-					{
-						"name": "Acceleration",
-						"units": "g",
-						"xAxis": "Time (s)",
-						"yAxes": ["xAccel", "yAccel", "zAccel"],
-						"colors": ["#FF0000", "#00FF00", "#0000FF"],
-						"yMax": 8
-					},
-					{
-						"name": "Angular-Rate",
-						"units": "deg/s",
-						"xAxis": "Time (s)",
-						"yAxes": ["xRate", "yRate", "zRate"],
-						"colors": ["#FF0000", "#00FF00", "#0000FF"],
-						"yMax": 400
-					},
-					{
-						"name": "Angular-Rate Bias",
-						"units": "deg/s",
-						"xAxis": "Time (s)",
-						"yAxes": ["xRateBias", "yRateBias", "zRateBias"],
-						"colors": ["#FF0000", "#00FF00", "#0000FF"],
-						"yMax": 400
-					},
-					{
-						"name": "Acceleration Bias",
-						"units": "g",
-						"xAxis": "Time (s)",
-						"yAxes": ["xAccelBias", "yAccelBias", "zAccelBias"],
-						"colors": ["#FF0000", "#00FF00", "#0000FF"],
-						"yMax": 8
-					},
-					{
-						"name": "Magnetic-Field",
-						"units": "G",
-						"xAxis": "Time (s)",
-						"yAxes": ["xMag", "yMag", "zMag"],
-						"colors": ["#FF0000", "#00FF00", "#0000FF"],
-						"yMax": 8
-					},
-					{
-						"name": "Latitude/Longitude",
-						"units": "deg",
-						"xAxis": "Time (s)",
-						"yAxes": ["lat", "lon"],
-						"colors": ["#FF0000", "#00FF00"],
-						"yMax": 200
-					},
-					{
-						"name": "Altitude",
-						"units": "m",
-						"xAxis": "Time (s)",
-						"yAxes": ["alt"],
-						"colors": ["#FF0000"],
-						"yMax": 100
-					},
-					{
-						"name": "NED Velocity",
-						"units": "m/s",
-						"xAxis": "Time (s)",
-						"yAxes": ["velNorth", "velEast", "velDown"],
-						"colors": ["#FF0000", "#00FF00", "#0000FF"],
-						"yMax": 100
-					},
-					{
-						"name": "Operational Flags",
-						"units": "unitless",
-						"xAxis": "Time (s)",
-						"yAxes": ["opMode", "linAccSw", "turnSw"],
-						"colors": ["#FF0000", "#00FF00", "#0000FF"],
-						"yMax": 5
-					}
-				]
-			},
+			},			
 			{
 				"name": "s1",
 				"description": "IMU Scaled-Sensor Output Message",
 				"payload": [{
 						"type": "uint32",
 						"name": "timeCntr",
-						"unit": "msec"
+						"unit": "ms"
 					},
 					{
 						"type": "double",
@@ -1073,17 +282,17 @@
 					{
 						"type": "float",
 						"name": "xMag",
-						"unit": "G"
+						"unit": "Gauss"
 					},
 					{
 						"type": "float",
 						"name": "yMag",
-						"unit": "G"
+						"unit": "Gauss"
 					},
 					{
 						"type": "float",
 						"name": "zMag",
-						"unit": "G"
+						"unit": "Gauss"
 					},
 					{
 						"type": "float",
@@ -1109,7 +318,7 @@
 					},
 					{
 						"name": "Magnetic-Field",
-						"units": "G",
+						"units": "Gauss",
 						"xAxis": "Time (s)",
 						"yAxes": ["xMag", "yMag", "zMag"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],

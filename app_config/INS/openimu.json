@@ -87,22 +87,22 @@
 				"payload": [{
 						"type": "uint32",
 						"name": "time",
-						"unit": "s"
+						"unit": "ms"
 					},
 					{
 						"type": "float",
 						"name": "xAccel",
-						"unit": "G"
+						"unit": "m/s/s"
 					},
 					{
 						"type": "float",
 						"name": "yAccel",
-						"unit": "G"
+						"unit": "m/s/s"
 					},
 					{
 						"type": "float",
 						"name": "zAccel",
-						"unit": "G"
+						"unit": "m/s/s"
 					},
 					{
 						"type": "float",
@@ -169,12 +169,12 @@
 					{
 						"type": "float",
 						"name": "roll",
-						"unit": "rad"
+						"unit": "deg"
 					},
 					{
 						"type": "float",
 						"name": "pitch",
-						"unit": "rad"
+						"unit": "deg"
 					},
 					{
 						"type": "float",
@@ -433,17 +433,17 @@
 					{
 						"type": "float",
 						"name": "xMag",
-						"unit": "G"
+						"unit": "m/s/s"
 					},
 					{
 						"type": "float",
 						"name": "yMag",
-						"unit": "G"
+						"unit": "m/s/s"
 					},
 					{
 						"type": "float",
 						"name": "zMag",
-						"unit": "G"
+						"unit": "m/s/s"
 					},
 					{
 						"type": "uint8",
@@ -504,7 +504,7 @@
 					},
 					{
 						"name": "Magnetic-Field",
-						"units": "G",
+						"units": "Gauss",
 						"xAxis": "Time (s)",
 						"yAxes": ["xMag", "yMag", "zMag"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
@@ -731,7 +731,7 @@
 					},
 					{
 						"name": "Magnetic-Field",
-						"units": "G",
+						"units": "Gauss",
 						"xAxis": "Time (s)",
 						"yAxes": ["xMag", "yMag", "zMag"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
@@ -853,7 +853,7 @@
 					},
 					{
 						"name": "Magnetic-Field",
-						"units": "G",
+						"units": "Gauss",
 						"xAxis": "Time (s)",
 						"yAxes": ["xMag", "yMag", "zMag"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],

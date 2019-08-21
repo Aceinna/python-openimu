@@ -446,9 +446,6 @@ class OpenIMU:
         self.paused = 0
         # print("connect,  3333333333333333333333333333333")
         threading.Thread(target=self.start_collection_task).start()
-
-
-
             
     def pause(self):
         ''' Will End the data collection task and thread
@@ -755,7 +752,6 @@ class OpenIMU:
                 self.openimu_get_packet(self.packet_type, True)     # get packet in stream mode
         print('End Collection Task')
         return False  # End Thread
-
 
     def openimu_get_packet(self,packet_type, stream = False):
         if not packet_type:
