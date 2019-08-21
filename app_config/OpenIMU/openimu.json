@@ -1,5 +1,6 @@
 {
-	"name": "OpenIMU300-OpenIMU",
+	"name": "OpenIMU300_OpenIMU",
+	"app_version": "OpenIMU300ZI Framework 1.1.1",
 	"type": "openimu",
 	"description": "9-axis OpenIMU with OpenIMU application",
 	"userConfiguration": [

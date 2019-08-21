@@ -1,5 +1,6 @@
 {
 	"name": "OpenIMU300_VG_AHRS",
+	"app_version": "OpenIMU300ZI VG_AHRS 1.1.1",
 	"type": "openimu",
 	"description": "9-axis OpenIMU with AHRS application",
 	"userConfiguration": [

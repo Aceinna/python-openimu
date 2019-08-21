@@ -1,5 +1,6 @@
 {
 	"name": "OpenIMU300_Leveler",
+	"app_version": "OpenIMU300ZI Leveler 1.1.1",
 	"type": "openimu",
 	"description": "9-axis OpenIMU with triaxial rate, acceleration, and magnetic measurement",
 	"userConfiguration": [
