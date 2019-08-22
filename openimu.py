@@ -333,7 +333,7 @@ class OpenIMU:
             else:
                 decodedStatus = str(binascii.hexlify(returnedStatus), 'utf-8')
 
-            print (decodedStatus)
+            # print (decodedStatus)
             if 'f12e' in decodedStatus:
                 return 1
 
@@ -374,7 +374,7 @@ class OpenIMU:
 
     def hardIronCal(self, value, type):
         decodedValue = int(value, 16)
-        print (decodedValue)
+        # print (decodedValue)
         if type == 'axis':
             if decodedValue > 2 ** 15:
                 newDecodedValue = (decodedValue - 2 ** 16)
@@ -426,7 +426,8 @@ class OpenIMU:
 
     def openimu_version_compare(self, fw_version, js_version):
         if fw_version == js_version:
-            print('fw & json version match')
+            pass
+            # print('fw & json version match')
         else:
             print('fw & json version mismatch')
 
@@ -614,7 +615,7 @@ class OpenIMU:
                 type = parameter['type']
                 name = parameter['name']
                 value = self.openimu_unpack_one(type, payload[id*8:(id+1)*8])
-                print('{0}: {1}'.format(name,value))
+                # print('{0}: {1}'.format(name,value))
                 params.append({ "paramId": id, "name": name, "value": value})
             return params
         elif input_message['type'] == 'userParameter':
@@ -624,7 +625,7 @@ class OpenIMU:
                 return False
             param = user_configuration[param_id]
             param_value = self.openimu_unpack_one(param['type'], payload[4:12])
-            print('{0}: {1}'.format(param['name'], param_value))
+            # print('{0}: {1}'.format(param['name'], param_value))
             return { "paramId": param_id, "name": param['name'], "value": param_value }
         elif input_message['type'] == 'paramId':
             user_configuration = self.imu_properties['userConfiguration']

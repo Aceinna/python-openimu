@@ -183,13 +183,13 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             if (list (message['data'].values())[0] == 'start'):
                 imu.magneticAlignCmd('start')
                 self.magProgress = 1
-                print ('mag align started')
+                # print ('mag align started')
                 self.write_message(json.dumps({"messageType": "magAction", "data": {"start": {}}}))
             elif (list(message['data'].values())[0] == 'abort'):
                 time.sleep(2)
                 imu.magneticAlignCmd('abort')
                 self.magProgress = 0
-                print ('mag align aborted')
+                # print ('mag align aborted')
                 self.write_message(json.dumps({"messageType": "magAction", "data": {"abort": {}}}))
                 return
 
