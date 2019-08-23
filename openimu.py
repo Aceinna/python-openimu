@@ -51,8 +51,10 @@ from bootloader_input_packet import BootloaderInputPacket
 from azure.storage.blob import BlockBlobService
 # import webbrowser # used for open ANS website by system browser
 import requests
-
-
+import binascii
+import json
+import global_vars as gl
+ 
 
 class OpenIMU:
     def __init__(self, ws=False):
@@ -77,19 +79,47 @@ class OpenIMU:
         if not os.path.isdir("data"):
             print('creat data folder for store measure data in future')
             os.makedirs("data")
-        #if no json folder, then copy one from githbug phton-openimu master
-        if not os.path.exists("openimu.json"):
-            print('try to copy openimu.json file from python-openimu/bugfix to local same foler')
-            url = 'https://raw.githubusercontent.com/Aceinna/python-openimu/master/openimu.json' 
-            try:
-                r = requests.get(url) 
-                with open("openimu.json", "wb") as code:
-                    code.write(r.content)     
-            except Exception as e:
-                print(e)       
+
+        # #if no json folder, then copy one from githbug phton-openimu master
+        # # note: sometimes the server raw.githubusercontent.com in amazon cloud will be blocked somehow!
+        # if not os.path.exists("openimu.json"):
+        #     print('try to copy openimu.json file from python-openimu/bugfix to local same folder')
+        #     # url = 'https://raw.githubusercontent.com/Aceinna/python-openimu/master/openimu.json'
+        #     url = 'https://navview.blob.core.windows.net/openimujson/openimu.json'
+
+        #     try:
+        #         r = requests.get(url) 
+        #         with open("openimu.json", "wb") as code:
+        #             code.write(r.content)     
+        #     except Exception as e:
+        #         print(e)       
         
-        with open('openimu.json') as json_data:
-            self.imu_properties = json.load(json_data)           
+        # Load the basic openimu.json, FIXME: should be delete and left the app config json files only
+        # with open('openimu.json') as json_data:
+        #     self.imu_properties = json.load(json_data)  
+            
+        if not os.path.exists('app_config'):
+            print('downloading config json files from github, please waiting for a while')
+            os.makedirs('app_config')
+            for app_name in gl.get_app_names():
+                os.makedirs('app_config'+ '/' + app_name)
+            i = 0
+            for url in gl.get_app_urls():
+                filepath = 'app_config' + '/' + gl.get_app_names()[i] + '/' + 'openimu.json'
+                i= i+1
+                try:
+                    r = requests.get(url) 
+                    # r = requests.session().get(url)
+                    with open(filepath, "wb") as code:
+                        code.write(r.content)     
+                except Exception as e:
+                    print(e) 
+        # else:
+        #     print('load basic config json locally')
+        
+        # Load the basic openimu.json(IMU application)
+        with open('app_config/IMU/openimu.json') as json_data:
+            self.imu_properties = json.load(json_data)
 
     def find_device(self):
         ''' Finds active ports and then autobauds units
@@ -114,18 +144,21 @@ class OpenIMU:
         print('scanning ports')
 
         #find system available ports
-        if sys.platform.startswith('win'):
-            # windows available ports already found
-            portlist = list(serial.tools.list_ports.comports())
-            ports = [ p.device for p in portlist]
-            # note: should change the IMU serial port access right to 777 manually     
-        elif sys.platform.startswith('linux') or sys.platform.startswith('cygwin'):
-            # this excludes your current terminal "/dev/tty"
-            ports = glob.glob('/dev/tty[A-Za-z]*')
-        elif sys.platform.startswith('darwin'):
-            ports = glob.glob('/dev/tty.*')
-        else:
-            raise EnvironmentError('Unsupported platform')
+        portList = list(serial.tools.list_ports.comports())
+        ports = [ p.device for p in portList]
+
+        # if sys.platform.startswith('win'):
+        #     #fond windows available ports already found
+        #     portlist = list(serial.tools.list_ports.comports())
+        #     ports = [ p.device for p in portlist]
+            
+        # elif sys.platform.startswith('linux') or sys.platform.startswith('cygwin'):
+        #     # this excludes your current terminal "/dev/tty"
+        #     ports = glob.glob('/dev/tty[A-Za-z]*')
+        # elif sys.platform.startswith('darwin'):
+        #     ports = glob.glob('/dev/tty.*')
+        # else:
+        #     raise EnvironmentError('Unsupported platform')
 
         result = []
         for port in ports:
@@ -178,6 +211,7 @@ class OpenIMU:
             for x in self.imu_properties['userConfiguration']:
                 if x['paramId'] == 2:
                     bandListFromOptions = x['options']
+                    break
             for baud in bandListFromOptions:
                 if self.ser:
                     self.ser.baudrate = baud
@@ -204,10 +238,16 @@ class OpenIMU:
 
     def try_last_port(self):
         connection = None
+        portList = list(serial.tools.list_ports.comports())
+        ports = [ p.device for p in portList]
+
         try:
-            with open('connection.json') as json_data:
+            with open('app_config/connection.json') as json_data:
                 connection = json.load(json_data)
             if connection:
+                if not connection['port'] in ports:
+                    return False
+                print("try port saved in app_config/connection.json last time")
                 self.open(port=connection['port'], baud=connection['baud'])
                 if self.ser:
                     self.device_id = self.openimu_get_device_id()
@@ -215,7 +255,7 @@ class OpenIMU:
                         print('autoconnected')
                         return True
                     else:
-                        print('no port')
+                        print('no port available in last recorded app_config/connection.json')
                         return False
                 else:
                     return False
@@ -224,7 +264,7 @@ class OpenIMU:
 
     def save_last_port(self):
         connection = { "port" : self.ser.port, "baud" : self.ser.baudrate }
-        with open('connection.json', 'w') as outfile:
+        with open('app_config/connection.json', 'w') as outfile:
             json.dump(connection, outfile)
     
     def get_latest(self):
@@ -273,7 +313,86 @@ class OpenIMU:
         C = InputPacket(self.imu_properties, 'gP', param)
         self.write(C.bytes)
         #time.sleep(0.05)
-        return self.openimu_get_packet('gP')  
+        return self.openimu_get_packet('gP')
+
+    def magneticAlignCmd(self,action):
+        C = InputPacket(self.imu_properties, 'ma', action)
+        self.write(C.bytes)
+
+        if action == 'stored':
+            time.sleep(1)
+            returnedStatus = self.read(10000)
+
+            decodedStatus = binascii.hexlify(returnedStatus)
+            return self.decodeOutput(decodedStatus)
+
+        if action == 'status':
+            returnedStatus = self.ser.readline().strip()
+            if sys.version_info[0] < 3:
+                decodedStatus = binascii.hexlify(returnedStatus)
+            else:
+                decodedStatus = str(binascii.hexlify(returnedStatus), 'utf-8')
+
+            # print (decodedStatus)
+            if 'f12e' in decodedStatus:
+                return 1
+
+    def decodeOutput(self, value):
+        hard_iron_x = dict()
+        hard_iron_y = dict()
+        soft_iron_ratio = dict()
+        soft_iron_angle = dict()
+
+        # output['hardIronX'] = self.hardIronCal(value[10:14], 'axis')
+        # output['hardIronY'] = self.hardIronCal(value[14:18], 'axis')
+        # output['SoftIronRatio'] = self.hardIronCal(value[18:22], 'ratio')
+        # output['SoftIronAngle'] = self.hardIronCal(value[22:26], 'angle')
+
+        hard_iron_x['value'] = self.hardIronCal(value[26:30], 'axis')
+        hard_iron_x['name'] = 'Hard Iron X'
+        hard_iron_x['argument'] = 'hard_iron_x'
+
+        hard_iron_y['value'] = self.hardIronCal(value[30:34], 'axis')
+        hard_iron_y['name'] = 'Hard Iron Y'
+        hard_iron_y['argument'] = 'hard_iron_y'
+
+        soft_iron_ratio['value'] = self.hardIronCal(value[34:38], 'ratio')
+        soft_iron_ratio['name'] = 'Soft Iron Ratio'
+        soft_iron_ratio['argument'] = 'soft_iron_ratio'
+
+        soft_iron_angle['value'] = self.hardIronCal(value[38:42], 'angle')
+        soft_iron_angle['name'] = 'Soft Iron Angle'
+        soft_iron_angle['argument'] = 'soft_iron_angle'
+
+        # output['hard_iron_y'] = self.hardIronCal(value[30:34], 'axis')
+        # output['soft_iron_ratio'] = self.hardIronCal(value[34:38], 'ratio')
+        # output['soft_iron_angle'] = self.hardIronCal(value[38:42], 'angle')
+
+        output = [hard_iron_x,hard_iron_y,soft_iron_ratio,soft_iron_angle]
+
+        return output
+
+    def hardIronCal(self, value, type):
+        decodedValue = int(value, 16)
+        # print (decodedValue)
+        if type == 'axis':
+            if decodedValue > 2 ** 15:
+                newDecodedValue = (decodedValue - 2 ** 16)
+                return newDecodedValue / float(2 ** 15) * 8
+            else:
+                return decodedValue / float(2 ** 15) * 8
+
+        if type == 'ratio':
+            return decodedValue / float(2 ** 16 - 1)
+
+        if type == 'angle':
+            if decodedValue > 2 ** 15:
+                decodedValue = decodedValue - 2 ** 16
+                piValue = 2 ** 15 / math.pi
+                return decodedValue / piValue
+
+            piValue = 2 ** 15 / math.pi
+            return decodedValue / piValue
 
     def openimu_save_config(self):
         C = InputPacket(self.imu_properties, 'sC')
@@ -303,7 +422,14 @@ class OpenIMU:
         # print('get id--------------1')
         self.write(C.bytes)        
         #time.sleep(0.05)
-        return self.openimu_get_packet('gV')    
+        return self.openimu_get_packet('gV')
+
+    def openimu_version_compare(self, fw_version, js_version):
+        if fw_version == js_version:
+            pass
+            # print('fw & json version match')
+        else:
+            print('fw & json version mismatch')
 
     def connect(self):
         '''Continous data collection loop to get and process data packets
@@ -361,6 +487,7 @@ class OpenIMU:
             self.data = self.openimu_unpack_output_packet(output_packet, payload)
             if self.logging == 1 and self.logger is not None:
                 self.logger.log(self, self.data)
+                # print(self.data['lat'])
               
         elif input_packet != None:
             
@@ -392,7 +519,7 @@ class OpenIMU:
         try:
             self.ser = serial.Serial(port, baud, timeout = 0.005)
         except Exception as e:
-            print('serial port open exception' + port)
+            print('serial port open exception: ' + port)
             self.ser = False
 
     def close(self):
@@ -488,7 +615,7 @@ class OpenIMU:
                 type = parameter['type']
                 name = parameter['name']
                 value = self.openimu_unpack_one(type, payload[id*8:(id+1)*8])
-                print('{0}: {1}'.format(name,value))
+                # print('{0}: {1}'.format(name,value))
                 params.append({ "paramId": id, "name": name, "value": value})
             return params
         elif input_message['type'] == 'userParameter':
@@ -498,7 +625,7 @@ class OpenIMU:
                 return False
             param = user_configuration[param_id]
             param_value = self.openimu_unpack_one(param['type'], payload[4:12])
-            print('{0}: {1}'.format(param['name'], param_value))
+            # print('{0}: {1}'.format(param['name'], param_value))
             return { "paramId": param_id, "name": param['name'], "value": param_value }
         elif input_message['type'] == 'paramId':
             user_configuration = self.imu_properties['userConfiguration']
@@ -548,6 +675,12 @@ class OpenIMU:
                 return b
             except:
                 return False
+        elif type == 'double':
+            try:
+                b = struct.pack('8B', *data)
+            except:
+                return False
+            return struct.unpack('d', b)[0]
 
     def openimu_start_bootloader(self):
         packet = BootloaderInputPacket(self.imu_properties, 'JI')
@@ -630,8 +763,10 @@ class OpenIMU:
             return False
         data = False
         trys = 0
-        while not data and trys < 200: 
+
+        while not data and trys < 200:
             self.data_buffer = self.read(10000)
+
             if self.data_buffer:
                 data = self.parse_buffer(packet_type, stream)
             trys += 1

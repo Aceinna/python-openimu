@@ -1,19 +1,29 @@
 {
-	"name": "OpenIMU300-EZ",
+	"name": "OpenIMU300_INS",
+	"app_version": "OpenIMU300ZI INS 1.1.1",
 	"type": "openimu",
-	"description": "9-axis OpenIMU with triaxial rate, acceleration, and magnetic measurement",
+	"description": "9-axis OpenIMU with INS application",
 	"userConfiguration": [
-    { "paramId": 0, "paramType": "disabled", "type": "uint64", "name": "Data CRC" },
-		{ "paramId": 1, "paramType": "disabled", "type": "uint64", "name": "Data Size" },
-		{ "paramId": 2, "paramType": "select", "type": "int64", "name": "Baud Rate", "argument": "baud_rate", "options": [115200, 57600, 230400, 38400] },
-		{ "paramId": 3, "paramType": "select", "type": "char8", "name": "Packet Type", "argument": "type", "options": ["z1", "zT", "a1", "a2", "c1", "l1", "z2", "s1", "e1", "e2"] },
-		{ "paramId": 4, "paramType": "select", "type": "int64", "name": "Packet Rate", "argument": "rate", "options": [200, 100, 50, 20, 10, 5, 2, 0] },
-		{ "paramId": 5, "paramType": "select", "type": "int64", "name": "Accel LPF", "argument": "xl_lpf", "options": [50, 40, 25, 20, 10, 5, 2] },
-		{ "paramId": 6, "paramType": "select", "type": "int64", "name": "Rate LPF", "argument": "rate_lpf", "options": [50, 40, 25, 20, 10, 5, 2] },
-		{ "paramId": 7, "paramType": "select", "type": "char8", "name": "Orientation", "argument": "orien", "options": ["+X+Y+Z"] }
+    { "paramId": 0,"category": "General", "paramType": "disabled", "type": "uint64", "name": "Data CRC" },
+		{ "paramId": 1,"category": "General", "paramType": "disabled", "type": "uint64", "name": "Data Size" },
+		{ "paramId": 2, "category": "General","paramType": "select", "type": "int64", "name": "Baud Rate", "argument": "baud_rate","value_range":[-1,1], "value_accuracy":6, "options": [115200, 57600, 230400, 38400] },
+		{ "paramId": 3, "category": "General","paramType": "select", "type": "char8", "name": "Packet Type", "argument": "type", "value_range":[-1,1],"value_accuracy":6, "options": ["z1", "zT", "a1", "a2", "c1", "l1", "z2", "s1", "e1", "e2"] },
+		{ "paramId": 4, "category": "General","paramType": "select", "type": "int64", "name": "Packet Rate", "argument": "rate", "value_range":[-1,1],"value_accuracy":6, "options": [200, 100, 50, 20, 10, 5, 2, 0] },
+		{ "paramId": 5, "category": "General","paramType": "select", "type": "int64", "name": "Accel LPF", "argument": "xl_lpf", "value_range":[-1,1],"value_accuracy":6,"options": [50, 40, 25, 20, 10, 5, 2] },
+		{ "paramId": 6, "category": "General","paramType": "select", "type": "int64", "name": "Rate LPF", "argument": "rate_lpf", "value_range":[-1,1],"value_accuracy":6,"options": [50, 40, 25, 20, 10, 5, 2] },
+		{ "paramId": 7, "category": "General","paramType": "select", "type": "char8", "name": "Orientation", "argument": "orien", "value_range":[-1,1],"value_accuracy":6,"options": ["+X+Y+Z"] },
+		{ "paramId": 8, "category": "Advanced","paramType": "select", "type": "int64", "name": "GPS Baud Rate", "argument": "gps_baud_rate", "value_range":[-1,1],"value_accuracy":6,"options": [38400, 57600, 115200, 230400 ] },
+		{ "paramId": 9, "category": "Advanced","paramType": "select", "type": "int64", "name": "GPS Protocol", "argument": "gps_protocal", "value_range":[-1,1],"value_accuracy":6,"options": [1,2,3,4,0 ] },
+		{ "paramId": 14, "category": "Advanced","paramType": "input", "type": "double", "name": "lever arm x", "argument": "lever_arm_x", "value_range":[-1,1],"value_accuracy":6,"options": [-10, 0, 10] },
+		{ "paramId": 15, "category": "Advanced","paramType": "input", "type": "double", "name": "lever arm y", "argument": "lever_arm_y", "value_range":[-1,1],"value_accuracy":6,"options": [-10, 0, 10] },
+		{ "paramId": 16, "category": "Advanced","paramType": "input", "type": "double", "name": "lever arm z", "argument": "lever_arm_z", "value_range":[-1,1],"value_accuracy":6,"options": [-10, 0, 10] },
+		{ "paramId": 17, "category": "Advanced","paramType": "input", "type": "double", "name": "point of interest x", "argument": "poi_x", "value_range":[-1,1],"value_accuracy":6,"options": [-10, 0, 10] },
+		{ "paramId": 18, "category": "Advanced","paramType": "input", "type": "double", "name": "point of interest y", "argument": "poi_y", "value_range":[-1,1],"value_accuracy":6,"options": [-10, 0, 10] },
+		{ "paramId": 19, "category": "Advanced","paramType": "input", "type": "double", "name": "point of interest z", "argument": "poi_z", "value_range":[-1,1],"value_accuracy":6,"options": [-10, 0, 10] }
 	],
 	"userMessages": {
-		"inputPackets": [{
+		"inputPackets": [
+			{
 				"name": "pG",
 				"description": "Get device serial number & factory ID",
 				"inputPayload": {},
@@ -57,7 +67,7 @@
 				"description": "Save Conifguration Parameters to Flash",
 				"inputPayload": {},
 				"responsePayload": {}
-			},
+			},			
 			{
 				"name": "uP",
 				"description": "Update Configuration Parameter",
@@ -71,13 +81,14 @@
 				}
 			}
 		],
-		"outputPackets": [{
+		"outputPackets": [
+			{
 				"name": "z1",
 				"description": "Scaled 9-Axis IMU",
 				"payload": [{
 						"type": "uint32",
 						"name": "time",
-						"unit": "s"
+						"unit": "ms"
 					},
 					{
 						"type": "float",
@@ -142,98 +153,7 @@
 						"yMax": 400
 					}
 				]
-			},
-			{
-				"name": "z2",
-				"description": "Arbitrary type Values",
-				"payload": [{
-						"type": "uint32",
-						"name": "time",
-						"unit": "s"
-					},
-					{
-						"type": "uchar",
-						"name": "c",
-						"unit": ""
-					},
-					{
-						"type": "int16",
-						"name": "s",
-						"unit": ""
-					},
-					{
-						"type": "int32",
-						"name": "i",
-						"unit": ""
-					},
-					{
-						"type": "int64",
-						"name": "ll",
-						"unit": ""
-					},
-					{
-						"type": "double",
-						"name": "d",
-						"unit": ""
-					}
-				],
-				"graphs": [{
-					"name": "Angular Rate",
-					"units": "deg/s",
-					"xAxis": "Time (s)",
-					"yAxes": ["xRate", "yRate", "zRate"],
-					"colors": ["#FF0000", "#00FF00", "#0000FF"],
-					"yMax": 400
-				}]
-			},
-			{
-				"name": "z3",
-				"description": "Scaled 6-Axis IMU Values",
-				"payload": [{
-						"type": "int",
-						"name": "timestamp",
-						"unit": "ms"
-					},
-					{
-						"type": "float",
-						"name": "xAccel",
-						"unit": "m/s/s"
-					},
-					{
-						"type": "float",
-						"name": "yAccel",
-						"unit": "m/s/s"
-					},
-					{
-						"type": "float",
-						"name": "zAccel",
-						"unit": "m/s/s"
-					},
-					{
-						"type": "float",
-						"name": "xRate",
-						"unit": "rad/s"
-					},
-					{
-						"type": "float",
-						"name": "yRate",
-						"unit": "rad/s"
-					},
-					{
-						"type": "float",
-						"name": "zRate",
-						"unit": "rad/s"
-					}
-				],
-				"graphs": [{
-					"name": "Acceleration",
-					"units": "m/s/s",
-					"xAxis": "timestamp (ms)",
-					"yAxes": ["xRate", "yRate", "zRate"],
-					"colors": ["#FF0000", "#00FF00", "#0000FF"],
-					"yMax": 100
-				}]
-			},
+			},			
 			{
 				"name": "a1",
 				"description": "VG Output Message",
@@ -250,12 +170,12 @@
 					{
 						"type": "float",
 						"name": "roll",
-						"unit": "rad"
+						"unit": "deg"
 					},
 					{
 						"type": "float",
 						"name": "pitch",
-						"unit": "rad"
+						"unit": "deg"
 					},
 					{
 						"type": "float",
@@ -427,159 +347,17 @@
 						"yAxes": ["heading"],
 						"colors": ["#FF0000"],
 						"yMax": 200
-					}
-				]
-			},
-			{
-				"name": "c1",
-				"description": "Leveler Output Message",
-				"payload": [{
-						"type": "uint32",
-						"name": "timeITOW",
-						"unit": "msec"
 					},
 					{
-						"type": "double",
-						"name": "time",
-						"unit": "s"
-					},
-					{
-						"type": "float",
-						"name": "roll",
-						"unit": "rad"
-					},
-					{
-						"type": "float",
-						"name": "pitch",
-						"unit": "rad"
-					},
-					{
-						"type": "float",
-						"name": "heading",
-						"unit": "rad"
-					},
-					{
-						"type": "float",
-						"name": "xAccel",
-						"unit": "m/s/s"
-					},
-					{
-						"type": "float",
-						"name": "yAccel",
-						"unit": "m/s/s"
-					},
-					{
-						"type": "float",
-						"name": "zAccel",
-						"unit": "m/s/s"
-					},
-					{
-						"type": "float",
-						"name": "xMag",
-						"unit": "G"
-					},
-					{
-						"type": "float",
-						"name": "yMag",
-						"unit": "G"
-					},
-					{
-						"type": "float",
-						"name": "zMag",
-						"unit": "G"
-					}
-				],
-				"graphs": [{
-						"name": "Acceleration",
-						"units": "m/s/s",
-						"xAxis": "Time (s)",
-						"yAxes": ["xAccel", "yAccel", "zAccel"],
-						"colors": ["#FF0000", "#00FF00", "#0000FF"],
-						"yMax": 80
-					},
-					{
-						"name": "Attitude (Roll and Pitch)",
+						"name": "Attitude and DG Indicators",
 						"units": "deg",
 						"xAxis": "Time (s)",
-						"yAxes": ["roll", "pitch"],
-						"colors": ["#FF0000", "#00FF00"],
-						"yMax": 90
-					},
-					{
-						"name": "Heading",
-						"units": "deg",
-						"xAxis": "Time (s)",
-						"yAxes": ["heading"],
+						"yAxes": ["roll", "pitch","heading"],
 						"colors": ["#FF0000"],
 						"yMax": 200
-					},
-					{
-						"name": "Magnetic-Field",
-						"units": "G",
-						"xAxis": "Time (s)",
-						"yAxes": ["xMag", "yMag", "zMag"],
-						"colors": ["#FF0000", "#00FF00", "#0000FF"],
-						"yMax": 10
 					}
 				]
-			},
-			{
-				"name": "l1",
-				"description": "Leveler Output Message",
-				"payload": [{
-						"type": "uint32",
-						"name": "timeITOW",
-						"unit": "msec"
-					},
-					{
-						"type": "double",
-						"name": "time",
-						"unit": "s"
-					},
-					{
-						"type": "float",
-						"name": "roll",
-						"unit": "rad"
-					},
-					{
-						"type": "float",
-						"name": "pitch",
-						"unit": "rad"
-					},
-					{
-						"type": "float",
-						"name": "xAccel",
-						"unit": "m/s/s"
-					},
-					{
-						"type": "float",
-						"name": "yAccel",
-						"unit": "m/s/s"
-					},
-					{
-						"type": "float",
-						"name": "zAccel",
-						"unit": "m/s/s"
-					}
-				],
-				"graphs": [{
-						"name": "Acceleration",
-						"units": "m/s/s",
-						"xAxis": "Time (s)",
-						"yAxes": ["xAccel", "yAccel", "zAccel"],
-						"colors": ["#FF0000", "#00FF00", "#0000FF"],
-						"yMax": 80
-					},
-					{
-						"name": "Attitude (Roll and Pitch)",
-						"units": "deg",
-						"xAxis": "Time (s)",
-						"yAxes": ["roll", "pitch"],
-						"colors": ["#FF0000", "#00FF00"],
-						"yMax": 20
-					}
-				]
-			},
+			},			
 			{
 				"name": "e1",
 				"description": "VG/AHRS Output Message",
@@ -656,17 +434,17 @@
 					{
 						"type": "float",
 						"name": "xMag",
-						"unit": "G"
+						"unit": "m/s/s"
 					},
 					{
 						"type": "float",
 						"name": "yMag",
-						"unit": "G"
+						"unit": "m/s/s"
 					},
 					{
 						"type": "float",
 						"name": "zMag",
-						"unit": "G"
+						"unit": "m/s/s"
 					},
 					{
 						"type": "uint8",
@@ -727,7 +505,7 @@
 					},
 					{
 						"name": "Magnetic-Field",
-						"units": "G",
+						"units": "Gauss",
 						"xAxis": "Time (s)",
 						"yAxes": ["xMag", "yMag", "zMag"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
@@ -893,7 +671,18 @@
 					}
 				],
 				"graphs": [
-                    {
+					{
+						"name": "Geo Map",
+						"renderType":"map",
+						"fields":[
+							{ "name":"lat" , "display": "Latitude" },
+							{ "name":"lon" , "display": "Longitude" }
+						],
+						"options":{
+							"hasTrajectory":false
+						}     
+					},
+					{
 						"name": "Euler Angles (Roll and Pitch)",
 						"units": "deg",
 						"xAxis": "Time (s)",
@@ -943,7 +732,7 @@
 					},
 					{
 						"name": "Magnetic-Field",
-						"units": "G",
+						"units": "Gauss",
 						"xAxis": "Time (s)",
 						"yAxes": ["xMag", "yMag", "zMag"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
@@ -1065,7 +854,7 @@
 					},
 					{
 						"name": "Magnetic-Field",
-						"units": "G",
+						"units": "Gauss",
 						"xAxis": "Time (s)",
 						"yAxes": ["xMag", "yMag", "zMag"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
@@ -1083,7 +872,8 @@
 			}
 		]
 	},
-	"bootloaderMessages": [{
+	"bootloaderMessages": [
+		{
 			"name": "JI",
 			"description": "Jump to Bootloader",
 			"inputPayload": {},
@@ -1114,7 +904,8 @@
 			}
 		}
 	],
-	"CLICommands": [{
+	"CLICommands": [
+		{
 			"name": "help",
 			"description": "CLI help menu",
 			"function": "help_handler"
@@ -1171,3 +962,4 @@
 		}
 	]
 }
+

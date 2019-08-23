@@ -60,7 +60,7 @@ class OpenIMULog:
                           ' [' + \
                           output_packet['payload'][keyIdx]['unit'] + \
                           ']'''
-                dataStr = output_packet['payload'][keyIdx]['name']
+                dataStr = output_packet['payload'][keyIdx]['name'] + "(" + output_packet['payload'][keyIdx]['unit'] + ")"
                 labels = labels + '{0:s},'.format(dataStr)
             
             # Remove the comma at the end of the string and append a new-line character
@@ -176,7 +176,7 @@ class OpenIMULog:
 
 
     def get_sas_token(self):
-        print('user token',self.user['access_token'])
+        # print('user token',self.user['access_token'])
         try:
             # host_address='http://40.118.233.18:3000/'
             host_address='https://api.aceinna.com/'
