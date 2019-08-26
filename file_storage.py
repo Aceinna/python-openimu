@@ -3,6 +3,7 @@ import datetime
 import json
 import requests
 import threading
+import os
 
 # need to find something python3 compatible  
 # import urllib2
@@ -101,10 +102,11 @@ class OpenIMULog:
                 print(0)
                 str += '{0:3.5f},'.format(data[key])
 
-        # 
         str = str[:-1]
         str = str + '\n'
         self.file.write(header+str)
+        os.fsync(self.file)
+        
 
     def write_to_azure(self):
         # check for internet 
