@@ -13,7 +13,7 @@
 		{ "paramId": 6, "category": "General","paramType": "select", "type": "int64", "name": "Rate LPF", "argument": "rate_lpf", "value_range":[-1,1],"value_accuracy":6,"options": [50, 40, 25, 20, 10, 5, 2] },
 		{ "paramId": 7, "category": "General","paramType": "select", "type": "char8", "name": "Orientation", "argument": "orien", "value_range":[-1,1],"value_accuracy":6,"options": ["+X+Y+Z"] },
 		{ "paramId": 8, "category": "Advanced","paramType": "select", "type": "int64", "name": "GPS Baud Rate", "argument": "gps_baud_rate", "value_range":[-1,1],"value_accuracy":6,"options": [38400, 57600, 115200, 230400 ] },
-		{ "paramId": 9, "category": "Advanced","paramType": "select", "type": "int64", "name": "GPS Protocol", "argument": "gps_protocal", "value_range":[-1,1],"value_accuracy":6,"options": [1,2,3,4,0 ] },
+		{ "paramId": 9, "category": "Advanced","paramType": "select", "type": "int64", "name": "GPS Protocol", "argument": "gps_protocal", "value_range":[-1,1],"value_accuracy":6,"options": [{"key":"0","value":"UBLOX_BINARY"},{"key":"1","value":"NOVATEL_BINARY"},{"key":"3","value":"NMEA_TEXT"}]},
 		{ "paramId": 14, "category": "Advanced","paramType": "input", "type": "double", "name": "lever arm x", "argument": "lever_arm_x", "value_range":[-1,1],"value_accuracy":6,"options": [-10, 0, 10] },
 		{ "paramId": 15, "category": "Advanced","paramType": "input", "type": "double", "name": "lever arm y", "argument": "lever_arm_y", "value_range":[-1,1],"value_accuracy":6,"options": [-10, 0, 10] },
 		{ "paramId": 16, "category": "Advanced","paramType": "input", "type": "double", "name": "lever arm z", "argument": "lever_arm_z", "value_range":[-1,1],"value_accuracy":6,"options": [-10, 0, 10] },
