@@ -152,7 +152,7 @@ class OpenIMULog:
                         "sn": self.sn, 
                         "sampleRate" : self.odr_setting, 
                         "packetType" : self.packet_type,
-                        "appVersion" : self.imu_properties['appName'] if 'appName' in self.imu_properties else '',
+                        "appVersion" : self.imu_properties['app_version'] if 'app_version' in self.imu_properties else '',
                         "imuProperties" : json.dumps(self.imu_properties)
                     } 
                 }
