@@ -107,7 +107,7 @@
 				"payload": [{
 						"type": "uint32",
 						"name": "time",
-						"unit": "ms"
+						"unit": "msec"
 					},
 					{
 						"type": "float",
