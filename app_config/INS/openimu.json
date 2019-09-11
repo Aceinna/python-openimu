@@ -673,6 +673,7 @@
 				"graphs": [
 					{
 						"name": "Geo Map",
+						"units": "deg",
 						"renderType":"map",
 						"fields":[
 							{ "name":"lat" , "display": "Latitude" },
