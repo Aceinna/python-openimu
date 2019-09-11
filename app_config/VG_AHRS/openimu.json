@@ -261,7 +261,7 @@
 					},
 					{
 						"name": "Angular Rate",
-						"units": "deg",
+						"units": "deg/s",
 						"xAxis": "Time (s)",
 						"yAxes": ["xRate", "yRate", "zRate"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
@@ -354,7 +354,7 @@
 					},
 					{
 						"name": "Angular Rate",
-						"units": "deg",
+						"units": "deg/s",
 						"xAxis": "Time (s)",
 						"yAxes": ["xRate", "yRate", "zRate"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
@@ -616,7 +616,7 @@
 				],
 				"graphs": [{
 						"name": "Acceleration",
-						"units": "g",
+						"units": "m/s^2",
 						"xAxis": "Time (s)",
 						"yAxes": ["xAccel", "yAccel", "zAccel"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
