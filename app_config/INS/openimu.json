@@ -93,17 +93,17 @@
 					{
 						"type": "float",
 						"name": "xAccel",
-						"unit": "m/s/s"
+						"unit": "m/^2"
 					},
 					{
 						"type": "float",
 						"name": "yAccel",
-						"unit": "m/s/s"
+						"unit": "m/^2"
 					},
 					{
 						"type": "float",
 						"name": "zAccel",
-						"unit": "m/s/s"
+						"unit": "m/^2"
 					},
 					{
 						"type": "float",
@@ -138,7 +138,7 @@
 				],
 				"graphs": [{
 						"name": "Acceleration",
-						"units": "m/s/s",
+						"units": "m/^2",
 						"xAxis": "Time (s)",
 						"yAxes": ["xAccel", "yAccel", "zAccel"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
@@ -195,17 +195,17 @@
 					{
 						"type": "float",
 						"name": "xAccel",
-						"unit": "m/s/s"
+						"unit": "m/^2"
 					},
 					{
 						"type": "float",
 						"name": "yAccel",
-						"unit": "m/s/s"
+						"unit": "m/^2"
 					},
 					{
 						"type": "float",
 						"name": "zAccel",
-						"unit": "m/s/s"
+						"unit": "m/^2"
 					},
 					{
 						"type": "uint8",
@@ -225,7 +225,7 @@
 				],
 				"graphs": [{
 						"name": "Acceleration",
-						"units": "m/s/s",
+						"units": "m/^2",
 						"xAxis": "Time (s)",
 						"yAxes": ["xAccel", "yAccel", "zAccel"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
@@ -303,22 +303,22 @@
 					{
 						"type": "float",
 						"name": "xAccel",
-						"unit": "m/s/s"
+						"unit": "m/^2"
 					},
 					{
 						"type": "float",
 						"name": "yAccel",
-						"unit": "m/s/s"
+						"unit": "m/^2"
 					},
 					{
 						"type": "float",
 						"name": "zAccel",
-						"unit": "m/s/s"
+						"unit": "m/^2"
 					}
 				],
 				"graphs": [{
 						"name": "Acceleration",
-						"units": "m/s/s",
+						"units": "m/^2",
 						"xAxis": "Time (s)",
 						"yAxes": ["xAccel", "yAccel", "zAccel"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
@@ -434,17 +434,17 @@
 					{
 						"type": "float",
 						"name": "xMag",
-						"unit": "m/s/s"
+						"unit": "m/^2"
 					},
 					{
 						"type": "float",
 						"name": "yMag",
-						"unit": "m/s/s"
+						"unit": "m/^2"
 					},
 					{
 						"type": "float",
 						"name": "zMag",
-						"unit": "m/s/s"
+						"unit": "m/^2"
 					},
 					{
 						"type": "uint8",
@@ -537,17 +537,17 @@
 					{
 						"type": "float",
 						"name": "roll",
-						"unit": "rad"
+						"unit": "deg"
 					},
 					{
 						"type": "float",
 						"name": "pitch",
-						"unit": "rad"
+						"unit": "deg"
 					},
 					{
 						"type": "float",
 						"name": "heading",
-						"unit": "rad"
+						"unit": "deg"
 					},
 					{
 						"type": "float",
@@ -567,17 +567,17 @@
 					{
 						"type": "float",
 						"name": "xAccelBias",
-						"unit": "g"
+						"unit": "m/s^2"
 					},
 					{
 						"type": "float",
 						"name": "yAccelBias",
-						"unit": "g"
+						"unit": "m/s^2"
 					},
 					{
 						"type": "float",
 						"name": "zAccelBias",
-						"unit": "g"
+						"unit": "m/s^2"
 					},
 					{
 						"type": "float",

@@ -166,7 +166,7 @@
 				],
 				"graphs": [{
 						"name": "Acceleration",
-						"units": "m/s/s",
+						"units": "m/^2",
 						"xAxis": "Time (s)",
 						"yAxes": ["xAccel", "yAccel", "zAccel"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
@@ -223,17 +223,17 @@
 					{
 						"type": "float",
 						"name": "xAccel",
-						"unit": "m/s/s"
+						"unit": "m/^2"
 					},
 					{
 						"type": "float",
 						"name": "yAccel",
-						"unit": "m/s/s"
+						"unit": "m/^2"
 					},
 					{
 						"type": "float",
 						"name": "zAccel",
-						"unit": "m/s/s"
+						"unit": "m/^2"
 					},
 					{
 						"type": "uint8",
@@ -253,7 +253,7 @@
 				],
 				"graphs": [{
 						"name": "Acceleration",
-						"units": "m/s/s",
+						"units": "m/^2",
 						"xAxis": "Time (s)",
 						"yAxes": ["xAccel", "yAccel", "zAccel"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
@@ -331,22 +331,22 @@
 					{
 						"type": "float",
 						"name": "xAccel",
-						"unit": "m/s/s"
+						"unit": "m/^2"
 					},
 					{
 						"type": "float",
 						"name": "yAccel",
-						"unit": "m/s/s"
+						"unit": "m/^2"
 					},
 					{
 						"type": "float",
 						"name": "zAccel",
-						"unit": "m/s/s"
+						"unit": "m/^2"
 					}
 				],
 				"graphs": [{
 						"name": "Acceleration",
-						"units": "m/s/s",
+						"units": "m/^2",
 						"xAxis": "Time (s)",
 						"yAxes": ["xAccel", "yAccel", "zAccel"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
