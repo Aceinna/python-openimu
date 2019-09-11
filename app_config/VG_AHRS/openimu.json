@@ -198,27 +198,27 @@
 					{
 						"type": "float",
 						"name": "roll",
-						"unit": "rad"
+						"unit": "deg"
 					},
 					{
 						"type": "float",
 						"name": "pitch",
-						"unit": "rad"
+						"unit": "deg"
 					},
 					{
 						"type": "float",
 						"name": "xRate",
-						"unit": "rad/s"
+						"unit": "deg/s"
 					},
 					{
 						"type": "float",
 						"name": "yRate",
-						"unit": "rad/s"
+						"unit": "deg/s"
 					},
 					{
 						"type": "float",
 						"name": "zRate",
-						"unit": "rad/s"
+						"unit": "deg/s"
 					},
 					{
 						"type": "float",
