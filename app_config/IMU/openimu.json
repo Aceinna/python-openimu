@@ -107,22 +107,22 @@
 				"payload": [{
 						"type": "uint32",
 						"name": "time",
-						"unit": "s"
+						"unit": "msec"
 					},
 					{
 						"type": "float",
 						"name": "xAccel",
-						"unit": "G"
+						"unit": "m/s^2"
 					},
 					{
 						"type": "float",
 						"name": "yAccel",
-						"unit": "G"
+						"unit": "m/s^2"
 					},
 					{
 						"type": "float",
 						"name": "zAccel",
-						"unit": "G"
+						"unit": "m/s^2"
 					},
 					{
 						"type": "float",
@@ -219,17 +219,17 @@
 					{
 						"type": "float",
 						"name": "xMag",
-						"unit": "G"
+						"unit": "Gauss"
 					},
 					{
 						"type": "float",
 						"name": "yMag",
-						"unit": "G"
+						"unit": "Gauss"
 					},
 					{
 						"type": "float",
 						"name": "zMag",
-						"unit": "G"
+						"unit": "Gauss"
 					},
 					{
 						"type": "float",
@@ -255,7 +255,7 @@
 					},
 					{
 						"name": "Magnetic-Field",
-						"units": "G",
+						"units": "Gauss",
 						"xAxis": "Time (s)",
 						"yAxes": ["xMag", "yMag", "zMag"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
