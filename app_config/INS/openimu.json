@@ -1,6 +1,7 @@
 {
 	"name": "OpenIMU300_INS",
 	"app_version": "OpenIMU300ZI INS 1.1.1",
+	"appName": "OpenIMU300ZI INS 1.1.1",
 	"type": "openimu",
 	"description": "9-axis OpenIMU with INS application",
 	"userConfiguration": [
