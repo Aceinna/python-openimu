@@ -54,24 +54,6 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             else:
                 fileName = ''
 
-            # if not os.path.exists('app_config'):
-            #     print('downloading config json files from github, please waiting for a while')
-            #     os.makedirs('app_config')
-            #     for app_name in gl.get_app_names:
-            #         os.makedirs('app_config'+ '/' + app_name)
-            #     i = 0
-            #     for url in gl.get_app_urls:
-            #         i= i+1
-            #         filepath = 'app_config' + '/' + app_names[i] + '/' + 'openimu.json'
-            #         try:
-            #             r = requests.get(url) 
-            #             with open(filepath, "wb") as code:
-            #                 code.write(r.content)     
-            #         except Exception as e:
-            #             print(e) 
-            # else:
-            #     print('load config json files locally')
-
             # Load the basic openimu.json(IMU application)
             with open('app_config/IMU/openimu.json') as json_data:
                 imu.imu_properties = json.load(json_data)
@@ -89,6 +71,13 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                         imu.imu_properties['userConfiguration'][3]['options'] = ['z1','s1','c1']
                         js_version_str = imu.imu_properties['app_version'].split(' ')[2]
                         imu.openimu_version_compare(hw_version_str,js_version_str)
+                    # INS application
+                    elif 'INS'in application_type:
+                        with open('app_config/INS/openimu.json') as json_data:
+                            imu.imu_properties = json.load(json_data)
+                        imu.imu_properties['userConfiguration'][3]['options'] = ['z1','a1','a2','s1','e1','e2']
+                        js_version_str = imu.imu_properties['app_version'].split(' ')[2]
+                        imu.openimu_version_compare(hw_version_str,js_version_str)
                     # VG_AHRS application
                     elif 'VG_AHRS' in application_type:
                         with open('app_config/VG_AHRS/openimu.json') as json_data:
@@ -103,26 +92,6 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                         imu.imu_properties['userConfiguration'][3]['options'] = ['z1']
                         js_version_str = imu.imu_properties['app_version'].split(' ')[2]
                         imu.openimu_version_compare(hw_version_str,js_version_str)
-                    # IMU application
-                    elif 'IMU'in application_type and not 'OpenIMU'in application_type:
-                        with open('app_config/IMU/openimu.json') as json_data:
-                            imu.imu_properties = json.load(json_data)
-                            time.sleep(1)
-                        imu.imu_properties['userConfiguration'][3]['options'] = ['z1','s1']  
-                        js_version_str = imu.imu_properties['app_version'].split(' ')[2]
-                        imu.openimu_version_compare(hw_version_str,js_version_str)
-                    # INS application
-                    elif 'INS'in application_type:
-                        with open('app_config/INS/openimu.json') as json_data:
-                            imu.imu_properties = json.load(json_data)
-                        imu.imu_properties['userConfiguration'][3]['options'] = ['z1','a1','a2','s1','e1','e2']
-                        js_version_str = imu.imu_properties['app_version'].split(' ')[2]
-                        imu.openimu_version_compare(hw_version_str,js_version_str)
-                    # Lever application    
-                    elif 'StaticL'in application_type:
-                        with open('app_config/Leveler/openimu.json') as json_data:
-                            imu.imu_properties = json.load(json_data)
-                        imu.imu_properties['userConfiguration'][3]['options'] = ['z1','s1','l1']
                     else:
                         print('no json file matched!')
 
