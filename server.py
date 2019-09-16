@@ -259,6 +259,11 @@ if __name__ == "__main__":
         # Port can be changed
         application = tornado.web.Application([(r'/', WSHandler)])
         http_server = tornado.httpserver.HTTPServer(application)
+        # https server
+        # http_server = tornado.httpserver.HTTPServer(application,ssl_options={
+        #    "certfile": os.path.join(os.path.abspath("."), "./cert/ssl.cert"),
+        #    "keyfile": os.path.join(os.path.abspath("."), "./cert/ssl.key"),
+        # })
         http_server.listen(8000)        
         
         tornado.ioloop.IOLoop.instance().start()
