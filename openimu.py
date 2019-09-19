@@ -79,24 +79,6 @@ class OpenIMU:
         if not os.path.isdir("data"):
             print('creat data folder for store measure data in future')
             os.makedirs("data")
-
-        # #if no json folder, then copy one from githbug phton-openimu master
-        # # note: sometimes the server raw.githubusercontent.com in amazon cloud will be blocked somehow!
-        # if not os.path.exists("openimu.json"):
-        #     print('try to copy openimu.json file from python-openimu/bugfix to local same folder')
-        #     # url = 'https://raw.githubusercontent.com/Aceinna/python-openimu/master/openimu.json'
-        #     url = 'https://navview.blob.core.windows.net/openimujson/openimu.json'
-
-        #     try:
-        #         r = requests.get(url) 
-        #         with open("openimu.json", "wb") as code:
-        #             code.write(r.content)     
-        #     except Exception as e:
-        #         print(e)       
-        
-        # Load the basic openimu.json, FIXME: should be delete and left the app config json files only
-        # with open('openimu.json') as json_data:
-        #     self.imu_properties = json.load(json_data)  
             
         if not os.path.exists('app_config'):
             print('downloading config json files from github, please waiting for a while')
@@ -423,13 +405,16 @@ class OpenIMU:
         self.write(C.bytes)        
         #time.sleep(0.05)
         return self.openimu_get_packet('gV')
-
+    
     def openimu_version_compare(self, fw_version, js_version):
+        '''app string should be matched with the corresponding json file.
+        '''
         if fw_version == js_version:
             pass
             # print('fw & json version match')
         else:
-            print('fw & json version mismatch')
+            pass
+            # print('fw & json version mismatch')
 
     def connect(self):
         '''Continous data collection loop to get and process data packets
