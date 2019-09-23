@@ -1,6 +1,7 @@
 {
 	"name": "OpenIMU300_Leveler",
 	"app_version": "OpenIMU300ZI Leveler 1.1.1",
+	"appName": "OpenIMU300ZI Leveler 1.1.1",
 	"type": "openimu",
 	"description": "9-axis OpenIMU with triaxial rate, acceleration, and magnetic measurement",
 	"userConfiguration": [
@@ -114,22 +115,22 @@
 				"payload": [{
 						"type": "uint32",
 						"name": "time",
-						"unit": "ms"
+						"unit": "msec"
 					},
 					{
 						"type": "float",
 						"name": "xAccel",
-						"unit": "m/s/s"
+						"unit": "m/^2"
 					},
 					{
 						"type": "float",
 						"name": "yAccel",
-						"unit": "m/s/s"
+						"unit": "m/^2"
 					},
 					{
 						"type": "float",
 						"name": "zAccel",
-						"unit": "m/s/s"
+						"unit": "m/^2"
 					},
 					{
 						"type": "float",
@@ -164,7 +165,7 @@
 				],
 				"graphs": [{
 						"name": "Acceleration",
-						"units": "m/s/s",
+						"units": "m/^2",
 						"xAxis": "Time (s)",
 						"yAxes": ["xAccel", "yAccel", "zAccel"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
@@ -186,7 +187,7 @@
 				"payload": [{
 						"type": "uint32",
 						"name": "timeITOW",
-						"unit": "ms"
+						"unit": "msec"
 					},
 					{
 						"type": "double",
@@ -206,22 +207,22 @@
 					{
 						"type": "float",
 						"name": "xAccel",
-						"unit": "m/s/s"
+						"unit": "m/^2"
 					},
 					{
 						"type": "float",
 						"name": "yAccel",
-						"unit": "m/s/s"
+						"unit": "m/^2"
 					},
 					{
 						"type": "float",
 						"name": "zAccel",
-						"unit": "m/s/s"
+						"unit": "m/^2"
 					}
 				],
 				"graphs": [{
 						"name": "Acceleration",
-						"units": "m/s/s",
+						"units": "m/^2",
 						"xAxis": "Time (s)",
 						"yAxes": ["xAccel", "yAccel", "zAccel"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
@@ -243,7 +244,7 @@
 				"payload": [{
 						"type": "uint32",
 						"name": "timeCntr",
-						"unit": "ms"
+						"unit": "msec"
 					},
 					{
 						"type": "double",

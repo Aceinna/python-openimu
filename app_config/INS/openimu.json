@@ -1,19 +1,20 @@
 {
 	"name": "OpenIMU300_INS",
 	"app_version": "OpenIMU300ZI INS 1.1.1",
+	"appName": "OpenIMU300ZI INS 1.1.1",
 	"type": "openimu",
 	"description": "9-axis OpenIMU with INS application",
 	"userConfiguration": [
     { "paramId": 0,"category": "General", "paramType": "disabled", "type": "uint64", "name": "Data CRC" },
 		{ "paramId": 1,"category": "General", "paramType": "disabled", "type": "uint64", "name": "Data Size" },
 		{ "paramId": 2, "category": "General","paramType": "select", "type": "int64", "name": "Baud Rate", "argument": "baud_rate","value_range":[-1,1], "value_accuracy":6, "options": [115200, 57600, 230400, 38400] },
-		{ "paramId": 3, "category": "General","paramType": "select", "type": "char8", "name": "Packet Type", "argument": "type", "value_range":[-1,1],"value_accuracy":6, "options": ["z1", "a1", "a2", "s1", "e1", "e2"] },
+		{ "paramId": 3, "category": "General","paramType": "select", "type": "char8", "name": "Packet Type", "argument": "type", "value_range":[-1,1],"value_accuracy":6, "options": ["z1", "zT", "a1", "a2", "c1", "l1", "z2", "s1", "e1", "e2"] },
 		{ "paramId": 4, "category": "General","paramType": "select", "type": "int64", "name": "Packet Rate", "argument": "rate", "value_range":[-1,1],"value_accuracy":6, "options": [200, 100, 50, 20, 10, 5, 2, 0] },
 		{ "paramId": 5, "category": "General","paramType": "select", "type": "int64", "name": "Accel LPF", "argument": "xl_lpf", "value_range":[-1,1],"value_accuracy":6,"options": [50, 40, 25, 20, 10, 5, 2] },
 		{ "paramId": 6, "category": "General","paramType": "select", "type": "int64", "name": "Rate LPF", "argument": "rate_lpf", "value_range":[-1,1],"value_accuracy":6,"options": [50, 40, 25, 20, 10, 5, 2] },
 		{ "paramId": 7, "category": "General","paramType": "select", "type": "char8", "name": "Orientation", "argument": "orien", "value_range":[-1,1],"value_accuracy":6,"options": ["+X+Y+Z"] },
 		{ "paramId": 8, "category": "Advanced","paramType": "select", "type": "int64", "name": "GPS Baud Rate", "argument": "gps_baud_rate", "value_range":[-1,1],"value_accuracy":6,"options": [38400, 57600, 115200, 230400 ] },
-		{ "paramId": 9, "category": "Advanced","paramType": "select", "type": "int64", "name": "GPS Protocol", "argument": "gps_protocal", "value_range":[-1,1],"value_accuracy":6,"options": [1,2,3,4,0 ] },
+		{ "paramId": 9, "category": "Advanced","paramType": "select", "type": "int64", "name": "GPS Protocol", "argument": "gps_protocal", "value_range":[-1,1],"value_accuracy":6,"options": [{"key":"0","value":"UBLOX_BINARY"},{"key":"1","value":"NOVATEL_BINARY"},{"key":"3","value":"NMEA_TEXT"}]},
 		{ "paramId": 14, "category": "Advanced","paramType": "input", "type": "double", "name": "lever arm x", "argument": "lever_arm_x", "value_range":[-1,1],"value_accuracy":6,"options": [-10, 0, 10] },
 		{ "paramId": 15, "category": "Advanced","paramType": "input", "type": "double", "name": "lever arm y", "argument": "lever_arm_y", "value_range":[-1,1],"value_accuracy":6,"options": [-10, 0, 10] },
 		{ "paramId": 16, "category": "Advanced","paramType": "input", "type": "double", "name": "lever arm z", "argument": "lever_arm_z", "value_range":[-1,1],"value_accuracy":6,"options": [-10, 0, 10] },
@@ -88,22 +89,22 @@
 				"payload": [{
 						"type": "uint32",
 						"name": "time",
-						"unit": "ms"
+						"unit": "msec"
 					},
 					{
 						"type": "float",
 						"name": "xAccel",
-						"unit": "m/s/s"
+						"unit": "m/^2"
 					},
 					{
 						"type": "float",
 						"name": "yAccel",
-						"unit": "m/s/s"
+						"unit": "m/^2"
 					},
 					{
 						"type": "float",
 						"name": "zAccel",
-						"unit": "m/s/s"
+						"unit": "m/^2"
 					},
 					{
 						"type": "float",
@@ -138,7 +139,7 @@
 				],
 				"graphs": [{
 						"name": "Acceleration",
-						"units": "m/s/s",
+						"units": "m/^2",
 						"xAxis": "Time (s)",
 						"yAxes": ["xAccel", "yAccel", "zAccel"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
@@ -180,32 +181,32 @@
 					{
 						"type": "float",
 						"name": "xRate",
-						"unit": "rad/s"
+						"unit": "deg/s"
 					},
 					{
 						"type": "float",
 						"name": "yRate",
-						"unit": "rad/s"
+						"unit": "deg/s"
 					},
 					{
 						"type": "float",
 						"name": "zRate",
-						"unit": "rad/s"
+						"unit": "deg/s"
 					},
 					{
 						"type": "float",
 						"name": "xAccel",
-						"unit": "m/s/s"
+						"unit": "m/^2"
 					},
 					{
 						"type": "float",
 						"name": "yAccel",
-						"unit": "m/s/s"
+						"unit": "m/^2"
 					},
 					{
 						"type": "float",
 						"name": "zAccel",
-						"unit": "m/s/s"
+						"unit": "m/^2"
 					},
 					{
 						"type": "uint8",
@@ -225,7 +226,7 @@
 				],
 				"graphs": [{
 						"name": "Acceleration",
-						"units": "m/s/s",
+						"units": "m/^2",
 						"xAxis": "Time (s)",
 						"yAxes": ["xAccel", "yAccel", "zAccel"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
@@ -233,7 +234,7 @@
 					},
 					{
 						"name": "Angular Rate",
-						"units": "deg",
+						"units": "deg/s",
 						"xAxis": "Time (s)",
 						"yAxes": ["xRate", "yRate", "zRate"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
@@ -273,52 +274,52 @@
 					{
 						"type": "float",
 						"name": "roll",
-						"unit": "rad"
+						"unit": "deg"
 					},
 					{
 						"type": "float",
 						"name": "pitch",
-						"unit": "rad"
+						"unit": "deg"
 					},
 					{
 						"type": "float",
 						"name": "heading",
-						"unit": "rad"
+						"unit": "deg"
 					},
 					{
 						"type": "float",
 						"name": "xRate",
-						"unit": "rad/s"
+						"unit": "deg/s"
 					},
 					{
 						"type": "float",
 						"name": "yRate",
-						"unit": "rad/s"
+						"unit": "deg/s"
 					},
 					{
 						"type": "float",
 						"name": "zRate",
-						"unit": "rad/s"
+						"unit": "deg/s"
 					},
 					{
 						"type": "float",
 						"name": "xAccel",
-						"unit": "m/s/s"
+						"unit": "m/^2"
 					},
 					{
 						"type": "float",
 						"name": "yAccel",
-						"unit": "m/s/s"
+						"unit": "m/^2"
 					},
 					{
 						"type": "float",
 						"name": "zAccel",
-						"unit": "m/s/s"
+						"unit": "m/^2"
 					}
 				],
 				"graphs": [{
 						"name": "Acceleration",
-						"units": "m/s/s",
+						"units": "m/^2",
 						"xAxis": "Time (s)",
 						"yAxes": ["xAccel", "yAccel", "zAccel"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
@@ -326,7 +327,7 @@
 					},
 					{
 						"name": "Angular Rate",
-						"units": "deg",
+						"units": "deg/s",
 						"xAxis": "Time (s)",
 						"yAxes": ["xRate", "yRate", "zRate"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
@@ -374,17 +375,17 @@
 					{
 						"type": "float",
 						"name": "roll",
-						"unit": "rad"
+						"unit": "deg"
 					},
 					{
 						"type": "float",
 						"name": "pitch",
-						"unit": "rad"
+						"unit": "deg"
 					},
 					{
 						"type": "float",
 						"name": "heading",
-						"unit": "rad"
+						"unit": "deg"
 					},
 					{
 						"type": "float",
@@ -434,17 +435,17 @@
 					{
 						"type": "float",
 						"name": "xMag",
-						"unit": "m/s/s"
+						"unit": "Gauss"
 					},
 					{
 						"type": "float",
 						"name": "yMag",
-						"unit": "m/s/s"
+						"unit": "Gauss"
 					},
 					{
 						"type": "float",
 						"name": "zMag",
-						"unit": "m/s/s"
+						"unit": "Gauss"
 					},
 					{
 						"type": "uint8",
@@ -537,17 +538,17 @@
 					{
 						"type": "float",
 						"name": "roll",
-						"unit": "rad"
+						"unit": "deg"
 					},
 					{
 						"type": "float",
 						"name": "pitch",
-						"unit": "rad"
+						"unit": "deg"
 					},
 					{
 						"type": "float",
 						"name": "heading",
-						"unit": "rad"
+						"unit": "deg"
 					},
 					{
 						"type": "float",
@@ -567,17 +568,17 @@
 					{
 						"type": "float",
 						"name": "xAccelBias",
-						"unit": "g"
+						"unit": "m/s^2"
 					},
 					{
 						"type": "float",
 						"name": "yAccelBias",
-						"unit": "g"
+						"unit": "m/s^2"
 					},
 					{
 						"type": "float",
 						"name": "zAccelBias",
-						"unit": "g"
+						"unit": "m/s^2"
 					},
 					{
 						"type": "float",
@@ -627,17 +628,17 @@
 					{
 						"type": "float",
 						"name": "xMag",
-						"unit": "G"
+						"unit": "Gauss"
 					},
 					{
 						"type": "float",
 						"name": "yMag",
-						"unit": "G"
+						"unit": "Gauss"
 					},
 					{
 						"type": "float",
 						"name": "zMag",
-						"unit": "G"
+						"unit": "Gauss"
 					},
 					{
 						"type": "double",
@@ -673,6 +674,7 @@
 				"graphs": [
 					{
 						"name": "Geo Map",
+						"units": "deg",
 						"renderType":"map",
 						"fields":[
 							{ "name":"lat" , "display": "Latitude" },
@@ -724,7 +726,7 @@
 					},
 					{
 						"name": "Acceleration Bias",
-						"units": "g",
+						"units": "m/s^2",
 						"xAxis": "Time (s)",
 						"yAxes": ["xAccelBias", "yAccelBias", "zAccelBias"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
@@ -818,17 +820,17 @@
 					{
 						"type": "float",
 						"name": "xMag",
-						"unit": "G"
+						"unit": "Gauss"
 					},
 					{
 						"type": "float",
 						"name": "yMag",
-						"unit": "G"
+						"unit": "Gauss"
 					},
 					{
 						"type": "float",
 						"name": "zMag",
-						"unit": "G"
+						"unit": "Gauss"
 					},
 					{
 						"type": "float",
