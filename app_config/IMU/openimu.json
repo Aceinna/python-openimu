@@ -158,7 +158,7 @@
 				],
 				"graphs": [{
 						"name": "Acceleration",
-						"units": "m/^2",
+						"units": "m/s^2",
 						"xAxis": "Time (s)",
 						"yAxes": ["xAccel", "yAccel", "zAccel"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
