@@ -29,5 +29,9 @@ def get_app_names():
 	]        
     return app_names
 
+app_str = ['INS','VG_AHRS','IMU']
+
+string_folder_path = 'app_config/APP_TYP/openimu.json'
+
 
 imu = OpenIMU(ws=True)
