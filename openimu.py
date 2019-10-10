@@ -425,11 +425,12 @@ class OpenIMU:
         return self.openimu_get_packet('gV')
 
     def openimu_version_compare(self, fw_version, js_version):
-        if fw_version == js_version:
+        if js_version in fw_version:
             pass
             # print('fw & json version match')
         else:
-            print('fw & json version mismatch')
+            pass
+            # print('fw & json version mismatch')
 
     def connect(self):
         '''Continous data collection loop to get and process data packets

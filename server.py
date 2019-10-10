@@ -57,43 +57,20 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             # Load the basic openimu.json(IMU application)
             with open('app_config/IMU/openimu.json') as json_data:
                 imu.imu_properties = json.load(json_data)
-            application_type = bytes.decode(imu.openimu_get_user_app_id())
-            hw_version_str = application_type.split(' ')[1]  
+            application_type = bytes.decode(imu.openimu_get_user_app_id())             
             # application_type = imu.device_id
-
+            for idx, item in enumerate(gl.app_str):
+                if item in application_type:
+                    folder_path = gl.string_folder_path.replace('APP_TYP',item)
+                    break   
+                            
             # load application type from firmware 
             try:
-                if imu.paused == 1 and not imu.openimu_get_user_app_id() == None:                                      
-                    # Compass application
-                    if 'Compass'in application_type:
-                        with open('app_config/Compass/openimu.json') as json_data:
+                if imu.paused == 1 and not imu.openimu_get_user_app_id() == None: 
+                    with open(folder_path) as json_data:
                             imu.imu_properties = json.load(json_data)
-                        imu.imu_properties['userConfiguration'][3]['options'] = ['z1','s1','c1']
-                        js_version_str = imu.imu_properties['app_version'].split(' ')[2]
-                        imu.openimu_version_compare(hw_version_str,js_version_str)
-                    # INS application
-                    elif 'INS'in application_type:
-                        with open('app_config/INS/openimu.json') as json_data:
-                            imu.imu_properties = json.load(json_data)
-                        imu.imu_properties['userConfiguration'][3]['options'] = ['z1','a1','a2','s1','e1','e2']
-                        js_version_str = imu.imu_properties['app_version'].split(' ')[2]
-                        imu.openimu_version_compare(hw_version_str,js_version_str)
-                    # VG_AHRS application
-                    elif 'VG_AHRS' in application_type:
-                        with open('app_config/VG_AHRS/openimu.json') as json_data:
-                            imu.imu_properties = json.load(json_data)
-                        imu.imu_properties['userConfiguration'][3]['options'] = ['z1','a1','a2','s1','e1']
-                        js_version_str = imu.imu_properties['app_version'].split(' ')[2]
-                        imu.openimu_version_compare(hw_version_str,js_version_str)
-                    # Framework application
-                    elif 'OpenIMU'in application_type:
-                        with open('app_config/OpenIMU/openimu.json') as json_data:
-                            imu.imu_properties = json.load(json_data)
-                        imu.imu_properties['userConfiguration'][3]['options'] = ['z1']
-                        js_version_str = imu.imu_properties['app_version'].split(' ')[2]
-                        imu.openimu_version_compare(hw_version_str,js_version_str)
-                    else:
-                        print('no json file matched!')
+                    js_version_str = imu.imu_properties['app_version'].split(' ')[2]
+                    imu.openimu_version_compare(application_type,js_version_str)
 
                     self.write_message(json.dumps({ 'messageType' : 'serverStatus', 'data' : { 'serverVersion' : server_version, 'serverUpdateRate' : callback_rate,  'packetType' : imu.packet_type,
                                                                                                 'deviceProperties' : imu.imu_properties, 'deviceId' : imu.device_id, 'logging' : imu.logging, 'fileName' : fileName }}))
