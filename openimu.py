@@ -409,7 +409,7 @@ class OpenIMU:
     def openimu_version_compare(self, fw_version, js_version):
         '''app string should be matched with the corresponding json file.
         '''
-        if fw_version == js_version:
+        if js_version in fw_version:
             pass
             # print('fw & json version match')
         else:

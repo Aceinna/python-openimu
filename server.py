@@ -57,22 +57,20 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             # Load the basic openimu.json(IMU application)
             #with open('app_config/IMU/openimu.json') as json_data:
             #    imu.imu_properties = json.load(json_data)
-            application_type = bytes.decode(imu.openimu_get_user_app_id())
-            hw_version_str = application_type.split(' ')[1]  
+            application_type = bytes.decode(imu.openimu_get_user_app_id())           
             # application_type = imu.device_id
-            i = 0
-            for x in gl.app_str:
-                if gl.app_str[i] in application_type:
-                    break;
-                i= i+1
-            folder_path = gl.string_folder_path.replace('APP_TYP',gl.app_str[i])
+            for idx, item in enumerate(gl.app_str):
+                if item in application_type:
+                    folder_path = gl.string_folder_path.replace('APP_TYP',item)
+                    break   
+                            
             # load application type from firmware 
             try:
                 if imu.paused == 1 and not imu.openimu_get_user_app_id() == None: 
                     with open(folder_path) as json_data:
                             imu.imu_properties = json.load(json_data)
                     js_version_str = imu.imu_properties['app_version'].split(' ')[2]
-                    imu.openimu_version_compare(hw_version_str,js_version_str)
+                    imu.openimu_version_compare(application_type,js_version_str)
                     self.write_message(json.dumps({ 'messageType' : 'serverStatus', 'data' : { 'serverVersion' : server_version, 'serverUpdateRate' : callback_rate,  'packetType' : imu.packet_type,
                                                                                                 'deviceProperties' : imu.imu_properties, 'deviceId' : imu.device_id, 'logging' : imu.logging, 'fileName' : fileName }}))
                 else:
