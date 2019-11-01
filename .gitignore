@@ -21,3 +21,7 @@ compass.bin
 *.pem
 *.cert
 *.key
+log_driver.py
+.gitignore
+.gitignore
+Server.log
