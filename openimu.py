@@ -73,8 +73,8 @@ class OpenIMU:
         self.data_buffer = []       # serial read buffer
         self.packet_buffer = []     # packet parsing buffer
         self.sync_state = 0
-        self.sync_pattern = collections.deque(4*[0], 4)  # create 4 byte FIFO   
-
+        self.sync_pattern = collections.deque(4*[0], 4)  # create 4 byte FIFO  
+         
         logging.basicConfig(level=logging.DEBUG,
             format='%(asctime)-28s:%(msecs)-4d %(filename)-20s[%(funcName)-25s][line:%(lineno)4d] %(levelname)5s     %(message)s',
             datefmt='%a, %d %b %Y %H:%M:%S',                
@@ -134,10 +134,11 @@ class OpenIMU:
         ''' 
         logging.info('Find device,------------------------------------------------------------------------')    
         search_history = 0     
-        while not self.device_id:  
+        while not self.device_id: 
+            print('Find device {0} times'.format(search_history), end="\r", flush=True)  
             ports = self.find_ports() 
             if len(ports): 
-                if search_history == 1:
+                if search_history != 0:
                     time.sleep(4)                
                 if self.try_last_port():
                     self.set_connection_details()
@@ -146,7 +147,7 @@ class OpenIMU:
                     time.sleep(0.1)               
                     return True
             else:
-                search_history = 1                    
+                search_history += 1                    
         
     def find_ports(self):
         ''' Lists serial port names. Code from
@@ -157,14 +158,13 @@ class OpenIMU:
             :returns:
                 A list of the serial ports available on the system
         '''
-        print('scanning ports', end="\r", flush=True)        
-
+        
         #find system available ports
         portList = list(serial.tools.list_ports.comports())          
         ports = [p.device for p in portList] 
         ports.sort()          
         if len(ports):            
-            print("system ports detected", ports)
+            print("\nsystem ports detected", ports)
             logging.info('system ports detected:{0}'.format(ports)) 
         else:            
             logging.info('no system ports detected') 
@@ -255,7 +255,7 @@ class OpenIMU:
             print('BOOTLOADER MODE') 
             print('Connected ....{0}'.format(self.device_id))
             print('Please Upgrade FW with upgrade_fw function')
-        elif self.device_id:
+        elif self.device_id:            
             print('Connected(port:{1} baudrate:{2}) ....{0}'.format(self.device_id,self.ser.name, self.ser.baudrate))
         self.save_last_port()   
         logging.info('Connected(port:{1} baudrate:{2}) ....{0}---------------------------------------------'.format(self.device_id,self.ser.name, self.ser.baudrate))               
@@ -281,7 +281,7 @@ class OpenIMU:
                         print('autoconnected by last port')
                         logging.info('autoconnected by last port')  
                         return True
-                    else:
+                    else:                        
                         print('no port available in last recorded app_config/connection.json')
                         return False
                 else:

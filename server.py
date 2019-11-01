@@ -23,7 +23,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
     def open(self):
         self.callback = tornado.ioloop.PeriodicCallback(self.send_data, callback_rate)
         self.callback.start()
-        self.callback2 = tornado.ioloop.PeriodicCallback(self.detect_status, 500)
+        self.callback2 = tornado.ioloop.PeriodicCallback(self.detect_status, 1000)
         self.callback2.start()
 
     def detect_status(self):        
