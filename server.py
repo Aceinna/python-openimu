@@ -167,10 +167,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                         storedValue = imu.magneticAlignCmd('stored')
                         self.write_message(
                             json.dumps({"messageType": "magAction", "data": {"status": "complete", "value": storedValue}}))
-
                         return
-
-
                     self.write_message(json.dumps({"messageType": "magAction", "data": {"status": "incomplete"}}))
 
             elif (list(message['data'].values())[0] == 'save'):
@@ -181,8 +178,6 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                 data = imu.openimu_get_all_param()
                 self.write_message(json.dumps({"messageType": "magAction", "data": {"status": "saved","value":data}}))
                 return
-
-
 
 
         # OLD CODE REVIEW FOR DELETION
@@ -214,11 +209,13 @@ class WSHandler(tornado.websocket.WebSocketHandler):
 
     def check_origin(self, origin):
         return True
- 
+
 if __name__ == "__main__":
     # Create IMU
     print("server_version:",server_version)   
     try: 
+
+        input_ret = imu.args_input()
         imu.find_device()    
         # Set up Websocket server on Port 8000
         # Port can be changed
@@ -229,7 +226,7 @@ if __name__ == "__main__":
         #    "certfile": os.path.join(os.path.abspath("."), "./cert/ssl.cert"),
         #    "keyfile": os.path.join(os.path.abspath("."), "./cert/ssl.key"),
         # })
-        http_server.listen(8123)        
+        http_server.listen(input_ret[1])        
         
         tornado.ioloop.IOLoop.instance().start()
     

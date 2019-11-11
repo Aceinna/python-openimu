@@ -55,6 +55,7 @@ import requests
 import binascii
 import json
 import global_vars as gl
+import argparse
 
 class OpenIMU:
     def __init__(self, ws=False):
@@ -74,7 +75,7 @@ class OpenIMU:
         self.packet_buffer = []     # packet parsing buffer
         self.sync_state = 0
         self.sync_pattern = collections.deque(4*[0], 4)  # create 4 byte FIFO  
-         
+
         logging.basicConfig(level=logging.DEBUG,
             format='%(asctime)-28s:%(msecs)-4dms %(filename)-20s[%(funcName)-25s][line:%(lineno)4d] %(levelname)5s     %(message)s',
             datefmt='%a, %d %b %Y %H:%M:%S',                
@@ -122,9 +123,6 @@ class OpenIMU:
                     logging.info("downloading the JSON file failed, url: {0}".format(url)) 
                     print("_init_:",e)
                     
-        # else:
-        #     print('load basic config json locally')
-        
         # Load the basic openimu.json(IMU application)
         with open('app_config/IMU/openimu.json') as json_data:
             self.imu_properties = json.load(json_data)
@@ -169,57 +167,6 @@ class OpenIMU:
         else:            
             logging.info('no system ports detected') 
             time.sleep(0.5)
-        # if sys.platform.startswith('win'):
-        #     #fond windows available ports already found
-        #     portlist = list(serial.tools.list_ports.comports())
-        #     ports = [ p.device for p in portlist]
-            
-        # elif sys.platform.startswith('linux') or sys.platform.startswith('cygwin'):
-        #     # this excludes your current terminal "/dev/tty"
-        #     ports = glob.glob('/dev/tty[A-Za-z]*')
-        # elif sys.platform.startswith('darwin'):
-        #     ports = glob.glob('/dev/tty.*')
-        # else:
-        #     raise EnvironmentError('Unsupported platform')
-
-        # result = []
-        # for port in ports:
-        #     if "Bluetooth" in port:
-        #         continue
-        #     else:
-        #         print('Testing port' + port)
-                
-        #         s = None
-        #         try:
-        #             print("try to build serial",time.clock())
-        #             s = serial.Serial(port)
-        #             if s:
-        #                 s.close()
-        #                 result.append(port)
-        #                 print("finished to build serial",time.clock())
-        #         # except:
-        #         except Exception as e:
-        #             # print(e)                    
-        #             if sys.version_info[0] > 2:
-        #                 if e.args[0].find('WindowsError') >= 0:
-        #                     try:
-        #                         if s:
-        #                             s.close()
-        #                     except Exception as ee:
-        #                         print ("find ports",ee)
-        #                         # self.disconnect()
-                            
-        #             else:   
-        #                 if e.message.find('Error') >= 0:
-        #                     try:
-        #                         if s:
-        #                             s.close()
-        #                     except Exception as ee:
-        #                         print ("find_ports",ee)
-        #                         # self.disconnect()
-        #             pass
-        # print("find ports finished",time.clock())
-        # return result
         return ports
 
     def autobaud(self, ports):
@@ -856,15 +803,21 @@ class OpenIMU:
                         self.sync_state = 0  # CRC did not match
                         # print("crc error***************************************")
 
- #####       
+    def args_input(self):
+        parser = argparse.ArgumentParser(description='OpenIMU input args command:', usage='%(prog)s -b [baudrate] -p [port number]' )
+        parser.add_argument('-b', type=int, default=115200, metavar='baudrate', nargs=1,help='input the baudrate',choices=[38400,57600,115200,230400])
+        parser.add_argument('-p', type=int, default=8101, metavar='port', nargs=1,help='input the port')
+        args = parser.parse_args()
+        return [args.b,args.p]
 
 if __name__ == "__main__":
     imu = OpenIMU()
+    imu.command_input()
     imu.find_device()
     imu.openimu_get_all_param()
     imu.start_log()
     time.sleep(20)
     imu.stop_log()
-  
+
 	
     
