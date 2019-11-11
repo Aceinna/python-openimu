@@ -76,7 +76,7 @@ class OpenIMU:
         self.sync_pattern = collections.deque(4*[0], 4)  # create 4 byte FIFO  
          
         logging.basicConfig(level=logging.DEBUG,
-            format='%(asctime)-28s:%(msecs)-4d %(filename)-20s[%(funcName)-25s][line:%(lineno)4d] %(levelname)5s     %(message)s',
+            format='%(asctime)-28s:%(msecs)-4dms %(filename)-20s[%(funcName)-25s][line:%(lineno)4d] %(levelname)5s     %(message)s',
             datefmt='%a, %d %b %Y %H:%M:%S',                
             filename='Server.log',
             filemode='w')                     
@@ -133,21 +133,21 @@ class OpenIMU:
         ''' Finds active ports and then autobauds units
         ''' 
         logging.info('Find device,------------------------------------------------------------------------')    
-        search_history = 0     
+        search_history, num_ports_ago = 0, len(self.find_ports())   
         while not self.device_id: 
             print('Find device {0} times'.format(search_history), end="\r", flush=True)  
             ports = self.find_ports() 
-            if len(ports): 
-                if search_history != 0:
-                    time.sleep(4)                
+            if len(ports) != num_ports_ago:
+                time.sleep(4)
+            if len(ports):
                 if self.try_last_port():
                     self.set_connection_details()
                     return True
-                if self.autobaud(ports):                
-                    time.sleep(0.1)               
+                if self.autobaud(ports):
+                    time.sleep(0.1)
                     return True
-            else:
-                search_history += 1                    
+            search_history += 1
+            num_ports_ago = len(ports)
         
     def find_ports(self):
         ''' Lists serial port names. Code from
@@ -273,16 +273,17 @@ class OpenIMU:
                 connection = json.load(json_data)
             if connection:
                 if not connection['port'] in ports:
-                    return False                
-                self.open(port=connection['port'], baud=connection['baud'])
+                    logging.debug('Port from app_config/connection.json not exist')
+                    return False                             
+                self.open(port=connection['port'], baud=connection['baud'])                
                 if self.ser:
                     self.device_id = self.openimu_get_device_id()
                     if self.device_id:
-                        print('autoconnected by last port')
-                        logging.info('autoconnected by last port')  
+                        print('Autoconnected by last saved port')
+                        logging.info('Autoconnected by last saved port')  
                         return True
                     else:                        
-                        print('no port available in last recorded app_config/connection.json')
+                        logging.debug('Port from app_config/connection.json get_device_id failed!')
                         return False
                 else:
                     return False
@@ -561,9 +562,10 @@ class OpenIMU:
         try:              
             self.ser = serial.Serial(port, baud, timeout = 0.005)
         except Exception as e:
-            print('serial port {0} open exception:{1}'.format(port,e))
-            logging.debug("serial port open exception: {0}, exception is: {1}".format(port,e))
-            self.ser = False
+            print('Port {0} open exception,  restart IMU/change port/disconnect other ports'.format(port))
+            logging.debug("Port open exception: {0}, exception is: {1}, pls restart IMU/change port/disconnect other ports".format(port,e))
+            if not self.ser:                 
+                self.ser = False                             
 
     def close(self):
         if self.ser:
