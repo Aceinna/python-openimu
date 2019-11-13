@@ -36,7 +36,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             time.sleep(1)
         if not imu.paused:
             d = imu.get_latest()
-            self.write_message(json.dumps({ 'messageType' : 'event',  'data' : { 'newOutput' : d }}))               
+            self.write_message(json.dumps({ 'messageType' : 'event',  'data' : { 'newOutput' : d }})) 
         else:
             return False
 
@@ -82,11 +82,8 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                     self.write_message(json.dumps({ 'messageType' : 'serverStatus', 'data' : { 'serverVersion' : server_version, 'serverUpdateRate' : callback_rate,  'packetType' : imu.packet_type,
                                                                                                 'deviceProperties' : imu.imu_properties, 'deviceId' : imu.device_id, 'logging' : imu.logging, 'fileName' : fileName }}))
                 else:
-                    self.write_message(json.dumps({ "messageType": "queryResponse","data": {"packetType": "DeviceStatus","packet": { "returnStatus":2}}}))
                     imu.pause()
-            except Exception as e:
-                # print(e)                 
-                self.write_message(json.dumps({ "messageType": "queryResponse","data": {"packetType": "DeviceStatus","packet": { "returnStatus":2}}}))
+            except Exception as e:     
                 logging.info("load JSON file exception:{0}".format(e))
                 imu.pause()
         elif message['messageType'] == 'requestAction':
