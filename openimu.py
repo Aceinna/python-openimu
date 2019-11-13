@@ -60,7 +60,7 @@ import argparse
 class OpenIMU:
     def __init__(self, ws=False):
         '''Initialize and then start ports search and autobaud process
-        '''
+        '''        
         self.ws = ws                # set to true if being run as a thread in a websocket server
         self.ser = None             # the active UART
         self.device_id = 0          # unit's id str
@@ -74,14 +74,15 @@ class OpenIMU:
         self.data_buffer = []       # serial read buffer
         self.packet_buffer = []     # packet parsing buffer
         self.sync_state = 0
-        self.sync_pattern = collections.deque(4*[0], 4)  # create 4 byte FIFO  
+        self.sync_pattern = collections.deque(4*[0], 4)  # create 4 byte FIFO   
+        self.customer_baudrate = self.args_input().b
+        self.loglevel = self.args_input().l             
 
-        logging.basicConfig(level=logging.DEBUG,
+        logging.basicConfig(level=self.loglevel,
             format='%(asctime)-28s:%(msecs)-4dms %(filename)-20s[%(funcName)-25s][line:%(lineno)4d] %(levelname)5s     %(message)s',
             datefmt='%a, %d %b %Y %H:%M:%S',                
             filename='Server.log',
-            filemode='w')                     
-
+            filemode='w')
         #if no data folder, then creat one
         if not os.path.isdir("data"):
             print('creat data folder for store measure data in future')
@@ -129,12 +130,12 @@ class OpenIMU:
 
     def find_device(self):
         ''' Finds active ports and then autobauds units
-        ''' 
+        '''         
         logging.info('Find device,------------------------------------------------------------------------')    
-        search_history, num_ports_ago = 0, len(self.find_ports())   
+        search_history, num_ports_ago = 0, len(list(serial.tools.list_ports.comports()) )   
         while not self.device_id: 
             print('Find device {0} times'.format(search_history), end="\r", flush=True)  
-            ports = self.find_ports() 
+            ports = self.find_ports()
             if len(ports) != num_ports_ago:
                 time.sleep(4)
             if len(ports):
@@ -144,6 +145,7 @@ class OpenIMU:
                 if self.autobaud(ports):
                     time.sleep(0.1)
                     return True
+                time.sleep(0.5)
             search_history += 1
             num_ports_ago = len(ports)
         
@@ -158,6 +160,7 @@ class OpenIMU:
         '''
         
         #find system available ports
+        logging.debug("at {0}".format(sys._getframe().f_code.co_name))  
         portList = list(serial.tools.list_ports.comports())          
         ports = [p.device for p in portList] 
         ports.sort()          
@@ -174,36 +177,33 @@ class OpenIMU:
            :returns: 
                 true when successful
         ''' 
-
-        bandListFromOptions = self.imu_properties['userConfiguration'][2]['options']
-        for port in ports:  
-            logging.info("open port:{}".format(port))                              
-            self.open(port)            
+        logging.debug("at {0}".format(sys._getframe().f_code.co_name))  
+        bandListFromOptions = self.imu_properties['userConfiguration'][2]['options']  if self.customer_baudrate == 0 else [self.customer_baudrate]     
+        
+        for port in ports:                                 
             # TODO: change this to intelligently use openimu.json.  even save the last configuration 
-            # user_configuration = self.imu_properties['userConfiguration']            
-                        
+            # user_configuration = self.imu_properties['userConfiguration']    
             for baud in bandListFromOptions: 
-                logging.info("try baud:{0}".format(baud))               
-                if self.ser:                    
-                    self.ser.baudrate = baud
-                    self.device_id = self.openimu_get_device_id()                    
-                    if self.device_id:
-                        print(self.device_id, self.ser.baudrate)
-                    if self.device_id:
-                        self.set_connection_details()
-                        logging.info('Connected in autobaud') 
-                        if sys.platform.startswith('win'):
-                            self.ser.set_buffer_size(rx_size = 128000, tx_size = 128000)
-                        return True
+                logging.info("try {0}:{1}".format(port, baud))          
+                self.open(port, baud)
+                self.ser.baudrate = baud
+                self.device_id = self.openimu_get_device_id()             
+                if self.device_id:
+                    self.set_connection_details()
+                    logging.info('Connected in autobaud') 
+                    if sys.platform.startswith('win'):
+                        self.ser.set_buffer_size(rx_size = 128000, tx_size = 128000)
+                    return True
         return False
     
     def set_connection_details(self):
+        logging.debug("at {0}".format(sys._getframe().f_code.co_name))  
         if "Bootloader" in self.device_id:
             print('BOOTLOADER MODE') 
             print('Connected ....{0}'.format(self.device_id))
             print('Please Upgrade FW with upgrade_fw function')
         elif self.device_id:            
-            print('Connected(port:{1} baudrate:{2}) ....{0}'.format(self.device_id,self.ser.name, self.ser.baudrate))
+            print('Connected(port:{0} baudrate:{1}) ....{2}'.format(self.ser.name, self.ser.baudrate, self.device_id))
         self.save_last_port()   
         logging.info('Connected(port:{1} baudrate:{2}) ....{0}---------------------------------------------'.format(self.device_id,self.ser.name, self.ser.baudrate))               
           
@@ -211,6 +211,7 @@ class OpenIMU:
         # webbrowser.open("http://40.118.233.18:8080/record", new=0, autoraise=True) 
 
     def try_last_port(self):
+        logging.debug("at {0}".format(sys._getframe().f_code.co_name))  
         connection = None
         portList = list(serial.tools.list_ports.comports())
         ports = [ p.device for p in portList]
@@ -222,7 +223,7 @@ class OpenIMU:
                 if not connection['port'] in ports:
                     logging.debug('Port from app_config/connection.json not exist')
                     return False                             
-                self.open(port=connection['port'], baud=connection['baud'])                
+                self.open(port=connection['port'], baud=connection['baud'] if self.customer_baudrate == 0 else self.customer_baudrate)                
                 if self.ser:
                     self.device_id = self.openimu_get_device_id()
                     if self.device_id:
@@ -239,6 +240,7 @@ class OpenIMU:
             return False
 
     def save_last_port(self):
+        logging.debug("at {0}".format(sys._getframe().f_code.co_name))  
         connection = { "port" : self.ser.port, "baud" : self.ser.baudrate }
         with open('app_config/connection.json', 'w') as outfile:
             json.dump(connection, outfile)
@@ -247,7 +249,7 @@ class OpenIMU:
         '''Get latest converted IMU readings in converted units
             :returns:
                 data object or error message for web socket server to pass to app
-        '''
+        '''        
         if not self.paused:
             return self.data
         else: 
@@ -256,6 +258,7 @@ class OpenIMU:
     def start_log(self, data = False):
         '''Creates file or cloud logger.  Autostarts log activity if ws (websocket) set to false
         '''
+        logging.debug("at {0}".format(sys._getframe().f_code.co_name))  
         if self.ws == False: 
             if self.paused:
                 self.connect()
@@ -275,6 +278,7 @@ class OpenIMU:
     def stop_log(self):
         '''Stops file or cloud logger
         '''
+        logging.debug("at {0}".format(sys._getframe().f_code.co_name))  
         self.pause()
         self.logging = 0
         self.logger.close()
@@ -284,6 +288,7 @@ class OpenIMU:
 
 
     def openimu_update_param(self, param, value):
+        logging.debug("at {0}".format(sys._getframe().f_code.co_name))  
         if param == 2:
             connection = { "port" : self.ser.port, "baud" : value }
             with open('app_config/connection.json', 'w') as outfile:
@@ -294,12 +299,14 @@ class OpenIMU:
         return self.openimu_get_packet('uP')  
 
     def openimu_get_param(self, param,):
+        logging.debug("at {0}".format(sys._getframe().f_code.co_name))  
         C = InputPacket(self.imu_properties, 'gP', param)
         self.write(C.bytes)
         #time.sleep(0.05)
         return self.openimu_get_packet('gP')
 
     def magneticAlignCmd(self,action):
+        logging.debug("at {0}".format(sys._getframe().f_code.co_name))  
         C = InputPacket(self.imu_properties, 'ma', action)
         self.write(C.bytes)
 
@@ -322,6 +329,7 @@ class OpenIMU:
                 return 1
 
     def decodeOutput(self, value):
+        logging.debug("at {0}".format(sys._getframe().f_code.co_name))  
         hard_iron_x = dict()
         hard_iron_y = dict()
         soft_iron_ratio = dict()
@@ -357,6 +365,7 @@ class OpenIMU:
         return output
 
     def hardIronCal(self, value, type):
+        logging.debug("at {0}".format(sys._getframe().f_code.co_name))  
         decodedValue = int(value, 16)
         # print (decodedValue)
         if type == 'axis':
@@ -379,34 +388,38 @@ class OpenIMU:
             return decodedValue / piValue
 
     def openimu_save_config(self):
+        logging.debug("at {0}".format(sys._getframe().f_code.co_name))          
         C = InputPacket(self.imu_properties, 'sC')
         self.write(C.bytes)
         # this message currently does not return anything
 
     def openimu_get_all_param(self):
+        logging.debug("at {0}".format(sys._getframe().f_code.co_name))  
         C = InputPacket(self.imu_properties, 'gA')
         self.write(C.bytes)
         #time.sleep(0.05)
         return self.openimu_get_packet('gA')  
 
     def openimu_get_device_id(self):
+        logging.debug("at {0}".format(sys._getframe().f_code.co_name))  
         C = InputPacket(self.imu_properties, 'pG')
         self.write(C.bytes)
         #time.sleep(0.05)
         device_id = self.openimu_get_packet('pG')
         if device_id:
             # print('git device id')
-            try:                
+            try:
+                logging.debug("decode id:{0}".format(device_id))
                 device_id = device_id.decode()
-            except Exception as e:
-                print("get_device_id, decoded error: ",e)  
-                logging.info("device_id decode error about:{0}, and exception is:{1}".format(device_id,e))
+            except Exception as e:                 
+                logging.info("get_device_id decode error about:{0}, and exception is:{1}".format(device_id,e))
                 return False
             return device_id
         else: 
             return False
 
     def openimu_get_user_app_id(self): 
+        logging.debug("at {0}".format(sys._getframe().f_code.co_name))  
         C = InputPacket(self.imu_properties, 'gV')
         # print('get id--------------1')
         self.write(C.bytes)        
@@ -424,6 +437,7 @@ class OpenIMU:
     def connect(self):
         '''Continous data collection loop to get and process data packets
         '''
+        logging.debug("at {0}".format(sys._getframe().f_code.co_name))  
         if not self.device_id:
             self.find_device()
         packet_rate = next((x for x in self.imu_properties['userConfiguration'] if x['name'] == 'Packet Rate'), None)
@@ -439,12 +453,13 @@ class OpenIMU:
         except:
             self.packet_type = 0
         self.paused = 0
-        # print("connect,  3333333333333333333333333333333")
+        logging.debug("connect function ongoing: id-{0}; packet rate-{1}; odr-{2}; packet type-{3}".format(self.device_id, packet_rate, odr_param, packet_type))
         threading.Thread(target=self.start_collection_task).start()
 
     def pause(self):
         ''' Will End the data collection task and thread
         '''
+        logging.debug("at {0}".format(sys._getframe().f_code.co_name))  
         self.paused = 1 
         time.sleep(0.1)
         self.reset_buffer()
@@ -452,6 +467,7 @@ class OpenIMU:
     def disconnect(self):
         '''Ends data collection loop and Reset settings
         '''
+        logging.debug("at {0}".format(sys._getframe().f_code.co_name))  
         if(self.logging == 1 ):
             self.stop_log() 
         self.pause()
@@ -465,6 +481,7 @@ class OpenIMU:
     def parse_payload(self, ws = False):
         '''Parses packet payload using openimu.json as reference
         '''
+        logging.debug("at {0}".format(sys._getframe().f_code.co_name))  
         payload = self.packet_buffer[3:self.packet_buffer[2]+3]   # extract the payload
         data = [] 
 
@@ -472,19 +489,21 @@ class OpenIMU:
         output_packet = next((x for x in self.imu_properties['userMessages']['outputPackets'] if x['name'] == self.packet_type), None)
         input_packet = next((x for x in self.imu_properties['userMessages']['inputPackets'] if x['name'] == self.packet_type), None)
         bootloader_packet = next((x for x in self.imu_properties['bootloaderMessages'] if x['name'] == self.packet_type), None)
-      
+
+        logging.debug("start to parse_payload:{0}".format(payload))
         if output_packet != None:
             self.data = self.openimu_unpack_output_packet(output_packet, payload)
             if self.logging == 1 and self.logger is not None:
                 self.logger.log(self, self.data)
                 # print(self.data['lat'])
+                logging.debug("parse_payload, output_packet data:{0}".format(self.data))
               
         elif input_packet != None:
-            
+            logging.debug("parse_payload, input_packet data:{0}".format(payload))
             data = self.openimu_unpack_input_packet(input_packet['responsePayload'], payload)
 
         elif bootloader_packet != None:
-
+            logging.debug("parse_payload, bootloader_packet data:{0}".format(payload))
             data = self.openimu_unpack_bootloader_packet(bootloader_packet['responsePayload'], payload)
 
         return data
@@ -492,6 +511,7 @@ class OpenIMU:
     def calc_crc(self,payload):
         '''Calculates CRC per 380 manual
         '''
+        logging.debug("at {0}".format(sys._getframe().f_code.co_name))  
         crc = 0x1D0F
         for bytedata in payload:
            crc = crc^(bytedata << 8) 
@@ -506,15 +526,17 @@ class OpenIMU:
 
     def open(self, port = False, baud = 57600):
         # simple open
+        logging.debug("at {0}".format(sys._getframe().f_code.co_name))  
         try:              
-            self.ser = serial.Serial(port, baud, timeout = 0.005)
+            self.ser = serial.Serial(port, baud, timeout = 0.005)            
         except Exception as e:
-            print('Port {0} open exception,  restart IMU/change port/disconnect other ports'.format(port))
-            logging.debug("Port open exception: {0}, exception is: {1}, pls restart IMU/change port/disconnect other ports".format(port,e))
+            print('{0}:{1} open failed'.format(port, baud), end='\r')
+            logging.debug("Port open exception: {0}-{1}, exception is: {2}, pls restart IMU/change port/disconnect other ports".format(port, baud,e))
             if not self.ser:                 
                 self.ser = False                             
 
     def close(self):
+        logging.debug("at {0}".format(sys._getframe().f_code.co_name))  
         if self.ser:
             self.ser.reset_input_buffer()
             try: 
@@ -524,6 +546,7 @@ class OpenIMU:
                 logging.debug("happened exception when close ser:{0}".format(self.ser))
     
     def read(self,n):
+        logging.debug("at {0}".format(sys._getframe().f_code.co_name))  
         bytes = []
         if self.ser:
             try: 
@@ -539,6 +562,7 @@ class OpenIMU:
                     self.find_device() 
         
     def write(self,n):
+        logging.debug("at {0}".format(sys._getframe().f_code.co_name))  
         try: 
             self.ser.write(n)
         except Exception as e:
@@ -549,12 +573,14 @@ class OpenIMU:
             self.find_device() 
 
     def reset_buffer(self):
+        logging.debug("at {0}".format(sys._getframe().f_code.co_name))  
         try:
             self.ser.reset_input_buffer()
         except:
             self.ser = False
 
-    def openimu_unpack_output_packet(self, output_message, payload):
+    def openimu_unpack_output_packet(self, output_message, payload):         
+        logging.debug("unpack_output_packet, payload is:{0}".format(payload))
         length = 0
         pack_fmt = '<'
         for value in output_message['payload']:
@@ -603,6 +629,7 @@ class OpenIMU:
             logging.debug("decode payload of packets exception:{0}".format(e))   
     
     def openimu_unpack_input_packet(self, input_message, payload):
+        logging.debug("unpack_input_packet: {0} payload: {1}".format(input_message['type'], payload))
         if input_message['type'] == 'userConfiguration':
             user_configuration = self.imu_properties['userConfiguration']
             params = []
@@ -634,11 +661,13 @@ class OpenIMU:
             return text_string
 
     def openimu_unpack_bootloader_packet(self, bootloader_message, payload):
+        logging.debug("at {0}".format(sys._getframe().f_code.co_name))  
         if bootloader_message['type'] == 'ack':
             print('Success')
             return { "error": 0 }
 
     def openimu_unpack_one(self, type, data):
+        logging.debug("unpack_one, type:{0}, data:{1}".format(type, data))
         if type == 'uint64':
             try:
                 b = struct.pack('8B', *data)
@@ -679,6 +708,7 @@ class OpenIMU:
             return struct.unpack('d', b)[0]
 
     def openimu_start_bootloader(self):
+        logging.debug("at {0}".format(sys._getframe().f_code.co_name))
         packet = BootloaderInputPacket(self.imu_properties, 'JI')
         self.write(packet.bytes)
         self.openimu_get_packet('JI')    
@@ -693,6 +723,7 @@ class OpenIMU:
         packet = BootloaderInputPacket(self.imu_properties, 'JA')
         self.write(packet.bytes)
         print('Restarting app ...')
+        logging.debug("Resatarting app")
         time.sleep(5)
         self.disconnect()
         self.reset_buffer()
@@ -701,6 +732,7 @@ class OpenIMU:
         return True
 
     def openimu_write_block(self, data_len, addr, data):
+        logging.debug("at {0}".format(sys._getframe().f_code.co_name))  
         print(data_len, addr)
         packet = BootloaderInputPacket(self.imu_properties, 'WA', data_len, addr, data)
         self.write(packet.bytes)
@@ -709,6 +741,7 @@ class OpenIMU:
         self.openimu_get_packet('WA')    
        
     def openimu_upgrade_fw_prepare(self, file):
+        logging.debug("at {0}".format(sys._getframe().f_code.co_name))  
         if self.ws == False:
             fw_file = Path(file)
 
@@ -736,18 +769,20 @@ class OpenIMU:
         return True
 
     def openimu_finish_upgrade_fw(self):
+        logging.debug("at {0}".format(sys._getframe().f_code.co_name))  
         return self.addr >= self.fs_len
 
     def openimu_upgrade_fw(self, file):
         '''Upgrades firmware of connected 380 device to file provided in argument
         '''
+        logging.debug("at {0}".format(sys._getframe().f_code.co_name))
         packet_data_len = self.max_data_len if (self.fs_len - self.addr) > self.max_data_len else (self.fs_len - self.addr)
         data = self.fw[self.addr : (self.addr + packet_data_len)]
         self.openimu_write_block(packet_data_len, self.addr, data)
         self.addr += packet_data_len
 
     def start_collection_task(self):
-        # print("start collect task:, paused ========= ", self.paused == 1)
+        logging.debug("at {0}".format(sys._getframe().f_code.co_name))
         while self.odr_setting and not self.paused:
             if self.odr_setting:
                 self.openimu_get_packet(self.packet_type, True)     # get packet in stream mode
@@ -755,6 +790,7 @@ class OpenIMU:
         return False  # End Thread
 
     def openimu_get_packet(self,packet_type, stream = False):
+        logging.debug("get_packet of {0}".format(packet_type))
         if not packet_type:
             return False
         data = False
@@ -772,6 +808,7 @@ class OpenIMU:
         return data
 
     def parse_buffer(self, packet_type, stream = False):
+        logging.debug("at {0}".format(sys._getframe().f_code.co_name))
         if (sys.version_info > (3, 0)) and not isinstance(packet_type, str):
             packet_type_0 = packet_type[0]  
             packet_type_1 = packet_type[1]
@@ -783,9 +820,10 @@ class OpenIMU:
             if list(self.sync_pattern) == [85, 85, packet_type_0, packet_type_1]:
                 self.packet_buffer = [packet_type_0, packet_type_1]
                 self.sync_state = 1
-            elif self.sync_state == 1:
+            elif self.sync_state == 1:                
                 self.packet_buffer.append(new_byte)
                 if len(self.packet_buffer) == self.packet_buffer[2] + 5:
+                    logging.debug("parse_buffer {2} packet:{0} {1}".format(self.sync_pattern, self.packet_buffer, packet_type))
                     packet_crc = 256 * self.packet_buffer[-2] + self.packet_buffer[-1]    
                     if packet_crc == self.calc_crc(self.packet_buffer[:-2]):
                         if not isinstance(packet_type, str) and not isinstance(packet_type, unicode):
@@ -804,15 +842,15 @@ class OpenIMU:
                         # print("crc error***************************************")
 
     def args_input(self):
-        parser = argparse.ArgumentParser(description='OpenIMU input args command:', usage='%(prog)s -b [baudrate] -p [port number]' )
-        parser.add_argument('-b', type=int, default=115200, metavar='baudrate', nargs=1,help='input the baudrate',choices=[38400,57600,115200,230400])
-        parser.add_argument('-p', type=int, default=8101, metavar='port', nargs=1,help='input the port')
-        args = parser.parse_args()
-        return [args.b,args.p]
+        # logging.debug("at {0}".format(sys._getframe().f_code.co_name))
+        parser = argparse.ArgumentParser(description='OpenIMU input args command:', usage='%(prog)s -b [baudrate] -p [http_port] -d [log_level]' )
+        parser.add_argument('-b', type=int, default=0, metavar='baudrate', nargs=1,help='input the baudrate',choices=[38400,57600,115200,230400])
+        parser.add_argument('-p', type=int, default=8123, metavar='http_port', nargs=1,help='input the port')
+        parser.add_argument('-l', type=int, default=10, metavar='log_level', nargs=1,help='log record level', choices=[0, 10, 20, 30, 40, 50])
+        return parser.parse_args()        
 
 if __name__ == "__main__":
     imu = OpenIMU()
-    imu.command_input()
     imu.find_device()
     imu.openimu_get_all_param()
     imu.start_log()

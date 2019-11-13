@@ -12,7 +12,6 @@ from global_vars import imu
 import binascii
 import global_vars as gl
 
-
 # note: version string update should follow the updating rule
 server_version = '1.1.1'
 callback_rate = 50
@@ -41,8 +40,8 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             return False
 
     def on_message(self, message):
+        logging.debug("at {0}".format(sys._getframe().f_code.co_name))
         global imu
-
         message = json.loads(message)
         # Except for a few exceptions stop the automatic message transmission if a message is received
         if message['messageType'] != 'serverStatus' and list(message['data'].keys())[0] != 'startLog' and list(message['data'].keys())[0] != 'stopLog':
@@ -189,19 +188,13 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                 self.write_message(json.dumps({ "messageType" : "requestAction", "data" : { "loadFile" :  f.read() }}))
 
     def on_close(self): 
+        logging.debug("at {0}".format(sys._getframe().f_code.co_name))
         if(imu.logging == 1):
             imu.stop_log() 
         imu.pause()
         self.callback.stop()
         self.callback2.stop()
         time.sleep(1.2)
-        
-        
-        # try:
-        #     os._exit(0)
-        # except:
-        #    print('Program is off.')
-
         return False
 
     def check_origin(self, origin):
@@ -210,9 +203,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
 if __name__ == "__main__":
     # Create IMU
     print("server_version:",server_version)   
-    try: 
-
-        input_ret = imu.args_input()
+    try:               
         imu.find_device()    
         # Set up Websocket server on Port 8000
         # Port can be changed
@@ -223,10 +214,8 @@ if __name__ == "__main__":
         #    "certfile": os.path.join(os.path.abspath("."), "./cert/ssl.cert"),
         #    "keyfile": os.path.join(os.path.abspath("."), "./cert/ssl.key"),
         # })
-        http_server.listen(input_ret[1])        
-        
-        tornado.ioloop.IOLoop.instance().start()
-    
+        http_server.listen(imu.args_input().p) 
+        tornado.ioloop.IOLoop.instance().start()   
     except KeyboardInterrupt:  # response for KeyboardInterrupt such as Ctrl+C
         print('User stop this program by KeyboardInterrupt! File:[{0}], Line:[{1}]'.format(__file__, sys._getframe().f_lineno))
         logging.info("User stop this program by KeyboardInterrupt!")
