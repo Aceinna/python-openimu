@@ -60,7 +60,7 @@ import argparse
 class OpenIMU:
     def __init__(self, ws=False):
         '''Initialize and then start ports search and autobaud process
-        '''        
+        '''   
         self.ws = ws                # set to true if being run as a thread in a websocket server
         self.ser = None             # the active UART
         self.device_id = 0          # unit's id str
@@ -76,10 +76,13 @@ class OpenIMU:
         self.sync_state = 0
         self.sync_pattern = collections.deque(4*[0], 4)  # create 4 byte FIFO   
         self.customer_baudrate = self.args_input().b
-        self.loglevel = self.args_input().l             
+        if self.args_input().l == 10 or self.args_input().l == 0:
+            self.loglevel = logging.DEBUG
+        else:
+            self.loglevel = logging.INFO                    
 
         logging.basicConfig(level=self.loglevel,
-            format='%(asctime)-28s:%(msecs)-4dms %(filename)-20s[%(funcName)-25s][line:%(lineno)4d] %(levelname)5s     %(message)s',
+            format='%(asctime)-28s:%(msecs)-4dms %(filename)-20s[%(funcName)-40s][line:%(lineno)4d] %(levelname)5s     %(message)s',
             datefmt='%a, %d %b %Y %H:%M:%S',                
             filename='Server.log',
             filemode='w')
@@ -490,7 +493,7 @@ class OpenIMU:
         input_packet = next((x for x in self.imu_properties['userMessages']['inputPackets'] if x['name'] == self.packet_type), None)
         bootloader_packet = next((x for x in self.imu_properties['bootloaderMessages'] if x['name'] == self.packet_type), None)
 
-        logging.debug("start to parse_payload:{0}".format(payload))
+        logging.debug("start to parse_payload:\n{0}".format([hex(x) for x in payload]))
         if output_packet != None:
             self.data = self.openimu_unpack_output_packet(output_packet, payload)
             if self.logging == 1 and self.logger is not None:
@@ -499,7 +502,7 @@ class OpenIMU:
                 logging.debug("parse_payload, output_packet data:{0}".format(self.data))
               
         elif input_packet != None:
-            logging.debug("parse_payload, input_packet data:{0}".format(payload))
+            logging.debug("parse_payload, input_packet data:\n{0}".format([hex(x) for x in payload]))
             data = self.openimu_unpack_input_packet(input_packet['responsePayload'], payload)
 
         elif bootloader_packet != None:
@@ -580,7 +583,7 @@ class OpenIMU:
             self.ser = False
 
     def openimu_unpack_output_packet(self, output_message, payload):         
-        logging.debug("unpack_output_packet, payload is:{0}".format(payload))
+        logging.debug("unpack_output_packet, payload is:\n{0}".format([hex(x) for x in payload]))
         length = 0
         pack_fmt = '<'
         for value in output_message['payload']:
@@ -629,7 +632,7 @@ class OpenIMU:
             logging.debug("decode payload of packets exception:{0}".format(e))   
     
     def openimu_unpack_input_packet(self, input_message, payload):
-        logging.debug("unpack_input_packet: {0} payload: {1}".format(input_message['type'], payload))
+        logging.debug("unpack_input_packet: {0}  payload:\n{1}".format(input_message['type'], [hex(x) for x in payload]))
         if input_message['type'] == 'userConfiguration':
             user_configuration = self.imu_properties['userConfiguration']
             params = []
@@ -667,7 +670,7 @@ class OpenIMU:
             return { "error": 0 }
 
     def openimu_unpack_one(self, type, data):
-        logging.debug("unpack_one, type:{0}, data:{1}".format(type, data))
+        logging.debug("unpack_one, type:{0}, data:\n{1}".format(type, [hex(x) for x in data]))
         if type == 'uint64':
             try:
                 b = struct.pack('8B', *data)
@@ -823,7 +826,7 @@ class OpenIMU:
             elif self.sync_state == 1:                
                 self.packet_buffer.append(new_byte)
                 if len(self.packet_buffer) == self.packet_buffer[2] + 5:
-                    logging.debug("parse_buffer {2} packet:{0} {1}".format(self.sync_pattern, self.packet_buffer, packet_type))
+                    logging.debug("parse_buffer {2} packet:\n{0} {1}".format([hex(x) for x in [85, 85, packet_type_0, packet_type_1]], [hex(x) for x in self.packet_buffer], packet_type))
                     packet_crc = 256 * self.packet_buffer[-2] + self.packet_buffer[-1]    
                     if packet_crc == self.calc_crc(self.packet_buffer[:-2]):
                         if not isinstance(packet_type, str) and not isinstance(packet_type, unicode):
@@ -841,12 +844,11 @@ class OpenIMU:
                         self.sync_state = 0  # CRC did not match
                         # print("crc error***************************************")
 
-    def args_input(self):
-        # logging.debug("at {0}".format(sys._getframe().f_code.co_name))
+    def args_input(self):        
         parser = argparse.ArgumentParser(description='OpenIMU input args command:', usage='%(prog)s -b [baudrate] -p [http_port] -d [log_level]' )
         parser.add_argument('-b', type=int, default=0, metavar='baudrate', nargs=1,help='input the baudrate',choices=[38400,57600,115200,230400])
         parser.add_argument('-p', type=int, default=8123, metavar='http_port', nargs=1,help='input the port')
-        parser.add_argument('-l', type=int, default=10, metavar='log_level', nargs=1,help='log record level', choices=[0, 10, 20, 30, 40, 50])
+        parser.add_argument('-l', type=int, default=20, metavar='log_level', nargs=1,help='log record level', choices=[0, 10, 20, 30, 40, 50])
         return parser.parse_args()        
 
 if __name__ == "__main__":
