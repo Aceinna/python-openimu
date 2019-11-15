@@ -1,4 +1,7 @@
 *.pyc
+*.log
+*.bin
+*.BIN
 data/*.*
 /.vscode
 /build
@@ -9,19 +12,7 @@ chromedriver.exe
 running openimu bugfix.bat
 server.spec
 connection.json
-data/.gitignore
-1557465383178314.bin
-1543452378400134.BIN
-imu.bin
-index.html - 快捷方式.lnk
-.gitignore
-VG_AHRS old.bin
-VG_AHRS20190627.bin
-compass.bin
 *.pem
 *.cert
 *.key
-log_driver.py
-.gitignore
-.gitignore
-Server.log
+
