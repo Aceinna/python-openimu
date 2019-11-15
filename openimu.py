@@ -76,10 +76,7 @@ class OpenIMU:
         self.sync_state = 0
         self.sync_pattern = collections.deque(4*[0], 4)  # create 4 byte FIFO   
         self.customer_baudrate = self.args_input().b
-        if self.args_input().l == 10 or self.args_input().l == 0:
-            self.loglevel = logging.DEBUG
-        else:
-            self.loglevel = logging.INFO                    
+        self.loglevel = self.args_input().l                              
 
         logging.basicConfig(level=self.loglevel,
             format='%(asctime)-28s:%(msecs)-4dms %(filename)-20s[%(funcName)-40s][line:%(lineno)4d] %(levelname)5s     %(message)s',
