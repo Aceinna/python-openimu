@@ -57,6 +57,8 @@ import json
 import global_vars as gl
 import argparse
 
+
+
 class OpenIMU:
     def __init__(self, ws=False):
         '''Initialize and then start ports search and autobaud process
@@ -76,7 +78,9 @@ class OpenIMU:
         self.sync_state = 0
         self.sync_pattern = collections.deque(4*[0], 4)  # create 4 byte FIFO   
         self.customer_baudrate = self.args_input().b
-        self.loglevel = self.args_input().l                              
+        self.loglevel = self.args_input().l  
+        self.unit_connect_status = False # default not connected
+                                
 
         logging.basicConfig(level=self.loglevel,
             format='%(asctime)-28s:%(msecs)-4dms %(filename)-20s[%(funcName)-40s][line:%(lineno)4d] %(levelname)5s     %(message)s',
@@ -456,6 +460,7 @@ class OpenIMU:
         logging.debug("connect function ongoing: id-{0}; packet rate-{1}; odr-{2}; packet type-{3}".format(self.device_id, packet_rate, odr_param, packet_type))
         threading.Thread(target=self.start_collection_task).start()
 
+
     def pause(self):
         ''' Will End the data collection task and thread
         '''
@@ -497,7 +502,7 @@ class OpenIMU:
                 self.logger.log(self, self.data)
                 # print(self.data['lat'])
                 logging.debug("parse_payload, output_packet data:{0}".format(self.data))
-              
+
         elif input_packet != None:
             logging.debug("parse_payload, input_packet data:\n{0}".format([hex(x) for x in payload]))
             data = self.openimu_unpack_input_packet(input_packet['responsePayload'], payload)
@@ -716,7 +721,7 @@ class OpenIMU:
         bootloader_id = self.openimu_get_device_id()
         print(bootloader_id)
         return True
-          
+
     def openimu_start_app(self):
         '''Starts app
         '''
@@ -789,6 +794,7 @@ class OpenIMU:
         print('End Collection Task')
         return False  # End Thread
 
+
     def openimu_get_packet(self,packet_type, stream = False):
         logging.debug("get_packet of {0}".format(packet_type))
         if not packet_type:
@@ -820,6 +826,8 @@ class OpenIMU:
             if list(self.sync_pattern) == [85, 85, packet_type_0, packet_type_1]:
                 self.packet_buffer = [packet_type_0, packet_type_1]
                 self.sync_state = 1
+                self.unit_connect_status = True # unit connected
+
             elif self.sync_state == 1:                
                 self.packet_buffer.append(new_byte)
                 if len(self.packet_buffer) == self.packet_buffer[2] + 5:
@@ -841,12 +849,21 @@ class OpenIMU:
                         self.sync_state = 0  # CRC did not match
                         # print("crc error***************************************")
 
+    def get_monitor_status(self):
+        return self.unit_connect_status
+
+    def set_monitor_status(self,mstatus):
+        self.unit_connect_status = mstatus
+        return self.unit_connect_status
+        
     def args_input(self):        
         parser = argparse.ArgumentParser(description='OpenIMU input args command:', usage='%(prog)s -b [baudrate] -p [http_port] -d [log_level]' )
         parser.add_argument('-b', type=int, default=0, metavar='baudrate', nargs=1,help='input the baudrate',choices=[38400,57600,115200,230400])
         parser.add_argument('-p', type=int, default=8123, metavar='http_port', nargs=1,help='input the port')
         parser.add_argument('-l', type=int, default=20, metavar='log_level', nargs=1,help='log record level', choices=[0, 10, 20, 30, 40, 50])
         return parser.parse_args()        
+
+
 
 if __name__ == "__main__":
     imu = OpenIMU()

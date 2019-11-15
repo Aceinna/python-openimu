@@ -11,10 +11,20 @@ import logging
 from global_vars import imu
 import binascii
 import global_vars as gl
+import threading
+from threading import Timer
 
 # note: version string update should follow the updating rule
 server_version = '1.1.1'
 callback_rate = 50
+
+# rewrite run opetion in Timer class to implement cycle time and avoid thread recreate 
+class RepeatingTimer(Timer): 
+    def run(self):
+        while not self.finished.is_set():
+            self.function(*self.args, **self.kwargs)
+            self.finished.wait(self.interval)
+
 class WSHandler(tornado.websocket.WebSocketHandler):
     count = 0
     magProgress = 0
@@ -25,10 +35,12 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         self.callback2 = tornado.ioloop.PeriodicCallback(self.detect_status, 500)
         self.callback2.start()
 
-    def detect_status(self):        
-        if not imu.read(200):
+    def detect_status(self): 
+        if imu.get_monitor_status() == False:
             self.write_message(json.dumps({ "messageType": "queryResponse","data": {"packetType": "DeviceStatus","packet": { "returnStatus":1}}}))
+        return True
 
+    # send IMU package to server
     def send_data(self):
         if not imu.device_id:            
             self.write_message(json.dumps({ "messageType": "queryResponse","data": {"packetType": "DeviceStatus","packet": { "returnStatus":1}}}))
@@ -200,6 +212,11 @@ class WSHandler(tornado.websocket.WebSocketHandler):
     def check_origin(self, origin):
         return True
 
+    def feed_watch_dog(self):
+        imu.set_monitor_status(False)
+        return 
+
+
 if __name__ == "__main__":
     # Create IMU
     print("server_version:",server_version)   
@@ -215,7 +232,11 @@ if __name__ == "__main__":
         #    "keyfile": os.path.join(os.path.abspath("."), "./cert/ssl.key"),
         # })
         http_server.listen(imu.args_input().p) 
-        tornado.ioloop.IOLoop.instance().start()   
+        tornado.ioloop.IOLoop.instance().start()  
+        # start and feed watch dog
+        tm = RepeatingTimer(2.0, feed_watch_dog)
+        tm.start()
+
     except KeyboardInterrupt:  # response for KeyboardInterrupt such as Ctrl+C
         print('User stop this program by KeyboardInterrupt! File:[{0}], Line:[{1}]'.format(__file__, sys._getframe().f_lineno))
         logging.info("User stop this program by KeyboardInterrupt!")
