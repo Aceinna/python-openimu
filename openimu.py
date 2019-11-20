@@ -78,7 +78,7 @@ class OpenIMU:
         self.sync_state = 0
         self.sync_pattern = collections.deque(4*[0], 4)  # create 4 byte FIFO   
         self.customer_baudrate = self.args_input().b
-        self.loglevel = self.args_input().l  
+        self.loglevel = self.args_input().l[0] if isinstance(self.args_input().l, list) else self.args_input().l 
         self.unit_connect_status = False # default not connected
                                 
 
@@ -857,7 +857,7 @@ class OpenIMU:
         return self.unit_connect_status
         
     def args_input(self):        
-        parser = argparse.ArgumentParser(description='OpenIMU input args command:', usage='%(prog)s -b [baudrate] -p [http_port] -d [log_level]' )
+        parser = argparse.ArgumentParser(description='OpenIMU input args command:', usage='%(prog)s -b [baudrate] -p [http_port] -l [log_level]' )
         parser.add_argument('-b', type=int, default=0, metavar='baudrate', nargs=1,help='input the baudrate',choices=[38400,57600,115200,230400])
         parser.add_argument('-p', type=int, default=8123, metavar='http_port', nargs=1,help='input the port')
         parser.add_argument('-l', type=int, default=20, metavar='log_level', nargs=1,help='log record level', choices=[0, 10, 20, 30, 40, 50])

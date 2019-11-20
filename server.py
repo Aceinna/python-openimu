@@ -71,8 +71,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             try:
                 application_type = bytes.decode(imu.openimu_get_user_app_id())   
             except Exception as e:
-                application_type = "get app id failed, no feedback! pls check your FW right or not"
-                print("on_message,get app id error:",e)   
+                application_type = "get app id failed, no feedback! pls check your FW right or not"                
                 logging.info("get app id failed, no feedback! pls check your FW right or not. excpetion is:{0}".format(e))        
             # application_type = imu.device_id
             for idx, item in enumerate(gl.app_str):
@@ -231,7 +230,7 @@ if __name__ == "__main__":
         #    "certfile": os.path.join(os.path.abspath("."), "./cert/ssl.cert"),
         #    "keyfile": os.path.join(os.path.abspath("."), "./cert/ssl.key"),
         # })
-        http_server.listen(imu.args_input().p) 
+        http_server.listen(imu.args_input().p[0] if isinstance(imu.args_input().p, list) else imu.args_input().p) 
         tornado.ioloop.IOLoop.instance().start()  
         # start and feed watch dog
         tm = RepeatingTimer(2.0, feed_watch_dog)
