@@ -230,6 +230,7 @@ if __name__ == "__main__":
         #    "certfile": os.path.join(os.path.abspath("."), "./cert/ssl.cert"),
         #    "keyfile": os.path.join(os.path.abspath("."), "./cert/ssl.key"),
         # })
+        logging.info(imu.args_input().p[0] if isinstance(imu.args_input().p, list) else imu.args_input().p)
         http_server.listen(imu.args_input().p[0] if isinstance(imu.args_input().p, list) else imu.args_input().p) 
         tornado.ioloop.IOLoop.instance().start()  
         # start and feed watch dog
