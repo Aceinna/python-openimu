@@ -56,6 +56,8 @@ import binascii
 import json
 import global_vars as gl
 import argparse
+import threading
+from threading import Timer
 
 
 
@@ -79,7 +81,7 @@ class OpenIMU:
         self.sync_pattern = collections.deque(4*[0], 4)  # create 4 byte FIFO   
         self.customer_baudrate = self.args_input().b
         self.loglevel = self.args_input().l[0] if isinstance(self.args_input().l, list) else self.args_input().l 
-        self.unit_connect_status = False # default not connected
+        self.unit_connect_status = 2 # 1:connect,2:no connect,3:re connected
                                 
 
         logging.basicConfig(level=self.loglevel,
@@ -814,6 +816,17 @@ class OpenIMU:
             trys += 1
         return data
 
+    def parse_unit_heartbeat(self):
+        
+        self.data_buffer = self.read(150)
+        self.ser.flushInput()
+        if self.data_buffer:
+            for i,new_byte in enumerate(self.data_buffer):
+                if new_byte == 85:
+                    return True
+            return False
+        return False
+
     def parse_buffer(self, packet_type, stream = False):
         logging.debug("at {0}".format(sys._getframe().f_code.co_name))
         if (sys.version_info > (3, 0)) and not isinstance(packet_type, str):
@@ -827,8 +840,7 @@ class OpenIMU:
             if list(self.sync_pattern) == [85, 85, packet_type_0, packet_type_1]:
                 self.packet_buffer = [packet_type_0, packet_type_1]
                 self.sync_state = 1
-                self.unit_connect_status = True # unit connected
-
+                self.unit_connect_status = 1 # unit connected
             elif self.sync_state == 1:                
                 self.packet_buffer.append(new_byte)
                 if len(self.packet_buffer) == self.packet_buffer[2] + 5:
@@ -864,12 +876,31 @@ class OpenIMU:
         parser.add_argument('-l', type=int, default=20, metavar='log_level', nargs=1,help='log record level', choices=[0, 10, 20, 30, 40, 50])
         return parser.parse_args()        
 
+    def process_monitor(self):
+        if self.parse_unit_heartbeat():
+            self.unit_connect_status = 1
+        else:
+            self.find_device()
+            self.unit_connect_status = 2
+        # return self.set_monitor_status(False)
+        return True
 
+# rewrite run opetion in Timer class to implement cycle time and avoid thread recreate 
+class RepeatingTimer(Timer): 
+    def run(self):
+        while not self.finished.is_set():
+            self.function(*self.args, **self.kwargs)
+            self.finished.wait(self.interval)
 
 if __name__ == "__main__":
     imu = OpenIMU()
     imu.find_device()
     imu.openimu_get_all_param()
+    tm = RepeatingTimer(1.5, imu.process_monitor)
+    # tm.start()
+    # while True:
+    #     pass
+
     imu.start_log()
     time.sleep(20)
     imu.stop_log()

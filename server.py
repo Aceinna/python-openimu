@@ -14,16 +14,13 @@ import global_vars as gl
 import threading
 from threading import Timer
 
+from openimu import RepeatingTimer
+
 # note: version string update should follow the updating rule
 server_version = '1.1.1'
 callback_rate = 50
 
-# rewrite run opetion in Timer class to implement cycle time and avoid thread recreate 
-class RepeatingTimer(Timer): 
-    def run(self):
-        while not self.finished.is_set():
-            self.function(*self.args, **self.kwargs)
-            self.finished.wait(self.interval)
+tm = RepeatingTimer(3.0, imu.process_monitor)
 
 class WSHandler(tornado.websocket.WebSocketHandler):
     count = 0
@@ -36,8 +33,12 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         self.callback2.start()
 
     def detect_status(self): 
-        if imu.get_monitor_status() == False:
+        if imu.get_monitor_status() == 1:
             self.write_message(json.dumps({ "messageType": "queryResponse","data": {"packetType": "DeviceStatus","packet": { "returnStatus":1}}}))
+        elif imu.get_monitor_status() == 2:
+            self.write_message(json.dumps({ "messageType": "queryResponse","data": {"packetType": "DeviceStatus","packet": { "returnStatus":2}}}))
+        elif imu.get_monitor_status() == 3:
+            self.write_message(json.dumps({ "messageType": "queryResponse","data": {"packetType": "DeviceStatus","packet": { "returnStatus":3}}}))
         return True
 
     # send IMU package to server
@@ -121,21 +122,25 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                 logging.debug('{0} feedback: {1}'.format(list(message['data'].keys())[0], data))
 
             elif list(message['data'].keys())[0] == 'startStream':  
+                tm.cancel()
                 logging.debug("start the stream!")                              
                 imu.connect()
                 self.callback.start()  
                 self.callback2.stop()
                 self.write_message(json.dumps({ "messageType" : "requestAction", "data" : { "startStream" : {} }}))
             elif list(message['data'].keys())[0] == 'stopStream':
+                tm.start()
                 logging.debug("stop the stream!")
                 imu.pause()                
                 self.callback2.start()
                 self.write_message(json.dumps({ "messageType" : "requestAction", "data" : { "stopStream" : {} }}))
             elif list(message['data'].keys())[0] == 'startLog' and imu.logging == 0: 
+                tm.cancel()
                 data = message['data']['startLog']
                 imu.start_log(data)
                 self.write_message(json.dumps({ "messageType" : "requestAction", "data" : { "logfile" : imu.logger.name }}))
             elif list(message['data'].keys())[0] == 'stopLog' and imu.logging == 1: 
+                tm.start()
                 imu.stop_log()                
                 self.write_message(json.dumps({ "messageType" : "requestAction", "data" : { "logfile" : '' }}))
             # added by Dave, app download page
@@ -211,16 +216,12 @@ class WSHandler(tornado.websocket.WebSocketHandler):
     def check_origin(self, origin):
         return True
 
-    def feed_watch_dog(self):
-        imu.set_monitor_status(False)
-        return 
-
-
 if __name__ == "__main__":
     # Create IMU
     print("server_version:",server_version)   
     try:               
-        imu.find_device()    
+        imu.find_device()  
+        tm.start() 
         # Set up Websocket server on Port 8000
         # Port can be changed
         application = tornado.web.Application([(r'/', WSHandler)])
@@ -233,9 +234,9 @@ if __name__ == "__main__":
         logging.info(imu.args_input().p[0] if isinstance(imu.args_input().p, list) else imu.args_input().p)
         http_server.listen(imu.args_input().p[0] if isinstance(imu.args_input().p, list) else imu.args_input().p) 
         tornado.ioloop.IOLoop.instance().start()  
-        # start and feed watch dog
-        tm = RepeatingTimer(2.0, feed_watch_dog)
-        tm.start()
+
+        http_server.listen(imu.args_input().p) 
+        tornado.ioloop.IOLoop.instance().start() 
 
     except KeyboardInterrupt:  # response for KeyboardInterrupt such as Ctrl+C
         print('User stop this program by KeyboardInterrupt! File:[{0}], Line:[{1}]'.format(__file__, sys._getframe().f_lineno))
