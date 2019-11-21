@@ -190,14 +190,15 @@ class OpenIMU:
             for baud in bandListFromOptions: 
                 logging.info("try {0}:{1}".format(port, baud))          
                 self.open(port, baud)
-                self.ser.baudrate = baud
-                self.device_id = self.openimu_get_device_id()             
-                if self.device_id:
-                    self.set_connection_details()
-                    logging.info('Connected in autobaud') 
-                    if sys.platform.startswith('win'):
-                        self.ser.set_buffer_size(rx_size = 128000, tx_size = 128000)
-                    return True
+                while self.ser:                 
+                    self.ser.baudrate = baud
+                    self.device_id = self.openimu_get_device_id()             
+                    if self.device_id:
+                        self.set_connection_details()
+                        logging.info('Connected in autobaud') 
+                        if sys.platform.startswith('win'):
+                            self.ser.set_buffer_size(rx_size = 128000, tx_size = 128000)
+                        return True
         return False
     
     def set_connection_details(self):
