@@ -8,6 +8,7 @@ data/*.*
 /__pycache__
 /dist
 /data
+/setting
 chromedriver.exe
 running openimu bugfix.bat
 server.spec

@@ -1,12 +1,3 @@
-"""
-Global variables, imu, cli etc. are declared in the file
-Created on 07-19-2018
-"""
-
-from openimu import OpenIMU
-
-
-
 def get_app_urls():
     app_urls = ['https://raw.githubusercontent.com/Aceinna/python-openimu/bugfix/app_config/Compass/openimu.json',
 	        'https://raw.githubusercontent.com/Aceinna/python-openimu/bugfix/app_config/IMU/openimu.json',
@@ -30,6 +21,3 @@ def get_app_names():
     return app_names
 
 app_str = ['INS','VG_AHRS','IMU','Compass','Leveler']
-string_folder_path = 'app_config/APP_TYP/openimu.json'
-
-imu = OpenIMU(ws=True)
