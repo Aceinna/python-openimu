@@ -4,13 +4,12 @@ import tornado.httpserver
 import tornado.web
 from .base import BootstrapBase
 from ..framework.communicator import CommunicatorFactory
-import src.bootstrap.bootstrap_factory
+from ..framework.context import active_app
 
 
 class WSHandler(tornado.websocket.WebSocketHandler):
     def open(self):
         self.get_device().append_client(self)
-        self.message_handler = ClientMessageHandler(device)
 
         #self.callback = tornado.ioloop.PeriodicCallback(self.send_data, callback_rate)
         pass
@@ -30,7 +29,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         return True
 
     def get_device(self):
-        return bootstrap_factory.get_active_instance().get_device()
+        return active_app.get_device()
 
     def response_message(self, method, data):
         self.write_message(

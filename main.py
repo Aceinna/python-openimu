@@ -1,6 +1,7 @@
 import sys
 import argparse
-import src.bootstrap.bootstrap_factory as bootstrap_factory
+from src.bootstrap.loader import Loader
+
 
 def receive_args():
     parser = argparse.ArgumentParser()
@@ -17,14 +18,12 @@ if __name__ == '__main__':
     args = receive_args()
     platform = args.host
     try:
-        app = bootstrap_factory.create(platform, options=args)
+        app = Loader.create(platform, options=args)
         app.listen()
     except KeyboardInterrupt:  # response for KeyboardInterrupt such as Ctrl+C
         print('User stop this program by KeyboardInterrupt! File:[{0}], Line:[{1}]'.format(
             __file__, sys._getframe().f_lineno))
         app.stop()
-        #logging.info("User stop this program by KeyboardInterrupt!")
         sys.exit()
     except Exception as e:
-        #logging.info("server main function exception:{0}".format(e))
         print(e)

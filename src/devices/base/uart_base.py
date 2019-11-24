@@ -295,8 +295,6 @@ class OpenDeviceBase:
         bootloader_packet_config = next(
             (x for x in self.properties['bootloaderMessages'] if x['name'] == packet_type), None)
 
-        print(packet_type)
-
         if output_packet_config:
             self.unpack_output_packet(output_packet_config, payload)
 
