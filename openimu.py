@@ -184,7 +184,7 @@ class OpenIMU:
                 true when successful
         ''' 
         logging.debug("at {0}".format(sys._getframe().f_code.co_name))  
-        bandListFromOptions = self.imu_properties['userConfiguration'][2]['options']  if self.customer_baudrate == 0 else [self.customer_baudrate]     
+        bandListFromOptions = self.imu_properties['userConfiguration'][2]['options']  if self.customer_baudrate == 0 else self.customer_baudrate   
         
         for port in ports:                                 
             # TODO: change this to intelligently use openimu.json.  even save the last configuration 
