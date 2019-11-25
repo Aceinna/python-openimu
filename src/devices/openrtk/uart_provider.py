@@ -4,6 +4,7 @@ from ..configs.openimu_predefine import *
 
 class Provider(OpenDeviceBase):
     def __init__(self, communicator):
+        self.server_update_rate = 100
         self.communicator = communicator
         pass
 
@@ -32,7 +33,6 @@ class Provider(OpenDeviceBase):
             'app_name': split_text[1],
             'version': split_text[2]
         }
-
 
     def load_properties(self):
         self.app_config_folder = os.path.join(

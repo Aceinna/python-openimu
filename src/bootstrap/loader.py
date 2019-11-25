@@ -3,7 +3,7 @@
 #import src.bootstrap.web as Webserver
 from .cli import CommandLine
 from .web import Webserver
-from ..framework.context import active_app
+from ..framework.context import app_context
 
 
 class Loader:
@@ -17,10 +17,6 @@ class Loader:
         if active_app == None:
             print('no matched bootstrap')
 
-        return active_app
+        app_context.set_app(active_app)
 
-    def get_active_instance():
-        if active_app is not None:
-            return active_app
-        else:
-            raise Exception('no actived app instance')
+        return active_app

@@ -108,7 +108,7 @@ class OpenDeviceBase:
             print(
                 "error happened when decode the payload of packets, pls restart IMU: {0}".format(e))
 
-        self.on_receive_output_packet(packet_config.name, data)
+        self.on_receive_output_packet(packet_config['name'], data)
 
     def unpack_input_packet(self, packet_config, payload):
         data = None
@@ -142,7 +142,7 @@ class OpenDeviceBase:
         elif input_message['type'] == 'string':
             data = self.unpack_one('string', payload)
 
-        self.on_receive_input_packet(packet_config.name, data, result)
+        self.on_receive_input_packet(packet_config['name'], data, error)
 
     def unpack_bootloader_packet(self, packet_config, payload):
         pass

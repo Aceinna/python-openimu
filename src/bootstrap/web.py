@@ -1,37 +1,48 @@
+import json
 import tornado.websocket
 import tornado.ioloop
 import tornado.httpserver
 import tornado.web
 from .base import BootstrapBase
 from ..framework.communicator import CommunicatorFactory
-from ..framework.context import active_app
+from ..framework.context import app_context
 
 
 class WSHandler(tornado.websocket.WebSocketHandler):
     def open(self):
         self.get_device().append_client(self)
-
+        print('open client count:', len(self.get_device().clients))
         #self.callback = tornado.ioloop.PeriodicCallback(self.send_data, callback_rate)
+        self.response_server_info()
         pass
 
     def on_message(self, message):
         device = self.get_device()
         client_msg = json.loads(message)
-        params = client_msg['params']
-        getattr(device, client_msg['method'], None)(params)
-        pass
+        print('request message:', client_msg)
+        method = client_msg['method'] if 'method' in client_msg else None
+        parameters = client_msg['params'] if 'params' in client_msg else None
+        if method:
+            try:
+                getattr(device, method, None)(parameters)
+            except Exception as e:
+                print('websocket on message error', e)
+        else:
+            self.response_unkonwn_method()
 
     def on_close(self):
         self.get_device().remove_client(self)
+        print('close client count:', len(self.get_device().clients))
         pass
 
     def check_origin(self, origin):
         return True
 
     def get_device(self):
-        return active_app.get_device()
+        return app_context.get_app().get_device()
 
     def response_message(self, method, data):
+        print('response message:', method)
         self.write_message(
             json.dumps(
                 {
@@ -39,6 +50,34 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                     'result': data
                 }
             ))
+
+    def response_unkonwn_method(self):
+        self.write_message(
+            json.dumps({
+                'method': 'unknown',
+                'result': {
+                    'packetType': 'error',
+                    'data': {
+                        'message': 'unknown method'
+                    }
+                }
+            })
+        )
+
+    def response_server_info(self):
+        self.write_message(
+            json.dumps({
+                'method': 'stream',
+                'result': {
+                    'packetType': 'serverInfo',
+                    'data': {
+                        'version': '2.0.0',
+                        'serverUpdateRate': self.get_device().server_update_rate
+                    }
+                }
+            })
+        )
+        pass
 
 
 class Webserver:

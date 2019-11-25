@@ -7,14 +7,18 @@ import json
 from ...framework.utils import helper
 from ..base.uart_base import OpenDeviceBase
 from ..configs.openimu_predefine import *
+import asyncio
+import datetime
 
 
 class Provider(OpenDeviceBase):
     def __init__(self, communicator):
         super().__init__()
+        self.server_update_rate = 50
         self.communicator = communicator
         self.is_streaming = False
         self.clients = []
+        self.input_result = None
         pass
 
     def ping(self):
@@ -72,8 +76,6 @@ class Provider(OpenDeviceBase):
         app_name = self.app_info['app_name']
         with open(os.path.join(self.app_config_folder, app_name, 'openimu.json')) as json_data:
             self.properties = json.load(json_data)
-
-        # TODO: read app id, then load specified json
         pass
 
     def append_client(self, client):
@@ -89,34 +91,43 @@ class Provider(OpenDeviceBase):
 
     def on_receive_input_packet(self, packet_type, data, error):
         # self.response(data)
-        if packet_type == 'gA':
-            self.response('getParams', {
-                'packetType': 'inputParams',
-                'data': data
-            })
-        if packet_type == 'sC':
-            self.response('getParams', {
-                'packetType': 'inputParams',
-                'data': data
-            })
+        self.input_result = {'packet_type': packet_type, 'data': data}
+
+    def get_input_result(self, packet_type, timeout=1):
+        result = None
+        start_time = datetime.datetime.now()
+        while self.input_result is None:
+            end_time = datetime.datetime.now()
+            span = end_time - start_time
+            if span.total_seconds() > timeout:
+                break
+
+        print('get input data', self.input_result)
+        if self.input_result is not None and self.input_result['packet_type'] == packet_type:
+            result = self.input_result.copy()
+            self.input_result = None
+            return result['data']
 
     # command list
-    def serverStatus(self, *args):
-        self.response('serverStatus', {
-                      'packetType': 'ping', 'data': {'status': '1'}})
-        pass
 
     def getDeviceInfo(self, *args):
         self.response('getDeviceInfo', {
             'packetType': 'deviceInfo',
             'data': [
-                {'name': 'Product Name', 'value': self.device_info.name},
-                {'name': 'PN', 'value': self.device_info.pn},
+                {'name': 'Product Name', 'value': self.device_info['name']},
+                {'name': 'PN', 'value': self.device_info['pn']},
                 {'name': 'Firmware Version',
-                    'value': self.device_info.firmware_version},
-                {'name': 'SN', 'value': self.device_info.sn},
-                {'name': 'App Version', 'value': self.app_info.version}
+                    'value': self.device_info['firmware_version']},
+                {'name': 'SN', 'value': self.device_info['sn']},
+                {'name': 'App Version', 'value': self.app_info['version']}
             ]
+        })
+        pass
+
+    def getConf(self, *args):
+        self.response('getConf', {
+            'packetType': 'conf',
+            'data': self.properties
         })
         pass
 
@@ -140,9 +151,21 @@ class Provider(OpenDeviceBase):
     def getParams(self, *args):
         command_line = helper.build_input_packet('gA')
         self.communicator.write(command_line)
+        data = self.get_input_result('gA', timeout=1)
+
+        if data:
+            self.response('getParams', {
+                'packetType': 'inputParams',
+                'data': data
+            })
+        else:
+            self.response('getParams', {
+                'packetType': 'error',
+                'data': 'no response'
+            })
         pass
 
-    def set_parameters(self, params, *args):
+    def setParameters(self, params, *args):
         pass
 
     def get_parameter(self, name, *args):
@@ -154,6 +177,18 @@ class Provider(OpenDeviceBase):
     def saveConfig(self, *args):
         command_line = helper.build_input_packet('sC')
         self.communicator.write(command_line)
+
+        data = self.get_input_result('sC', timeout=1)
+
+        if data:
+            self.response('saveConfig', {
+                'packetType': 'success'
+            })
+        else:
+            self.response('getParams', {
+                'packetType': 'error',
+                'data': 'no response'
+            })
         pass
 
     def upgrade(self):
