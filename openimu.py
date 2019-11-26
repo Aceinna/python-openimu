@@ -79,7 +79,7 @@ class OpenIMU:
         self.packet_buffer = []     # packet parsing buffer
         self.sync_state = 0
         self.sync_pattern = collections.deque(4*[0], 4)  # create 4 byte FIFO   
-        self.customer_baudrate = self.args_input().b
+        self.customer_baudrate = self.args_input().b[0] if isinstance(self.args_input().b, list) else self.args_input().b
         self.loglevel = self.args_input().l[0] if isinstance(self.args_input().l, list) else self.args_input().l 
         self.unit_connect_status = 2 # 1:connect,2:no connect,3:re connected
                                 
@@ -138,7 +138,7 @@ class OpenIMU:
         ''' Finds active ports and then autobauds units
         '''         
         logging.info('Find device,------------------------------------------------------------------------')    
-        search_history, num_ports_ago = 0, len(list(serial.tools.list_ports.comports()) )   
+        search_history, num_ports_ago = 0, len(list(serial.tools.list_ports.comports()))   
         while not self.device_id: 
             print('Find device {0} times'.format(search_history), end="\r", flush=True)  
             ports = self.find_ports()
@@ -184,23 +184,24 @@ class OpenIMU:
                 true when successful
         ''' 
         logging.debug("at {0}".format(sys._getframe().f_code.co_name))  
-        bandListFromOptions = self.imu_properties['userConfiguration'][2]['options']  if self.customer_baudrate == 0 else self.customer_baudrate   
-        
-        for port in ports:                                 
-            # TODO: change this to intelligently use openimu.json.  even save the last configuration 
-            # user_configuration = self.imu_properties['userConfiguration']    
+        bandListFromOptions = self.imu_properties['userConfiguration'][2]['options']  if self.customer_baudrate == 0 else [self.customer_baudrate]           
+        for port in ports:                         
             for baud in bandListFromOptions: 
                 logging.info("try {0}:{1}".format(port, baud))          
-                self.open(port, baud)
-                if self.ser:
-                    self.ser.baudrate = baud
-                    self.device_id = self.openimu_get_device_id()
-                    if self.device_id:
-                        self.set_connection_details()
-                        logging.info('Connected in autobaud')
-                        if sys.platform.startswith('win'):
-                            self.ser.set_buffer_size(rx_size = 128000, tx_size = 128000)
-                        return True
+                self.open(port, baud)     
+                try:
+                    if self.ser:                     
+                        self.device_id = self.openimu_get_device_id()
+                        if self.device_id:
+                            self.set_connection_details()
+                            logging.info('Connected in autobaud')
+                            if sys.platform.startswith('win'):
+                                self.ser.set_buffer_size(rx_size = 128000, tx_size = 128000)
+                            return True
+                        else:
+                            self.ser.close()
+                except Exception as e:
+                    logging.info("self.ser.close and  get_device_id exist error:{error}".format(baudrate=baud, error=e))  
         return False
     
     def set_connection_details(self):
@@ -221,7 +222,7 @@ class OpenIMU:
         logging.debug("at {0}".format(sys._getframe().f_code.co_name))  
         connection = None
         portList = list(serial.tools.list_ports.comports())
-        ports = [ p.device for p in portList]
+        ports = [p.device for p in portList]
 
         try:
             with open('app_config/connection.json') as json_data:
@@ -536,12 +537,14 @@ class OpenIMU:
         # simple open
         logging.debug("at {0}".format(sys._getframe().f_code.co_name))  
         try:              
-            self.ser = serial.Serial(port, baud, timeout = 0.005)            
+            self.ser = serial.Serial(port, baud, timeout = 0.005)
         except Exception as e:
             print('{0}:{1} open failed'.format(port, baud), end='\r')
             logging.debug("Port open exception: {0}-{1}, exception is: {2}, pls restart IMU/change port/disconnect other ports".format(port, baud,e))
-            if not self.ser:                 
-                self.ser = False                             
+            if self.ser is not None:
+                if self.ser.isOpen():
+                    self.ser.close()
+                self.ser = None                           
 
     def close(self):
         logging.debug("at {0}".format(sys._getframe().f_code.co_name))  
