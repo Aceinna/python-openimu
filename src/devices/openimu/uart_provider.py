@@ -102,42 +102,39 @@ class Provider(OpenDeviceBase):
             if span.total_seconds() > timeout:
                 break
 
-        print('get input data', self.input_result)
         if self.input_result is not None and self.input_result['packet_type'] == packet_type:
-            result = self.input_result.copy()
+            result = self.input_result['data'].copy()
             self.input_result = None
-            return result['data']
+
+        return result
 
     # command list
 
     def getDeviceInfo(self, *args):
-        self.response('getDeviceInfo', {
-            'packetType': 'deviceInfo',
-            'data': [
-                {'name': 'Product Name', 'value': self.device_info['name']},
-                {'name': 'PN', 'value': self.device_info['pn']},
-                {'name': 'Firmware Version',
-                    'value': self.device_info['firmware_version']},
-                {'name': 'SN', 'value': self.device_info['sn']},
-                {'name': 'App Version', 'value': self.app_info['version']}
-            ]
-        })
+        self.response('getDeviceInfo',  'deviceInfo',
+                      [
+                          {'name': 'Product Name',
+                              'value': self.device_info['name']},
+                          {'name': 'PN', 'value': self.device_info['pn']},
+                          {'name': 'Firmware Version',
+                           'value': self.device_info['firmware_version']},
+                          {'name': 'SN', 'value': self.device_info['sn']},
+                          {'name': 'App Version',
+                              'value': self.app_info['version']}
+                      ])
         pass
 
     def getConf(self, *args):
-        self.response('getConf', {
-            'packetType': 'conf',
-            'data': self.properties
-        })
+        self.response('getConf', 'conf', self.properties)
         pass
 
     def startStream(self, *args):
         self.is_streaming = True
-        self.response('startStream', {'packetType': 'success'})
+        self.response('startStream',  'success')
 
     def stopStream(self, *args):
         self.is_streaming = False
-        self.response('startStream', {'packetType': 'success'})
+        self.response('stopStream', 'success')
 
     def startLog(self, *args):
         # start log
@@ -152,18 +149,11 @@ class Provider(OpenDeviceBase):
         command_line = helper.build_input_packet('gA')
         self.communicator.write(command_line)
         data = self.get_input_result('gA', timeout=1)
-
+        print(data)
         if data:
-            self.response('getParams', {
-                'packetType': 'inputParams',
-                'data': data
-            })
+            self.response('getParams', 'inputParams', data)
         else:
-            self.response('getParams', {
-                'packetType': 'error',
-                'data': 'no response'
-            })
-        pass
+            self.response_error('getParams', 'No Response')
 
     def setParameters(self, params, *args):
         pass
@@ -181,14 +171,9 @@ class Provider(OpenDeviceBase):
         data = self.get_input_result('sC', timeout=1)
 
         if data:
-            self.response('saveConfig', {
-                'packetType': 'success'
-            })
+            self.response('saveConfig', 'success')
         else:
-            self.response('getParams', {
-                'packetType': 'error',
-                'data': 'no response'
-            })
+            self.response_error('saveConfig', 'Operation Failed')
         pass
 
     def upgrade(self):
@@ -197,7 +182,18 @@ class Provider(OpenDeviceBase):
     def on(self, data_type, callback):
         pass
 
-    def response(self, method, data):
+    def response(self, method, packet_type, data):
         for client in self.clients:
-            client.response_message(method, data)
+            client.response_message(method, {
+                'packetType': packet_type,
+                'data': data
+            })
+        pass
+
+    def response_error(self, method, message):
+        for client in self.clients:
+            client.response_message(method, {
+                'packetType': 'error',
+                'data': message
+            })
         pass
