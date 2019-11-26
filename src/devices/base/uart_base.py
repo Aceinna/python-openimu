@@ -22,6 +22,8 @@ class OpenDeviceBase:
         self.exit_lock = threading.Lock()  # lock of exit_thread
         self.data_queue = Queue()  # data container
         self.data_lock = threading.Lock()
+        self.clients = []
+        self.input_result = None
         pass
 
     @abstractmethod
@@ -103,7 +105,7 @@ class OpenDeviceBase:
             out = [(value['name'], data[idx])
                    for idx, value in enumerate(packet_config['payload'])]
             data = collections.OrderedDict(out)
-            return data
+            # return data
         except Exception as e:
             print(
                 "error happened when decode the payload of packets, pls restart IMU: {0}".format(e))
@@ -113,7 +115,8 @@ class OpenDeviceBase:
     def unpack_input_packet(self, packet_config, payload):
         data = None
         error = False
-        response_playload_type_config = packet_config['responsePayload']['type']
+        response_playload_type_config = packet_config['responsePayload']['type'] \
+            if packet_config['responsePayload'].__contains__('type') else ''
         user_configuration = self.properties['userConfiguration']
 
         if response_playload_type_config == 'userConfiguration':
@@ -139,8 +142,10 @@ class OpenDeviceBase:
             data = self.unpack_one('uint32', payload[0:4])
             if data:
                 error = True
-        elif input_message['type'] == 'string':
+        elif response_playload_type_config == 'string':
             data = self.unpack_one('string', payload)
+        else:
+            data = True
 
         self.on_receive_input_packet(packet_config['name'], data, error)
 
@@ -189,7 +194,6 @@ class OpenDeviceBase:
     def setup(self):
         ''' start 2 threads, receiver, parser
         '''
-        print('setup')
         self.load_properties()
 
         funcs = [self.receiver, self.parser]
@@ -304,3 +308,35 @@ class OpenDeviceBase:
         if bootloader_packet_config != None:
             self.unpack_bootloader_packet(
                 bootloader_packet_config, payload)
+
+    def response(self, method, packet_type, data=None):
+        for client in self.clients:
+            client.response_message(method, {
+                'packetType': packet_type,
+                'data': data
+            })
+        pass
+
+    def response_error(self, method, message):
+        for client in self.clients:
+            client.response_message(method, {
+                'packetType': 'error',
+                'data': message
+            })
+        pass
+
+    def add_output_packet(self, method, packet_type, data):
+        for client in self.clients:
+            client.on_receive_output_packet(method, packet_type, data)
+        pass
+
+    def notify_client(self, method):
+        for client in self.clients:
+            client.on_receive_notify(method)
+        pass
+
+    def append_client(self, client):
+        self.clients.append(client)
+
+    def remove_client(self, client):
+        self.clients.remove(client)

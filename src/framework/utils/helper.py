@@ -11,17 +11,18 @@ def build_input_packet(name, properties=None, param=False, value=False):
         S = COMMAND_START + name_bytes + [0]
         packet = S + calc_crc(S[2:4] + [0x00])
     else:
-        payload = unpack_payload(properties, param, value)
+        payload = unpack_payload(name, properties, param, value)
         S = COMMAND_START + name_bytes + [len(payload)] + payload
         packet = S + calc_crc(S[2:S[4]+5])
     return packet
 
 
 def unpack_payload(name, properties, param=False, value=False):
+    print('upack payload', name, param, value)
     input_packet = next(
         (x for x in properties['userMessages']['inputPackets'] if x['name'] == name), None)
 
-    if self.name == 'ma':
+    if name == 'ma':
         input_action = next(
             (x for x in input_packet['inputPayload'] if x['actionName'] == param), None)
         return [input_action['actionID']]

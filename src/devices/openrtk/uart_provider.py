@@ -1,19 +1,33 @@
+import os
+import collections
+import requests
+import time
+import struct
+import json
+from ...framework.utils import helper
 from ..base.uart_base import OpenDeviceBase
-from ..configs.openimu_predefine import *
+from ..configs.openrtk_predefine import *
+import asyncio
+import datetime
 
 
 class Provider(OpenDeviceBase):
     def __init__(self, communicator):
         self.server_update_rate = 100
         self.communicator = communicator
+        self.is_streaming = False
         pass
 
     def ping(self):
         device_info_text = self.internal_input_command('pG')
         app_info_text = self.internal_input_command('gV')
 
-        print(self.device_info)
-        print(self.app_info)
+        print(device_info_text)
+        print(app_info_text)
+
+        self.build_device_info(device_info_text)
+        self.build_app_info(app_info_text)
+
         if device_info_text.find('OpenRTK') > -1:
             return True
         return False
@@ -28,10 +42,8 @@ class Provider(OpenDeviceBase):
         }
 
     def build_app_info(self, text):
-        split_text = text.split(' ')
         self.app_info = {
-            'app_name': split_text[1],
-            'version': split_text[2]
+            'version': text
         }
 
     def load_properties(self):
@@ -58,32 +70,76 @@ class Provider(OpenDeviceBase):
         # TODO: maybe we need a base config file
         pass
 
-    def start_stream(self):
+    def on_receive_output_packet(self, packet_type, data, error=None):
+        if packet_type == 'NV':
+            self.add_output_packet('stream', 'pos', data)
+
+        if packet_type == 'SA':
+            self.add_output_packet('stream', 'snr', data)
+
+        if packet_type == 'SK':
+            self.add_output_packet('stream', 'skyview', data)
+
+    def on_receive_input_packet(self, packet_type, data, error):
+        self.input_result = {'packet_type': packet_type,
+                             'data': data, 'error': error}
+
+    # command list
+    def serverStatus(self, *args):
+        return {
+            'packetType': 'ping',
+            'data': '1'
+        }
+
+    def getDeviceInfo(self, *args):
+        return {
+            'packetType': 'deviceInfo',
+            'data': [
+                {'name': 'Product Name',
+                 'value': self.device_info['name']},
+                {'name': 'PN', 'value': self.device_info['pn']},
+                {'name': 'Firmware Version',
+                 'value': self.device_info['firmware_version']},
+                {'name': 'SN', 'value': self.device_info['sn']},
+                {'name': 'App Version',
+                 'value': self.app_info['version']}
+            ]
+        }
         pass
 
-    def stop_stream(self):
+    def getConf(self, *args):
         pass
 
-    def start_log(self):
+    def startStream(self):
+        self.is_streaming = True
+        self.response('startStream',  'success')
+        self.notify_client('startStream')
+
+    def stopStream(self):
+        self.is_streaming = False
+        self.response('stopStream', 'success')
+        self.notify_client('stopStream')
+
+    def startLog(self, *args):
         pass
 
-    def stop_log(self):
+    def stopLog(self, *args):
         pass
 
-    def get_parameters(self):
+    def getParams(self, *args):
         pass
 
-    def set_parameters(self):
+    def setParameters(self, params, *args):
         pass
 
-    def get_parameter(self):
+    def get_parameter(self, name, *args):
         pass
 
-    def set_parameter(self):
+    def setParam(self, params, *args):
+        pass
+
+    def saveConfig(self, *args):
         pass
 
     def upgrade(self):
-        pass
-
-    def on(self, data_type, callback):
         pass

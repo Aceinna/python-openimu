@@ -17,8 +17,6 @@ class Provider(OpenDeviceBase):
         self.server_update_rate = 50
         self.communicator = communicator
         self.is_streaming = False
-        self.clients = []
-        self.input_result = None
         pass
 
     def ping(self):
@@ -78,23 +76,15 @@ class Provider(OpenDeviceBase):
             self.properties = json.load(json_data)
         pass
 
-    def append_client(self, client):
-        self.clients.append(client)
-
-    def remove_client(self, client):
-        self.clients.remove(client)
-
-    def on_receive_output_packet(self, packet_type, data, error):
-        if self.is_streaming:
-            self.response('stream', {'packetType': packet_type, 'data': data})
-        pass
+    def on_receive_output_packet(self, packet_type, data, error=None):
+        self.add_output_packet('stream', packet_type, data)
 
     def on_receive_input_packet(self, packet_type, data, error):
-        # self.response(data)
-        self.input_result = {'packet_type': packet_type, 'data': data}
+        self.input_result = {'packet_type': packet_type,
+                             'data': data, 'error': error}
 
     def get_input_result(self, packet_type, timeout=1):
-        result = None
+        result = {'data': None, 'error': None}
         start_time = datetime.datetime.now()
         while self.input_result is None:
             end_time = datetime.datetime.now()
@@ -103,16 +93,19 @@ class Provider(OpenDeviceBase):
                 break
 
         if self.input_result is not None and self.input_result['packet_type'] == packet_type:
-            result = self.input_result['data'].copy()
+            result = self.input_result.copy()
             self.input_result = None
 
-        return result
+        return {
+            'data': result['data'],
+            'error': result['error']
+        }
 
     # command list
-
     def getDeviceInfo(self, *args):
-        self.response('getDeviceInfo',  'deviceInfo',
-                      [
+        return {
+            'packetType': 'deviceInfo',
+            'data':  [
                           {'name': 'Product Name',
                               'value': self.device_info['name']},
                           {'name': 'PN', 'value': self.device_info['pn']},
@@ -121,24 +114,32 @@ class Provider(OpenDeviceBase):
                           {'name': 'SN', 'value': self.device_info['sn']},
                           {'name': 'App Version',
                               'value': self.app_info['version']}
-                      ])
-        pass
+            ]
+        }
 
     def getConf(self, *args):
-        self.response('getConf', 'conf', self.properties)
-        pass
+        return {
+            'packetType': 'conf',
+            'data': self.properties
+        }
 
     def startStream(self, *args):
         self.is_streaming = True
-        self.response('startStream',  'success')
+        self.notify_client('startStream')
+        # self.response('startStream',  'success')
+        return {
+            'packetType': 'success'
+        }
 
     def stopStream(self, *args):
         self.is_streaming = False
-        self.response('stopStream', 'success')
+        self.notify_client('stopStream')
+        # self.response('stopStream', 'success')
+        return {
+            'packetType': 'success'
+        }
 
     def startLog(self, *args):
-        # start log
-        self.response()
         pass
 
     def stopLog(self, *args):
@@ -148,12 +149,17 @@ class Provider(OpenDeviceBase):
     def getParams(self, *args):
         command_line = helper.build_input_packet('gA')
         self.communicator.write(command_line)
-        data = self.get_input_result('gA', timeout=1)
-        print(data)
-        if data:
-            self.response('getParams', 'inputParams', data)
+        result = self.get_input_result('gA', timeout=1)
+        if result['data']:
+            return {
+                'packetType': 'inputParams',
+                'data': result['data']
+            }
         else:
-            self.response_error('getParams', 'No Response')
+            return {
+                'packetType': 'error',
+                'data': 'No Response'
+            }
 
     def setParameters(self, params, *args):
         pass
@@ -161,39 +167,40 @@ class Provider(OpenDeviceBase):
     def get_parameter(self, name, *args):
         pass
 
-    def set_parameter(self, id, value, *args):
+    def setParam(self, params, *args):
+        command_line = helper.build_input_packet(
+            'uP', properties=self.properties, param=params['paramId'], value=params['value'])
+        self.communicator.write(command_line)
+        result = self.get_input_result('uP', timeout=1)
+
+        if result['data']:
+            return {
+                'packetType': 'success'
+            }
+        else:
+            return {
+                'packetType': 'error',
+                'data': 'No Response'
+            }
         pass
 
     def saveConfig(self, *args):
         command_line = helper.build_input_packet('sC')
         self.communicator.write(command_line)
 
-        data = self.get_input_result('sC', timeout=1)
+        result = self.get_input_result('sC', timeout=1)
 
-        if data:
-            self.response('saveConfig', 'success')
+        if result['data']:
+            return {
+                'packetType': 'success',
+                'data': result['data']
+            }
         else:
-            self.response_error('saveConfig', 'Operation Failed')
+            return {
+                'packetType': 'success',
+                'data': result['error']
+            }
         pass
 
     def upgrade(self):
-        pass
-
-    def on(self, data_type, callback):
-        pass
-
-    def response(self, method, packet_type, data):
-        for client in self.clients:
-            client.response_message(method, {
-                'packetType': packet_type,
-                'data': data
-            })
-        pass
-
-    def response_error(self, method, message):
-        for client in self.clients:
-            client.response_message(method, {
-                'packetType': 'error',
-                'data': message
-            })
         pass

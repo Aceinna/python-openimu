@@ -9,28 +9,39 @@ from ..framework.context import app_context
 
 
 class WSHandler(tornado.websocket.WebSocketHandler):
+    is_streaming = False
+
     def open(self):
         self.get_device().append_client(self)
         print('open client count:', len(self.get_device().clients))
-        #self.callback = tornado.ioloop.PeriodicCallback(self.send_data, callback_rate)
-        self.response_server_info()
+        self.callback = tornado.ioloop.PeriodicCallback(
+            self.response_output_packet, self.get_device().server_update_rate)
+        self.callback.start()
+
+        self.response_server_info()  # response server info at first time connected
         pass
 
     def on_message(self, message):
         device = self.get_device()
         client_msg = json.loads(message)
-        print('request message:', client_msg)
         method = client_msg['method'] if 'method' in client_msg else None
         parameters = client_msg['params'] if 'params' in client_msg else None
+
         if method:
             try:
-                getattr(device, method, None)(parameters)
+                result = getattr(device, method, None)(parameters)
+                self.response_message(method, result)
             except Exception as e:
                 print('websocket on message error', e)
         else:
             self.response_unkonwn_method()
 
     def on_close(self):
+        try:
+            self.callback.stop()
+        except Exception as e:
+            pass
+
         self.get_device().remove_client(self)
         print('close client count:', len(self.get_device().clients))
         pass
@@ -41,8 +52,33 @@ class WSHandler(tornado.websocket.WebSocketHandler):
     def get_device(self):
         return app_context.get_app().get_device()
 
+    def on_receive_output_packet(self, method, packet_type, data):
+        if hasattr(self, 'last_packet_collection') != True:
+            self.last_packet_collection = []
+
+        data_updated = False
+        for item in self.last_packet_collection:
+            if item['packet_type'] == packet_type:
+                item['data'] = data
+                data_updated = True
+                break
+
+        if data_updated == False:
+            self.last_packet_collection.append({
+                'packet_type': packet_type,
+                'data': data
+            })
+
+    def on_receive_notify(self, method):
+        if method == 'startStream':
+            self.is_streaming = True
+            pass
+
+        if method == 'stopStream':
+            self.is_streaming = False
+            pass
+
     def response_message(self, method, data):
-        print('response message:', method)
         self.write_message(
             json.dumps(
                 {
@@ -78,6 +114,20 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             })
         )
         pass
+
+    def response_output_packet(self):
+        if self.is_streaming and len(self.last_packet_collection) > 0:
+            for last_packet in self.last_packet_collection:
+                self.write_message(
+                    json.dumps({
+                        'method': 'stream',
+                        'result': {
+                            'packetType': last_packet['packet_type'],
+                            'data': last_packet['data']
+                        }
+                    })
+                )
+            self.last_packet_collection.clear()
 
 
 class Webserver:

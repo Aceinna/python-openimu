@@ -1,29 +1,13 @@
-import datetime
+last_packet_collection = [
+    {'packet_type': 'a1', 'data': 'hello1'},
+    {'packet_type': 'a2', 'data': 'hello2'},
+    {'packet_type': 'a3', 'data': 'hello3'}
+]
 
+for x in last_packet_collection:
+    if x['packet_type'] == 'a1':
+        x['data'] = 'world'
+# p[0]['data']='world'
 
-class Test:
-    def __init__(self):
-        pass
-
-    def greeting(self, *args):
-        print('hello world')
-
-
-app = Test()
-
-getattr(app, 'greeting')(None)
-
-info = [{'name': 'hello'}, {'name': 'good'}]
-
-more = {'gender': 'male'}
-
-print(info)
-timeout = 1
-input_result = None
-start_time = datetime.datetime.now()
-while input_result is None:
-    end_time = datetime.datetime.now()
-    span = end_time - start_time
-    if span.total_seconds() > timeout:
-        break
-    print(start_time, end_time)
+for last_packet in last_packet_collection:
+    print(last_packet['packet_type'], last_packet['data'])
