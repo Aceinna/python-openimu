@@ -20,16 +20,13 @@ class Provider(OpenDeviceBase):
         pass
 
     def ping(self):
+        print('ping openimu')
         device_info_text = self.internal_input_command('pG')
         app_info_text = self.internal_input_command('gV')
 
-        print(device_info_text)
-        print(app_info_text)
-
-        self.build_device_info(device_info_text)
-        self.build_app_info(app_info_text)
-
         if device_info_text.find('OpenIMU') > -1:
+            self.build_device_info(device_info_text)
+            self.build_app_info(app_info_text)
             return True
         return False
 

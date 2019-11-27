@@ -1,5 +1,5 @@
 from .openimu.uart_provider import Provider as OpenIMUProvider
-from .openimu.uart_provider import Provider as OpenRTKProvider
+from .openrtk.uart_provider import Provider as OpenRTKProvider
 
 
 class DeviceManager:

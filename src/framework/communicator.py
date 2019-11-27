@@ -83,12 +83,13 @@ class SerialPort(Communicator):
         '''
         while self.device is None:
             if self.try_last_port():
+                print('try last? Yes')
                 break
             else:
                 num_ports = self.find_ports()
                 self.autobaud(num_ports)
             time.sleep(0.5)
-
+        print('find-deivce', self.device is None)
         callback(self.device)
 
     def find_ports(self):
@@ -115,10 +116,13 @@ class SerialPort(Communicator):
                 self.open(port, baud)
                 if self.serial_port is not None:
                     self.confirm_device()
-                    self.save_last_port()
 
                     if self.device is None:
+                        self.close()
                         continue
+                    else:
+                        self.save_last_port()
+                        break
         return False
 
     def try_last_port(self):
@@ -131,14 +135,19 @@ class SerialPort(Communicator):
         try:
             with open(self.connection_file) as json_data:
                 connection = json.load(json_data)
+                
             if connection:
                 self.open_serial_port(
                     port=connection['port'], baud=connection['baud'], timeout=1)
                 if self.serial_port is not None:
                     self.confirm_device()
-                    self.save_last_port()
-                    # Assume max_len of a frame is less than 300 bytes.
-                    return True
+                    if self.device is None:
+                        self.close()
+                        return False
+                    else:
+                        self.save_last_port()
+                        # Assume max_len of a frame is less than 300 bytes.
+                        return True
                 else:
                     return False
         except Exception as e:
@@ -175,9 +184,9 @@ class SerialPort(Communicator):
     def close_serial_port(self):
         '''close serial port
         '''
-        if self.ser is not None:
-            if self.ser.isOpen():
-                self.ser.close()
+        if self.serial_port is not None:
+            if self.serial_port.isOpen():
+                self.serial_port.close()
 
     def write(self, data):
         '''

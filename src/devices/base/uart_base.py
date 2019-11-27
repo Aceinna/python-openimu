@@ -30,15 +30,21 @@ class OpenDeviceBase:
     def load_properties(self):
         pass
 
-    def internal_input_command(self, command, read_length=200):
+    def internal_input_command(self, command, read_length=500):
         command_line = helper.build_input_packet(command)
         self.communicator.write(command_line)
+        time.sleep(0.05)
         data_buffer = self.communicator.read(read_length)
+        # print('parsed', data_buffer)
         parsed = self.extract_command_response(command, data_buffer)
-        format_string = str(struct.pack(
-            '{0}B'.format(len(parsed)), *parsed), 'utf-8')
-        return format_string
-        pass
+        format_string = None
+        if parsed is not None:
+            format_string = str(struct.pack(
+                '{0}B'.format(len(parsed)), *parsed), 'utf-8')
+
+        if format_string is not None:
+            return format_string
+        return ''
 
     def extract_command_response(self, command, data_buffer):
         command_0 = ord(command[0])

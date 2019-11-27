@@ -19,16 +19,13 @@ class Provider(OpenDeviceBase):
         pass
 
     def ping(self):
+        print('ping openrtk')
         device_info_text = self.internal_input_command('pG')
         app_info_text = self.internal_input_command('gV')
 
-        print(device_info_text)
-        print(app_info_text)
-
-        self.build_device_info(device_info_text)
-        self.build_app_info(app_info_text)
-
         if device_info_text.find('OpenRTK') > -1:
+            self.build_device_info(device_info_text)
+            self.build_app_info(app_info_text)
             return True
         return False
 
@@ -50,18 +47,18 @@ class Provider(OpenDeviceBase):
         self.app_config_folder = os.path.join(
             os.getcwd(), 'setting', 'openrtk')
 
-        if not os.path.exists(self.app_config_folder):
-            print('downloading config json files from github, please waiting for a while')
-            os.makedirs(self.app_config_folder)
+        # if not os.path.exists(self.app_config_folder):
+        #     print('downloading config json files from github, please waiting for a while')
+        #     os.makedirs(self.app_config_folder)
 
-            filepath = self.app_config_folder + '/' + json_file_name
+        #     filepath = self.app_config_folder + '/' + json_file_name
 
-            try:
-                r = requests.get(url)
-                with open(filepath, "wb") as code:
-                    code.write(r.content)
-            except Exception as e:
-                print(e)
+        #     try:
+        #         r = requests.get(url)
+        #         with open(filepath, "wb") as code:
+        #             code.write(r.content)
+        #     except Exception as e:
+        #         print(e)
 
         # Load the basic openimu.json(IMU application)
         with open(os.path.join(self.app_config_folder, json_file_name)) as json_data:
