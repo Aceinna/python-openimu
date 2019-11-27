@@ -16,7 +16,6 @@ class Provider(OpenDeviceBase):
         super().__init__()
         self.server_update_rate = 50
         self.communicator = communicator
-        self.is_streaming = False
         pass
 
     def ping(self):
@@ -140,7 +139,6 @@ class Provider(OpenDeviceBase):
         pass
 
     def stopLog(self, *args):
-        self.response()
         pass
 
     def getParams(self, *args):

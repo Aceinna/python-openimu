@@ -15,7 +15,7 @@ class Loader:
             active_app = CommandLine(options)
 
         if active_app == None:
-            print('no matched bootstrap')
+            raise Exception('no matched bootstrap')
 
         app_context.set_app(active_app)
 

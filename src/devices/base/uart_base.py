@@ -24,6 +24,8 @@ class OpenDeviceBase:
         self.data_lock = threading.Lock()
         self.clients = []
         self.input_result = None
+        self.listeners = {}
+        self.is_streaming = False
         pass
 
     @abstractmethod
@@ -218,10 +220,11 @@ class OpenDeviceBase:
             try:
                 data = bytearray(self.communicator.read())
             except Exception as e:
-                print(e)
+                print('receiver error:', e)
                 self.exit_lock.acquire()
                 self.exit_thread = True  # Notice thread paser to exit.
                 self.exit_lock.release()
+                self.emit('exception', 'app', e)
                 return  # exit thread receiver
 
             if len(data):
@@ -249,6 +252,12 @@ class OpenDeviceBase:
         payload_len = 0
 
         while True:
+            self.exit_lock.acquire()
+            if self.exit_thread:
+                self.exit_lock.release()
+                return  # exit thread parser
+            self.exit_lock.release()
+
             self.data_lock.acquire()
             if self.data_queue.empty():
                 self.data_lock.release()
@@ -257,7 +266,6 @@ class OpenDeviceBase:
             else:
                 data = self.data_queue.get()
                 self.data_lock.release()
-                # print(datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S:') + hex(data))
 
                 if find_header:
                     frame.append(data)
@@ -266,7 +274,6 @@ class OpenDeviceBase:
                     # 5: 2 msg_header + 2 packet_type + 1 payload_len 2:len of checksum.
                     elif 5 + payload_len + 2 == len(frame):
                         find_header = False
-                        # checksum
                         result = helper.calc_crc(frame[2:-2])
                         if result[0] == frame[-2] and result[1] == frame[-1]:
                             # find a whole frame
@@ -275,7 +282,7 @@ class OpenDeviceBase:
                             payload_len = 0
                             sync_pattern = collections.deque(2*[0], 2)
                         else:
-                            print("Checksum error!")
+                            print("crc check error!")
                     else:
                         pass
 
@@ -315,22 +322,6 @@ class OpenDeviceBase:
             self.unpack_bootloader_packet(
                 bootloader_packet_config, payload)
 
-    def response(self, method, packet_type, data=None):
-        for client in self.clients:
-            client.response_message(method, {
-                'packetType': packet_type,
-                'data': data
-            })
-        pass
-
-    def response_error(self, method, message):
-        for client in self.clients:
-            client.response_message(method, {
-                'packetType': 'error',
-                'data': message
-            })
-        pass
-
     def add_output_packet(self, method, packet_type, data):
         for client in self.clients:
             client.on_receive_output_packet(method, packet_type, data)
@@ -346,3 +337,26 @@ class OpenDeviceBase:
 
     def remove_client(self, client):
         self.clients.remove(client)
+
+    def close(self):
+        self.threads.clear()
+        self.listeners.clear()
+        # self.clients.clear()
+        self.input_result = None
+        self.is_streaming = False
+        # self.exit_thread = False
+        self.data_queue.queue.clear()
+        pass
+
+    def on(self, event_type, handler):
+        if not self.listeners.__contains__(event_type):
+            self.listeners[event_type] = []
+
+        self.listeners[event_type].append(handler)
+        # print('on', len(self.listeners[event_type]))
+
+    def emit(self, event_type, *args):
+        handlers = self.listeners[event_type]
+        if handlers is not None and len(handlers) > 0:
+            for handler in handlers:
+                handler(*args)

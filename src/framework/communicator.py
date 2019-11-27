@@ -71,8 +71,9 @@ class SerialPort(Communicator):
         self.threads = []
         self.data_lock = threading.Lock()
         self.data_queue = Queue()
-        self.baudrateList = [38400, 57600, 115200,
-                             230400, 460800]  # default baudrate list
+        self.baudrateList = [115200]  # for test
+        # self.baudrateList = [38400, 57600, 115200,
+        #                      230400, 460800]  # default baudrate list
         if options.b and len(options.b) > 0:
             self.baudrateList = options.b
 
@@ -81,6 +82,7 @@ class SerialPort(Communicator):
     def find_device(self, callback):
         ''' Finds active ports and then autobauds units
         '''
+        self.device = None
         while self.device is None:
             if self.try_last_port():
                 print('try last? Yes')
@@ -135,7 +137,7 @@ class SerialPort(Communicator):
         try:
             with open(self.connection_file) as json_data:
                 connection = json.load(json_data)
-                
+
             if connection:
                 self.open_serial_port(
                     port=connection['port'], baud=connection['baud'], timeout=1)
@@ -225,69 +227,6 @@ class SerialPort(Communicator):
     def close(self):
         return self.close_serial_port()
 
-    def receiver(self):
-        ''' receive rover data and push data into data_queue.
-            return when occur Exception
-        '''
-        while True:
-            # self.exit_lock.acquire()
-            # if self.exit_thread:
-            #     self.exit_lock.release()
-            #     self.cmt.close()
-            #     return
-            # self.exit_lock.release()
-            data = ''
-            try:
-                if self.serial_port:
-                    data = bytearray(self.read(self.read_size))
-            except Exception as e:
-                print(e)
-                # self.exit_lock.acquire()
-                # self.exit_thread = True  # Notice thread paser to exit.
-                # self.exit_lock.release()
-                # return  # exit thread receiver
-
-            print(str(data))
-            if len(data):
-                # print(datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S:') + ' '.join('0X{0:x}'.format(data[i]) for i in range(len(data))))
-                self.data_lock.acquire()
-                for d in data:
-                    self.data_queue.put(d)
-                self.data_lock.release()
-            else:
-                time.sleep(0.5)
-
-    def parser(self):
-        ''' get rover data from data_queue and parse data into one whole frame.
-            return when occur Exception in thread receiver.
-        '''
-
-        while True:
-            # self.exit_lock.acquire()
-            # if self.exit_thread:
-            #     self.exit_lock.release()
-            #     return  # exit thread parser
-            # self.exit_lock.release()
-
-            self.data_lock.acquire()
-            if self.data_queue.empty():
-                self.data_lock.release()
-                time.sleep(0.001)
-                continue
-            else:
-                data = self.data_queue.get()
-                self.device.receive(data)
-                self.data_lock.release()
-
-    def listen_data(self):
-        funcs = [self.receiver]
-        for func in funcs:
-            t = threading.Thread(target=func, args=())
-            t.start()
-            print("Thread[{0}({1})] start at:[{2}].".format(
-                t.name, t.ident, datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
-            self.threads.append(t)
-        pass
 
 
 class SPI(Communicator):

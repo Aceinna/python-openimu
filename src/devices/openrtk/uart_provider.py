@@ -15,7 +15,6 @@ class Provider(OpenDeviceBase):
     def __init__(self, communicator):
         self.server_update_rate = 100
         self.communicator = communicator
-        self.is_streaming = False
         pass
 
     def ping(self):

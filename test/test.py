@@ -11,3 +11,11 @@ for x in last_packet_collection:
 
 for last_packet in last_packet_collection:
     print(last_packet['packet_type'], last_packet['data'])
+
+def funcB(type, *args):
+    print(type, *args)
+
+def funcA(*args):
+    funcB('test',*args)
+
+funcA('hello', 'world')

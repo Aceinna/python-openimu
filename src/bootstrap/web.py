@@ -10,6 +10,10 @@ from ..framework.context import app_context
 
 class WSHandler(tornado.websocket.WebSocketHandler):
     is_streaming = False
+    latest_packet_collection = []
+
+    def initialize(self, server):
+        server.ws_handler = self
 
     def open(self):
         self.get_device().append_client(self)
@@ -53,18 +57,15 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         return app_context.get_app().get_device()
 
     def on_receive_output_packet(self, method, packet_type, data):
-        if hasattr(self, 'last_packet_collection') != True:
-            self.last_packet_collection = []
-
         data_updated = False
-        for item in self.last_packet_collection:
+        for item in self.latest_packet_collection:
             if item['packet_type'] == packet_type:
                 item['data'] = data
                 data_updated = True
                 break
 
         if data_updated == False:
-            self.last_packet_collection.append({
+            self.latest_packet_collection.append({
                 'packet_type': packet_type,
                 'data': data
             })
@@ -116,18 +117,18 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         pass
 
     def response_output_packet(self):
-        if self.is_streaming and len(self.last_packet_collection) > 0:
-            for last_packet in self.last_packet_collection:
+        for latest_packet in self.latest_packet_collection:
+            if latest_packet['packet_type'] == 'ping' or self.is_streaming:
                 self.write_message(
                     json.dumps({
                         'method': 'stream',
                         'result': {
-                            'packetType': last_packet['packet_type'],
-                            'data': last_packet['data']
+                            'packetType': latest_packet['packet_type'],
+                            'data': latest_packet['data']
                         }
                     })
                 )
-            self.last_packet_collection.clear()
+        self.latest_packet_collection.clear()
 
 
 class Webserver:
@@ -135,38 +136,69 @@ class Webserver:
         self.communication = 'uart'
         self.options = options
         self.device_provider = None
+        self.communicator = None
+        self.ws_handler = None
         pass
 
     def listen(self):
         print('start web listen')
-        # start to detect device
-        self.detect_device(self.device_found_handler)
+        self.detect_device(self.device_discover_handler)
 
     def get_device(self):
         if self.device_provider is not None:
             return self.device_provider
         raise Exception('device is not connected')
 
-    def device_found_handler(self, device_provider):
+    def device_discover_handler(self, device_provider):
         print('device found')
         # load device provider
+        self.load_device_provider(device_provider)
+        # start websocket server
+        self.start_websocket_server()
+
+    def device_rediscover_handler(self, device_provider):
+        self.load_device_provider(device_provider)
+        # TODO: compare if it is this last connected device
+        if self.ws_handler:
+            self.ws_handler.on_receive_output_packet(
+                'stream', 'ping', {'status': 3})
+
+    def load_device_provider(self, device_provider):
+        print('foudn device', device_provider)
         self.device_provider = device_provider
         self.device_provider.setup()
-        #self.deviceProvider.on('stream', onReceiveStreamData)
-        #self.deviceProvider.on('', onReceiveStreamData)
+        self.device_provider.on('exception', self.handle_device_exception)
+        self.device_provider.on('data', self.handle_receive_device_data)
+        pass
 
-        # start websocket server
-        application = tornado.web.Application([(r'/', WSHandler)])
+    def start_websocket_server(self):
+        # add ws handler as a member
+        application = tornado.web.Application(
+            [(r'/', WSHandler, dict(server=self))])
         self.http_server = tornado.httpserver.HTTPServer(application)
         self.http_server.listen(self.options.p)
-
         tornado.ioloop.IOLoop.instance().start()
 
+    def handle_device_exception(self, error, message):
+        print('recevied exception', error, message, self.ws_handler)
+        if self.ws_handler:
+            self.ws_handler.on_receive_output_packet(
+                'stream', 'ping', {'status': 2})
+
+        self.device_provider.close()
+        self.detect_device(self.device_rediscover_handler)
+
+    def handle_receive_device_data(self, method, packet_type, data):
+        self.ws_handler.on_receive_output_packet()
+        pass
+
     def detect_device(self, callback):
-        print('start find device')
-        communicator = CommunicatorFactory.create(
-            self.communication, self.options)
-        communicator.find_device(callback)
+        print('start to find device')
+        if self.communicator is None:
+            self.communicator = CommunicatorFactory.create(
+                self.communication, self.options)
+
+        self.communicator.find_device(callback)
 
     def stop(self):
         if self.http_server is not None:
