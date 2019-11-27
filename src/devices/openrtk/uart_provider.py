@@ -85,14 +85,14 @@ class Provider(OpenDeviceBase):
     def serverStatus(self, *args):
         return {
             'packetType': 'ping',
-            'data': '1'
+            'data': {'status': '1'}
         }
 
     def getDeviceInfo(self, *args):
         return {
             'packetType': 'deviceInfo',
             'data': [
-                {'name': 'Product Name',
+                {'name': 'IMU Info',
                  'value': self.device_info['name']},
                 {'name': 'PN', 'value': self.device_info['pn']},
                 {'name': 'Firmware Version',
