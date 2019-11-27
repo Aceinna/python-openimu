@@ -634,6 +634,7 @@ class OpenIMU:
             data = struct.unpack(pack_fmt, b)
             out = [(value['name'],data[idx]) for idx,value in enumerate(output_message['payload'])]
             data = collections.OrderedDict(out)
+            logging.debug("unpack_output_packet, data of payload is:\n{0}".format(data))
             return data
         except Exception as e:
             print("error happened when decode the payload of packets, pls restart IMU: {0}".format(e)) 
