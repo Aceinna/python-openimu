@@ -19,7 +19,7 @@ class Provider(OpenDeviceBase):
         pass
 
     def ping(self):
-        print('ping openimu')
+        print('start to check if it is openimu')
         device_info_text = self.internal_input_command('pG')
         app_info_text = self.internal_input_command('gV')
 

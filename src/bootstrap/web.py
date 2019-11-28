@@ -150,21 +150,25 @@ class Webserver:
         raise Exception('device is not connected')
 
     def device_discover_handler(self, device_provider):
-        print('device found')
         # load device provider
         self.load_device_provider(device_provider)
         # start websocket server
         self.start_websocket_server()
 
     def device_rediscover_handler(self, device_provider):
+        if self.device_provider.device_info['sn'] == device_provider.devide_info['sn']:
+            if self.ws_handler:
+                self.ws_handler.on_receive_output_packet(
+                    'stream', 'ping', {'status': 3})
+        else:
+            if self.ws_handler:
+                self.ws_handler.on_receive_output_packet(
+                    'stream', 'ping', {'status': 1})
+            self.device_provider.close()
+
         self.load_device_provider(device_provider)
-        # TODO: compare if it is this last connected device
-        if self.ws_handler:
-            self.ws_handler.on_receive_output_packet(
-                'stream', 'ping', {'status': 3})
 
     def load_device_provider(self, device_provider):
-        print('foudn device', device_provider)
         self.device_provider = device_provider
         self.device_provider.setup()
         self.device_provider.on('exception', self.handle_device_exception)
@@ -180,12 +184,11 @@ class Webserver:
         tornado.ioloop.IOLoop.instance().start()
 
     def handle_device_exception(self, error, message):
-        print('recevied exception', error, message, self.ws_handler)
         if self.ws_handler:
             self.ws_handler.on_receive_output_packet(
                 'stream', 'ping', {'status': 2})
 
-        self.device_provider.close()
+        self.device_provider.reset()
         self.detect_device(self.device_rediscover_handler)
 
     def handle_receive_device_data(self, method, packet_type, data):

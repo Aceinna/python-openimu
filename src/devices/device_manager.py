@@ -17,7 +17,7 @@ class DeviceManager:
             if len(DeviceManager.device_list) == 0:
                 DeviceManager.device_list.append(OpenIMUProvider(communicator))
                 DeviceManager.device_list.append(OpenRTKProvider(communicator))
-        print('device list',len(DeviceManager.device_list))
+                
         for device in DeviceManager.device_list:
             can_ping = device.ping()
             if can_ping:

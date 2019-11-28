@@ -26,6 +26,7 @@ class OpenDeviceBase:
         self.input_result = None
         self.listeners = {}
         self.is_streaming = False
+        self.has_running_checker = False
         pass
 
     @abstractmethod
@@ -204,6 +205,13 @@ class OpenDeviceBase:
         '''
         self.load_properties()
 
+        if not self.has_running_checker:
+            t = threading.Thread(target=self.running_checker, args=())
+            t.start()
+            print("Thread[{0}({1})] start at:[{2}].".format(
+                t.name, t.ident, datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+            self.has_running_checker = True
+
         funcs = [self.receiver, self.parser]
         for func in funcs:
             t = threading.Thread(target=func, args=())
@@ -220,11 +228,10 @@ class OpenDeviceBase:
             try:
                 data = bytearray(self.communicator.read())
             except Exception as e:
-                print('receiver error:', e)
+                print('Thread:receiver error:', e)
                 self.exit_lock.acquire()
                 self.exit_thread = True  # Notice thread paser to exit.
                 self.exit_lock.release()
-                self.emit('exception', 'app', e)
                 return  # exit thread receiver
 
             if len(data):
@@ -296,6 +303,18 @@ class OpenDeviceBase:
                         find_header = True
                         pass
 
+    def running_checker(self):
+        while True:
+            self.exit_lock.acquire()
+            if self.exit_thread:
+                self.emit('exception', 'app', 'communicator read error')
+            self.exit_lock.release()
+
+            try:
+                time.sleep(0.1)
+            except KeyboardInterrupt:  # response for KeyboardInterrupt such as Ctrl+C
+                return True
+
     def parse_frame(self, frame, payload_len):
         data = []
         PACKET_TYPE_INDEX = 2
@@ -338,13 +357,13 @@ class OpenDeviceBase:
     def remove_client(self, client):
         self.clients.remove(client)
 
-    def close(self):
+    def reset(self):
         self.threads.clear()
         self.listeners.clear()
         # self.clients.clear()
         self.input_result = None
         self.is_streaming = False
-        # self.exit_thread = False
+        self.exit_thread = False
         self.data_queue.queue.clear()
         pass
 

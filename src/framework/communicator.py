@@ -85,13 +85,11 @@ class SerialPort(Communicator):
         self.device = None
         while self.device is None:
             if self.try_last_port():
-                print('try last? Yes')
                 break
             else:
                 num_ports = self.find_ports()
                 self.autobaud(num_ports)
             time.sleep(0.5)
-        print('find-deivce', self.device is None)
         callback(self.device)
 
     def find_ports(self):
@@ -133,6 +131,7 @@ class SerialPort(Communicator):
            returns: True if find header
                     False if not find header.
         '''
+        print('try to use last connected port')
         connection = None
         try:
             with open(self.connection_file) as json_data:
