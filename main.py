@@ -1,5 +1,6 @@
 import sys
 import argparse
+import traceback
 from src.bootstrap.loader import Loader
 
 
@@ -11,6 +12,8 @@ def receive_args():
     # for host as web
     parser.add_argument("-p", type=int, help="webserver port", default=8123)
     parser.add_argument("-b", type=int, help="baudrate")
+    parser.add_argument("-nolog", type=int,
+                        help="disable internal log", default=True)
     return parser.parse_args()
 
 
@@ -26,4 +29,4 @@ if __name__ == '__main__':
         app.stop()
         sys.exit()
     except Exception as e:
-        print(e)
+        traceback.print_exc()

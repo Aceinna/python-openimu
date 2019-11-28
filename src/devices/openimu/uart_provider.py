@@ -14,8 +14,10 @@ import datetime
 class Provider(OpenDeviceBase):
     def __init__(self, communicator):
         super().__init__()
+        self.type = 'IMU'
         self.server_update_rate = 50
         self.communicator = communicator
+        self.is_logging = False
         pass
 
     def ping(self):
@@ -46,6 +48,7 @@ class Provider(OpenDeviceBase):
         }
 
     def load_properties(self):
+        print('load properties')
         self.app_config_folder = os.path.join(
             os.getcwd(), 'setting', 'openimu')
 
@@ -66,13 +69,14 @@ class Provider(OpenDeviceBase):
                 except Exception as e:
                     print(e)
 
-        # Load the basic openimu.json(IMU application)
+        # Load the openimu.json based on its app
         app_name = self.app_info['app_name']
         with open(os.path.join(self.app_config_folder, app_name, 'openimu.json')) as json_data:
             self.properties = json.load(json_data)
         pass
 
     def on_receive_output_packet(self, packet_type, data, error=None):
+
         self.add_output_packet('stream', packet_type, data)
 
     def on_receive_input_packet(self, packet_type, data, error):
@@ -97,6 +101,21 @@ class Provider(OpenDeviceBase):
             'error': result['error']
         }
 
+    def get_log_info(self):
+        packet_rate = next(
+            (item['value'] for item in self.parameters if x['name'] == 'Packet Rate'), '100')
+        return {
+            "type": self.type,
+            "model": self.device_info['name'],
+            "logInfo": {
+                "pn": self.device_info['pn'],
+                "sn": self.device_info['sn'],
+                "sampleRate": packet_rate,
+                "appVersion": self.app_info.version,
+                "imuProperties": json.dumps(self.properties)
+            }
+        }
+
     # command list
     def getDeviceInfo(self, *args):
         return {
@@ -119,33 +138,13 @@ class Provider(OpenDeviceBase):
             'data': self.properties
         }
 
-    def startStream(self, *args):
-        self.is_streaming = True
-        self.notify_client('startStream')
-        # self.response('startStream',  'success')
-        return {
-            'packetType': 'success'
-        }
-
-    def stopStream(self, *args):
-        self.is_streaming = False
-        self.notify_client('stopStream')
-        # self.response('stopStream', 'success')
-        return {
-            'packetType': 'success'
-        }
-
-    def startLog(self, *args):
-        pass
-
-    def stopLog(self, *args):
-        pass
-
     def getParams(self, *args):
         command_line = helper.build_input_packet('gA')
         self.communicator.write(command_line)
         result = self.get_input_result('gA', timeout=1)
+
         if result['data']:
+            self.parameters = result['data']
             return {
                 'packetType': 'inputParams',
                 'data': result['data']
@@ -159,7 +158,7 @@ class Provider(OpenDeviceBase):
     def setParameters(self, params, *args):
         pass
 
-    def get_parameter(self, name, *args):
+    def getParameter(self, name, *args):
         pass
 
     def setParam(self, params, *args):
@@ -168,16 +167,20 @@ class Provider(OpenDeviceBase):
         self.communicator.write(command_line)
         result = self.get_input_result('uP', timeout=1)
 
-        if result['data']:
+        if result['error']:
             return {
-                'packetType': 'success'
+                'packetType': 'error',
+                'data': {
+                    'error': result['data']
+                }
             }
         else:
             return {
-                'packetType': 'error',
-                'data': 'No Response'
+                'packetType': 'success',
+                'data': {
+                    'error': result['data']
+                }
             }
-        pass
 
     def saveConfig(self, *args):
         command_line = helper.build_input_packet('sC')
@@ -197,5 +200,11 @@ class Provider(OpenDeviceBase):
             }
         pass
 
-    def upgrade(self):
+    def startMagAlign(self):
+        pass
+
+    def stopMagAlign(self):
+        pass
+
+    def upgradeFirmware(self):
         pass

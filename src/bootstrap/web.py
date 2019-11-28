@@ -3,14 +3,18 @@ import tornado.websocket
 import tornado.ioloop
 import tornado.httpserver
 import tornado.web
+import traceback
 from .base import BootstrapBase
 from ..framework.communicator import CommunicatorFactory
 from ..framework.context import app_context
+from ..framework.file_storage import FileLoger
 
 
 class WSHandler(tornado.websocket.WebSocketHandler):
     is_streaming = False
+    is_logging = False
     latest_packet_collection = []
+    file_logger = None
 
     def initialize(self, server):
         server.ws_handler = self
@@ -22,33 +26,30 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             self.response_output_packet, self.get_device().server_update_rate)
         self.callback.start()
 
+        self.file_logger = FileLoger(self.get_device().properties)
+
         self.response_server_info()  # response server info at first time connected
         pass
 
     def on_message(self, message):
-        device = self.get_device()
         client_msg = json.loads(message)
         method = client_msg['method'] if 'method' in client_msg else None
         parameters = client_msg['params'] if 'params' in client_msg else None
-
         if method:
             try:
-                result = getattr(device, method, None)(parameters)
-                self.response_message(method, result)
+                self.handle_message(method, parameters)
             except Exception as e:
                 print('websocket on message error', e)
+                traceback.print_exc()
+                self.response_message(
+                    method, {'packetType': 'error', 'data': 'sever error'})
         else:
             self.response_unkonwn_method()
 
     def on_close(self):
-        try:
-            self.callback.stop()
-        except Exception as e:
-            pass
-
+        self.reset()
         self.get_device().remove_client(self)
         print('close client count:', len(self.get_device().clients))
-        pass
 
     def check_origin(self, origin):
         return True
@@ -70,14 +71,27 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                 'data': data
             })
 
-    def on_receive_notify(self, method):
-        if method == 'startStream':
-            self.is_streaming = True
-            pass
+        if self.file_logger and self.is_logging:
+            self.file_logger.append(packet_type, data)
 
-        if method == 'stopStream':
-            self.is_streaming = False
+    def reset(self):
+        try:
+            self.callback.stop()
+        except Exception as e:
             pass
+        self.is_streaming = False
+        self.is_logging = False
+        if self.file_logger:
+            self.file_logger.stop_user_log()
+
+    def handle_message(self, method, parameters):
+        device = self.get_device()
+
+        if hasattr(self, method):
+            getattr(self, method, None)(parameters)
+        else:
+            result = getattr(device, method, None)(parameters)
+            self.response_message(method, result)
 
     def response_message(self, method, data):
         self.write_message(
@@ -130,6 +144,30 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                 )
         self.latest_packet_collection.clear()
 
+    # protocol
+    def startStream(self, *args):
+        self.response_message('startStream', {'packetType': 'success'})
+        self.is_streaming = True
+
+    def stopStream(self, *args):
+        self.response_message('stopStream', {'packetType': 'success'})
+        self.is_streaming = False
+
+    def startLog(self, *args):
+        parameters = args[0]
+        self.file_logger.set_info(self.get_device().get_log_info())
+        self.file_logger.set_user_id(parameters['id'])
+        self.file_logger.set_user_access_token(parameters['access_token'])
+        self.file_logger.start_user_log(parameters['fileName'], True)
+        self.is_logging = True
+        self.response_message(
+            'startLog', {'packetType': 'success', 'data': parameters['fileName']+'.csv'})
+
+    def stopLog(self, *args):
+        self.file_logger.stop_user_log()
+        self.is_logging = False
+        self.response_message('stopLog', {'packetType': 'success', 'data': ''})
+
 
 class Webserver:
     def __init__(self, options):
@@ -170,7 +208,7 @@ class Webserver:
 
     def load_device_provider(self, device_provider):
         self.device_provider = device_provider
-        self.device_provider.setup()
+        self.device_provider.setup(self.options)
         self.device_provider.on('exception', self.handle_device_exception)
         self.device_provider.on('data', self.handle_receive_device_data)
         pass
@@ -185,6 +223,7 @@ class Webserver:
 
     def handle_device_exception(self, error, message):
         if self.ws_handler:
+            self.ws_handler.reset()
             self.ws_handler.on_receive_output_packet(
                 'stream', 'ping', {'status': 2})
 

@@ -19,3 +19,10 @@ def funcA(*args):
     funcB('test',*args)
 
 funcA('hello', 'world')
+
+
+d = {'test_a1.csv':'hello world'}
+d['ww']='gg'
+print(d['ww'])
+
+#self.data_dict[self.log_files[packet_type]] = self.data_dict[self.log_files[packet_type]] + str

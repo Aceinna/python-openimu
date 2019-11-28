@@ -18,7 +18,6 @@ def build_input_packet(name, properties=None, param=False, value=False):
 
 
 def unpack_payload(name, properties, param=False, value=False):
-    print('upack payload', name, param, value)
     input_packet = next(
         (x for x in properties['userMessages']['inputPackets'] if x['name'] == name), None)
 

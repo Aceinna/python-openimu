@@ -13,6 +13,7 @@ import datetime
 
 class Provider(OpenDeviceBase):
     def __init__(self, communicator):
+        self.type='RTK'
         self.server_update_rate = 100
         self.communicator = communicator
         pass
@@ -46,20 +47,6 @@ class Provider(OpenDeviceBase):
         self.app_config_folder = os.path.join(
             os.getcwd(), 'setting', 'openrtk')
 
-        # if not os.path.exists(self.app_config_folder):
-        #     print('downloading config json files from github, please waiting for a while')
-        #     os.makedirs(self.app_config_folder)
-
-        #     filepath = self.app_config_folder + '/' + json_file_name
-
-        #     try:
-        #         r = requests.get(url)
-        #         with open(filepath, "wb") as code:
-        #             code.write(r.content)
-        #     except Exception as e:
-        #         print(e)
-
-        # Load the basic openimu.json(IMU application)
         with open(os.path.join(self.app_config_folder, json_file_name)) as json_data:
             self.properties = json.load(json_data)
 
@@ -80,6 +67,9 @@ class Provider(OpenDeviceBase):
         self.input_result = {'packet_type': packet_type,
                              'data': data, 'error': error}
 
+    def get_log_info(self):
+        pass
+
     # command list
     def serverStatus(self, *args):
         return {
@@ -87,39 +77,18 @@ class Provider(OpenDeviceBase):
             'data': {'status': '1'}
         }
 
-    def getDeviceInfo(self, *args):
+    def get_log_info(self):
         return {
-            'packetType': 'deviceInfo',
-            'data': [
-                {'name': 'IMU Info',
-                 'value': self.device_info['name']},
-                {'name': 'PN', 'value': self.device_info['pn']},
-                {'name': 'Firmware Version',
-                 'value': self.device_info['firmware_version']},
-                {'name': 'SN', 'value': self.device_info['sn']},
-                {'name': 'App Version',
-                 'value': self.app_info['version']}
-            ]
+            "type": self.type,
+            "model": self.device_info['name'],
+            "logInfo": {
+                "pn": self.device_info['pn'],
+                "sn": self.device_info['sn'],
+                "rtkProperties": json.dumps(self.properties)
+            }
         }
-        pass
 
     def getConf(self, *args):
-        pass
-
-    def startStream(self):
-        self.is_streaming = True
-        self.response('startStream',  'success')
-        self.notify_client('startStream')
-
-    def stopStream(self):
-        self.is_streaming = False
-        self.response('stopStream', 'success')
-        self.notify_client('stopStream')
-
-    def startLog(self, *args):
-        pass
-
-    def stopLog(self, *args):
         pass
 
     def getParams(self, *args):

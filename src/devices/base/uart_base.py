@@ -7,6 +7,7 @@ import collections
 import time
 import struct
 from ...framework.utils import helper
+from ...framework.file_storage import FileLoger
 if sys.version_info[0] > 2:
     from queue import Queue
 else:
@@ -18,8 +19,9 @@ class OpenDeviceBase:
 
     def __init__(self):
         self.threads = []  # thread of receiver and paser
-        self.exit_thread = False  # flag of exit threads
-        self.exit_lock = threading.Lock()  # lock of exit_thread
+        self.exception_thread = False  # flag of exit threads
+        self.exception_lock = threading.Lock()  # lock of exception_thread
+        self.exit_thread = False
         self.data_queue = Queue()  # data container
         self.data_lock = threading.Lock()
         self.clients = []
@@ -27,6 +29,7 @@ class OpenDeviceBase:
         self.listeners = {}
         self.is_streaming = False
         self.has_running_checker = False
+        self._logger = None
         pass
 
     @abstractmethod
@@ -119,6 +122,7 @@ class OpenDeviceBase:
             print(
                 "error happened when decode the payload of packets, pls restart IMU: {0}".format(e))
 
+        self._logger.append(packet_config['name'], data)
         self.on_receive_output_packet(packet_config['name'], data)
 
     def unpack_input_packet(self, packet_config, payload):
@@ -200,19 +204,22 @@ class OpenDeviceBase:
                 return False
             return struct.unpack('d', b)[0]
 
-    def setup(self):
+    def setup(self, options):
         ''' start 2 threads, receiver, parser
         '''
         self.load_properties()
+        self._logger = FileLoger(self.properties)
+        if not options.nolog:
+            self._logger.start_user_log('data')
 
         if not self.has_running_checker:
-            t = threading.Thread(target=self.running_checker, args=())
+            t = threading.Thread(target=self.thread_running_checker, args=())
             t.start()
-            print("Thread[{0}({1})] start at:[{2}].".format(
-                t.name, t.ident, datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+            print("Thread checker start at:[{0}].".format(
+                datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
             self.has_running_checker = True
 
-        funcs = [self.receiver, self.parser]
+        funcs = [self.thread_receiver, self.thread_parser]
         for func in funcs:
             t = threading.Thread(target=func, args=())
             t.start()
@@ -220,7 +227,7 @@ class OpenDeviceBase:
                 t.name, t.ident, datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
             self.threads.append(t)
 
-    def receiver(self):
+    def thread_receiver(self):
         ''' receive rover data and push data into data_queue.
             return when occur Exception
         '''
@@ -229,9 +236,9 @@ class OpenDeviceBase:
                 data = bytearray(self.communicator.read())
             except Exception as e:
                 print('Thread:receiver error:', e)
-                self.exit_lock.acquire()
-                self.exit_thread = True  # Notice thread paser to exit.
-                self.exit_lock.release()
+                self.exception_lock.acquire()
+                self.exception_thread = True  # Notice thread paser to exit.
+                self.exception_lock.release()
                 return  # exit thread receiver
 
             if len(data):
@@ -243,7 +250,7 @@ class OpenDeviceBase:
             else:
                 time.sleep(0.001)
 
-    def parser(self):
+    def thread_parser(self):
         ''' get rover data from data_queue and parse data into one whole frame.
             return when occur Exception in thread receiver.
         '''
@@ -259,11 +266,11 @@ class OpenDeviceBase:
         payload_len = 0
 
         while True:
-            self.exit_lock.acquire()
-            if self.exit_thread:
-                self.exit_lock.release()
+            self.exception_lock.acquire()
+            if self.exception_thread:
+                self.exception_lock.release()
                 return  # exit thread parser
-            self.exit_lock.release()
+            self.exception_lock.release()
 
             self.data_lock.acquire()
             if self.data_queue.empty():
@@ -303,12 +310,15 @@ class OpenDeviceBase:
                         find_header = True
                         pass
 
-    def running_checker(self):
+    def thread_running_checker(self):
         while True:
-            self.exit_lock.acquire()
-            if self.exit_thread:
+            self.exception_lock.acquire()
+            if self.exception_thread:
                 self.emit('exception', 'app', 'communicator read error')
-            self.exit_lock.release()
+            self.exception_lock.release()
+
+            if self.exit_thread:
+                return
 
             try:
                 time.sleep(0.1)
@@ -346,11 +356,6 @@ class OpenDeviceBase:
             client.on_receive_output_packet(method, packet_type, data)
         pass
 
-    def notify_client(self, method):
-        for client in self.clients:
-            client.on_receive_notify(method)
-        pass
-
     def append_client(self, client):
         self.clients.append(client)
 
@@ -363,9 +368,14 @@ class OpenDeviceBase:
         # self.clients.clear()
         self.input_result = None
         self.is_streaming = False
-        self.exit_thread = False
+        self.exception_thread = False
         self.data_queue.queue.clear()
-        pass
+        if self._logger is not None:
+            self._logger.stop_user_log()
+
+    def close(self):
+        self.reset()
+        self.exit_thread = True
 
     def on(self, event_type, handler):
         if not self.listeners.__contains__(event_type):
