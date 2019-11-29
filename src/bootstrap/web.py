@@ -194,7 +194,7 @@ class Webserver:
         self.start_websocket_server()
 
     def device_rediscover_handler(self, device_provider):
-        if self.device_provider.device_info['sn'] == device_provider.devide_info['sn']:
+        if self.device_provider.device_info['sn'] == device_provider.device_info['sn']:
             if self.ws_handler:
                 self.ws_handler.on_receive_output_packet(
                     'stream', 'ping', {'status': 3})

@@ -61,23 +61,18 @@ class Communicator():
 
 
 class SerialPort(Communicator):
-    def __init__(self, options):
+    def __init__(self, options=None):
         super().__init__()
         self.type = 'uart'
         self.serial_port = None  # the active UART
         self.port = None
         self.baud = None
         self.read_size = 100
-        self.threads = []
-        self.data_lock = threading.Lock()
-        self.data_queue = Queue()
         # self.baudrateList = [115200]  # for test
         self.baudrateList = [38400, 57600, 115200,
                              230400, 460800]  # default baudrate list
-        if options.b and len(options.b) > 0:
+        if options and options.b and len(options.b) > 0:
             self.baudrateList = options.b
-
-        # self.listen_data()
 
     def find_device(self, callback):
         ''' Finds active ports and then autobauds units
@@ -93,13 +88,34 @@ class SerialPort(Communicator):
         callback(self.device)
 
     def find_ports(self):
+        # portList = list(serial.tools.list_ports.comports())
+        # filterPortList = filter(
+        #     lambda item: item.device.find('Bluetooth') == -1, portList)
+        # ports = [p.device for p in filterPortList]
+        # ports.sort()
+        # print("\nsystem ports detected", ports)
+
         portList = list(serial.tools.list_ports.comports())
-        filterPortList = filter(
-            lambda item: item.device.find('Bluetooth') == -1, portList)
-        ports = [p.device for p in filterPortList]
-        ports.sort()
-        print("\nsystem ports detected", ports)
-        return ports
+        ports = [ p.device for p in portList]
+
+        result = []
+        for port in ports:
+            if "Bluetooth" in port:
+                continue
+            else:
+                print('Check if is a used port ' + port)
+                s = None
+                try:
+                    s = serial.Serial(port)
+                    if s:
+                        s.close()
+                        result.append(port)
+                except Exception as e:
+                    print(e)             
+                    pass
+        return result
+
+        # return ports
 
     def autobaud(self, ports):
         '''Autobauds unit - first check for stream_mode / continuous data, then check by polling unit
