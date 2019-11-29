@@ -30,6 +30,7 @@ class OpenDeviceBase:
         self.is_streaming = False
         self.has_running_checker = False
         self._logger = None
+        self.connected = False
         pass
 
     @abstractmethod
@@ -314,6 +315,7 @@ class OpenDeviceBase:
         while True:
             self.exception_lock.acquire()
             if self.exception_thread:
+                self.connected = False
                 self.emit('exception', 'app', 'communicator read error')
             self.exception_lock.release()
 

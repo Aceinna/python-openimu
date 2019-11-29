@@ -26,6 +26,7 @@ class Provider(OpenDeviceBase):
         if device_info_text.find('OpenRTK') > -1:
             self.build_device_info(device_info_text)
             self.build_app_info(app_info_text)
+            self.connected = True
             return True
         return False
 
@@ -68,6 +69,9 @@ class Provider(OpenDeviceBase):
                              'data': data, 'error': error}
 
     def get_log_info(self):
+        pass
+
+    def restart(self):
         pass
 
     # command list

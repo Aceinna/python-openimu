@@ -28,6 +28,7 @@ class Provider(OpenDeviceBase):
         if device_info_text.find('OpenIMU') > -1:
             self.build_device_info(device_info_text)
             self.build_app_info(app_info_text)
+            self.connected = True
             return True
         return False
 
@@ -42,13 +43,15 @@ class Provider(OpenDeviceBase):
 
     def build_app_info(self, text):
         split_text = text.split(' ')
+
+        app_name = next((item for item in app_str if item in split_text), 'IMU')
+
         self.app_info = {
-            'app_name': split_text[1],
-            'version': split_text[2]
+            'app_name': app_name,
+            'version': split_text
         }
 
     def load_properties(self):
-        print('load properties')
         self.app_config_folder = os.path.join(
             os.getcwd(), 'setting', 'openimu')
 
@@ -116,7 +119,10 @@ class Provider(OpenDeviceBase):
             }
         }
 
+    def restart(self):
+        pass
     # command list
+
     def getDeviceInfo(self, *args):
         return {
             'packetType': 'deviceInfo',
@@ -206,5 +212,12 @@ class Provider(OpenDeviceBase):
     def stopMagAlign(self):
         pass
 
-    def upgradeFirmware(self):
-        pass
+    def upgradeFramework(self):
+        # start a thread to do upgrade
+        command_line = helper.build_bootloader_packet(
+            'uP', properties=self.properties, param=params['paramId'], value=params['value'])
+        self.communicator.write(command_line)
+
+        return {
+            'packetType': 'success'
+        }

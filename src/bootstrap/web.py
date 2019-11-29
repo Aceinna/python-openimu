@@ -48,6 +48,10 @@ class WSHandler(tornado.websocket.WebSocketHandler):
 
     def on_close(self):
         self.reset()
+        try:
+            self.callback.stop()
+        except Exception as e:
+            pass
         self.get_device().remove_client(self)
         print('close client count:', len(self.get_device().clients))
 
@@ -75,10 +79,6 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             self.file_logger.append(packet_type, data)
 
     def reset(self):
-        try:
-            self.callback.stop()
-        except Exception as e:
-            pass
         self.is_streaming = False
         self.is_logging = False
         if self.file_logger:
@@ -89,7 +89,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
 
         if hasattr(self, method):
             getattr(self, method, None)(parameters)
-        else:
+        elif device and device.connected:
             result = getattr(device, method, None)(parameters)
             self.response_message(method, result)
 
@@ -185,7 +185,7 @@ class Webserver:
     def get_device(self):
         if self.device_provider is not None:
             return self.device_provider
-        raise Exception('device is not connected')
+        return None
 
     def device_discover_handler(self, device_provider):
         # load device provider
