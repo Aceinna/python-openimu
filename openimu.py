@@ -169,7 +169,7 @@ class OpenIMU:
         logging.debug("at {0}".format(sys._getframe().f_code.co_name))  
         portList = list(serial.tools.list_ports.comports())          
         ports = [p.device for p in portList] 
-        ports.sort()          
+        ports.sort()
         if len(ports):            
             print("\nsystem ports detected", ports)
             logging.info('system ports detected:{0}'.format(ports)) 
@@ -238,7 +238,8 @@ class OpenIMU:
                         print('Autoconnected by last saved port')
                         logging.info('Autoconnected by last saved port')  
                         return True
-                    else:                        
+                    else:   
+                        self.ser.close()                     
                         logging.debug('Port from app_config/connection.json get_device_id failed!')
                         return False
                 else:
