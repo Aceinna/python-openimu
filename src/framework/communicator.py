@@ -71,9 +71,9 @@ class SerialPort(Communicator):
         self.threads = []
         self.data_lock = threading.Lock()
         self.data_queue = Queue()
-        self.baudrateList = [115200]  # for test
-        # self.baudrateList = [38400, 57600, 115200,
-        #                      230400, 460800]  # default baudrate list
+        # self.baudrateList = [115200]  # for test
+        self.baudrateList = [38400, 57600, 115200,
+                             230400, 460800]  # default baudrate list
         if options.b and len(options.b) > 0:
             self.baudrateList = options.b
 
@@ -225,7 +225,6 @@ class SerialPort(Communicator):
 
     def close(self):
         return self.close_serial_port()
-
 
 
 class SPI(Communicator):

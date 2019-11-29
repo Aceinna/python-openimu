@@ -210,7 +210,7 @@ class Webserver:
         self.device_provider = device_provider
         self.device_provider.setup(self.options)
         self.device_provider.on('exception', self.handle_device_exception)
-        self.device_provider.on('data', self.handle_receive_device_data)
+        # self.device_provider.on('data', self.handle_receive_device_data)
         pass
 
     def start_websocket_server(self):
@@ -230,9 +230,9 @@ class Webserver:
         self.device_provider.reset()
         self.detect_device(self.device_rediscover_handler)
 
-    def handle_receive_device_data(self, method, packet_type, data):
-        self.ws_handler.on_receive_output_packet()
-        pass
+    # def handle_receive_device_data(self, method, packet_type, data):
+    #     self.ws_handler.on_receive_output_packet()
+    #     pass
 
     def detect_device(self, callback):
         print('start to find device')
