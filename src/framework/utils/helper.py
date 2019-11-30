@@ -16,6 +16,17 @@ def build_input_packet(name, properties=None, param=False, value=False):
         packet = S + calc_crc(S[2:S[4]+5])
     return packet
 
+def build_bootloader_input_packet(name, properties=None, data_len = False, addr = False, data = False):
+    name_bytes =  list(struct.unpack('BB', bytearray(name, 'utf-8')))
+
+    if not data_len and not addr and not data:
+        S = COMMAND_START + name_bytes + [0]  
+        packet = S + calc_crc(S[2:4] + [0x00])  
+    else:
+        payload = block_payload(data_len, addr, data)
+        S = COMMAND_START + name_bytes + [len(payload)] + payload
+        packet = S + calc_crc(S[2:S[4]+5])   
+    return packet
 
 def unpack_payload(name, properties, param=False, value=False):
     input_packet = next(
@@ -43,6 +54,24 @@ def unpack_payload(name, properties, param=False, value=False):
                                               struct.pack("<d", float(value))))
             return payload
 
+
+def block_payload(data_len, addr, data):
+        C = []
+        addr_3 = (addr & 0xFF000000) >> 24
+        addr_2 = (addr & 0x00FF0000) >> 16
+        addr_1 = (addr & 0x0000FF00) >> 8
+        addr_0 = (addr & 0x000000FF)
+        C.insert(len(C), addr_3)
+        C.insert(len(C), addr_2)
+        C.insert(len(C), addr_1)
+        C.insert(len(C), addr_0)
+        C.insert(len(C), data_len)
+        for i in range(data_len):
+            if (sys.version_info > (3, 0)):
+                C.insert(len(C), data[i])
+            else:
+                C.insert(len(C), ord(data[i]))
+        return C
 
 def calc_crc(payload):
     '''Calculates 16-bit CRC-CCITT

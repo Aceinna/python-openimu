@@ -9,6 +9,9 @@ from ..base.uart_base import OpenDeviceBase
 from ..configs.openimu_predefine import *
 import asyncio
 import datetime
+from pathlib import Path
+from azure.storage.blob import BlockBlobService
+import threading
 
 
 class Provider(OpenDeviceBase):
@@ -18,6 +21,8 @@ class Provider(OpenDeviceBase):
         self.server_update_rate = 50
         self.communicator = communicator
         self.is_logging = False
+        self.is_upgrading = False
+        self.bootloader_result = None
         pass
 
     def ping(self):
@@ -44,7 +49,8 @@ class Provider(OpenDeviceBase):
     def build_app_info(self, text):
         split_text = text.split(' ')
 
-        app_name = next((item for item in app_str if item in split_text), 'IMU')
+        app_name = next(
+            (item for item in app_str if item in split_text), 'IMU')
 
         self.app_info = {
             'app_name': app_name,
@@ -79,12 +85,15 @@ class Provider(OpenDeviceBase):
         pass
 
     def on_receive_output_packet(self, packet_type, data, error=None):
-
         self.add_output_packet('stream', packet_type, data)
 
     def on_receive_input_packet(self, packet_type, data, error):
         self.input_result = {'packet_type': packet_type,
                              'data': data, 'error': error}
+
+    def on_receive_bootloader_packet(self, packt_type, data, error):
+        self.bootloader_result = {'packet_type': packet_type,
+                                  'data': data, 'error': error}
 
     def get_input_result(self, packet_type, timeout=1):
         result = {'data': None, 'error': None}
@@ -98,11 +107,29 @@ class Provider(OpenDeviceBase):
         if self.input_result is not None and self.input_result['packet_type'] == packet_type:
             result = self.input_result.copy()
             self.input_result = None
+        else:
+            result['data'] = 'Command timeout'
+            result['error'] = True
 
-        return {
-            'data': result['data'],
-            'error': result['error']
-        }
+        return result
+
+    def get_bootloader_result(self, packet_type, timeout=1):
+        result = {'data': None, 'error': None}
+        start_time = datetime.datetime.now()
+        while self.bootloader_result is None:
+            end_time = datetime.datetime.now()
+            span = end_time - start_time
+            if span.total_seconds() > timeout:
+                break
+
+        if self.bootloader_result is not None and self.bootloader_result['packet_type'] == packet_type:
+            result = self.bootloader_result.copy()
+            self.bootloader_result = None
+        else:
+            result['data'] = 'Command timeout'
+            result['error'] = True
+
+        return result
 
     def get_log_info(self):
         packet_rate = next(
@@ -120,9 +147,23 @@ class Provider(OpenDeviceBase):
         }
 
     def restart(self):
-        pass
-    # command list
+        # output firmware upgrade finished
+        '''restart app
+        '''
+        command_line = helper.build_bootloader_input_packet('JA')
+        self.write(command_line)
+        print('Restarting app ...')
+        time.sleep(5)
+        if self.ping():
+            self.load_properties()
+            self.add_output_packet(
+                'stream', 'upgrade_complete', {success: True})
+        else:
+            self.add_output_packet(
+                'stream', 'upgrade_complete', {success: False})
+        self.is_upgrading = False
 
+    # command list
     def getDeviceInfo(self, *args):
         return {
             'packetType': 'deviceInfo',
@@ -212,12 +253,84 @@ class Provider(OpenDeviceBase):
     def stopMagAlign(self):
         pass
 
-    def upgradeFramework(self):
+    def upgradeFramework(self, file, *args):
         # start a thread to do upgrade
-        command_line = helper.build_bootloader_packet(
-            'uP', properties=self.properties, param=params['paramId'], value=params['value'])
-        self.communicator.write(command_line)
+        if not self.is_upgrading:
+            t = threading.Thread(
+                target=self.thread_do_upgrade_framework, args=(file,))
+            t.start()
+            print("Thread upgarde framework start at:[{0}].".format(
+                datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+            self.is_upgrading = True
 
         return {
             'packetType': 'success'
         }
+
+    def thread_do_upgrade_framework(self, file):
+        try:
+            # step.1 download firmware
+            can_download = self.download_firmware(file)
+            if not can_download:
+                return
+
+            # step.2 write to block
+            self.write_firmware()
+            # step.3 restart app
+            self.restart()
+        except Exception as e:
+            self.is_upgrading = False
+            print('upgard failed', e)
+
+    def download_firmware(self, file):
+        if not self.start_bootloader():
+            print('Bootloader Start Failed')
+            return False
+
+        firmware_file = Path(file)
+
+        if firmware_file.is_file():
+            self.fw = open(file, 'rb').read()
+        else:
+            self.block_blob_service = BlockBlobService(account_name='navview',
+                                                       account_key='+roYuNmQbtLvq2Tn227ELmb6s1hzavh0qVQwhLORkUpM0DN7gxFc4j+DF/rEla1EsTN2goHEA1J92moOM/lfxg==',
+                                                       protocol='http')
+            self.block_blob_service.get_blob_to_path('apps', file, file)
+            self.fw = open(file, 'rb').read()
+
+        print('upgrade fw: %s' % file)
+        self.max_data_len = 240
+        self.addr = 0
+        self.fs_len = len(self.fw)
+
+    def start_bootloader(self):
+        try:
+            command_line = helper.build_bootloader_input_packet('JI')
+            self.communicator.write(command_line)
+            result = self.get_bootloader_result('JI', timeout=1)
+            return True
+        except Exception as e:
+            print('bootloader exception', e)
+            return False
+
+    def write_firmware(self):
+        '''Upgrades firmware of connected device to file provided in argument
+        '''
+        while self.addr < self.fs_len:
+            packet_data_len = self.max_data_len if (
+                self.fs_len - self.addr) > self.max_data_len else (self.fs_len - self.addr)
+            data = self.fw[self.addr: (self.addr + packet_data_len)]
+            self.write_block(packet_data_len, self.addr, data)
+            self.addr += packet_data_len
+            self.add_output_packet('stream', 'upgrade_progress', {
+                                   addr: self.addr, fs_len: self.fs_len})
+            # output firmware upgrading
+
+    def write_block(self, data_len, addr, data):
+        print(data_len, addr)
+        command_line = helper.build_bootloader_input_packet(
+            'WA', None, data_len, addr, data)
+        self.communicator.write(pcommand_line)
+        if addr == 0:
+            time.sleep(5)
+        self.get_bootloader_result('WA', timeout=1)

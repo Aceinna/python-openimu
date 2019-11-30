@@ -164,7 +164,9 @@ class OpenDeviceBase:
         self.on_receive_input_packet(packet_config['name'], data, error)
 
     def unpack_bootloader_packet(self, packet_config, payload):
-        pass
+        data = payload
+        error = False
+        self.on_receive_bootloader_packet(packet_config['name'], data, error)
 
     def unpack_one(self, type, data):
         if type == 'uint64':

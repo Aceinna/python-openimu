@@ -68,6 +68,9 @@ class Provider(OpenDeviceBase):
         self.input_result = {'packet_type': packet_type,
                              'data': data, 'error': error}
 
+    def on_receive_bootloader_packet(self, packt_type, data, error):
+        pass
+
     def get_log_info(self):
         pass
 
