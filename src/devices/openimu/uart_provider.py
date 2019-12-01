@@ -12,6 +12,7 @@ import datetime
 from pathlib import Path
 from azure.storage.blob import BlockBlobService
 import threading
+import traceback
 
 
 class Provider(OpenDeviceBase):
@@ -91,7 +92,8 @@ class Provider(OpenDeviceBase):
         self.input_result = {'packet_type': packet_type,
                              'data': data, 'error': error}
 
-    def on_receive_bootloader_packet(self, packt_type, data, error):
+    def on_receive_bootloader_packet(self, packet_type, data, error):
+        print('bootloader', packet_type)
         self.bootloader_result = {'packet_type': packet_type,
                                   'data': data, 'error': error}
 
@@ -151,17 +153,19 @@ class Provider(OpenDeviceBase):
         '''restart app
         '''
         command_line = helper.build_bootloader_input_packet('JA')
-        self.write(command_line)
+        self.communicator.write(command_line)
         print('Restarting app ...')
         time.sleep(5)
         if self.ping():
             self.load_properties()
             self.add_output_packet(
-                'stream', 'upgrade_complete', {success: True})
+                'stream', 'upgrade_complete', {'success': True})
         else:
             self.add_output_packet(
-                'stream', 'upgrade_complete', {success: False})
+                'stream', 'upgrade_complete', {'success': False})
         self.is_upgrading = False
+        self.bootloader_result = None
+        self.input_result = None
 
     # command list
     def getDeviceInfo(self, *args):
@@ -272,15 +276,16 @@ class Provider(OpenDeviceBase):
             # step.1 download firmware
             can_download = self.download_firmware(file)
             if not can_download:
+                print('cannot find firmware file')
                 return
-
             # step.2 write to block
             self.write_firmware()
             # step.3 restart app
             self.restart()
         except Exception as e:
             self.is_upgrading = False
-            print('upgard failed', e)
+            print('upgard failed')
+            traceback.print_exc()
 
     def download_firmware(self, file):
         if not self.start_bootloader():
@@ -302,12 +307,15 @@ class Provider(OpenDeviceBase):
         self.max_data_len = 240
         self.addr = 0
         self.fs_len = len(self.fw)
+        return True
 
     def start_bootloader(self):
         try:
             command_line = helper.build_bootloader_input_packet('JI')
             self.communicator.write(command_line)
-            result = self.get_bootloader_result('JI', timeout=1)
+            result = self.get_bootloader_result('JI', timeout=2)
+            self.communicator.serial_port.baudrate = 57600
+            print('JI response', result)
             return True
         except Exception as e:
             print('bootloader exception', e)
@@ -323,14 +331,16 @@ class Provider(OpenDeviceBase):
             self.write_block(packet_data_len, self.addr, data)
             self.addr += packet_data_len
             self.add_output_packet('stream', 'upgrade_progress', {
-                                   addr: self.addr, fs_len: self.fs_len})
+                                   'addr': self.addr,
+                                   'fs_len': self.fs_len
+                                   })
             # output firmware upgrading
 
     def write_block(self, data_len, addr, data):
         print(data_len, addr)
         command_line = helper.build_bootloader_input_packet(
             'WA', None, data_len, addr, data)
-        self.communicator.write(pcommand_line)
+        self.communicator.write(command_line)
         if addr == 0:
             time.sleep(5)
-        self.get_bootloader_result('WA', timeout=1)
+        # self.get_bootloader_result('WA', timeout=1)

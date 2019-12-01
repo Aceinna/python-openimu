@@ -1,5 +1,6 @@
 import json
 import struct
+import sys
 
 COMMAND_START = [0x55, 0x55]
 

@@ -10,11 +10,13 @@ from ..framework.context import app_context
 from ..framework.file_storage import FileLoger
 
 
+
 class WSHandler(tornado.websocket.WebSocketHandler):
     is_streaming = False
     is_logging = False
     latest_packet_collection = []
     file_logger = None
+    packet_white_list = ['ping', 'upgrade_progress', 'upgrade_complete']
 
     def initialize(self, server):
         server.ws_handler = self
@@ -132,7 +134,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
 
     def response_output_packet(self):
         for latest_packet in self.latest_packet_collection:
-            if latest_packet['packet_type'] == 'ping' or self.is_streaming:
+            if latest_packet['packet_type'] in self.packet_white_list or self.is_streaming:
                 self.write_message(
                     json.dumps({
                         'method': 'stream',
