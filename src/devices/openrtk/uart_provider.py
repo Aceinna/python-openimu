@@ -14,7 +14,7 @@ import datetime
 class Provider(OpenDeviceBase):
     def __init__(self, communicator):
         super().__init__()
-        self.type='RTK'
+        self.type = 'RTK'
         self.server_update_rate = 100
         self.communicator = communicator
         pass
@@ -83,6 +83,21 @@ class Provider(OpenDeviceBase):
         return {
             'packetType': 'ping',
             'data': {'status': '1'}
+        }
+
+    def getDeviceInfo(self, *args):
+        return {
+            'packetType': 'deviceInfo',
+            'data':  [
+                          {'name': 'Product Name',
+                              'value': self.device_info['name']},
+                          {'name': 'PN', 'value': self.device_info['pn']},
+                          {'name': 'Firmware Version',
+                           'value': self.device_info['firmware_version']},
+                          {'name': 'SN', 'value': self.device_info['sn']},
+                          {'name': 'App Version',
+                              'value': self.app_info['version']}
+            ]
         }
 
     def get_log_info(self):
