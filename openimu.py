@@ -810,7 +810,7 @@ class OpenIMU:
         data = False
         trys = 0
         if self.device_id == 0:
-            trys_limit = 20
+            trys_limit = 60
         else:
             trys_limit = 200
         while not data and trys < trys_limit:
