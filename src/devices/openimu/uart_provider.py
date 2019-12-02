@@ -56,7 +56,7 @@ class Provider(OpenDeviceBase):
 
         self.app_info = {
             'app_name': app_name,
-            'version': split_text
+            'version': text
         }
 
     def load_properties(self):
@@ -153,6 +153,7 @@ class Provider(OpenDeviceBase):
         # output firmware upgrade finished
         '''restart app
         '''
+        time.sleep(1)
         command_line = helper.build_bootloader_input_packet('JA')
         self.communicator.write(command_line)
         print('Restarting app ...')
