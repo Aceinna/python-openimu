@@ -56,13 +56,13 @@ class Provider(OpenDeviceBase):
         pass
 
     def on_receive_output_packet(self, packet_type, data, error=None):
-        if packet_type == 'NV':
+        if packet_type == 'pS':
             self.add_output_packet('stream', 'pos', data)
 
-        if packet_type == 'SA':
+        if packet_type == 'sR':
             self.add_output_packet('stream', 'snr', data)
 
-        if packet_type == 'SK':
+        if packet_type == 'sK':
             self.add_output_packet('stream', 'skyview', data)
 
     def on_receive_input_packet(self, packet_type, data, error):

@@ -69,7 +69,14 @@ class FileLoger():
 
             for packet in self.output_packets:
                 # if 1 == packet['save2file']:
-                self.msgs_need_to_log.append(packet['name'])
+                has_save2file = packet.__contains__('save2file')
+                save2file = 1
+                if has_save2file:
+                    save2file = packet['save2file']
+                    
+                if save2file == 1:
+                    self.msgs_need_to_log.append(packet['name'])
+
                 self.log_file_rows[packet['name']] = 0
                 if self.user_file_name == '':
                     self.log_file_names[packet['name']

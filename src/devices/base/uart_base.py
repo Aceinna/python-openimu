@@ -76,6 +76,11 @@ class OpenDeviceBase:
                         sync_state = 0  # CRC did not match
 
     def unpack_output_packet(self, packet_config, payload):
+        if packet_config is None:
+            return
+
+        data = None
+        is_list = 0
         length = 0
         pack_fmt = '<'
         for value in packet_config['payload']:
@@ -113,21 +118,45 @@ class OpenDeviceBase:
                 pack_fmt += 'B'
                 length += 1
         len_fmt = '{0}B'.format(length)
-        try:
-            b = struct.pack(len_fmt, *payload)
-            data = struct.unpack(pack_fmt, b)
-            out = [(value['name'], data[idx])
-                   for idx, value in enumerate(packet_config['payload'])]
-            data = collections.OrderedDict(out)
-            # return data
-        except Exception as e:
-            print(
-                "error happened when decode the payload of packets, pls restart IMU: {0}".format(e))
+
+        has_list = packet_config.__contains__('isList')
+        if has_list:
+            is_list = packet_config['isList']
+
+        if is_list == 1:
+            packet_num = len(payload) // length
+            data = []
+            for i in range(packet_num):
+                payload_c = payload[i*length:(i+1)*length]
+                try:
+                    b = struct.pack(len_fmt, *payload_c)
+                    item = struct.unpack(pack_fmt, b)
+                    out = [(value['name'], data[idx])
+                           for idx, value in enumerate(packet_config['payload'])]
+                    item = collections.OrderedDict(out)
+                    data.append(data)
+                except Exception as e:
+                    print(
+                        "error happened when decode the payload, pls restart IMU firmware: {0}".format(e))
+        else:
+            try:
+                b = struct.pack(len_fmt, *payload)
+                data = struct.unpack(pack_fmt, b)
+                out = [(value['name'], data[idx])
+                       for idx, value in enumerate(packet_config['payload'])]
+                data = collections.OrderedDict(out)
+                # return data
+            except Exception as e:
+                print(
+                    "error happened when decode the payload of packets, pls restart IMU: {0}".format(e))
 
         self._logger.append(packet_config['name'], data)
         self.on_receive_output_packet(packet_config['name'], data)
 
     def unpack_input_packet(self, packet_config, payload):
+        if packet_config is None:
+            return
+
         data = None
         error = False
         response_playload_type_config = packet_config['responsePayload']['type'] \
@@ -165,6 +194,9 @@ class OpenDeviceBase:
         self.on_receive_input_packet(packet_config['name'], data, error)
 
     def unpack_bootloader_packet(self, packet_config, payload):
+        if packet_config is None:
+            return
+
         data = payload
         error = False
         self.on_receive_bootloader_packet(packet_config['name'], data, error)
@@ -346,21 +378,19 @@ class OpenDeviceBase:
             ["%c" % x for x in frame[PACKET_TYPE_INDEX:PAYLOAD_LEN_IDX]])
         frame_offset = PAYLOAD_LEN_IDX+1
         payload = frame[frame_offset:payload_len+frame_offset]
-
-        output_packet_config = next(
-            (x for x in self.properties['userMessages']['outputPackets'] if x['name'] == packet_type), None)
-        input_packet_config = next(
-            (x for x in self.properties['userMessages']['inputPackets'] if x['name'] == packet_type), None)
-        bootloader_packet_config = next(
-            (x for x in self.properties['bootloaderMessages'] if x['name'] == packet_type), None)
-
-        if output_packet_config:
+        #print(packet_type)
+        if self.properties.__contains__('userMessages'):
+            output_packet_config = next(
+                (x for x in self.properties['userMessages']['outputPackets'] if x['name'] == packet_type), None)
             self.unpack_output_packet(output_packet_config, payload)
 
-        if input_packet_config:
+            input_packet_config = next(
+                (x for x in self.properties['userMessages']['inputPackets'] if x['name'] == packet_type), None)
             self.unpack_input_packet(input_packet_config, payload)
 
-        if bootloader_packet_config != None:
+        if self.properties.__contains__('bootloaderMessages'):
+            bootloader_packet_config = next(
+                (x for x in self.properties['bootloaderMessages'] if x['name'] == packet_type), None)
             self.unpack_bootloader_packet(
                 bootloader_packet_config, payload)
 
