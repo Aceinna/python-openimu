@@ -31,6 +31,7 @@ class OpenDeviceBase:
         self.has_running_checker = False
         self._logger = None
         self.connected = False
+        self.is_upgrading = False
         pass
 
     @abstractmethod
@@ -235,6 +236,10 @@ class OpenDeviceBase:
             return when occur Exception
         '''
         while True:
+            if self.is_upgrading:
+                time.sleep(0.1)
+                continue
+
             try:
                 data = bytearray(self.communicator.read())
             except Exception as e:
@@ -274,6 +279,10 @@ class OpenDeviceBase:
                 self.exception_lock.release()
                 return  # exit thread parser
             self.exception_lock.release()
+
+            if self.is_upgrading:
+                time.sleep(0.1)
+                continue
 
             self.data_lock.acquire()
             if self.data_queue.empty():
@@ -372,6 +381,7 @@ class OpenDeviceBase:
         # self.clients.clear()
         self.input_result = None
         self.is_streaming = False
+        self.is_upgrading = False
         self.exception_thread = False
         self.data_queue.queue.clear()
         if self._logger is not None:

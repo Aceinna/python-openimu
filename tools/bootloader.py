@@ -1371,7 +1371,7 @@ if __name__ == "__main__":
     unit = OpenIMU()
     unit.find_device()
     print('file name ' + unit.filename)
-    unit.start_bootloader()
+    #unit.start_bootloader()
     if unit.connected != 0:
         if unit.boot != 1:
             unit.close()

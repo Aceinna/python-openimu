@@ -22,7 +22,7 @@ class Provider(OpenDeviceBase):
         self.server_update_rate = 50
         self.communicator = communicator
         self.is_logging = False
-        self.is_upgrading = False
+
         self.bootloader_result = None
         pass
 
@@ -31,7 +31,8 @@ class Provider(OpenDeviceBase):
         device_info_text = self.internal_input_command('pG')
         app_info_text = self.internal_input_command('gV')
 
-        if device_info_text.find('OpenIMU') > -1:
+        if device_info_text.find('OpenIMU') > -1 and \
+            device_info_text.find('OpenRTK') == -1:
             self.build_device_info(device_info_text)
             self.build_app_info(app_info_text)
             self.connected = True
@@ -257,16 +258,22 @@ class Provider(OpenDeviceBase):
     def stopMagAlign(self):
         pass
 
+    def on_upgarde_failed(self, message):
+        print(message)
+        self.is_upgrading = False
+        self.add_output_packet(
+            'stream', 'upgrade_complete', {'success': False, 'message': message})
+        pass
+
     def upgradeFramework(self, file, *args):
         # start a thread to do upgrade
         if not self.is_upgrading:
+            self.is_upgrading = True
             t = threading.Thread(
                 target=self.thread_do_upgrade_framework, args=(file,))
             t.start()
             print("Thread upgarde framework start at:[{0}].".format(
                 datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
-            self.is_upgrading = True
-
         return {
             'packetType': 'success'
         }
@@ -274,24 +281,22 @@ class Provider(OpenDeviceBase):
     def thread_do_upgrade_framework(self, file):
         try:
             # step.1 download firmware
-            can_download = self.download_firmware(file)
-            if not can_download:
-                print('cannot find firmware file')
+            if not self.download_firmware(file):
+                self.on_upgarde_failed('cannot find firmware file')
                 return
-            # step.2 write to block
+            # step.2 jump to bootloader
+            if not self.start_bootloader():
+                self.on_upgarde_failed('Bootloader Start Failed')
+                return
+            # step.3 write to block
             self.write_firmware()
-            # step.3 restart app
+            # step.4 restart app
             self.restart()
         except Exception as e:
-            self.is_upgrading = False
-            print('upgard failed')
+            self.on_upgarde_failed('Upgrade Failed')
             traceback.print_exc()
 
     def download_firmware(self, file):
-        if not self.start_bootloader():
-            print('Bootloader Start Failed')
-            return False
-
         firmware_file = Path(file)
 
         if firmware_file.is_file():
@@ -313,9 +318,12 @@ class Provider(OpenDeviceBase):
         try:
             command_line = helper.build_bootloader_input_packet('JI')
             self.communicator.write(command_line)
-            result = self.get_bootloader_result('JI', timeout=2)
+            time.sleep(2)
+            data_buffer = self.communicator.read(500)
+            parsed = self.extract_command_response('JI', data_buffer)
+            print('parsed', parsed)
             self.communicator.serial_port.baudrate = 57600
-            print('JI response', result)
+            #print('JI response', result)
             return True
         except Exception as e:
             print('bootloader exception', e)
@@ -340,7 +348,16 @@ class Provider(OpenDeviceBase):
         print(data_len, addr)
         command_line = helper.build_bootloader_input_packet(
             'WA', None, data_len, addr, data)
-        self.communicator.write(command_line)
+        try:
+            self.communicator.write(command_line)
+        except Exception as e:
+            self.exception_lock.acquire()
+            self.exception_thread = True
+            self.exception_lock.release()
+            return
+
         if addr == 0:
             time.sleep(5)
+        else:
+            time.sleep(0.1)
         # self.get_bootloader_result('WA', timeout=1)
