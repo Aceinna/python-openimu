@@ -13,6 +13,7 @@ import datetime
 
 class Provider(OpenDeviceBase):
     def __init__(self, communicator):
+        super().__init__()
         self.type='RTK'
         self.server_update_rate = 100
         self.communicator = communicator
