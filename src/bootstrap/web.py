@@ -10,7 +10,6 @@ from ..framework.context import app_context
 from ..framework.file_storage import FileLoger
 
 
-
 class WSHandler(tornado.websocket.WebSocketHandler):
     is_streaming = False
     is_logging = False
@@ -208,10 +207,26 @@ class Webserver:
 
         self.load_device_provider(device_provider)
 
+    def device_complete_upgrade_handler(self, device_provider):
+        if self.device_provider.device_info['sn'] == device_provider.device_info['sn']:
+            if self.ws_handler:
+                self.ws_handler.on_receive_output_packet(
+                    'stream', 'upgrade_complete', {'success': True})
+            self.device_provider.upgrade_completed()
+        else:
+            if self.ws_handler:
+                self.ws_handler.on_receive_output_packet(
+                    'stream', 'upgrade_complete', {'success': False})
+            self.device_provider.close()
+
+        self.device_provider = device_provider
+
     def load_device_provider(self, device_provider):
         self.device_provider = device_provider
         self.device_provider.setup(self.options)
         self.device_provider.on('exception', self.handle_device_exception)
+        self.device_provider.on(
+            'complete_upgrade', self.handle_device_complete_upgrade)
         # self.device_provider.on('data', self.handle_receive_device_data)
         pass
 
@@ -231,6 +246,12 @@ class Webserver:
 
         self.device_provider.reset()
         self.detect_device(self.device_rediscover_handler)
+
+    def handle_device_complete_upgrade(self):
+        self.communicator.reset_buffer()
+        self.communicator.close()
+        # self.device_provider.reset()
+        self.detect_device(self.device_complete_upgrade_handler)
 
     # def handle_receive_device_data(self, method, packet_type, data):
     #     self.ws_handler.on_receive_output_packet()

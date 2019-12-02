@@ -17,7 +17,7 @@ else:
 class OpenDeviceBase:
     __metaclass__ = ABCMeta
 
-    def __init__(self):
+    def __init__(self, communicator):
         self.threads = []  # thread of receiver and paser
         self.exception_thread = False  # flag of exit threads
         self.exception_lock = threading.Lock()  # lock of exception_thread
@@ -26,12 +26,15 @@ class OpenDeviceBase:
         self.data_lock = threading.Lock()
         self.clients = []
         self.input_result = None
+        self.bootloader_result = None
         self.listeners = {}
         self.is_streaming = False
         self.has_running_checker = False
         self._logger = None
         self.connected = False
         self.is_upgrading = False
+        self.complete_upgrade = False
+        self.communicator = communicator
         pass
 
     @abstractmethod
@@ -362,6 +365,10 @@ class OpenDeviceBase:
                 self.emit('exception', 'app', 'communicator read error')
             self.exception_lock.release()
 
+            if self.complete_upgrade:
+                self.emit('complete_upgrade')
+                self.complete_upgrade = False
+
             if self.exit_thread:
                 return
 
@@ -410,6 +417,7 @@ class OpenDeviceBase:
         self.listeners.clear()
         # self.clients.clear()
         self.input_result = None
+        self.bootloader_result = None
         self.is_streaming = False
         self.is_upgrading = False
         self.exception_thread = False
@@ -421,12 +429,17 @@ class OpenDeviceBase:
         self.reset()
         self.exit_thread = True
 
+    def upgrade_completed(self):
+        self.input_result = None
+        self.bootloader_result = None
+        self.data_queue.queue.clear()
+        self.is_upgrading = False
+
     def on(self, event_type, handler):
         if not self.listeners.__contains__(event_type):
             self.listeners[event_type] = []
 
         self.listeners[event_type].append(handler)
-        # print('on', len(self.listeners[event_type]))
 
     def emit(self, event_type, *args):
         handlers = self.listeners[event_type]

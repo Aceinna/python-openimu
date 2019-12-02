@@ -242,6 +242,11 @@ class SerialPort(Communicator):
     def close(self):
         return self.close_serial_port()
 
+    def reset_buffer(self):
+        self.serial_port.flushInput()
+        self.serial_port.flushOutput()
+        pass
+
 
 class SPI(Communicator):
     def __init__(self):

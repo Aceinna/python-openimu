@@ -17,13 +17,10 @@ import traceback
 
 class Provider(OpenDeviceBase):
     def __init__(self, communicator):
-        super().__init__()
+        super().__init__(communicator)
         self.type = 'IMU'
         self.server_update_rate = 50
-        self.communicator = communicator
         self.is_logging = False
-
-        self.bootloader_result = None
         pass
 
     def ping(self):
@@ -41,11 +38,12 @@ class Provider(OpenDeviceBase):
 
     def build_device_info(self, text):
         split_text = text.split(' ')
+        split_len = len(split_text)
         self.device_info = {
             'name': split_text[0],
             'pn': split_text[1],
             'firmware_version': split_text[2],
-            'sn': split_text[3]
+            'sn': split_text[3].split(':')[1] if split_len == 4 else '' 
         }
 
     def build_app_info(self, text):
@@ -158,16 +156,8 @@ class Provider(OpenDeviceBase):
         self.communicator.write(command_line)
         print('Restarting app ...')
         time.sleep(5)
-        if self.ping():
-            self.load_properties()
-            self.add_output_packet(
-                'stream', 'upgrade_complete', {'success': True})
-        else:
-            self.add_output_packet(
-                'stream', 'upgrade_complete', {'success': False})
-        self.is_upgrading = False
-        self.bootloader_result = None
-        self.input_result = None
+        
+        self.complete_upgrade = True
 
     # command list
     def getDeviceInfo(self, *args):
