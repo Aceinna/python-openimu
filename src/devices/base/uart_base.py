@@ -131,10 +131,10 @@ class OpenDeviceBase:
                 try:
                     b = struct.pack(len_fmt, *payload_c)
                     item = struct.unpack(pack_fmt, b)
-                    out = [(value['name'], data[idx])
+                    out = [(value['name'], item[idx])
                            for idx, value in enumerate(packet_config['payload'])]
                     item = collections.OrderedDict(out)
-                    data.append(data)
+                    data.append(item)
                 except Exception as e:
                     print(
                         "error happened when decode the payload, pls restart IMU firmware: {0}".format(e))
