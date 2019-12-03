@@ -15,7 +15,8 @@ class WSHandler(tornado.websocket.WebSocketHandler):
     is_logging = False
     latest_packet_collection = []
     file_logger = None
-    packet_white_list = ['ping', 'upgrade_progress', 'upgrade_complete']
+    packet_white_list = ['ping', 'upgrade_progress',
+                         'upgrade_complete', 'mag_status']
 
     def initialize(self, server):
         server.ws_handler = self
@@ -212,7 +213,6 @@ class Webserver:
             if self.ws_handler:
                 self.ws_handler.on_receive_output_packet(
                     'stream', 'upgrade_complete', {'success': True})
-            self.device_provider.upgrade_completed()
         else:
             if self.ws_handler:
                 self.ws_handler.on_receive_output_packet(
@@ -220,6 +220,7 @@ class Webserver:
             self.device_provider.close()
 
         self.device_provider = device_provider
+        self.device_provider.upgrade_completed()
 
     def load_device_provider(self, device_provider):
         self.device_provider = device_provider

@@ -191,6 +191,8 @@ class OpenDeviceBase:
                 error = True
         elif response_playload_type_config == 'string':
             data = self.unpack_one('string', payload)
+        elif response_playload_type_config == 'bytes':
+            data = self.unpack_one('bytes', payload)
         else:
             data = True
 
@@ -242,6 +244,9 @@ class OpenDeviceBase:
             except:
                 return False
             return struct.unpack('d', b)[0]
+        elif type == 'bytes':
+            b = int.from_bytes(data, byteorder='big', signed=False)
+            return b
 
     def setup(self, options):
         ''' start 2 threads, receiver, parser
@@ -385,7 +390,7 @@ class OpenDeviceBase:
             ["%c" % x for x in frame[PACKET_TYPE_INDEX:PAYLOAD_LEN_IDX]])
         frame_offset = PAYLOAD_LEN_IDX+1
         payload = frame[frame_offset:payload_len+frame_offset]
-        #print(packet_type)
+        # print(packet_type)
         if self.properties.__contains__('userMessages'):
             output_packet_config = next(
                 (x for x in self.properties['userMessages']['outputPackets'] if x['name'] == packet_type), None)
@@ -410,20 +415,24 @@ class OpenDeviceBase:
         self.clients.append(client)
 
     def remove_client(self, client):
+        self.reset_client()
         self.clients.remove(client)
 
-    def reset(self):
-        self.threads.clear()
-        self.listeners.clear()
-        # self.clients.clear()
+    def reset_client(self):
         self.input_result = None
         self.bootloader_result = None
         self.is_streaming = False
         self.is_upgrading = False
-        self.exception_thread = False
-        self.data_queue.queue.clear()
         if self._logger is not None:
             self._logger.stop_user_log()
+
+    def reset(self):
+        self.reset_client()
+        self.threads.clear()
+        self.listeners.clear()
+        # self.clients.clear()
+        self.exception_thread = False
+        self.data_queue.queue.clear()
 
     def close(self):
         self.reset()
@@ -434,6 +443,11 @@ class OpenDeviceBase:
         self.bootloader_result = None
         self.data_queue.queue.clear()
         self.is_upgrading = False
+
+        self.load_properties()
+        self._logger = FileLoger(self.properties)
+        if not options.nolog:
+            self._logger.start_user_log('data')
 
     def on(self, event_type, handler):
         if not self.listeners.__contains__(event_type):
