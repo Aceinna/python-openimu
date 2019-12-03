@@ -191,8 +191,6 @@ class OpenDeviceBase:
                 error = True
         elif response_playload_type_config == 'string':
             data = self.unpack_one('string', payload)
-        elif response_playload_type_config == 'bytes':
-            data = self.unpack_one('bytes', payload)
         else:
             data = True
 
@@ -244,9 +242,6 @@ class OpenDeviceBase:
             except:
                 return False
             return struct.unpack('d', b)[0]
-        elif type == 'bytes':
-            b = int.from_bytes(data, byteorder='big', signed=False)
-            return b
 
     def setup(self, options):
         ''' start 2 threads, receiver, parser

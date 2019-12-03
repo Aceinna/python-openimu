@@ -10,7 +10,7 @@ def receive_args():
         description='Aceinna python driver input args command:')
     parser.add_argument("-host", type=str, help="host type", default='web')
     # for host as web
-    parser.add_argument("-p", type=int, help="webserver port", default=8123)
+    parser.add_argument("-p", type=int, help="webserver port", default=8000)
     parser.add_argument("-b", type=int, help="baudrate")
     parser.add_argument("-nolog", type=int,
                         help="disable internal log", default=True)
