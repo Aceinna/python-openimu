@@ -43,14 +43,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         return True
 
     # send IMU package to server
-    def send_data(self):
-        if imu.get_monitor_status() == 1:
-            self.write_message(json.dumps({ "messageType": "queryResponse","data": {"packetType": "DeviceStatus","packet": { "returnStatus":1}}}))
-        elif imu.get_monitor_status() == 2:
-            self.write_message(json.dumps({ "messageType": "queryResponse","data": {"packetType": "DeviceStatus","packet": { "returnStatus":2}}}))
-        elif imu.get_monitor_status() == 3:
-            self.write_message(json.dumps({ "messageType": "queryResponse","data": {"packetType": "DeviceStatus","packet": { "returnStatus":3}}}))
-        
+    def send_data(self):        
         if not imu.device_id:            
             self.write_message(json.dumps({ "messageType": "queryResponse","data": {"packetType": "DeviceStatus","packet": { "returnStatus":2}}}))
             time.sleep(1)
@@ -131,25 +124,25 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                 logging.debug('{0} feedback: {1}'.format(list(message['data'].keys())[0], data))
 
             elif list(message['data'].keys())[0] == 'startStream':  
-                tm.cancel()
+                # tm.cancel()
                 logging.debug("start the stream!")                              
                 imu.connect()
                 self.callback.start()  
                 self.dtsta.stop()
                 self.write_message(json.dumps({ "messageType" : "requestAction", "data" : { "startStream" : {} }}))
             elif list(message['data'].keys())[0] == 'stopStream':
-                tm.start()
+                # tm.start()
                 logging.debug("stop the stream!")
                 imu.pause()                
                 self.dtsta.start()
                 self.write_message(json.dumps({ "messageType" : "requestAction", "data" : { "stopStream" : {} }}))
             elif list(message['data'].keys())[0] == 'startLog' and imu.logging == 0: 
-                tm.cancel()
+                # tm.cancel()
                 data = message['data']['startLog']
                 imu.start_log(data)
                 self.write_message(json.dumps({ "messageType" : "requestAction", "data" : { "logfile" : imu.logger.name }}))
             elif list(message['data'].keys())[0] == 'stopLog' and imu.logging == 1: 
-                tm.start()
+                # tm.start()
                 imu.stop_log()                
                 self.write_message(json.dumps({ "messageType" : "requestAction", "data" : { "logfile" : '' }}))
             # added by Dave, app download page
@@ -199,7 +192,6 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                 data = imu.openimu_get_all_param()
                 self.write_message(json.dumps({"messageType": "magAction", "data": {"status": "saved","value":data}}))
                 return
-
 
         # OLD CODE REVIEW FOR DELETION
         elif  0 and message['messageType'] == 'requestAction':
