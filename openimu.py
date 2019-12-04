@@ -60,7 +60,6 @@ import threading
 from threading import Timer
 
 
-
 class OpenIMU:
     def __init__(self, ws=False):
         '''Initialize and then start ports search and autobaud process
@@ -263,6 +262,7 @@ class OpenIMU:
             return self.data
         else: 
             return { 'error' : 'not streaming' }
+
     
     def start_log(self, data = False):
         '''Creates file or cloud logger.  Autostarts log activity if ws (websocket) set to false
@@ -563,12 +563,14 @@ class OpenIMU:
         if self.ser:
             try: 
                 bytes = self.ser.read(n)
+                self.set_monitor_status(1) # connected
                 return bytearray(bytes)
             except serial.SerialException as e:
                 if 'returned no data' in str(e):
                     return bytearray(bytes)
                 else:
                     self.disconnect()    # sets connected to 0, and other related parameters to initial values
+                    self.set_monitor_status(2) # no connection with unit
                     print('serial exception read') 
                     logging.debug("serial exception read")
                     self.find_device() 
@@ -822,7 +824,6 @@ class OpenIMU:
         return data
 
     def parse_unit_heartbeat(self):
-        
         self.data_buffer = self.read(150)
         self.ser.flushInput()
         if self.data_buffer:
