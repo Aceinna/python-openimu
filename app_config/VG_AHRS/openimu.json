@@ -53,7 +53,11 @@
 						"actionID": 7,
 						"actionName": "stored"
 					}
-				]
+				],
+				"responsePayload": {
+					"type": "string",
+					"name": "ma action name"
+				}
 			},
 			{
 				"name": "gV",

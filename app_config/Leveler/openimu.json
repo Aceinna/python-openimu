@@ -58,7 +58,11 @@
 						"actionID":  6,
 						"actionName": "abort"
 					}
-				]
+				],
+				"responsePayload": {
+					"type": "string",
+					"name": "ma action name"
+				}
 			},
 			{
 				"name": "gV",

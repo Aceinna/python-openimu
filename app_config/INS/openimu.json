@@ -80,6 +80,37 @@
 					"type": "paramId",
 					"name": "ID of the Updated Parameter"
 				}
+			},
+			{
+				"name": "ma",
+				"description": "Magnetic alignment control commands",
+				"inputPayload": [
+					{
+						"actionID":  0,
+						"actionName": "status"
+					},
+					{
+
+						"actionID":  1,
+						"actionName": "start"
+					},
+					{
+						"actionID":  5,
+						"actionName": "save"
+					},
+					{
+						"actionID":  6,
+						"actionName": "abort"
+					},
+					{
+						"actionID": 7,
+						"actionName": "stored"
+					}
+				],
+				"responsePayload": {
+					"type": "string",
+					"name": "ma action name"
+				}
 			}
 		],
 		"outputPackets": [
