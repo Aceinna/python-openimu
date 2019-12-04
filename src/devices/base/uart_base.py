@@ -433,7 +433,7 @@ class OpenDeviceBase:
         self.reset()
         self.exit_thread = True
 
-    def upgrade_completed(self):
+    def upgrade_completed(self, options):
         self.input_result = None
         self.bootloader_result = None
         self.data_queue.queue.clear()

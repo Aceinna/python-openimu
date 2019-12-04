@@ -220,7 +220,7 @@ class Webserver:
             self.device_provider.close()
 
         self.device_provider = device_provider
-        self.device_provider.upgrade_completed()
+        self.device_provider.upgrade_completed(self.options)
 
     def load_device_provider(self, device_provider):
         self.device_provider = device_provider
