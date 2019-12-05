@@ -469,13 +469,6 @@
 			"description": "Write parameters to OpenIMU",
 			"function": "set_handler"
 		}
-	],
-	"MagCommands":[
-		{"start": "55556D610101E10F"},
-		{"abort":"55556D61010691E8" },
-		{"status":"55556D610100F12E"},
-		{"save": "55556d610105A18B"}
-
 	]
 }
 
