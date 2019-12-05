@@ -563,7 +563,7 @@ class OpenIMU:
         if self.ser:
             try: 
                 bytes = self.ser.read(n)
-                self.set_monitor_status(1) # connected
+                # self.set_monitor_status(1) # connected
                 return bytearray(bytes)
             except serial.SerialException as e:
                 if 'returned no data' in str(e):

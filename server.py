@@ -25,32 +25,32 @@ tm = RepeatingTimer(3.0, imu.process_monitor)
 class WSHandler(tornado.websocket.WebSocketHandler):
     count = 0
     magProgress = 0
+    stored_device_status = 0
+    stored_device_id = None
 
     def open(self):
         self.callback = tornado.ioloop.PeriodicCallback(self.send_data, callback_rate)
         self.callback.start()
         self.dtsta = tornado.ioloop.PeriodicCallback(self.detect_status, 1000)
         self.dtsta.start()
-
+        self.stored_device_status = imu.get_monitor_status()
+        self.stored_device_id = imu.device_id
 
     def detect_status(self): 
-        if imu.get_monitor_status() == 1:
-            self.write_message(json.dumps({ "messageType": "queryResponse","data": {"packetType": "DeviceStatus","packet": { "returnStatus":1}}}))
-        elif imu.get_monitor_status() == 2:
-            self.write_message(json.dumps({ "messageType": "queryResponse","data": {"packetType": "DeviceStatus","packet": { "returnStatus":2}}}))
-        elif imu.get_monitor_status() == 3:
-            self.write_message(json.dumps({ "messageType": "queryResponse","data": {"packetType": "DeviceStatus","packet": { "returnStatus":3}}}))
+        imu_status = imu.get_monitor_status()
+
+        if imu_status != self.stored_device_status:
+            self.stored_device_status = imu_status
+            if self.stored_device_id == imu.device_id:
+                imu_status = 3
+            self.write_message(json.dumps({ "messageType": "queryResponse","data": {"packetType": "DeviceStatus","packet": { "returnStatus":imu_status}}}))
         return True
 
     # send IMU package to server
     def send_data(self):        
-        if not imu.device_id:            
-            self.write_message(json.dumps({ "messageType": "queryResponse","data": {"packetType": "DeviceStatus","packet": { "returnStatus":2}}}))
-            time.sleep(1)
         if not imu.paused:
             d = imu.get_latest()
             self.write_message(json.dumps({ 'messageType' : 'event',  'data' : { 'newOutput' : d }})) 
-            self.write_message(json.dumps({ "messageType": "queryResponse","data": {"packetType": "DeviceStatus","packet": { "returnStatus":1}}}))
         else:
             return False
 
