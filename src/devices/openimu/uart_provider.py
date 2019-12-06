@@ -42,11 +42,13 @@ class Provider(OpenDeviceBase):
     def build_device_info(self, text):
         split_text = text.split(' ')
         split_len = len(split_text)
+        pre_sn = split_text[3].split(':') if split_len == 4 else ''
+        sn = pre_sn[1] if len(pre_sn) == 2 else pre_sn[0]
         self.device_info = {
             'name': split_text[0],
             'pn': split_text[1],
             'firmware_version': split_text[2],
-            'sn': split_text[3].split(':')[1] if split_len == 4 else ''
+            'sn': sn
         }
 
     def build_app_info(self, text):
@@ -95,7 +97,7 @@ class Provider(OpenDeviceBase):
                              'data': data, 'error': error}
 
     def on_receive_bootloader_packet(self, packet_type, data, error):
-        print('bootloader', packet_type)
+        print('bootloader', packet_type, data)
         self.bootloader_result = {'packet_type': packet_type,
                                   'data': data, 'error': error}
 
@@ -128,18 +130,26 @@ class Provider(OpenDeviceBase):
     def get_bootloader_result(self, packet_type, timeout=1):
         result = {'data': None, 'error': None}
         start_time = datetime.datetime.now()
+        end_time = datetime.datetime.now()
+        span = None
+
         while self.bootloader_result is None:
             end_time = datetime.datetime.now()
             span = end_time - start_time
             if span.total_seconds() > timeout:
                 break
 
+        if self.bootloader_result:
+            print('get bootloader packet in:',
+                  span.total_seconds() if span else 0, 's')
+
         if self.bootloader_result is not None and self.bootloader_result['packet_type'] == packet_type:
             result = self.bootloader_result.copy()
-            self.bootloader_result = None
         else:
             result['data'] = 'Command timeout'
             result['error'] = True
+
+        self.bootloader_result = None
 
         return result
 
@@ -418,7 +428,6 @@ class Provider(OpenDeviceBase):
         }
 
     def on_upgarde_failed(self, message):
-        print(message)
         self.is_upgrading = False
         self.add_output_packet(
             'stream', 'upgrade_complete', {'success': False, 'message': message})
@@ -463,13 +472,12 @@ class Provider(OpenDeviceBase):
     def start_bootloader(self):
         try:
             command_line = helper.build_bootloader_input_packet('JI')
-            self.communicator.write(command_line)
+            self.communicator.write(command_line, True)
             time.sleep(2)
             data_buffer = self.communicator.read(500)
             parsed = self.extract_command_response('JI', data_buffer)
             print('parsed', parsed)
             self.communicator.serial_port.baudrate = 57600
-            #print('JI response', result)
             return True
         except Exception as e:
             print('bootloader exception', e)
@@ -495,7 +503,7 @@ class Provider(OpenDeviceBase):
         command_line = helper.build_bootloader_input_packet(
             'WA', None, data_len, addr, data)
         try:
-            self.communicator.write(command_line)
+            self.communicator.write(command_line, True)
         except Exception as e:
             self.exception_lock.acquire()
             self.exception_thread = True
@@ -506,4 +514,3 @@ class Provider(OpenDeviceBase):
             time.sleep(5)
         else:
             time.sleep(0.1)
-        # self.get_bootloader_result('WA', timeout=1)

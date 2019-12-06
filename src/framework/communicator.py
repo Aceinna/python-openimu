@@ -50,7 +50,7 @@ class Communicator():
     def close(self):
         pass
 
-    def write(self, data):
+    def write(self, data, is_flush=False):
         pass
 
     def read(self, size):
@@ -96,7 +96,7 @@ class SerialPort(Communicator):
         # print("\nsystem ports detected", ports)
 
         portList = list(serial.tools.list_ports.comports())
-        ports = [ p.device for p in portList]
+        ports = [p.device for p in portList]
 
         result = []
         for port in ports:
@@ -111,7 +111,7 @@ class SerialPort(Communicator):
                         s.close()
                         result.append(port)
                 except Exception as e:
-                    print(e)             
+                    print(e)
                     pass
         return result
 
@@ -195,6 +195,10 @@ class SerialPort(Communicator):
             return True
         except Exception as e:
             print('{0} : {1} open failed'.format(port, baud), end='\r')
+            if self.serial_port is not None:
+                if self.serial_port.isOpen():
+                    self.serial_port.close()
+
             self.serial_port = None
             return False
 
@@ -205,7 +209,7 @@ class SerialPort(Communicator):
             if self.serial_port.isOpen():
                 self.serial_port.close()
 
-    def write(self, data):
+    def write(self, data, is_flush=False):
         '''
         write the bytes data to the port
 
@@ -214,7 +218,10 @@ class SerialPort(Communicator):
                 False: Exception when sending data, eg. serial port hasn't been opened.
         '''
         try:
-            return self.serial_port.write(data)
+            len_of_data = self.serial_port.write(data)
+            if is_flush:
+                self.serial_port.flush()
+            return len_of_data
         except Exception as e:
             # print(e)
             raise
