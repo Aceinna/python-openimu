@@ -8,8 +8,6 @@ def get_app_urls():
 	        ]
     return app_urls
 
-
-
 def get_app_names():       
     app_names = ['Compass',
 	        'IMU',
@@ -20,4 +18,5 @@ def get_app_names():
 	]        
     return app_names
 
+app_url_base = 'https://raw.githubusercontent.com/Aceinna/python-openimu/bugfix/app_config'
 app_str = ['INS','VG_AHRS','IMU','Compass','Leveler']

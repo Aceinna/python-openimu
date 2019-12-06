@@ -155,7 +155,7 @@ class SerialPort(Communicator):
 
             if connection:
                 self.open_serial_port(
-                    port=connection['port'], baud=connection['baud'], timeout=1)
+                    port=connection['port'], baud=connection['baud'], timeout=0.005)
                 if self.serial_port is not None:
                     self.confirm_device()
                     if self.device is None:

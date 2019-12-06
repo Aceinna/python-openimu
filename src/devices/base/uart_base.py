@@ -78,6 +78,23 @@ class OpenDeviceBase:
                     else:
                         sync_state = 0  # CRC did not match
 
+    # may lost data
+    def read_untils_have_data(self, packet_type, read_length=200, retry_times=20):
+        response = False
+        trys = 0
+
+        while not response and trys < retry_times:
+            data_buffer = self.communicator.read(read_length)
+
+            if data_buffer:
+                response = self.extract_command_response(
+                    packet_type, data_buffer)
+            trys += 1
+
+        #print('read end', time.time(), 'try times', trys, 'response', response)
+
+        return response
+
     def unpack_output_packet(self, packet_config, payload):
         if packet_config is None:
             return

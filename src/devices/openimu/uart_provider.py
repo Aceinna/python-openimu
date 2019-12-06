@@ -43,7 +43,7 @@ class Provider(OpenDeviceBase):
         split_text = text.split(' ')
         split_len = len(split_text)
         pre_sn = split_text[3].split(':') if split_len == 4 else ''
-        sn = pre_sn[1] if len(pre_sn) == 2 else pre_sn[0]
+        sn = pre_sn[1] if len(pre_sn) == 2 else ''
         self.device_info = {
             'name': split_text[0],
             'pn': split_text[1],
@@ -66,27 +66,36 @@ class Provider(OpenDeviceBase):
             os.getcwd(), 'setting', 'openimu')
 
         if not os.path.exists(self.app_config_folder):
-            print('downloading config json files from github, please waiting for a while')
             os.makedirs(self.app_config_folder)
             for app_name in get_app_names():
                 os.makedirs(self.app_config_folder + '/' + app_name)
-            i = 0
-            for url in get_app_urls():
-                filepath = self.app_config_folder + '/' + \
-                    get_app_names()[i] + '/' + 'openimu.json'
-                i = i+1
-                try:
-                    r = requests.get(url)
-                    with open(filepath, "wb") as code:
-                        code.write(r.content)
-                except Exception as e:
-                    print(e)
 
         # Load the openimu.json based on its app
         app_name = self.app_info['app_name']
-        with open(os.path.join(self.app_config_folder, app_name, 'openimu.json')) as json_data:
-            self.properties = json.load(json_data)
-        pass
+        app_file_path = os.path.join(
+            self.app_config_folder, app_name, 'openimu.json')
+
+        exist_json_file = os.path.isfile(app_file_path)
+
+        if not exist_json_file:
+            try:
+                print(
+                    'downloading config json files from github, please waiting for a while')
+                r = requests.get(app_url_base + '/' +
+                                 app_name + '/openimu.json')
+                r.raise_for_status()
+                r.close()
+                with open(app_file_path, "wb") as code:
+                    code.write(r.content)
+                    exist_json_file = True
+            except Exception as e:
+                exist_json_file = False
+                print(e)
+                raise
+
+        if exist_json_file:
+            with open(app_file_path) as json_data:
+                self.properties = json.load(json_data)
 
     def on_receive_output_packet(self, packet_type, data, error=None):
         self.add_output_packet('stream', packet_type, data)
@@ -359,11 +368,6 @@ class Provider(OpenDeviceBase):
         soft_iron_ratio = dict()
         soft_iron_angle = dict()
 
-        # output['hardIronX'] = self.hardIronCal(value[10:14], 'axis')
-        # output['hardIronY'] = self.hardIronCal(value[14:18], 'axis')
-        # output['SoftIronRatio'] = self.hardIronCal(value[18:22], 'ratio')
-        # output['SoftIronAngle'] = self.hardIronCal(value[22:26], 'angle')
-
         hard_iron_x['value'] = self.hardIronCal(value[16:20], 'axis')
         hard_iron_x['name'] = 'Hard Iron X'
         hard_iron_x['argument'] = 'hard_iron_x'
@@ -379,10 +383,6 @@ class Provider(OpenDeviceBase):
         soft_iron_angle['value'] = self.hardIronCal(value[28:32], 'angle')
         soft_iron_angle['name'] = 'Soft Iron Angle'
         soft_iron_angle['argument'] = 'soft_iron_angle'
-
-        # output['hard_iron_y'] = self.hardIronCal(value[30:34], 'axis')
-        # output['soft_iron_ratio'] = self.hardIronCal(value[34:38], 'ratio')
-        # output['soft_iron_angle'] = self.hardIronCal(value[38:42], 'angle')
 
         output = [hard_iron_x, hard_iron_y, soft_iron_ratio, soft_iron_angle]
 
@@ -476,7 +476,7 @@ class Provider(OpenDeviceBase):
             time.sleep(2)
             data_buffer = self.communicator.read(500)
             parsed = self.extract_command_response('JI', data_buffer)
-            print('parsed', parsed)
+            #print('parsed', parsed)
             self.communicator.serial_port.baudrate = 57600
             return True
         except Exception as e:
@@ -499,7 +499,7 @@ class Provider(OpenDeviceBase):
             # output firmware upgrading
 
     def write_block(self, data_len, addr, data):
-        print(data_len, addr)
+        # print(data_len, addr, time.time())
         command_line = helper.build_bootloader_input_packet(
             'WA', None, data_len, addr, data)
         try:
@@ -512,5 +512,5 @@ class Provider(OpenDeviceBase):
 
         if addr == 0:
             time.sleep(5)
-        else:
-            time.sleep(0.1)
+
+        response = self.read_untils_have_data('WA', 50, 50)
