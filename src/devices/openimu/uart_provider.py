@@ -478,11 +478,13 @@ class Provider(OpenDeviceBase):
 
     def start_bootloader(self):
         try:
+            # TODO: should send set quiet command before go to bootloader mode
             command_line = helper.build_bootloader_input_packet('JI')
+            self.communicator.reset_buffer() #clear input and output buffer
             self.communicator.write(command_line, True)
             time.sleep(3)
-            data_buffer = self.communicator.read(500)
-            parsed = self.extract_command_response('JI', data_buffer)
+            # It is used to skip streaming data with size 1000 per read
+            parsed = self.read_untils_have_data('JI', 1000, 50) 
             #print('parsed', parsed)
             self.communicator.serial_port.baudrate = 57600
             return True
@@ -522,5 +524,5 @@ class Provider(OpenDeviceBase):
 
         response = self.read_untils_have_data('WA', 50, 50)
         # wait WA end if cannot read response in defined retry times
-        if not response:
+        if response is None:
             time.sleep(0.1)

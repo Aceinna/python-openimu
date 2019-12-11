@@ -70,7 +70,6 @@ class OpenDeviceBase:
                 sync_state = 1
             elif sync_state == 1:
                 packet_buffer.append(new_byte)
-                # command_start(2) packet_length(1) crc(2)
                 if len(packet_buffer) == packet_buffer[2] + 5:
                     if packet_buffer[-2:] == helper.calc_crc(packet_buffer[:-2]):
                         data = packet_buffer[3:packet_buffer[2]+3]
@@ -85,13 +84,13 @@ class OpenDeviceBase:
 
         while not response and trys < retry_times:
             data_buffer = self.communicator.read(read_length)
-
             if data_buffer:
+                # print('data_buffer', data_buffer)
                 response = self.extract_command_response(
                     packet_type, data_buffer)
             trys += 1
 
-        #print('read end', time.time(), 'try times', trys, 'response', response)
+        # print('read end', time.time(), 'try times', trys, 'response', response)
 
         return response
 
