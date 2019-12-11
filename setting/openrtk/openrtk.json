@@ -632,27 +632,27 @@
 				"isList": 1,
 				"payload": [
 					{
-						"type": "uint32",
+						"type": "uint8",
 						"name": "satelliteId",
 						"unit": ""
 					},
 					{
-						"type": "uint32",
+						"type": "uint8",
 						"name": "systemId",
 						"unit": ""
 					},
 					{
-						"type": "double",
+						"type": "uint8",
 						"name": "l1cn0",
 						"unit": ""
 					},
 					{
-						"type": "double",
+						"type": "uint8",
 						"name": "l2cn0",
 						"unit": ""
 					},
 					{
-						"type": "uint32",
+						"type": "uint8",
 						"name": "antennaId",
 						"unit": ""
 					}
@@ -665,22 +665,22 @@
 				"isList": 1,
 				"payload": [
 					{
-						"type": "uint32",
+						"type": "uint8",
 						"name": "satelliteId",
 						"unit": ""
 					},
 					{
-						"type": "uint32",
+						"type": "uint8",
 						"name": "systemId",
 						"unit": ""
 					},
 					{
-						"type": "double",
+						"type": "float",
 						"name": "azimuth",
 						"unit": ""
 					},
 					{
-						"type": "double",
+						"type": "float",
 						"name": "elevation",
 						"unit": ""
 					}
