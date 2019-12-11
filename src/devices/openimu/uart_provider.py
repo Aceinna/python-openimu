@@ -480,7 +480,7 @@ class Provider(OpenDeviceBase):
         try:
             command_line = helper.build_bootloader_input_packet('JI')
             self.communicator.write(command_line, True)
-            time.sleep(2)
+            time.sleep(3)
             data_buffer = self.communicator.read(500)
             parsed = self.extract_command_response('JI', data_buffer)
             #print('parsed', parsed)
@@ -520,4 +520,7 @@ class Provider(OpenDeviceBase):
         if addr == 0:
             time.sleep(5)
 
-        response = self.read_untils_have_data('WA', 50, 80)
+        response = self.read_untils_have_data('WA', 50, 50)
+        # wait WA end if cannot read response in defined retry times
+        if not response:
+            time.sleep(0.1)
