@@ -16,6 +16,7 @@ class Provider(OpenDeviceBase):
         super().__init__(communicator)
         self.type = 'RTK'
         self.server_update_rate = 100
+        self.sky_data = []
         pass
 
     def ping(self):
@@ -53,16 +54,22 @@ class Provider(OpenDeviceBase):
 
         # TODO: maybe we need a base config file
         pass
-
+    
     def on_receive_output_packet(self, packet_type, data, error=None):
         if packet_type == 'pS':
             self.add_output_packet('stream', 'pos', data)
 
-        if packet_type == 'sR':
-            self.add_output_packet('stream', 'snr', data)
-
         if packet_type == 'sK':
-            self.add_output_packet('stream', 'skyview', data)
+            if self.sky_data:
+                if self.sky_data[0]['timeOfWeek'] == data[0]['timeOfWeek']:
+                    self.sky_data.extend(data)
+                else:
+                    self.add_output_packet('stream', 'skyview', self.sky_data)
+                    self.add_output_packet('stream', 'snr', self.sky_data)
+                    self.sky_data = []
+                    self.sky_data.extend(data)
+            else:
+                self.sky_data.extend(data)
 
     def on_receive_input_packet(self, packet_type, data, error):
         self.input_result = {'packet_type': packet_type,
