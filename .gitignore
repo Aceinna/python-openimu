@@ -17,3 +17,4 @@ connection.json
 *.key
 /setting/openimu
 /app_config
+/upgrade

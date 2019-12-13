@@ -452,16 +452,23 @@ class Provider(OpenDeviceBase):
             traceback.print_exc()
 
     def download_firmware(self, file):
-        firmware_file = Path(file)
+        upgarde_root = os.path.join(os.getcwd(), 'upgrade')
+
+        if not os.path.exists(upgarde_root):
+            os.makedirs(upgarde_root)
+
+        firmware_file_path = os.path.join(upgarde_root, file)
+        firmware_file = Path(firmware_file_path)
 
         if firmware_file.is_file():
-            self.fw = open(file, 'rb').read()
+            self.fw = open(firmware_file_path, 'rb').read()
         else:
             self.block_blob_service = BlockBlobService(account_name='navview',
                                                        account_key='+roYuNmQbtLvq2Tn227ELmb6s1hzavh0qVQwhLORkUpM0DN7gxFc4j+DF/rEla1EsTN2goHEA1J92moOM/lfxg==',
                                                        protocol='http')
-            self.block_blob_service.get_blob_to_path('apps', file, file)
-            self.fw = open(file, 'rb').read()
+            self.block_blob_service.get_blob_to_path(
+                'apps', file, firmware_file_path)
+            self.fw = open(firmware_file_path, 'rb').read()
 
         print('upgrade fw: %s' % file)
         self.max_data_len = 240
@@ -471,11 +478,13 @@ class Provider(OpenDeviceBase):
 
     def start_bootloader(self):
         try:
+            # TODO: should send set quiet command before go to bootloader mode
             command_line = helper.build_bootloader_input_packet('JI')
+            self.communicator.reset_buffer() #clear input and output buffer
             self.communicator.write(command_line, True)
-            time.sleep(2)
-            data_buffer = self.communicator.read(500)
-            parsed = self.extract_command_response('JI', data_buffer)
+            time.sleep(3)
+            # It is used to skip streaming data with size 1000 per read
+            parsed = self.read_untils_have_data('JI', 1000, 50) 
             #print('parsed', parsed)
             self.communicator.serial_port.baudrate = 57600
             return True
@@ -514,3 +523,6 @@ class Provider(OpenDeviceBase):
             time.sleep(5)
 
         response = self.read_untils_have_data('WA', 50, 50)
+        # wait WA end if cannot read response in defined retry times
+        if response is None:
+            time.sleep(0.1)

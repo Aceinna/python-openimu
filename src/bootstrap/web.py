@@ -24,9 +24,9 @@ class WSHandler(tornado.websocket.WebSocketHandler):
     def open(self):
         self.get_device().append_client(self)
         print('open client count:', len(self.get_device().clients))
-        self.callback = tornado.ioloop.PeriodicCallback(
+        self.period_output_callback = tornado.ioloop.PeriodicCallback(
             self.response_output_packet, self.get_device().server_update_rate)
-        self.callback.start()
+        self.period_output_callback.start()
 
         self.file_logger = FileLoger(self.get_device().properties)
 
@@ -51,7 +51,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
     def on_close(self):
         self.reset()
         try:
-            self.callback.stop()
+            self.period_output_callback.stop()
         except Exception as e:
             pass
         self.get_device().remove_client(self)
