@@ -27,7 +27,7 @@ class CommunicatorFactory:
             raise Exception('no matched communicator')
 
 
-class Communicator():
+class Communicator(object):
     '''
     '''
 
@@ -62,7 +62,7 @@ class Communicator():
 
 class SerialPort(Communicator):
     def __init__(self, options=None):
-        super().__init__()
+        super(SerialPort, self).__init__()
         self.type = 'uart'
         self.serial_port = None  # the active UART
         self.port = None
@@ -194,7 +194,8 @@ class SerialPort(Communicator):
             self.serial_port = serial.Serial(port, baud, timeout=timeout)
             return True
         except Exception as e:
-            print('{0} : {1} open failed'.format(port, baud), end='\r')
+            # TODO: compatible for py 2.x
+            print('{0} : {1} open failed'.format(port, baud))
             if self.serial_port is not None:
                 if self.serial_port.isOpen():
                     self.serial_port.close()
@@ -229,7 +230,7 @@ class SerialPort(Communicator):
     def read(self, size=100):
         '''
         read size bytes from the serial port.
-        parameters: size – number of bytes to read.
+        parameters: size - number of bytes to read.
         returns: bytes read from the port.
         return type: bytes
         '''

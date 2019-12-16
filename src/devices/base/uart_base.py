@@ -14,7 +14,7 @@ else:
     from Queue import Queue
 
 
-class OpenDeviceBase:
+class OpenDeviceBase(object):
     __metaclass__ = ABCMeta
 
     def __init__(self, communicator):
@@ -45,13 +45,17 @@ class OpenDeviceBase:
         command_line = helper.build_input_packet(command)
         self.communicator.write(command_line)
         time.sleep(0.05)
-        data_buffer = self.communicator.read(read_length)
-        # print('parsed', data_buffer)
+        data_buffer = bytearray(self.communicator.read(read_length))
         parsed = self.extract_command_response(command, data_buffer)
+
         format_string = None
         if parsed is not None:
-            format_string = str(struct.pack(
-                '{0}B'.format(len(parsed)), *parsed), 'utf-8')
+            if (sys.version_info < (3, 0)):
+                format_string = str(struct.pack(
+                    '{0}B'.format(len(parsed)), *parsed))
+            else:
+                format_string = str(struct.pack(
+                    '{0}B'.format(len(parsed)), *parsed), 'utf-8')
 
         if format_string is not None:
             return format_string
@@ -439,7 +443,8 @@ class OpenDeviceBase:
 
     def reset(self):
         self.reset_client()
-        self.threads.clear()
+        # self.threads.clear()
+        helper.clear_elements(self.threads)
         self.listeners.clear()
         # self.clients.clear()
         self.exception_thread = False

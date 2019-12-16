@@ -1,3 +1,4 @@
+import sys
 import json
 import tornado.websocket
 import tornado.ioloop
@@ -8,7 +9,7 @@ from .base import BootstrapBase
 from ..framework.communicator import CommunicatorFactory
 from ..framework.context import app_context
 from ..framework.file_storage import FileLoger
-
+from ..framework.utils import helper
 
 class WSHandler(tornado.websocket.WebSocketHandler):
     is_streaming = False
@@ -144,9 +145,11 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                         }
                     })
                 )
-        self.latest_packet_collection.clear()
+
+        helper.clear_elements(self.latest_packet_collection)
 
     # protocol
+
     def startStream(self, *args):
         self.response_message('startStream', {'packetType': 'success'})
         self.is_streaming = True

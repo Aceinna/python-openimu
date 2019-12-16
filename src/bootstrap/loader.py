@@ -7,6 +7,7 @@ from ..framework.context import app_context
 
 
 class Loader:
+    @staticmethod
     def create(type, options):
         if type == 'web':
             active_app = Webserver(options)

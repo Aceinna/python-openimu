@@ -6,7 +6,7 @@ import struct
 import json
 import binascii
 import math
-import asyncio
+#import asyncio
 import datetime
 import threading
 import traceback
@@ -19,7 +19,7 @@ from ..configs.openimu_predefine import *
 
 class Provider(OpenDeviceBase):
     def __init__(self, communicator):
-        super().__init__(communicator)
+        super(Provider, self).__init__(communicator)
         self.type = 'IMU'
         self.server_update_rate = 50
         self.is_logging = False
@@ -122,9 +122,9 @@ class Provider(OpenDeviceBase):
             if span.total_seconds() > timeout:
                 break
 
-        if self.input_result:
-            print('get input packet in:',
-                  span.total_seconds() if span else 0, 's')
+        # if self.input_result:
+        #     print('get input packet in:',
+        #           span.total_seconds() if span else 0, 's')
 
         if self.input_result is not None and self.input_result['packet_type'] == packet_type:
             result = self.input_result.copy()
@@ -480,11 +480,11 @@ class Provider(OpenDeviceBase):
         try:
             # TODO: should send set quiet command before go to bootloader mode
             command_line = helper.build_bootloader_input_packet('JI')
-            self.communicator.reset_buffer() #clear input and output buffer
+            self.communicator.reset_buffer()  # clear input and output buffer
             self.communicator.write(command_line, True)
             time.sleep(3)
             # It is used to skip streaming data with size 1000 per read
-            parsed = self.read_untils_have_data('JI', 1000, 50) 
+            parsed = self.read_untils_have_data('JI', 1000, 50)
             #print('parsed', parsed)
             self.communicator.serial_port.baudrate = 57600
             return True

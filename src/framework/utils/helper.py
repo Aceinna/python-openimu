@@ -90,3 +90,11 @@ def calc_crc(payload):
     crc_msb = (crc & 0xFF00) >> 8
     crc_lsb = (crc & 0x00FF)
     return [crc_msb, crc_lsb]
+
+
+def clear_elements(list_instance):
+    if (sys.version_info < (3, 0)):
+        list_instance[:]=[]
+    else:
+        list_instance.clear()
+        

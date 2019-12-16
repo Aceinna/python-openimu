@@ -7,13 +7,13 @@ import json
 from ...framework.utils import helper
 from ..base.uart_base import OpenDeviceBase
 from ..configs.openrtk_predefine import *
-import asyncio
+# import asyncio
 import datetime
 
 
 class Provider(OpenDeviceBase):
     def __init__(self, communicator):
-        super().__init__(communicator)
+        super(Provider, self).__init__(communicator)
         self.type = 'RTK'
         self.server_update_rate = 100
         self.sky_data = []
