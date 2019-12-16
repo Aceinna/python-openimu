@@ -71,6 +71,9 @@ class Provider(OpenDeviceBase):
             else:
                 self.sky_data.extend(data)
 
+        else:
+            self.add_output_packet('stream', 'imu', data)
+
     def on_receive_input_packet(self, packet_type, data, error):
         self.input_result = {'packet_type': packet_type,
                              'data': data, 'error': error}
@@ -118,10 +121,30 @@ class Provider(OpenDeviceBase):
         }
 
     def getConf(self, *args):
-        pass
+        return {
+            'packetType': 'conf',
+            'data': {
+                'outputs': self.properties['userMessages']['outputPackets'],
+                'inputParams': self.properties['userConfiguration']
+            }
+        }
 
     def getParams(self, *args):
-        pass
+        command_line = helper.build_input_packet('gA')
+        self.communicator.write(command_line)
+        result = self.get_input_result('gA', timeout=2)
+
+        if result['data']:
+            self.parameters = result['data']
+            return {
+                'packetType': 'inputParams',
+                'data': result['data']
+            }
+        else:
+            return {
+                'packetType': 'error',
+                'data': 'No Response'
+            }
 
     def setParameters(self, params, *args):
         pass
