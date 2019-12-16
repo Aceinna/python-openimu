@@ -87,7 +87,7 @@ class OpenDeviceBase(object):
         trys = 0
 
         while not response and trys < retry_times:
-            data_buffer = self.communicator.read(read_length)
+            data_buffer = bytearray(self.communicator.read(read_length))
             if data_buffer:
                 # print('data_buffer', data_buffer)
                 response = self.extract_command_response(
