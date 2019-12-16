@@ -678,6 +678,7 @@
 				"name": "e1",
 				"description": "VG/AHRS Output Message",
 				"save2file": 1,
+				"from": "imu",
 				"payload": [
 					{
 						"type": "uint32",
@@ -893,6 +894,7 @@
 				"name": "e2",
 				"description": "INS Output Message",
 				"save2file": 1,
+				"from": "imu",
 				"payload": [
 					{
 						"type": "uint32",

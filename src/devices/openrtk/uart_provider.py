@@ -54,12 +54,12 @@ class Provider(OpenDeviceBase):
 
         # TODO: maybe we need a base config file
         pass
-    
+
     def on_receive_output_packet(self, packet_type, data, error=None):
         if packet_type == 'pS':
             self.add_output_packet('stream', 'pos', data)
 
-        if packet_type == 'sK':
+        elif packet_type == 'sK':
             if self.sky_data:
                 if self.sky_data[0]['timeOfWeek'] == data[0]['timeOfWeek']:
                     self.sky_data.extend(data)
@@ -72,7 +72,10 @@ class Provider(OpenDeviceBase):
                 self.sky_data.extend(data)
 
         else:
-            self.add_output_packet('stream', 'imu', data)
+            output_packet_config = next(
+                (x for x in self.properties['userMessages']['outputPackets'] if x['name'] == packet_type), None)
+            if output_packet_config and output_packet_config.__contains__('from') and output_packet_config['from'] == 'imu':
+                self.add_output_packet('stream', 'imu', data)
 
     def on_receive_input_packet(self, packet_type, data, error):
         self.input_result = {'packet_type': packet_type,
