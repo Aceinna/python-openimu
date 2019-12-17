@@ -188,11 +188,40 @@ class OpenDeviceBase(object):
 
         if response_playload_type_config == 'userConfiguration':
             data = []
+            data_len = 0
             for parameter in user_configuration:
                 id = parameter['paramId']
                 type = parameter['type']
                 name = parameter['name']
-                value = self.unpack_one(type, payload[id*8:(id+1)*8])
+
+                if type == 'uint8' or type == 'int8':
+                    value = self.unpack_one(type, payload[data_len:data_len + 1])
+                    data_len = data_len + 1
+                elif type == 'uint16' or type == 'int16':
+                    value = self.unpack_one(type, payload[data_len:data_len + 2])
+                    data_len = data_len + 2
+                elif type == 'uint32' or type == 'int32' or type == 'float':
+                    value = self.unpack_one(type, payload[data_len:data_len + 4])
+                    data_len = data_len + 4
+                elif type == 'uint64' or type == 'int64' or type == 'double':
+                    value = self.unpack_one(type, payload[data_len:data_len + 8])
+                    data_len = data_len + 8
+                elif type == 'ip4':
+                    value = self.unpack_one(type, payload[data_len:data_len + 4])
+                    data_len = data_len + 4
+                elif type == 'ip6':
+                    value = self.unpack_one(type, payload[data_len:data_len + 6])
+                    data_len = data_len + 6
+                elif 'char' in type:
+                    ctype_n = type.replace('char', '')
+                    ctype_l = int(ctype_n)
+                    value = self.unpack_one(type, payload[data_len:data_len + ctype_l])
+                    data_len = data_len + ctype_l
+                else:
+                    print(
+                        "no [{0}] when unpack_input_packet".format(type))
+                    value = False
+
                 data.append({"paramId": id, "name": name, "value": value})
         elif response_playload_type_config == 'userParameter':
             param_id = self.unpack_one('uint32', payload[0:4])
@@ -237,15 +266,58 @@ class OpenDeviceBase(object):
             except:
                 return False
             return struct.unpack('<q', b)[0]
+        elif type == 'double':
+            try:
+                b = struct.pack('8B', *data)
+            except:
+                return False
+            return struct.unpack('d', b)[0]
         elif type == 'uint32':
             try:
                 b = struct.pack('4B', *data)
             except:
                 return False
             return struct.unpack('<L', b)[0]
-        elif type == 'char8':
+        elif type == 'int32':
             try:
-                b = struct.pack('8B', *data)
+                b = struct.pack('4B', *data)
+            except:
+                return False
+            return struct.unpack('<l', b)[0]
+        elif type == 'float':
+            try:
+                b = struct.pack('4B', *data)
+            except:
+                return False
+            return struct.unpack('<f', b)[0]
+        elif type == 'uint16':
+            try:
+                b = struct.pack('2B', *data)
+            except:
+                return False
+            return struct.unpack('<H', b)[0]
+        elif type == 'int16':
+            try:
+                b = struct.pack('2B', *data)
+            except:
+                return False
+            return struct.unpack('<h', b)[0]
+        elif type == 'uint8':
+            try:
+                b = struct.pack('1B', *data)
+            except:
+                return False
+            return struct.unpack('<B', b)[0]
+        elif type == 'int8':
+            try:
+                b = struct.pack('1B', *data)
+            except:
+                return False
+            return struct.unpack('<b', b)[0]
+        elif 'char' in type:
+            try:
+                ctype_n = type.replace('char', '')
+                b = struct.pack(ctype_n + 'B', *data)
                 return b.decode()
             except:
                 return False
@@ -256,12 +328,28 @@ class OpenDeviceBase(object):
                 return b
             except:
                 return False
-        elif type == 'double':
+        elif type == 'ip4':
             try:
-                b = struct.pack('8B', *data)
+                ip_1 = str(data[0])
+                ip_2 = str(data[1])
+                ip_3 = str(data[2])
+                ip_4 = str(data[3])
+                return ip_1+'.'+ip_2+'.'+ip_3+'.'+ip_4
             except:
                 return False
-            return struct.unpack('d', b)[0]
+        elif type == 'ip6':
+            try:
+                ip_1 = str(data[0])
+                ip_2 = str(data[1])
+                ip_3 = str(data[2])
+                ip_4 = str(data[3])
+                ip_5 = str(data[4])
+                ip_6 = str(data[5])
+                return ip_1+'.'+ip_2+'.'+ip_3+'.'+ip_4+'.'+ip_5+'.'+ip_6
+            except:
+                return False
+        else:
+            return False
 
     def setup(self, options):
         ''' start 2 threads, receiver, parser

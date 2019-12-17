@@ -83,9 +83,32 @@ class Provider(OpenDeviceBase):
 
     def on_receive_bootloader_packet(self, packt_type, data, error):
         pass
+    
+    def get_input_result(self, packet_type, timeout=1):
+        result = {'data': None, 'error': None}
+        start_time = datetime.datetime.now()
+        end_time = datetime.datetime.now()
+        span = None
 
-    def get_log_info(self):
-        pass
+        while self.input_result is None:
+            end_time = datetime.datetime.now()
+            span = end_time - start_time
+            if span.total_seconds() > timeout:
+                break
+
+        if self.input_result:
+            print('get input packet in:',
+                  span.total_seconds() if span else 0, 's')
+
+        if self.input_result is not None and self.input_result['packet_type'] == packet_type:
+            result = self.input_result.copy()
+        else:
+            result['data'] = 'Command timeout'
+            result['error'] = True
+
+        self.input_result = None
+
+        return result
 
     def restart(self):
         pass
@@ -111,6 +134,8 @@ class Provider(OpenDeviceBase):
                               'value': self.app_info['version']}
             ]
         }
+
+    
 
     def get_log_info(self):
         return {

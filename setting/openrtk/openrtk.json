@@ -145,51 +145,20 @@
 		{
 			"paramId": 8,
 			"category": "Advanced",
-			"paramType": "select",
-			"type": "int64",
-			"name": "GPS Baud Rate",
-			"argument": "gps_baud_rate",
+			"paramType": "input",
+			"type": "uint32",
+			"name": "Profile",
+			"argument": "profile",
 			"value_range": [
 				-1,
 				1
 			],
-			"value_accuracy": 6,
+			"value_accuracy": 0,
 			"options": [
-				38400,
-				57600,
-				115200,
-				230400
 			]
 		},
 		{
 			"paramId": 9,
-			"category": "Advanced",
-			"paramType": "select",
-			"type": "int64",
-			"name": "GPS Protocol",
-			"argument": "gps_protocal",
-			"value_range": [
-				-1,
-				1
-			],
-			"value_accuracy": 6,
-			"options": [
-				{
-					"key": "0",
-					"value": "UBLOX_BINARY"
-				},
-				{
-					"key": "1",
-					"value": "NOVATEL_BINARY"
-				},
-				{
-					"key": "3",
-					"value": "NMEA_TEXT"
-				}
-			]
-		},
-		{
-			"paramId": 14,
 			"category": "Advanced",
 			"paramType": "input",
 			"type": "double",
@@ -201,13 +170,10 @@
 			],
 			"value_accuracy": 6,
 			"options": [
-				-10,
-				0,
-				10
 			]
 		},
 		{
-			"paramId": 15,
+			"paramId": 10,
 			"category": "Advanced",
 			"paramType": "input",
 			"type": "double",
@@ -219,13 +185,10 @@
 			],
 			"value_accuracy": 6,
 			"options": [
-				-10,
-				0,
-				10
 			]
 		},
 		{
-			"paramId": 16,
+			"paramId": 11,
 			"category": "Advanced",
 			"paramType": "input",
 			"type": "double",
@@ -237,13 +200,10 @@
 			],
 			"value_accuracy": 6,
 			"options": [
-				-10,
-				0,
-				10
 			]
 		},
 		{
-			"paramId": 17,
+			"paramId": 12,
 			"category": "Advanced",
 			"paramType": "input",
 			"type": "double",
@@ -255,13 +215,10 @@
 			],
 			"value_accuracy": 6,
 			"options": [
-				-10,
-				0,
-				10
 			]
 		},
 		{
-			"paramId": 18,
+			"paramId": 13,
 			"category": "Advanced",
 			"paramType": "input",
 			"type": "double",
@@ -273,13 +230,10 @@
 			],
 			"value_accuracy": 6,
 			"options": [
-				-10,
-				0,
-				10
 			]
 		},
 		{
-			"paramId": 19,
+			"paramId": 14,
 			"category": "Advanced",
 			"paramType": "input",
 			"type": "double",
@@ -291,9 +245,199 @@
 			],
 			"value_accuracy": 6,
 			"options": [
-				-10,
-				0,
-				10
+			]
+        },
+        {
+			"paramId": 15,
+			"category": "Advanced",
+			"paramType": "input",
+			"type": "double",
+			"name": "rotation of interest x",
+			"argument": "rotationRbvx",
+			"value_range": [
+				-1,
+				1
+			],
+			"value_accuracy": 6,
+			"options": [
+			]
+		},
+		{
+			"paramId": 16,
+			"category": "Advanced",
+			"paramType": "input",
+			"type": "double",
+			"name": "rotation of interest y",
+			"argument": "rotationRbvy",
+			"value_range": [
+				-1,
+				1
+			],
+			"value_accuracy": 6,
+			"options": [
+			]
+		},
+		{
+			"paramId": 17,
+			"category": "Advanced",
+			"paramType": "input",
+			"type": "double",
+			"name": "rotation of interest z",
+			"argument": "rotationRbvz",
+			"value_range": [
+				-1,
+				1
+			],
+			"value_accuracy": 6,
+			"options": [
+			]
+        },
+        {
+			"paramId": 18,
+			"category": "Ethnet",
+			"paramType": "input",
+			"type": "ip4",
+			"name": "Ip",
+			"argument": "ip",
+			"value_range": [
+			],
+			"value_accuracy": 6,
+			"options": [
+			]
+        },
+		{
+			"paramId": 19,
+			"category": "Ethnet",
+			"paramType": "input",
+			"type": "ip4",
+			"name": "Netmask",
+			"argument": "netmask",
+			"value_range": [
+			],
+			"value_accuracy": 6,
+			"options": [
+			]
+        },
+        {
+			"paramId": 20,
+			"category": "Ethnet",
+			"paramType": "input",
+			"type": "ip4",
+			"name": "Gateway",
+			"argument": "gateway",
+			"value_range": [
+			],
+			"value_accuracy": 6,
+			"options": [
+			]
+        },
+        {
+			"paramId": 21,
+			"category": "Ethnet",
+			"paramType": "input",
+			"type": "ip6",
+			"name": "Mac",
+            "argument": "Mac",
+            "disabled":true,
+			"value_range": [
+			],
+			"value_accuracy": 6,
+			"options": [
+			]
+        },
+        {
+			"paramId": 22,
+			"category": "Ntrip",
+			"paramType": "input",
+			"type": "char12",
+			"name": "Username",
+			"argument": "username",
+			"value_range": [
+			],
+			"value_accuracy": 6,
+			"options": [
+			]
+        },
+        {
+			"paramId": 23,
+			"category": "Ntrip",
+			"paramType": "input",
+			"type": "char36",
+			"name": "Apikey",
+			"argument": "apikey",
+			"value_range": [
+			],
+			"value_accuracy": 6,
+			"options": [
+			]
+        },
+        {
+			"paramId": 24,
+			"category": "Ntrip",
+			"paramType": "select",
+			"type": "uint8",
+			"name": "DefaultNtripWay",
+			"argument": "defaultNtripWay",
+			"value_range": [
+			],
+			"value_accuracy": 6,
+			"options": [
+                {"key":"0","value":"Bluetooth"},
+                {"key":"1","value":"Ethernet"}
+			]
+        },
+        {
+			"paramId": 25,
+			"category": "Ntrip",
+			"paramType": "select",
+			"type": "uint8",
+			"name": "RtkType",
+			"argument": "rtkType",
+			"value_range": [
+			],
+			"value_accuracy": 6,
+			"options": [
+                {"key":"0","value":"CloudRTK"},
+                {"key":"1","value":"LocalRTK"}
+			]
+        },
+        {
+			"paramId": 26,
+			"category": "Ntrip",
+			"paramType": "input",
+			"type": "ip4",
+			"name": "Url",
+			"argument": "url",
+			"value_range": [
+			],
+			"value_accuracy": 6,
+			"options": [
+			]
+        },
+        {
+			"paramId": 27,
+			"category": "Ntrip",
+			"paramType": "input",
+			"type": "uint16",
+			"name": "Port",
+			"argument": "port",
+			"value_range": [
+			],
+			"value_accuracy": 0,
+			"options": [
+			]
+        },
+        {
+			"paramId": 28,
+			"category": "Ntrip",
+			"paramType": "input",
+			"type": "char18",
+			"name": "MountPoint",
+			"argument": "mountPoint",
+			"value_range": [
+			],
+			"value_accuracy": 6,
+			"options": [
 			]
 		}
 	],
@@ -325,17 +469,23 @@
 					"type": "userConfiguration",
 					"name": "Full Current Configuration"
 				}
-			},
+            },
+            {
+				"name": "sC",
+				"description": "Save Conifguration Parameters to Flash",
+				"inputPayload": {},
+				"responsePayload": {}
+			},			
 			{
-				"name": "gP",
-				"description": "Get a Configuration Parameter",
+				"name": "uP",
+				"description": "Update Configuration Parameter",
 				"inputPayload": {
-					"type": "paramId",
-					"name": "Request Parameter Id"
+					"type": "userParameter",
+					"name": "Parameter to be Updated"
 				},
 				"responsePayload": {
-					"type": "userParameter",
-					"name": "User Parameter"
+					"type": "paramId",
+					"name": "ID of the Updated Parameter"
 				}
 			}
 		],
