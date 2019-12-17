@@ -8,10 +8,9 @@ Python driver for OpenIMU and OpenRTK
 ## Steps
 
 ### Dependency - pip install
-- pyserial
-- tornado
-- azure-blob-storage(1.4.0)
-- requests
+```
+pip install -r requirements.txt
+```
 
 ### Execution
 There are 2 ways to run the tool
