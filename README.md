@@ -7,21 +7,23 @@ Python driver for OpenIMU and OpenRTK
 
 ## Steps
 
-### Dependency - pip install
+### 1. Start the tool
+There are 2 ways to run the tool
+- A. From source code
+#### Prepare
+Install the dependency library. It is better to create a virtual environments before to do it.
 ```
 pip install -r requirements.txt
 ```
-
-### Execution
-There are 2 ways to run the tool
-1. From source code, run main.py
+#### Run
 ```
-python server.py
+python main.py
 ```
-2. Build as a execution file
+- B. Build as a execution file
 ```
 pyinstaller build.spec
 ```
+
 #### Startup Arguments
 You can specify some arguments while run the tool
 
@@ -31,5 +33,5 @@ Parameter | Default Value | Description
 `-b`|[38400, 57600, 115200,230400, 460800]|A baudrate range for auto detect device|
 `-nolog`|True|Internal log switch, suggest to disable|
 
-### Connect your device
+### 2. Connect ans device
 Link device to your pc or mac. And the tool will auto detect the linked device.
