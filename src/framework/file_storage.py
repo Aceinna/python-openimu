@@ -36,7 +36,7 @@ class FileLoger():
         self.file_name = ''
         self.sas_token = ''
         self.db_user_access_token = ''
-        self.host_url = 'http://40.118.233.18:3000/'  # TODO: set a host url
+        self.host_url = 'https://api.aceinna.com/' #'http://40.118.233.18:3000/'  # TODO: set a host url
 
         #
         self.threads = []  # thread of receiver and paser
