@@ -228,8 +228,30 @@ class Provider(OpenDeviceBase):
                 'data': 'No Response'
             }
 
-    def setParameters(self, params, *args):
-        pass
+    def setParams(self, params, *args):
+        for parameter in params:
+            result = self.setParam(parameter)
+            if result['packetType'] == 'error':
+                return {
+                    'packetType': 'error',
+                    'data': {
+                        'error': result['data']['error']
+                    }
+                }
+            if result['data']['error'] > 0:
+                return {
+                    'packetType': 'error',
+                    'data': {
+                        'error': result['data']['error']
+                    }
+                }
+
+        return {
+            'packetType': 'success',
+            'data': {
+                'error': 0
+            }
+        }
 
     def getParameter(self, name, *args):
         pass

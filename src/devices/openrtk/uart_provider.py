@@ -83,7 +83,7 @@ class Provider(OpenDeviceBase):
 
     def on_receive_bootloader_packet(self, packt_type, data, error):
         pass
-    
+
     def get_input_result(self, packet_type, timeout=1):
         result = {'data': None, 'error': None}
         start_time = datetime.datetime.now()
@@ -135,8 +135,6 @@ class Provider(OpenDeviceBase):
             ]
         }
 
-    
-
     def get_log_info(self):
         return {
             "type": self.type,
@@ -174,16 +172,68 @@ class Provider(OpenDeviceBase):
                 'data': 'No Response'
             }
 
-    def setParameters(self, params, *args):
-        pass
+    def setParams(self, params, *args):
+        for parameter in params:
+            result = self.setParam(parameter)
+            if result['packetType'] == 'error':
+                return {
+                    'packetType': 'error',
+                    'data': {
+                        'error': result['data']['error']
+                    }
+                }
+            if result['data']['error'] > 0:
+                return {
+                    'packetType': 'error',
+                    'data': {
+                        'error': result['data']['error']
+                    }
+                }
 
-    def get_parameter(self, name, *args):
-        pass
+        return {
+            'packetType': 'success',
+            'data': {
+                'error': 0
+            }
+        }
 
     def setParam(self, params, *args):
-        pass
+        command_line = helper.build_input_packet(
+            'uP', properties=self.properties, param=params['paramId'], value=params['value'])
+        self.communicator.write(command_line)
+        result = self.get_input_result('uP', timeout=1)
+
+        if result['error']:
+            return {
+                'packetType': 'error',
+                'data': {
+                    'error': result['data']
+                }
+            }
+        else:
+            return {
+                'packetType': 'success',
+                'data': {
+                    'error': result['data']
+                }
+            }
 
     def saveConfig(self, *args):
+        command_line = helper.build_input_packet('sC')
+        self.communicator.write(command_line)
+
+        result = self.get_input_result('sC', timeout=1)
+
+        if result['data']:
+            return {
+                'packetType': 'success',
+                'data': result['data']
+            }
+        else:
+            return {
+                'packetType': 'success',
+                'data': result['error']
+            }
         pass
 
     def upgrade(self):
