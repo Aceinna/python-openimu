@@ -98,7 +98,7 @@ class Provider(OpenDeviceBase):
 
         if self.input_result:
             print('get input packet in:',
-                  span.total_seconds() if span else 0, 's')
+                  span.total_seconds() if span else 0, 's', ',packet type:', self.input_result['packet_type'],packet_type)
 
         if self.input_result is not None and self.input_result['packet_type'] == packet_type:
             result = self.input_result.copy()
@@ -222,7 +222,7 @@ class Provider(OpenDeviceBase):
         command_line = helper.build_input_packet('sC')
         self.communicator.write(command_line)
 
-        result = self.get_input_result('sC', timeout=1)
+        result = self.get_input_result('sC', timeout=2)
 
         if result['data']:
             return {

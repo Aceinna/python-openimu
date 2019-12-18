@@ -42,17 +42,42 @@ def unpack_payload(name, properties, param=False, value=False):
             return list(struct.unpack("4B", struct.pack("<L", param)))
         elif input_packet['inputPayload']['type'] == 'userParameter':
             payload = list(struct.unpack("4B", struct.pack("<L", param)))
-            if properties['userConfiguration'][param]['type'] == 'char8':
-                length = len(value)
-                payload += list(struct.unpack('{0}B'.format(length),
-                                              bytearray(value, 'utf-8')))
-                for i in range(8-length):
-                    payload += [0x00]
+            if properties['userConfiguration'][param]['type'] == 'uint64':
+                payload += list(struct.unpack("8B", struct.pack("<Q", value)))
             elif properties['userConfiguration'][param]['type'] == 'int64':
                 payload += list(struct.unpack("8B", struct.pack("<q", value)))
             elif properties['userConfiguration'][param]['type'] == 'double':
-                payload += list(struct.unpack("8B",
-                                              struct.pack("<d", float(value))))
+                payload += list(struct.unpack("8B", struct.pack("<d", float(value))))
+            elif properties['userConfiguration'][param]['type'] == 'uint32':
+                payload += list(struct.unpack("4B", struct.pack("<I", value)))
+            elif properties['userConfiguration'][param]['type'] == 'int32':
+                payload += list(struct.unpack("4B", struct.pack("<i", value)))
+            elif properties['userConfiguration'][param]['type'] == 'float':
+                payload += list(struct.unpack("4B", struct.pack("<f", value)))
+            elif properties['userConfiguration'][param]['type'] == 'uint16':
+                payload += list(struct.unpack("2B", struct.pack("<H", value)))
+            elif properties['userConfiguration'][param]['type'] == 'int16':
+                payload += list(struct.unpack("2B", struct.pack("<h", value)))
+            elif properties['userConfiguration'][param]['type'] == 'uint8':
+                payload += list(struct.unpack("1B", struct.pack("<B", value)))
+            elif properties['userConfiguration'][param]['type'] == 'int8':
+                payload += list(struct.unpack("1B", struct.pack("<b", value)))
+            elif 'char' in properties['userConfiguration'][param]['type']:
+                c_len = int(properties['userConfiguration'][param]['type'].replace('char', ''))
+                length = len(value)
+                payload += list(struct.unpack('{0}B'.format(length),
+                                              bytearray(value, 'utf-8')))
+                for i in range(c_len-length):
+                    payload += [0x00]
+            elif properties['userConfiguration'][param]['type'] == 'ip4':
+                ip = value.split('.')
+                ip_4 = list(map(int, ip)) 
+                for i in range(4):
+                    payload += list(struct.unpack("1B", struct.pack("<B", ip_4[i])))
+            elif properties['userConfiguration'][param]['type'] == 'ip6':
+                ip = value.split('.')
+                payload += list(struct.unpack('6B', bytearray(ip, 'utf-8')))
+
             return payload
 
 

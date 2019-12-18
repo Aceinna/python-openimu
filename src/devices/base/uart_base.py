@@ -277,13 +277,13 @@ class OpenDeviceBase(object):
                 b = struct.pack('4B', *data)
             except:
                 return False
-            return struct.unpack('<L', b)[0]
+            return struct.unpack('<I', b)[0]
         elif type == 'int32':
             try:
                 b = struct.pack('4B', *data)
             except:
                 return False
-            return struct.unpack('<l', b)[0]
+            return struct.unpack('<i', b)[0]
         elif type == 'float':
             try:
                 b = struct.pack('4B', *data)
