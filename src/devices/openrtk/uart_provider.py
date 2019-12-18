@@ -236,5 +236,11 @@ class Provider(OpenDeviceBase):
             }
         pass
 
+    def startLog(self, params, *args):
+        pass
+
+    def stopLog(self, params, * args):
+        pass
+
     def upgrade(self):
         pass

@@ -90,11 +90,11 @@ class WSHandler(tornado.websocket.WebSocketHandler):
     def handle_message(self, method, parameters):
         device = self.get_device()
 
-        if hasattr(self, method):
-            getattr(self, method, None)(parameters)
-        elif device and device.connected:
+        if device and device.connected and hasattr(device, method):
             result = getattr(device, method, None)(parameters)
             self.response_message(method, result)
+        elif hasattr(self, method):
+            getattr(self, method, None)(parameters)
 
     def response_message(self, method, data):
         self.write_message(
