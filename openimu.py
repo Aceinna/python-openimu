@@ -653,7 +653,6 @@ class OpenIMU:
                 type = parameter['type']
                 name = parameter['name']
                 value = self.openimu_unpack_one(type, payload[id*8:(id+1)*8])
-                # print('{0}: {1}'.format(name,value))
                 params.append({ "paramId": id, "name": name, "value": value})
             return params
         elif input_message['type'] == 'userParameter':
@@ -663,7 +662,6 @@ class OpenIMU:
                 return False
             param = user_configuration[param_id]
             param_value = self.openimu_unpack_one(param['type'], payload[4:12])
-            # print('{0}: {1}'.format(param['name'], param_value))
             return { "paramId": param_id, "name": param['name'], "value": param_value }
         elif input_message['type'] == 'paramId':
             user_configuration = self.imu_properties['userConfiguration']
@@ -678,7 +676,7 @@ class OpenIMU:
     def openimu_unpack_bootloader_packet(self, bootloader_message, payload):
         logging.debug("at {0}".format(sys._getframe().f_code.co_name))  
         if bootloader_message['type'] == 'ack':
-            print('Success')
+            # print('Success')
             return { "error": 0 }
 
     def openimu_unpack_one(self, type, data):
@@ -704,7 +702,6 @@ class OpenIMU:
         elif type == 'char8':
             try:
                 b = struct.pack('8B', *data)
-                # print('unpack one---------0000')
                 return b.decode()    
             except:
                 return False 
@@ -748,7 +745,7 @@ class OpenIMU:
 
     def openimu_write_block(self, data_len, addr, data):
         logging.debug("at {0}".format(sys._getframe().f_code.co_name))  
-        print(data_len, addr)
+        # print(data_len, addr)
         packet = BootloaderInputPacket(self.imu_properties, 'WA', data_len, addr, data)
         self.write(packet.bytes)
         if addr == 0:
@@ -854,7 +851,6 @@ class OpenIMU:
                     packet_crc = 256 * self.packet_buffer[-2] + self.packet_buffer[-1]    
                     if packet_crc == self.calc_crc(self.packet_buffer[:-2]):
                         if not isinstance(packet_type, str) and not isinstance(packet_type, unicode):
-                            # print('parse buffer---------')
                             self.packet_type = bytearray(packet_type).decode()
                         else:
                             self.packet_type = packet_type
@@ -866,7 +862,7 @@ class OpenIMU:
                             self.sync_state = 0
                     else:
                         self.sync_state = 0  # CRC did not match
-                        # print("crc error***************************************")
+                        logging.debug("crc error")
 
     def get_monitor_status(self):
         return self.unit_connect_status
