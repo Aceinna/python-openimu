@@ -298,7 +298,7 @@ tqdm==4.26.0
 traceback2==1.4.0
 traitlets==4.3.2
 twine==1.12.1
-Twisted==17.5.0
+Twisted==19.7.0
 typing==3.6.6
 unicodecsv==0.14.1
 unittest2==1.1.0
