@@ -2,7 +2,7 @@
 
 ## pack to pip package
 ```
-python .\setup.py sdist
+python ./setup.py sdist
 ```
 
 ## build a executor
