@@ -39,22 +39,26 @@ import string
 import time
 import sys
 import os
-from file_storage import OpenIMULog
+from .file_storage import OpenIMULog
 import collections
 import glob
 import struct
 import json
 import threading
 from pathlib import Path
-from imu_input_packet import InputPacket
-from bootloader_input_packet import BootloaderInputPacket
+from .imu_input_packet import InputPacket
+from .bootloader_input_packet import BootloaderInputPacket
 from azure.storage.blob import BlockBlobService
 # import webbrowser # used for open ANS website by system browser
 import requests
 import binascii
 import json
-import global_vars as gl
- 
+from .predefine import (
+    get_app_urls,
+    get_app_names
+)
+
+root_path = os.getcwd()
 
 class OpenIMU:
     def __init__(self, ws=False):
@@ -76,6 +80,7 @@ class OpenIMU:
         self.sync_pattern = collections.deque(4*[0], 4)  # create 4 byte FIFO         
 
         #if no data folder, then creat one
+
         if not os.path.isdir("data"):
             print('creat data folder for store measure data in future')
             os.makedirs("data")
@@ -83,11 +88,11 @@ class OpenIMU:
         if not os.path.exists('app_config'):
             print('downloading config json files from github, please waiting for a while')
             os.makedirs('app_config')
-            for app_name in gl.get_app_names():
+            for app_name in get_app_names():
                 os.makedirs('app_config'+ '/' + app_name)
             i = 0
-            for url in gl.get_app_urls():
-                filepath = 'app_config' + '/' + gl.get_app_names()[i] + '/' + 'openimu.json'
+            for url in get_app_urls():
+                filepath = 'app_config' + '/' + get_app_names()[i] + '/' + 'openimu.json'
                 i= i+1
                 try:
                     r = requests.get(url) 
@@ -157,22 +162,11 @@ class OpenIMU:
                 # except:
                 except Exception as e:
                     # print(e)                    
-                    if sys.version_info[0] > 2:
-                        if e.args[0].find('WindowsError') >= 0:
-                            try:
-                                if s:
-                                    s.close()
-                            except Exception as ee:
-                                print (ee)
-                                # self.disconnect()
-                            
-                    else:   
-                        if e.message.find('Error') >= 0:
-                            try:
-                                if s:
-                                    s.close()
-                            except Exception as ee:
-                                print (ee)
+                    try:
+                        if s:
+                            s.close()
+                    except Exception as ee:
+                        print (ee)
                                 # self.disconnect()
                     pass
         return result

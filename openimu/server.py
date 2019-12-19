@@ -7,14 +7,16 @@ import json
 import time
 import math
 import os
-from global_vars import imu
+from .global_vars import imu
 import binascii
-import global_vars as gl
+from .predefine import (
+    app_str,
+    string_folder_path
+)
 
 
 # note: version string update should follow the updating rule
 server_version = '1.1.1'
-
 callback_rate = 50
 class WSHandler(tornado.websocket.WebSocketHandler):
     count = 0
@@ -59,9 +61,9 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             #    imu.imu_properties = json.load(json_data)
             application_type = bytes.decode(imu.openimu_get_user_app_id())           
             # application_type = imu.device_id
-            for idx, item in enumerate(gl.app_str):
+            for idx, item in enumerate(app_str):
                 if item in application_type:
-                    folder_path = gl.string_folder_path.replace('APP_TYP',item)
+                    folder_path = string_folder_path.replace('APP_TYP',item)
                     break   
                             
             # load application type from firmware 
@@ -196,6 +198,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         return True
  
 if __name__ == "__main__":
+    server_version = '1.1.1'
     # Create IMU
     print("server_version:",server_version)
     try: 

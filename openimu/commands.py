@@ -19,9 +19,9 @@ import tornado.httpserver
 import tornado.web
 import psutil
 
-from imu_input_packet import InputPacket
-from server import WSHandler
-from global_vars import imu
+from .imu_input_packet import InputPacket
+from .server import WSHandler
+from .global_vars import imu
 from os import getpid
 
 class OpenIMU_CLI:

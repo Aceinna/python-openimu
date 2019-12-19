@@ -19,3 +19,4 @@ VG_AHRS old.bin
 VG_AHRS20190627.bin
 compass.bin
 *.bin
+*.egg-info
