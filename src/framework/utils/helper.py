@@ -64,9 +64,14 @@ def unpack_payload(name, properties, param=False, value=False):
                 payload += list(struct.unpack("1B", struct.pack("<b", value)))
             elif 'char' in properties['userConfiguration'][param]['type']:
                 c_len = int(properties['userConfiguration'][param]['type'].replace('char', ''))
-                length = len(value)
-                payload += list(struct.unpack('{0}B'.format(length),
-                                              bytearray(value, 'utf-8')))
+                if (isinstance(value, int)):
+                    length = len(str(value))
+                    payload += list(struct.unpack('{0}B'.format(length),
+                                                bytearray(str(value), 'utf-8')))
+                else:
+                    length = len(value)
+                    payload += list(struct.unpack('{0}B'.format(length),
+                                                bytearray(value, 'utf-8')))
                 for i in range(c_len-length):
                     payload += [0x00]
             elif properties['userConfiguration'][param]['type'] == 'ip4':

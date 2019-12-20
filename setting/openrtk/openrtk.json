@@ -23,7 +23,7 @@
 			"paramId": 2,
 			"category": "General",
 			"paramType": "select",
-			"type": "int64",
+			"type": "uint64",
 			"name": "Baud Rate",
 			"argument": "baud_rate",
 			"value_range": [
@@ -63,7 +63,7 @@
 			"paramId": 4,
 			"category": "General",
 			"paramType": "select",
-			"type": "int64",
+			"type": "uint64",
 			"name": "Packet Rate",
 			"argument": "rate",
 			"value_range": [
@@ -86,7 +86,7 @@
 			"paramId": 5,
 			"category": "General",
 			"paramType": "select",
-			"type": "int64",
+			"type": "uint64",
 			"name": "Accel LPF",
 			"argument": "xl_lpf",
 			"value_range": [
@@ -108,7 +108,7 @@
 			"paramId": 6,
 			"category": "General",
 			"paramType": "select",
-			"type": "int64",
+			"type": "uint64",
 			"name": "Rate LPF",
 			"argument": "rate_lpf",
 			"value_range": [
@@ -161,7 +161,7 @@
 			"paramId": 9,
 			"category": "Advanced",
 			"paramType": "input",
-			"type": "double",
+			"type": "float",
 			"name": "lever arm x",
 			"argument": "lever_arm_x",
 			"value_range": [
@@ -176,7 +176,7 @@
 			"paramId": 10,
 			"category": "Advanced",
 			"paramType": "input",
-			"type": "double",
+			"type": "float",
 			"name": "lever arm y",
 			"argument": "lever_arm_y",
 			"value_range": [
@@ -191,7 +191,7 @@
 			"paramId": 11,
 			"category": "Advanced",
 			"paramType": "input",
-			"type": "double",
+			"type": "float",
 			"name": "lever arm z",
 			"argument": "lever_arm_z",
 			"value_range": [
@@ -206,7 +206,7 @@
 			"paramId": 12,
 			"category": "Advanced",
 			"paramType": "input",
-			"type": "double",
+			"type": "float",
 			"name": "point of interest x",
 			"argument": "poi_x",
 			"value_range": [
@@ -221,7 +221,7 @@
 			"paramId": 13,
 			"category": "Advanced",
 			"paramType": "input",
-			"type": "double",
+			"type": "float",
 			"name": "point of interest y",
 			"argument": "poi_y",
 			"value_range": [
@@ -236,7 +236,7 @@
 			"paramId": 14,
 			"category": "Advanced",
 			"paramType": "input",
-			"type": "double",
+			"type": "float",
 			"name": "point of interest z",
 			"argument": "poi_z",
 			"value_range": [
@@ -251,7 +251,7 @@
 			"paramId": 15,
 			"category": "Advanced",
 			"paramType": "input",
-			"type": "double",
+			"type": "float",
 			"name": "rotation of interest x",
 			"argument": "rotationRbvx",
 			"value_range": [
@@ -266,7 +266,7 @@
 			"paramId": 16,
 			"category": "Advanced",
 			"paramType": "input",
-			"type": "double",
+			"type": "float",
 			"name": "rotation of interest y",
 			"argument": "rotationRbvy",
 			"value_range": [
@@ -281,7 +281,7 @@
 			"paramId": 17,
 			"category": "Advanced",
 			"paramType": "input",
-			"type": "double",
+			"type": "float",
 			"name": "rotation of interest z",
 			"argument": "rotationRbvz",
 			"value_range": [
@@ -295,6 +295,21 @@
         {
 			"paramId": 18,
 			"category": "Ethnet",
+			"paramType": "select",
+			"type": "uint32",
+			"name": "EthMode",
+			"argument": "ethmode",
+			"value_range": [
+			],
+			"value_accuracy": 6,
+			"options": [
+                {"key":"0","value":"dhcp"},
+                {"key":"1","value":"static"}
+			]
+        },
+        {
+			"paramId": 19,
+			"category": "Ethnet",
 			"paramType": "input",
 			"type": "ip4",
 			"name": "Ip",
@@ -306,7 +321,7 @@
 			]
         },
 		{
-			"paramId": 19,
+			"paramId": 20,
 			"category": "Ethnet",
 			"paramType": "input",
 			"type": "ip4",
@@ -319,7 +334,7 @@
 			]
         },
         {
-			"paramId": 20,
+			"paramId": 21,
 			"category": "Ethnet",
 			"paramType": "input",
 			"type": "ip4",
@@ -332,7 +347,7 @@
 			]
         },
         {
-			"paramId": 21,
+			"paramId": 22,
 			"category": "Ethnet",
 			"paramType": "input",
 			"type": "ip6",
@@ -346,10 +361,26 @@
 			]
         },
         {
-			"paramId": 22,
+			"paramId": 23,
+			"category": "Ntrip",
+			"paramType": "select",
+			"type": "uint8",
+			"name": "RtkType",
+            "argument": "rtkType",
+            "disabled":true,
+			"value_range": [
+			],
+			"value_accuracy": 6,
+			"options": [
+                {"key":"0","value":"LocalRTK"},
+                {"key":"1","value":"CloudRTK"}
+			]
+        },
+        {
+			"paramId": 24,
 			"category": "Ntrip",
 			"paramType": "input",
-			"type": "char12",
+			"type": "char13",
 			"name": "Username",
 			"argument": "username",
 			"value_range": [
@@ -359,46 +390,16 @@
 			]
         },
         {
-			"paramId": 23,
+			"paramId": 25,
 			"category": "Ntrip",
 			"paramType": "input",
-			"type": "char36",
+			"type": "char24",
 			"name": "Apikey",
 			"argument": "apikey",
 			"value_range": [
 			],
 			"value_accuracy": 6,
 			"options": [
-			]
-        },
-        {
-			"paramId": 24,
-			"category": "Ntrip",
-			"paramType": "select",
-			"type": "uint8",
-			"name": "DefaultNtripWay",
-			"argument": "defaultNtripWay",
-			"value_range": [
-			],
-			"value_accuracy": 6,
-			"options": [
-                {"key":"0","value":"Bluetooth"},
-                {"key":"1","value":"Ethernet"}
-			]
-        },
-        {
-			"paramId": 25,
-			"category": "Ntrip",
-			"paramType": "select",
-			"type": "uint8",
-			"name": "RtkType",
-			"argument": "rtkType",
-			"value_range": [
-			],
-			"value_accuracy": 6,
-			"options": [
-                {"key":"0","value":"CloudRTK"},
-                {"key":"1","value":"LocalRTK"}
 			]
         },
         {
@@ -431,7 +432,7 @@
 			"paramId": 28,
 			"category": "Ntrip",
 			"paramType": "input",
-			"type": "char18",
+			"type": "char20",
 			"name": "MountPoint",
 			"argument": "mountPoint",
 			"value_range": [
@@ -439,7 +440,7 @@
 			"value_accuracy": 6,
 			"options": [
 			]
-		}
+        }
 	],
 	"userMessages": {
 		"inputPackets": [
