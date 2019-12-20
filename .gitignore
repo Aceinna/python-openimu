@@ -8,13 +8,11 @@ data/*.*
 __pycache__
 /dist
 /data
-chromedriver.exe
-running openimu bugfix.bat
-server.spec
-connection.json
 *.pem
 *.cert
 *.key
 /setting/openimu
+/setting/connection.json
 /app_config
 /upgrade
+*.egg-info
