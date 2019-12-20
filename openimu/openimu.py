@@ -786,13 +786,6 @@ class OpenIMU:
 
  #####       
 
-if __name__ == "__main__":
-    imu = OpenIMU()
-    imu.find_device()
-    imu.openimu_get_all_param()
-    imu.start_log()
-    time.sleep(20)
-    imu.stop_log()
   
 	
     
