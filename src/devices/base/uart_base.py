@@ -158,6 +158,7 @@ class OpenDeviceBase(object):
                            for idx, value in enumerate(packet_config['payload'])]
                     item = collections.OrderedDict(out)
                     data.append(item)
+                    self._logger.append(packet_config['name'], item)
                 except Exception as e:
                     print(
                         "error happened when decode the payload, pls restart IMU firmware: {0}".format(e))
@@ -168,12 +169,12 @@ class OpenDeviceBase(object):
                 out = [(value['name'], data[idx])
                        for idx, value in enumerate(packet_config['payload'])]
                 data = collections.OrderedDict(out)
+                self._logger.append(packet_config['name'], data)
                 # return data
             except Exception as e:
                 print(
                     "error happened when decode the payload of packets, pls restart IMU: {0}".format(e))
 
-        self._logger.append(packet_config['name'], data)
         self.on_receive_output_packet(packet_config['name'], data)
 
     def unpack_input_packet(self, packet_config, payload):
