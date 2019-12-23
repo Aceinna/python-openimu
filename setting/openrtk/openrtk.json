@@ -419,7 +419,7 @@
 			"paramId": 27,
 			"category": "Ntrip",
 			"paramType": "input",
-			"type": "char15",
+			"type": "char16",
 			"name": "USER NAME",
 			"argument": "USER NAME",
 			"value_range": [
