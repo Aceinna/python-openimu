@@ -296,15 +296,15 @@
 			"paramId": 18,
 			"category": "Ethnet",
 			"paramType": "select",
-			"type": "uint32",
-			"name": "EthMode",
-			"argument": "ethmode",
+			"type": "uint8",
+			"name": "MODE",
+			"argument": "MODE",
 			"value_range": [
 			],
 			"value_accuracy": 6,
 			"options": [
-                {"key":"0","value":"dhcp"},
-                {"key":"1","value":"static"}
+                {"key":"0","value":"DHCP"},
+                {"key":"1","value":"STATIC"}
 			]
         },
         {
@@ -312,8 +312,8 @@
 			"category": "Ethnet",
 			"paramType": "input",
 			"type": "ip4",
-			"name": "Ip",
-			"argument": "ip",
+			"name": "STATIC IP",
+			"argument": "STATIC IP",
 			"value_range": [
 			],
 			"value_accuracy": 6,
@@ -325,8 +325,8 @@
 			"category": "Ethnet",
 			"paramType": "input",
 			"type": "ip4",
-			"name": "Netmask",
-			"argument": "netmask",
+			"name": "NETMASK",
+			"argument": "NETMASK",
 			"value_range": [
 			],
 			"value_accuracy": 6,
@@ -338,8 +338,8 @@
 			"category": "Ethnet",
 			"paramType": "input",
 			"type": "ip4",
-			"name": "Gateway",
-			"argument": "gateway",
+			"name": "GATEWAY",
+			"argument": "GATEWAY",
 			"value_range": [
 			],
 			"value_accuracy": 6,
@@ -351,8 +351,8 @@
 			"category": "Ethnet",
 			"paramType": "input",
 			"type": "ip6",
-			"name": "Mac",
-            "argument": "Mac",
+			"name": "MAC",
+            "argument": "MAC",
             "disabled":true,
 			"value_range": [
 			],
@@ -365,8 +365,8 @@
 			"category": "Ntrip",
 			"paramType": "select",
 			"type": "uint8",
-			"name": "RtkType",
-            "argument": "rtkType",
+			"name": "RTK Type",
+            "argument": "RTK Type",
             "disabled":true,
 			"value_range": [
 			],
@@ -380,9 +380,9 @@
 			"paramId": 24,
 			"category": "Ntrip",
 			"paramType": "input",
-			"type": "char13",
-			"name": "Username",
-			"argument": "username",
+			"type": "ip4",
+			"name": "IP",
+			"argument": "IP",
 			"value_range": [
 			],
 			"value_accuracy": 6,
@@ -393,12 +393,12 @@
 			"paramId": 25,
 			"category": "Ntrip",
 			"paramType": "input",
-			"type": "char24",
-			"name": "Apikey",
-			"argument": "apikey",
+			"type": "uint16",
+			"name": "PORT",
+			"argument": "PORT",
 			"value_range": [
 			],
-			"value_accuracy": 6,
+			"value_accuracy": 0,
 			"options": [
 			]
         },
@@ -406,9 +406,9 @@
 			"paramId": 26,
 			"category": "Ntrip",
 			"paramType": "input",
-			"type": "ip4",
-			"name": "Url",
-			"argument": "url",
+			"type": "char20",
+			"name": "MOUNT POINT",
+			"argument": "MOUNT POINT",
 			"value_range": [
 			],
 			"value_accuracy": 6,
@@ -419,12 +419,12 @@
 			"paramId": 27,
 			"category": "Ntrip",
 			"paramType": "input",
-			"type": "uint16",
-			"name": "Port",
-			"argument": "port",
+			"type": "char15",
+			"name": "USER NAME",
+			"argument": "USER NAME",
 			"value_range": [
 			],
-			"value_accuracy": 0,
+			"value_accuracy": 6,
 			"options": [
 			]
         },
@@ -432,9 +432,9 @@
 			"paramId": 28,
 			"category": "Ntrip",
 			"paramType": "input",
-			"type": "char20",
-			"name": "MountPoint",
-			"argument": "mountPoint",
+			"type": "char24",
+			"name": "PASSWORD",
+			"argument": "PASSWORD",
 			"value_range": [
 			],
 			"value_accuracy": 6,
