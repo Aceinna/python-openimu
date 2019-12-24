@@ -175,7 +175,27 @@ class OpenIMU:
         else:            
             logging.info('no system ports detected') 
             time.sleep(0.5)
-        return ports
+        # return ports
+        result = []
+        for port in ports:
+            if "Bluetooth" in port:
+                continue
+            else:
+                logging.debug('Testing port ' + port)
+                s = None
+                try:
+                    s = serial.Serial(port)
+                    if s:
+                        s.close()
+                        result.append(port)                
+                except Exception as e:
+                    try:
+                        if s:
+                            s.close()
+                    except Exception as ee:
+                        logging.debug(ee)
+                    pass
+        return result
 
     def autobaud(self, ports):
         '''Autobauds unit - first check for stream_mode / continuous data, then check by polling unit
