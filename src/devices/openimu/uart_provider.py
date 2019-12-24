@@ -21,6 +21,7 @@ class Provider(OpenDeviceBase):
         self.server_update_rate = 50
         self.is_logging = False
         self.is_mag_align = False
+        self.bootloader_baudrate = 57600
         pass
 
     def ping(self):

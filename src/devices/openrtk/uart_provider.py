@@ -17,6 +17,7 @@ class Provider(OpenDeviceBase):
         self.type = 'RTK'
         self.server_update_rate = 100
         self.sky_data = []
+        self.bootloader_baudrate = 115200
         pass
 
     def ping(self):

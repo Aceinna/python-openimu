@@ -39,6 +39,7 @@ class OpenDeviceBase(object):
         self.is_upgrading = False
         self.complete_upgrade = False
         self.communicator = communicator
+        self.bootloader_baudrate = 57600
         pass
 
     @abstractmethod
@@ -200,27 +201,34 @@ class OpenDeviceBase(object):
                 name = parameter['name']
 
                 if type == 'uint8' or type == 'int8':
-                    value = self.unpack_one(type, payload[data_len:data_len + 1])
+                    value = self.unpack_one(
+                        type, payload[data_len:data_len + 1])
                     data_len = data_len + 1
                 elif type == 'uint16' or type == 'int16':
-                    value = self.unpack_one(type, payload[data_len:data_len + 2])
+                    value = self.unpack_one(
+                        type, payload[data_len:data_len + 2])
                     data_len = data_len + 2
                 elif type == 'uint32' or type == 'int32' or type == 'float':
-                    value = self.unpack_one(type, payload[data_len:data_len + 4])
+                    value = self.unpack_one(
+                        type, payload[data_len:data_len + 4])
                     data_len = data_len + 4
                 elif type == 'uint64' or type == 'int64' or type == 'double':
-                    value = self.unpack_one(type, payload[data_len:data_len + 8])
+                    value = self.unpack_one(
+                        type, payload[data_len:data_len + 8])
                     data_len = data_len + 8
                 elif type == 'ip4':
-                    value = self.unpack_one(type, payload[data_len:data_len + 4])
+                    value = self.unpack_one(
+                        type, payload[data_len:data_len + 4])
                     data_len = data_len + 4
                 elif type == 'ip6':
-                    value = self.unpack_one(type, payload[data_len:data_len + 6])
+                    value = self.unpack_one(
+                        type, payload[data_len:data_len + 6])
                     data_len = data_len + 6
                 elif 'char' in type:
                     ctype_n = type.replace('char', '')
                     ctype_l = int(ctype_n)
-                    value = self.unpack_one(type, payload[data_len:data_len + ctype_l])
+                    value = self.unpack_one(
+                        type, payload[data_len:data_len + ctype_l])
                     data_len = data_len + ctype_l
                 else:
                     print(
@@ -600,7 +608,7 @@ class OpenDeviceBase(object):
             # It is used to skip streaming data with size 1000 per read
             parsed = self.read_untils_have_data('JI', 1000, 50)
             #print('parsed', parsed)
-            self.communicator.serial_port.baudrate = 57600
+            self.communicator.serial_port.baudrate = self.bootloader_baudrate
             return True
         except Exception as e:
             print('bootloader exception', e)
