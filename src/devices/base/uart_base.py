@@ -1,4 +1,5 @@
 from abc import ABCMeta, abstractmethod
+import os
 import sys
 import threading
 import operator
@@ -6,8 +7,11 @@ import datetime
 import collections
 import time
 import struct
+import traceback
+from pathlib import Path
 from ...framework.utils import helper
 from ...framework.file_storage import FileLoger
+from azure.storage.blob import BlockBlobService
 if sys.version_info[0] > 2:
     from queue import Queue
 else:
@@ -161,7 +165,7 @@ class OpenDeviceBase(object):
                     self._logger.append(packet_config['name'], item)
                 except Exception as e:
                     print(
-                        "error happened when decode the payload, pls restart IMU firmware: {0}".format(e))
+                        "error happened when decode the payload, pls restart driver: {0}".format(e))
         else:
             try:
                 b = struct.pack(len_fmt, *payload)
@@ -173,7 +177,7 @@ class OpenDeviceBase(object):
                 # return data
             except Exception as e:
                 print(
-                    "error happened when decode the payload of packets, pls restart IMU: {0}".format(e))
+                    "error happened when decode the payload of packets, pls restart driver: {0}".format(e))
 
         self.on_receive_output_packet(packet_config['name'], data)
 
@@ -543,6 +547,100 @@ class OpenDeviceBase(object):
         self.reset()
         self.exit_thread = True
 
+    def thread_do_upgrade_framework(self, file):
+        try:
+            # step.1 download firmware
+            if not self.download_firmware(file):
+                self.on_upgarde_failed('cannot find firmware file')
+                return
+            # step.2 jump to bootloader
+            if not self.start_bootloader():
+                self.on_upgarde_failed('Bootloader Start Failed')
+                return
+            # step.3 write to block
+            self.write_firmware()
+            # step.4 restart app
+            self.restart()
+        except Exception as e:
+            self.on_upgarde_failed('Upgrade Failed')
+            traceback.print_exc()
+
+    def download_firmware(self, file):
+        upgarde_root = os.path.join(os.getcwd(), 'upgrade')
+
+        if not os.path.exists(upgarde_root):
+            os.makedirs(upgarde_root)
+
+        firmware_file_path = os.path.join(upgarde_root, file)
+        firmware_file = Path(firmware_file_path)
+
+        if firmware_file.is_file():
+            self.fw = open(firmware_file_path, 'rb').read()
+        else:
+            self.block_blob_service = BlockBlobService(account_name='navview',
+                                                       account_key='+roYuNmQbtLvq2Tn227ELmb6s1hzavh0qVQwhLORkUpM0DN7gxFc4j+DF/rEla1EsTN2goHEA1J92moOM/lfxg==',
+                                                       protocol='http')
+            self.block_blob_service.get_blob_to_path(
+                'apps', file, firmware_file_path)
+            self.fw = open(firmware_file_path, 'rb').read()
+
+        print('upgrade fw: %s' % file)
+        self.max_data_len = 240
+        self.addr = 0
+        self.fs_len = len(self.fw)
+        return True
+
+    def start_bootloader(self):
+        try:
+            # TODO: should send set quiet command before go to bootloader mode
+            command_line = helper.build_bootloader_input_packet('JI')
+            self.communicator.reset_buffer()  # clear input and output buffer
+            self.communicator.write(command_line, True)
+            time.sleep(3)
+            # It is used to skip streaming data with size 1000 per read
+            parsed = self.read_untils_have_data('JI', 1000, 50)
+            #print('parsed', parsed)
+            self.communicator.serial_port.baudrate = 57600
+            return True
+        except Exception as e:
+            print('bootloader exception', e)
+            return False
+
+    def write_firmware(self):
+        '''Upgrades firmware of connected device to file provided in argument
+        '''
+        while self.addr < self.fs_len:
+            packet_data_len = self.max_data_len if (
+                self.fs_len - self.addr) > self.max_data_len else (self.fs_len - self.addr)
+            data = self.fw[self.addr: (self.addr + packet_data_len)]
+            self.write_block(packet_data_len, self.addr, data)
+            self.addr += packet_data_len
+            self.add_output_packet('stream', 'upgrade_progress', {
+                'addr': self.addr,
+                'fs_len': self.fs_len
+            })
+            # output firmware upgrading
+
+    def write_block(self, data_len, addr, data):
+        # print(data_len, addr, time.time())
+        command_line = helper.build_bootloader_input_packet(
+            'WA', None, data_len, addr, data)
+        try:
+            self.communicator.write(command_line, True)
+        except Exception as e:
+            self.exception_lock.acquire()
+            self.exception_thread = True
+            self.exception_lock.release()
+            return
+
+        if addr == 0:
+            time.sleep(5)
+
+        response = self.read_untils_have_data('WA', 50, 50)
+        # wait WA end if cannot read response in defined retry times
+        if response is None:
+            time.sleep(0.1)
+
     def upgrade_completed(self, options):
         self.input_result = None
         self.bootloader_result = None
@@ -553,6 +651,12 @@ class OpenDeviceBase(object):
         self._logger = FileLoger(self.properties)
         if not options.nolog:
             self._logger.start_user_log('data')
+
+    def on_upgarde_failed(self, message):
+        self.is_upgrading = False
+        self.add_output_packet(
+            'stream', 'upgrade_complete', {'success': False, 'message': message})
+        pass
 
     def on(self, event_type, handler):
         if not self.listeners.__contains__(event_type):

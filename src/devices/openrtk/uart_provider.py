@@ -242,5 +242,19 @@ class Provider(OpenDeviceBase):
     def stopLog(self, params, * args):
         pass
 
-    def upgrade(self):
-        pass
+    def upgradeFramework(self, file, *args):
+        # start a thread to do upgrade
+        if not self.is_upgrading:
+            self.is_upgrading = True
+
+            if self._logger is not None:
+                self._logger.stop_user_log()
+
+            t = threading.Thread(
+                target=self.thread_do_upgrade_framework, args=(file,))
+            t.start()
+            print("Thread upgarde framework OpenRTK start at:[{0}].".format(
+                datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+        return {
+            'packetType': 'success'
+        }    
