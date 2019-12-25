@@ -46,6 +46,10 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         global imu
 
         message = json.loads(message)
+
+        if not message.__contains__('messageType'):
+            return
+
         # Except for a few exceptions stop the automatic message transmission if a message is received
         if message['messageType'] != 'serverStatus' and list(message['data'].keys())[0] != 'startLog' and list(message['data'].keys())[0] != 'stopLog':
             self.callback.stop()
