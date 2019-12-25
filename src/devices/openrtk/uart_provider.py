@@ -36,9 +36,10 @@ class Provider(OpenDeviceBase):
         split_text = text.split(' ')
         self.device_info = {
             'name': split_text[0],
-            'pn': split_text[1],
-            'firmware_version': split_text[2],
-            'sn': split_text[3]
+            'imu': split_text[1],
+            'pn': split_text[2],
+            'firmware_version': split_text[3],
+            'sn': split_text[4]
         }
 
     def build_app_info(self, text):
@@ -127,6 +128,8 @@ class Provider(OpenDeviceBase):
             'data':  [
                           {'name': 'Product Name',
                               'value': self.device_info['name']},
+                          {'name': 'IMU',
+                              'value': self.device_info['imu']},
                           {'name': 'PN', 'value': self.device_info['pn']},
                           {'name': 'Firmware Version',
                            'value': self.device_info['firmware_version']},
