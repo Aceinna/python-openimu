@@ -78,8 +78,10 @@ class OpenIMU:
         self.packet_buffer = []     # packet parsing buffer
         self.sync_state = 0
         self.sync_pattern = collections.deque(4*[0], 4)  # create 4 byte FIFO   
+        self.input_tcpip_port = self.args_input().p[0] if isinstance(self.args_input().p, list) else self.args_input().p
         self.customer_baudrate = self.args_input().b[0] if isinstance(self.args_input().b, list) else self.args_input().b
-        self.loglevel = self.args_input().l[0] if isinstance(self.args_input().l, list) else self.args_input().l 
+        self.input_com_port = self.args_input().c[0] if isinstance(self.args_input().c, list) else self.args_input().c
+        self.loglevel = self.args_input().l[0] if isinstance(self.args_input().l, list) else self.args_input().l
         self.unit_connect_status = 2 # 1:connect,2:no connect,3:re connected
                                 
 
@@ -183,7 +185,8 @@ class OpenIMU:
                 true when successful
         ''' 
         logging.debug("at {0}".format(sys._getframe().f_code.co_name))  
-        bandListFromOptions = self.imu_properties['userConfiguration'][2]['options']  if self.customer_baudrate == 0 else [self.customer_baudrate]           
+        bandListFromOptions = self.imu_properties['userConfiguration'][2]['options']  if self.customer_baudrate == 0 else [self.customer_baudrate]    
+        # bandListFromOptions = self.imu_properties['userConfiguration'][2]['options']       
         for port in ports:                         
             for baud in bandListFromOptions: 
                 logging.info("try {0}:{1}".format(port, baud))          
@@ -213,7 +216,7 @@ class OpenIMU:
             print('Connected(port:{0} baudrate:{1}) ....{2}'.format(self.ser.name, self.ser.baudrate, self.device_id))
         self.save_last_port()   
         logging.info('Connected(port:{1} baudrate:{2}) ....{0}---------------------------------------------'.format(self.device_id,self.ser.name, self.ser.baudrate))               
-          
+
         # open the webside ans automatically by system browser        
         # webbrowser.open("http://40.118.233.18:8080/record", new=0, autoraise=True) 
 
@@ -230,7 +233,8 @@ class OpenIMU:
                 if not connection['port'] in ports:
                     logging.debug('Port from app_config/connection.json not exist')
                     return False                             
-                self.open(port=connection['port'], baud=connection['baud'] if self.customer_baudrate == 0 else self.customer_baudrate)                
+                self.open(port=connection['port'], baud=connection['baud'] if self.customer_baudrate == 0 else self.customer_baudrate) 
+                # self.open(port=connection['port'], baud=connection['baud'])               
                 if self.ser:
                     self.device_id = self.openimu_get_device_id()
                     if self.device_id:
@@ -825,7 +829,7 @@ class OpenIMU:
 
     def parse_unit_heartbeat(self):
         self.data_buffer = self.read(150)
-        self.ser.flushInput()
+        # self.ser.flushInput()
         if self.data_buffer:
             for i,new_byte in enumerate(self.data_buffer):
                 if new_byte == 85:
@@ -877,8 +881,9 @@ class OpenIMU:
         
     def args_input(self):        
         parser = argparse.ArgumentParser(description='OpenIMU input args command:', usage='%(prog)s -b [baudrate] -p [http_port] -l [log_level]' )
-        parser.add_argument('-b', type=int, default=0, metavar='baudrate', nargs=1,help='input the baudrate',choices=[38400,57600,115200,230400])
         parser.add_argument('-p', type=int, default=8123, metavar='http_port', nargs=1,help='input the port')
+        parser.add_argument('-b', type=int, default=0, metavar='baudrate', nargs=1,help='input the baudrate',choices=[38400,57600,115200,230400])
+        parser.add_argument('-c', type=str, default='COMX', metavar='com_port', nargs=1,help='import the com port')
         parser.add_argument('-l', type=int, default=20, metavar='log_level', nargs=1,help='log record level', choices=[0, 10, 20, 30, 40, 50])
         return parser.parse_args()        
 
@@ -903,10 +908,6 @@ if __name__ == "__main__":
     imu.find_device()
     imu.openimu_get_all_param()
     tm = RepeatingTimer(1.5, imu.process_monitor)
-    # tm.start()
-    # while True:
-    #     pass
-
     imu.start_log()
     time.sleep(20)
     imu.stop_log()

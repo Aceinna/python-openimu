@@ -220,8 +220,11 @@ class WSHandler(tornado.websocket.WebSocketHandler):
 if __name__ == "__main__":
     # Create IMU
     print("server_version:",server_version)   
-    try:               
-        imu.find_device()  
+
+    try:
+        imu.find_device()
+        # imu.open(imu.input_com_port,imu.customer_baudrate)
+
         tm.start() 
         # Set up Websocket server on Port 8000
         # Port can be changed
@@ -232,8 +235,8 @@ if __name__ == "__main__":
         #    "certfile": os.path.join(os.path.abspath("."), "./cert/ssl.cert"),
         #    "keyfile": os.path.join(os.path.abspath("."), "./cert/ssl.key"),
         # })
-        logging.info(imu.args_input().p[0] if isinstance(imu.args_input().p, list) else imu.args_input().p)
-        http_server.listen(imu.args_input().p[0] if isinstance(imu.args_input().p, list) else imu.args_input().p) 
+        logging.info(imu.input_tcpip_port)
+        http_server.listen(imu.input_tcpip_port) 
         tornado.ioloop.IOLoop.instance().start()  
 
         http_server.listen(imu.args_input().p) 
