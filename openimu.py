@@ -210,7 +210,8 @@ class OpenIMU:
         for port in ports:                         
             for baud in bandListFromOptions: 
                 logging.info("try {0}:{1}".format(port, baud))          
-                self.open(port, baud)     
+                # self.open(port, baud)
+                self.open(port if self.input_com_port == 'COMX' else self.input_com_port,baud)   
                 try:
                     if self.ser:                     
                         self.device_id = self.openimu_get_device_id()
