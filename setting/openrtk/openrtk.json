@@ -380,7 +380,7 @@
 			"paramId": 24,
 			"category": "Ntrip",
 			"paramType": "input",
-			"type": "ip4",
+			"type": "char22",
 			"name": "IP",
 			"argument": "IP",
 			"value_range": [
