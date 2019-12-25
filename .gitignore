@@ -16,3 +16,4 @@ connection.json
 *.cert
 *.key
 
+*.ico
