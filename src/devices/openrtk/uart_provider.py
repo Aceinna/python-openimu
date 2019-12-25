@@ -9,7 +9,7 @@ from ..base.uart_base import OpenDeviceBase
 from ..configs.openrtk_predefine import *
 # import asyncio
 import datetime
-
+import threading
 
 class Provider(OpenDeviceBase):
     def __init__(self, communicator):

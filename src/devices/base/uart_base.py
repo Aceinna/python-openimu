@@ -555,6 +555,18 @@ class OpenDeviceBase(object):
         self.reset()
         self.exit_thread = True
 
+    def restart(self):
+        # output firmware upgrade finished
+        '''restart app
+        '''
+        time.sleep(1)
+        command_line = helper.build_bootloader_input_packet('JA')
+        self.communicator.write(command_line)
+        print('Restarting app ...')
+        time.sleep(5)
+
+        self.complete_upgrade = True
+
     def thread_do_upgrade_framework(self, file):
         try:
             # step.1 download firmware
@@ -642,7 +654,7 @@ class OpenDeviceBase(object):
             return
 
         if addr == 0:
-            time.sleep(5)
+            time.sleep(8)
 
         response = self.read_untils_have_data('WA', 50, 50)
         # wait WA end if cannot read response in defined retry times
