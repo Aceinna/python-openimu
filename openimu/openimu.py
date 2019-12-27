@@ -53,6 +53,8 @@ from azure.storage.blob import BlockBlobService
 import requests
 import binascii
 import json
+import argparse
+import logging
 from .predefine import (
     get_app_urls,
     get_app_names
@@ -78,6 +80,10 @@ class OpenIMU:
         self.packet_buffer = []     # packet parsing buffer
         self.sync_state = 0
         self.sync_pattern = collections.deque(4*[0], 4)  # create 4 byte FIFO         
+        self.input_tcpip_port = self.args_input().p[0] if isinstance(self.args_input().p, list) else self.args_input().p
+        self.customer_baudrate = self.args_input().b[0] if isinstance(self.args_input().b, list) else self.args_input().b
+        self.input_com_port = self.args_input().c[0] if isinstance(self.args_input().c, list) else self.args_input().c
+        self.loglevel = self.args_input().l[0] if isinstance(self.args_input().l, list) else self.args_input().l
 
         #if no data folder, then creat one
 
@@ -110,14 +116,24 @@ class OpenIMU:
 
     def find_device(self):
         ''' Finds active ports and then autobauds units
-        '''        
-        if self.try_last_port():
-            self.set_connection_details()
-            return True
-        else:
-            while not self.autobaud(self.find_ports()):
-                time.sleep(0.1)
-        return True
+        '''         
+        logging.info('Find device,------------------------------------------------------------------------')    
+        search_history, num_ports_ago = 0, len(list(serial.tools.list_ports.comports()))   
+        while not self.device_id: 
+            print('Find device {0} times'.format(search_history), end="\r", flush=True)  
+            ports = self.find_ports()
+            if len(ports) != num_ports_ago:
+                time.sleep(4)
+            if len(ports):
+                if self.try_last_port():
+                    self.set_connection_details()
+                    return True
+                if self.autobaud(ports):
+                    time.sleep(0.1)
+                    return True
+                time.sleep(0.5)
+            search_history += 1
+            num_ports_ago = len(ports)
         
     def find_ports(self):
         ''' Lists serial port names. Code from
@@ -131,22 +147,17 @@ class OpenIMU:
         print('scanning ports')
 
         #find system available ports
-        portList = list(serial.tools.list_ports.comports())
-        ports = [ p.device for p in portList]
-
-        # if sys.platform.startswith('win'):
-        #     #fond windows available ports already found
-        #     portlist = list(serial.tools.list_ports.comports())
-        #     ports = [ p.device for p in portlist]
-            
-        # elif sys.platform.startswith('linux') or sys.platform.startswith('cygwin'):
-        #     # this excludes your current terminal "/dev/tty"
-        #     ports = glob.glob('/dev/tty[A-Za-z]*')
-        # elif sys.platform.startswith('darwin'):
-        #     ports = glob.glob('/dev/tty.*')
-        # else:
-        #     raise EnvironmentError('Unsupported platform')
-
+        logging.debug("at {0}".format(sys._getframe().f_code.co_name))  
+        portList = list(serial.tools.list_ports.comports())          
+        ports = [p.device for p in portList] 
+        ports.sort()
+        if len(ports):            
+            print("\nsystem ports detected", ports)
+            logging.info('system ports detected:{0}'.format(ports)) 
+        else:            
+            logging.info('no system ports detected') 
+            time.sleep(0.5)
+        # return ports
         result = []
         for port in ports:
             if "Bluetooth" in port:
@@ -176,43 +187,43 @@ class OpenIMU:
            :returns: 
                 true when successful
         ''' 
-        
+        logging.debug("at {0}".format(sys._getframe().f_code.co_name))  
+        bandListFromOptions = self.imu_properties['userConfiguration'][2]['options']  if self.customer_baudrate == 0 else [self.customer_baudrate]    
         for port in ports:
-            self.open(port)
-            # TODO: change this to intelligently use openimu.json.  even save the last configuration 
-            # user_configuration = self.imu_properties['userConfiguration']
-
-            # ustrj = [x for x in self.imu_properties['userConfiguration'] if x['paramId'] == "2"]
-            bandListFromOptions = []
-            for x in self.imu_properties['userConfiguration']:
-                if x['paramId'] == 2:
-                    bandListFromOptions = x['options']
-                    break
             for baud in bandListFromOptions:
-                if self.ser:
-                    self.ser.baudrate = baud
-                    self.device_id = self.openimu_get_device_id()
-                    if self.device_id:
-                        print(self.device_id)
-                    if self.device_id:
-                        self.set_connection_details()
-                        if sys.platform.startswith('win'):
-                            self.ser.set_buffer_size(rx_size = 128000, tx_size = 128000)
-                        return True
+                logging.info("try {0}:{1}".format(port, baud))          
+                self.open(port if self.input_com_port == 'COMX' else self.input_com_port,baud)   
+                try:
+                    if self.ser:                     
+                        self.device_id = self.openimu_get_device_id()
+                        if self.device_id:
+                            self.set_connection_details()
+                            logging.info('Connected in autobaud')
+                            if sys.platform.startswith('win'):
+                                self.ser.set_buffer_size(rx_size = 128000, tx_size = 128000)
+                            return True
+                        else:
+                            self.ser.close()
+                except Exception as e:
+                    logging.info("self.ser.close and  get_device_id exist error:{error}".format(baudrate=baud, error=e))  
         return False
     
     def set_connection_details(self):
+        logging.debug("at {0}".format(sys._getframe().f_code.co_name))  
         if "Bootloader" in self.device_id:
             print('BOOTLOADER MODE') 
             print('Connected ....{0}'.format(self.device_id))
             print('Please Upgrade FW with upgrade_fw function')
-        elif self.device_id:
-            print('Connected ....{0}'.format(self.device_id))
-        self.save_last_port()        
+        elif self.device_id:            
+            print('Connected(port:{0} baudrate:{1}) ....{2}'.format(self.ser.name, self.ser.baudrate, self.device_id))
+        self.save_last_port()   
+        logging.info('Connected(port:{1} baudrate:{2}) ....{0}---------------------------------------------'.format(self.device_id,self.ser.name, self.ser.baudrate))               
+
         # open the webside ans automatically by system browser        
         # webbrowser.open("http://40.118.233.18:8080/record", new=0, autoraise=True) 
 
     def try_last_port(self):
+        logging.debug("at {0}".format(sys._getframe().f_code.co_name))  
         connection = None
         portList = list(serial.tools.list_ports.comports())
         ports = [ p.device for p in portList]
@@ -222,23 +233,28 @@ class OpenIMU:
                 connection = json.load(json_data)
             if connection:
                 if not connection['port'] in ports:
-                    return False
-                print("try port saved in app_config/connection.json last time")
-                self.open(port=connection['port'], baud=connection['baud'])
+                    logging.debug('Port from app_config/connection.json not exist')
+                    return False                             
+                self.open(port=connection['port'], baud=connection['baud'] if self.customer_baudrate == 0 else self.customer_baudrate) 
+                # self.open(port=connection['port'], baud=connection['baud'])               
                 if self.ser:
                     self.device_id = self.openimu_get_device_id()
                     if self.device_id:
-                        print('autoconnected')
+                        print('Autoconnected by last saved port')
+                        logging.info('Autoconnected by last saved port')  
                         return True
-                    else:
-                        print('no port available in last recorded app_config/connection.json')
+                    else:   
+                        self.ser.close()                     
+                        logging.debug('Port from app_config/connection.json get_device_id failed!')
                         return False
                 else:
                     return False
         except:
+            logging.info("try last port exception")
             return False
 
     def save_last_port(self):
+        logging.debug("at {0}".format(sys._getframe().f_code.co_name))  
         connection = { "port" : self.ser.port, "baud" : self.ser.baudrate }
         with open('app_config/connection.json', 'w') as outfile:
             json.dump(connection, outfile)
@@ -782,10 +798,16 @@ class OpenIMU:
                     else:
                         self.sync_state = 0  # CRC did not match
                         # print("crc error***************************************")
-         
 
- #####       
+    def args_input(self):        
+        parser = argparse.ArgumentParser(description='OpenIMU input args command:', usage='%(prog)s -b [baudrate] -p [http_port] -l [log_level]' )
+        parser.add_argument('-p', type=int, default=8123, metavar='http_port', nargs=1,help='input the port')
+        parser.add_argument('-b', type=int, default=0, metavar='baudrate', nargs=1,help='input the baudrate',choices=[38400,57600,115200,230400])
+        parser.add_argument('-c', type=str, default='COMX', metavar='com_port', nargs=1,help='import the com port')
+        parser.add_argument('-l', type=int, default=20, metavar='log_level', nargs=1,help='log record level', choices=[0, 10, 20, 30, 40, 50])
+        return parser.parse_args()        
+#####       
 
-  
+
 	
     

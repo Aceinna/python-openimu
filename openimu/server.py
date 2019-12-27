@@ -189,36 +189,8 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         self.callback.stop()
         self.callback2.stop()
         time.sleep(1.2)
-        
-        
-        # try:
-        #     os._exit(0)
-        # except:
-        #    print('Program is off.')
-
         return False
 
     def check_origin(self, origin):
         return True
- 
-# if __name__ == "__main__":
-#     server_version = '1.1.1'
-#     # Create IMU
-#     print("server_version:",server_version)
-#     try: 
-#         imu.find_device()    
-#         # Set up Websocket server on Port 8000
-#         # Port can be changed
-#         application = tornado.web.Application([(r'/', WSHandler)])
-#         http_server = tornado.httpserver.HTTPServer(application)
-#         http_server.listen(8000)        
-        
-#         tornado.ioloop.IOLoop.instance().start()
-    
-#     except KeyboardInterrupt:  # response for KeyboardInterrupt such as Ctrl+C
-#         print('User stop this program by KeyboardInterrupt! File:[{0}], Line:[{1}]'.format(__file__, sys._getframe().f_lineno))
-#         os._exit(1)
-#     except Exception as e:
-#         print(e)    
-
     
