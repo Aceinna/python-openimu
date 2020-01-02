@@ -184,6 +184,14 @@
 						"yAxes": ["xRate", "yRate", "zRate"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
 						"yMax": 400
+					},
+					{
+						"name": "Magnetic-Field",
+						"units": "Gauss",
+						"xAxis": "Time (s)",
+						"yAxes": ["xMag", "yMag", "zMag"],
+						"colors": ["#FF0000", "#00FF00", "#0000FF"],
+						"yMax": 20
 					}
 				]
 			},
