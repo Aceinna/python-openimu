@@ -11,6 +11,7 @@ from ..configs.openrtk_predefine import *
 import datetime
 import threading
 
+
 class Provider(OpenDeviceBase):
     def __init__(self, communicator):
         super(Provider, self).__init__(communicator)
@@ -100,7 +101,7 @@ class Provider(OpenDeviceBase):
 
         if self.input_result:
             print('get input packet in:',
-                  span.total_seconds() if span else 0, 's', ',packet type:', self.input_result['packet_type'],packet_type)
+                  span.total_seconds() if span else 0, 's', ',packet type:', self.input_result['packet_type'], packet_type)
 
         if self.input_result is not None and self.input_result['packet_type'] == packet_type:
             result = self.input_result.copy()
@@ -111,9 +112,6 @@ class Provider(OpenDeviceBase):
         self.input_result = None
 
         return result
-
-    def restart(self):
-        pass
 
     # command list
     def serverStatus(self, *args):
@@ -261,4 +259,4 @@ class Provider(OpenDeviceBase):
                 datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
         return {
             'packetType': 'success'
-        }    
+        }
