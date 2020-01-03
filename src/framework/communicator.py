@@ -72,7 +72,7 @@ class SerialPort(Communicator):
         self.baudrateList = [38400, 57600, 115200,
                              230400, 460800]  # default baudrate list
         if options and options.b:
-            self.baudrateList = options.b
+            self.baudrateList = [options.b]
 
     def find_device(self, callback):
         ''' Finds active ports and then autobauds units

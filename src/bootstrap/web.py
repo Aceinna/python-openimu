@@ -244,7 +244,7 @@ class Webserver:
             self.http_server.listen(self.options.p)
             tornado.ioloop.IOLoop.instance().start()
         except Exception as e:
-            print('Cannot start a websocket, please check if the port is in use')
+            print('Cannot start a websocket server, please check if the port is in use')
             raise
 
     def handle_device_exception(self, error, message):

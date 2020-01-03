@@ -99,9 +99,9 @@ class Provider(OpenDeviceBase):
             if span.total_seconds() > timeout:
                 break
 
-        if self.input_result:
-            print('get input packet in:',
-                  span.total_seconds() if span else 0, 's', ',packet type:', self.input_result['packet_type'], packet_type)
+        # if self.input_result:
+        #     print('get input packet in:',
+        #           span.total_seconds() if span else 0, 's', ',packet type:', self.input_result['packet_type'], packet_type)
 
         if self.input_result is not None and self.input_result['packet_type'] == packet_type:
             result = self.input_result.copy()
