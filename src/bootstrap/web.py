@@ -11,6 +11,7 @@ from ..framework.context import app_context
 from ..framework.file_storage import FileLoger
 from ..framework.utils import helper
 
+
 class WSHandler(tornado.websocket.WebSocketHandler):
     is_streaming = False
     is_logging = False
@@ -236,11 +237,15 @@ class Webserver:
 
     def start_websocket_server(self):
         # add ws handler as a member
-        application = tornado.web.Application(
-            [(r'/', WSHandler, dict(server=self))])
-        self.http_server = tornado.httpserver.HTTPServer(application)
-        self.http_server.listen(self.options.p)
-        tornado.ioloop.IOLoop.instance().start()
+        try:
+            application = tornado.web.Application(
+                [(r'/', WSHandler, dict(server=self))])
+            self.http_server = tornado.httpserver.HTTPServer(application)
+            self.http_server.listen(self.options.p)
+            tornado.ioloop.IOLoop.instance().start()
+        except Exception as e:
+            print('Cannot start a websocket, please check if the port is in use')
+            raise
 
     def handle_device_exception(self, error, message):
         if self.ws_handler:

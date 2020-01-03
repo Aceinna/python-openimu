@@ -71,7 +71,7 @@ class SerialPort(Communicator):
         # self.baudrateList = [115200]  # for test
         self.baudrateList = [38400, 57600, 115200,
                              230400, 460800]  # default baudrate list
-        if options and options.b and len(options.b) > 0:
+        if options and options.b:
             self.baudrateList = options.b
 
     def find_device(self, callback):

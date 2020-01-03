@@ -1,3 +1,4 @@
+import os
 import sys
 import argparse
 import traceback
@@ -11,7 +12,8 @@ def receive_args():
     parser.add_argument("-host", type=str, help="host type", default='web')
     # for host as web
     parser.add_argument("-p", type=int, help="webserver port", default=8000)
-    parser.add_argument("-b", type=int, help="baudrate")
+    parser.add_argument("-b", type=int, help="baudrate",
+                        choices=[38400, 57600, 115200, 230400, 460800])
     parser.add_argument("-nolog", type=int,
                         help="disable internal log", default=True)
     return parser.parse_args()
@@ -29,4 +31,5 @@ if __name__ == '__main__':
         app.stop()
         sys.exit()
     except Exception as e:
-        traceback.print_exc()
+        # traceback.print_exc() # For development
+        os._exit(1)
