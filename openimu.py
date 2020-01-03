@@ -329,6 +329,7 @@ class OpenIMU:
                 json.dump(connection, outfile)
         C = InputPacket(self.imu_properties, 'uP', param, value) 
         self.write(C.bytes)
+        logging.debug("write message:{0}".format(C.bytes))
         #time.sleep(0.05)
         return self.openimu_get_packet('uP')  
 
