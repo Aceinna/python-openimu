@@ -242,6 +242,7 @@ class Webserver:
                 [(r'/', WSHandler, dict(server=self))])
             self.http_server = tornado.httpserver.HTTPServer(application)
             self.http_server.listen(self.options.p)
+            print('Websocket server is started on port', self.options.p)
             tornado.ioloop.IOLoop.instance().start()
         except Exception as e:
             print('Cannot start a websocket server, please check if the port is in use')

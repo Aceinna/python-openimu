@@ -376,16 +376,18 @@ class OpenDeviceBase(object):
         if not self.has_running_checker:
             t = threading.Thread(target=self.thread_running_checker, args=())
             t.start()
-            print("Thread checker start at:[{0}].".format(
-                datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+            # TODO: write to log
+            # print("Thread checker start at:[{0}].".format(
+            #     datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
             self.has_running_checker = True
 
         funcs = [self.thread_receiver, self.thread_parser]
         for func in funcs:
             t = threading.Thread(target=func, args=())
             t.start()
-            print("Thread[{0}({1})] start at:[{2}].".format(
-                t.name, t.ident, datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+            # TODO: write to log
+            # print("Thread[{0}({1})] start at:[{2}].".format(
+            #     t.name, t.ident, datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
             self.threads.append(t)
 
     def thread_receiver(self):

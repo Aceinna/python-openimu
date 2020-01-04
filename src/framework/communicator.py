@@ -108,9 +108,24 @@ class SerialPort(Communicator):
                 except Exception as e:
                     print('port:', port, 'is in use')
                     pass
+        # TODO: only use UART port
+        # for port in portList:
+        #     port_interface = port.interface
+        #     if not port_interface:
+        #         continue
+        #     if not port_interface.__contains__('RS232') and not port_interface.__contains__('UART'):
+        #         continue
+        #     print('Check if is a used port ' + port.device)
+        #     s = None
+        #     try:
+        #         s = serial.Serial(port.device)
+        #         if s:
+        #             s.close()
+        #             result.append(port.device)
+        #     except Exception as e:
+        #         print(e)
+        #         pass
         return result
-
-        # return ports
 
     def autobaud(self, ports):
         '''Autobauds unit - first check for stream_mode / continuous data, then check by polling unit
