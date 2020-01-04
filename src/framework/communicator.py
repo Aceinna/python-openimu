@@ -68,11 +68,13 @@ class SerialPort(Communicator):
         self.port = None
         self.baud = None
         self.read_size = 100
+        self.baudrate_assigned = False
         # self.baudrateList = [115200]  # for test
         self.baudrateList = [38400, 57600, 115200,
                              230400, 460800]  # default baudrate list
         if options and options.b:
             self.baudrateList = [options.b]
+            self.baudrate_assigned = True
 
     def find_device(self, callback):
         ''' Finds active ports and then autobauds units
@@ -81,20 +83,13 @@ class SerialPort(Communicator):
         while self.device is None:
             if self.try_last_port():
                 break
-            else:
-                num_ports = self.find_ports()
-                self.autobaud(num_ports)
+
+            num_ports = self.find_ports()
+            self.autobaud(num_ports)
             time.sleep(0.5)
         callback(self.device)
 
     def find_ports(self):
-        # portList = list(serial.tools.list_ports.comports())
-        # filterPortList = filter(
-        #     lambda item: item.device.find('Bluetooth') == -1, portList)
-        # ports = [p.device for p in filterPortList]
-        # ports.sort()
-        # print("\nsystem ports detected", ports)
-
         portList = list(serial.tools.list_ports.comports())
         ports = [p.device for p in portList]
 
@@ -111,7 +106,7 @@ class SerialPort(Communicator):
                         s.close()
                         result.append(port)
                 except Exception as e:
-                    print(e)
+                    print('port:', port, 'is in use')
                     pass
         return result
 
@@ -138,7 +133,7 @@ class SerialPort(Communicator):
                         continue
                     else:
                         self.save_last_port()
-                        break
+                        return True
         return False
 
     def try_last_port(self):
@@ -147,12 +142,16 @@ class SerialPort(Communicator):
            returns: True if find header
                     False if not find header.
         '''
-        print('try to use last connected port')
         connection = None
         try:
+            if not os.path.isfile(self.connection_file):
+                return False
+
             with open(self.connection_file) as json_data:
                 connection = json.load(json_data)
-
+            connection['baud'] = self.baudrateList[0] if self.baudrate_assigned else connection['baud']
+            print('try to use last connected port',
+                  connection['port'], connection['baud'])
             if connection:
                 self.open_serial_port(
                     port=connection['port'], baud=connection['baud'], timeout=0.005)
