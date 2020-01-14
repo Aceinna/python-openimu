@@ -49,6 +49,7 @@ class OpenDeviceBase(object):
     def internal_input_command(self, command, read_length=500):
         command_line = helper.build_input_packet(command)
         self.communicator.write(command_line)
+        time.sleep(0.1)
 
         data_buffer = self.read_untils_have_data(command, read_length, 20)
         parsed = bytearray(data_buffer) if data_buffer and len(
