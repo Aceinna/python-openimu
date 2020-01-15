@@ -1,3 +1,4 @@
+from __future__ import print_function
 """
 Driver for Aceinna OpenIMU
 Based on PySerial https://github.com/pyserial/pyserial
@@ -120,7 +121,10 @@ class OpenIMU:
         logging.info('Find device,------------------------------------------------------------------------')    
         search_history, num_ports_ago = 0, len(list(serial.tools.list_ports.comports()))   
         while not self.device_id: 
-            print('Find device {0} times'.format(search_history), end="\r", flush=True)  
+            if sys.version_info[0] > 2:
+                print('Find device {0} times'.format(search_history), end="\r", flush=True)
+            else:
+                print('Find device {0} times'.format(search_history))
             ports = self.find_ports()
             if len(ports) != num_ports_ago:
                 time.sleep(4)
