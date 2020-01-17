@@ -8,7 +8,7 @@
     { "paramId": 0,"category": "General", "paramType": "disabled", "type": "uint64", "name": "Data CRC" },
 		{ "paramId": 1,"category": "General", "paramType": "disabled", "type": "uint64", "name": "Data Size" },
 		{ "paramId": 2, "category": "General","paramType": "select", "type": "int64", "name": "Baud Rate", "argument": "baud_rate","value_range":[-1,1], "value_accuracy":6, "options": [115200, 57600, 230400, 38400] },
-		{ "paramId": 3, "category": "General","paramType": "select", "type": "char8", "name": "Packet Type", "argument": "type", "value_range":[-1,1],"value_accuracy":6, "options": ["z1"] },
+		{ "paramId": 3, "category": "General","paramType": "select", "type": "char8", "name": "Packet Type", "argument": "type", "value_range":[-1,1],"value_accuracy":6, "options": ["z1","s1"] },
 		{ "paramId": 4, "category": "General","paramType": "select", "type": "int64", "name": "Packet Rate", "argument": "rate", "value_range":[-1,1],"value_accuracy":6, "options": [200, 100, 50, 20, 10, 5, 2, 0] },
 		{ "paramId": 5, "category": "General","paramType": "select", "type": "int64", "name": "Accel LPF", "argument": "xl_lpf", "value_range":[-1,1],"value_accuracy":6,"options": [50, 40, 25, 20, 10, 5, 2] },
 		{ "paramId": 6, "category": "General","paramType": "select", "type": "int64", "name": "Rate LPF", "argument": "rate_lpf", "value_range":[-1,1],"value_accuracy":6,"options": [50, 40, 25, 20, 10, 5, 2] },
@@ -50,7 +50,11 @@
 						"actionID": 7,
 						"actionName": "stored"
 					}
-				]
+				],
+				"responsePayload": {
+					"type": "string",
+					"name": "ma action name"
+				}
 			},
 			{
 				"name": "gV",
@@ -158,7 +162,7 @@
 				],
 				"graphs": [{
 						"name": "Acceleration",
-						"units": "m/^2",
+						"units": "m/s^2",
 						"xAxis": "Time (s)",
 						"yAxes": ["xAccel", "yAccel", "zAccel"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
@@ -171,6 +175,14 @@
 						"yAxes": ["xRate", "yRate", "zRate"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
 						"yMax": 400
+					},
+					{
+						"name": "Magnetic-Field",
+						"units": "Gauss",
+						"xAxis": "Time (s)",
+						"yAxes": ["xMag", "yMag", "zMag"],
+						"colors": ["#FF0000", "#00FF00", "#0000FF"],
+						"yMax": 20
 					}
 				]
 			},

@@ -539,7 +539,7 @@ class OpenIMU:
     def write_block(self, buf, data_len, addr):
         '''Executed WA command to write a block of new app code into memory
         '''
-        print(data_len, addr)
+        #print(data_len, addr)
         C = [0x55, 0x55, ord('W'), ord('A'), data_len+5]
         addr_3 = (addr & 0xFF000000) >> 24
         addr_2 = (addr & 0x00FF0000) >> 16

@@ -53,7 +53,11 @@
 						"actionID": 7,
 						"actionName": "stored"
 					}
-				]
+				],
+				"responsePayload": {
+					"type": "string",
+					"name": "ma action name"
+				}
 			},
 			{
 				"name": "gV",
@@ -167,7 +171,7 @@
 				],
 				"graphs": [{
 						"name": "Acceleration",
-						"units": "m/^2",
+						"units": "m/s^2",
 						"xAxis": "Time (s)",
 						"yAxes": ["xAccel", "yAccel", "zAccel"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
@@ -180,6 +184,14 @@
 						"yAxes": ["xRate", "yRate", "zRate"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
 						"yMax": 400
+					},
+					{
+						"name": "Magnetic-Field",
+						"units": "Gauss",
+						"xAxis": "Time (s)",
+						"yAxes": ["xMag", "yMag", "zMag"],
+						"colors": ["#FF0000", "#00FF00", "#0000FF"],
+						"yMax": 20
 					}
 				]
 			},
@@ -224,17 +236,17 @@
 					{
 						"type": "float",
 						"name": "xAccel",
-						"unit": "m/^2"
+						"unit": "m/s^2"
 					},
 					{
 						"type": "float",
 						"name": "yAccel",
-						"unit": "m/^2"
+						"unit": "m/s^2"
 					},
 					{
 						"type": "float",
 						"name": "zAccel",
-						"unit": "m/^2"
+						"unit": "m/s^2"
 					},
 					{
 						"type": "uint8",
@@ -254,7 +266,7 @@
 				],
 				"graphs": [{
 						"name": "Acceleration",
-						"units": "m/^2",
+						"units": "m/s^2",
 						"xAxis": "Time (s)",
 						"yAxes": ["xAccel", "yAccel", "zAccel"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
@@ -332,22 +344,22 @@
 					{
 						"type": "float",
 						"name": "xAccel",
-						"unit": "m/^2"
+						"unit": "m/s^2"
 					},
 					{
 						"type": "float",
 						"name": "yAccel",
-						"unit": "m/^2"
+						"unit": "m/s^2"
 					},
 					{
 						"type": "float",
 						"name": "zAccel",
-						"unit": "m/^2"
+						"unit": "m/s^2"
 					}
 				],
 				"graphs": [{
 						"name": "Acceleration",
-						"units": "m/^2",
+						"units": "m/s^2",
 						"xAxis": "Time (s)",
 						"yAxes": ["xAccel", "yAccel", "zAccel"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],

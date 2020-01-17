@@ -7,6 +7,7 @@ import json
 import time
 import math
 import os
+import logging
 from .global_vars import imu
 import binascii
 from .predefine import (
@@ -83,7 +84,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                     self.write_message(json.dumps({ "messageType": "queryResponse","data": {"packetType": "DeviceStatus","packet": { "returnStatus":2}}}))
                     imu.pause()
             except Exception as e:
-                # print(e)                 
+                print(e)                 
                 self.write_message(json.dumps({ "messageType": "queryResponse","data": {"packetType": "DeviceStatus","packet": { "returnStatus":2}}}))
                 imu.pause()
         elif message['messageType'] == 'requestAction':
@@ -93,11 +94,14 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                 # data[7]['value'] = data[3]['value'].strip(b'\x00'.decode())
                 time.sleep(0.2)
                 self.write_message(json.dumps({ "messageType" : "requestAction", "data" : { "gA" : data }}))
+                logging.debug('{0} feedback: {1}'.format(list(message['data'].keys())[0], data))	
                 # print('requesting ok ---------------{0}'.format(self.count))                
             elif list(message['data'].keys())[0] == 'uP':
+                logging.debug("uP setting, parameter ID:{0}, value is:{1}".format(message['data']['uP']['paramId'], message['data']['uP']['value']))
                 data = imu.openimu_update_param(message['data']['uP']['paramId'], message['data']['uP']['value'])
                 self.write_message(json.dumps({ "messageType" : "requestAction", "data" : { "uP" : data }}))
             elif list(message['data'].keys())[0] == 'sC':
+                logging.debug("sC setting")
                 imu.openimu_save_config()
                 time.sleep(0.5)
                 self.write_message(json.dumps({ "messageType" : "requestAction", "data" : { "sC" : {} }}))
@@ -105,7 +109,11 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             elif list(message['data'].keys())[0] == 'gV':
                 data = imu.openimu_get_user_app_id()
                 self.write_message(json.dumps({ "messageType" : "completeAction", "data" : { "gV" : str(data) }}))
-            elif list(message['data'].keys())[0] == 'startStream':                                
+                logging.debug('{0} feedback: {1}'.format(list(message['data'].keys())[0], data))
+
+            elif list(message['data'].keys())[0] == 'startStream':  
+                # tm.cancel()
+                logging.debug("start the stream!")                              
                 imu.connect()
                 self.callback.start()  
                 self.callback2.stop()
@@ -132,11 +140,13 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                 self.write_message(json.dumps({ "messageType" : "completeAction", "data" : { "upgradeFramework" : fileName }}))
         elif message['messageType'] == 'magAction':
             if (list (message['data'].values())[0] == 'start'):
+                logging.debug("start magalign") 
                 imu.magneticAlignCmd('start')
                 self.magProgress = 1
                 # print ('mag align started')
                 self.write_message(json.dumps({"messageType": "magAction", "data": {"start": {}}}))
             elif (list(message['data'].values())[0] == 'abort'):
+                logging.debug("abort magalign") 
                 time.sleep(2)
                 imu.magneticAlignCmd('abort')
                 self.magProgress = 0
@@ -146,6 +156,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
 
             elif (list(message['data'].values())[0] == 'status'):
                 # status = openIMUMagneticAlign.status()
+                logging.debug("status of magalign") 
                 if (self.magProgress == 1):
                     status = imu.magneticAlignCmd('status')
 
@@ -161,6 +172,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                     self.write_message(json.dumps({"messageType": "magAction", "data": {"status": "incomplete"}}))
 
             elif (list(message['data'].values())[0] == 'save'):
+                logging.debug("save result of magalign") 
                 imu.magneticAlignCmd('save')
                 time.sleep(1)
                 self.magProgress = 0
@@ -183,6 +195,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                 self.write_message(json.dumps({ "messageType" : "requestAction", "data" : { "loadFile" :  f.read() }}))
 
     def on_close(self): 
+        logging.debug("at {0}".format(sys._getframe().f_code.co_name))
         if(imu.logging == 1):
             imu.stop_log() 
         imu.pause()
