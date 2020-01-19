@@ -135,9 +135,7 @@ class OpenIMU:
                 print('Find device {0} times'.format(search_history))
             ports = self.find_ports()
             if len(ports) != num_ports_ago:
-                time.sleep(4)
-            else:
-                time.sleep(0.5)
+                time.sleep(4)            
             if len(ports):
                 if self.try_last_port():
                     self.set_connection_details()
@@ -145,7 +143,8 @@ class OpenIMU:
                 if self.autobaud(ports):
                     time.sleep(0.1)
                     return True
-                
+            else:
+                time.sleep(0.5)    
             search_history += 1
             num_ports_ago = len(ports)
         
@@ -872,7 +871,7 @@ class OpenIMU:
         parser.add_argument('-p', type=int, default=8123, metavar='http_port', nargs=1,help='input the port')
         parser.add_argument('-b', type=int, default=0, metavar='baudrate', nargs=1,help='input the baudrate',choices=[38400,57600,115200,230400])
         parser.add_argument('-c', type=str, default='COMX', metavar='com_port', nargs=1,help='import the com port')
-        parser.add_argument('-l', type=int, default=10, metavar='log_level', nargs=1,help='log record level', choices=[0, 10, 20, 30, 40, 50])
+        parser.add_argument('-l', type=int, default=20, metavar='log_level', nargs=1,help='log record level', choices=[0, 10, 20, 30, 40, 50])
         return parser.parse_args()        
 #####       
 
