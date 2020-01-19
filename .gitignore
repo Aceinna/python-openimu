@@ -13,3 +13,4 @@ data/.gitignore
 .gitignore
 *.bin
 *.egg-info
+*.log
