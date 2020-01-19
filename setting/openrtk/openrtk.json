@@ -689,14 +689,14 @@
 						"unit": "msec"
 					},
 					{
-						"type": "uint32",
-						"name": "positionMode",
-						"unit": ""
-					},
-					{
 						"type": "double",
 						"name": "timeOfWeek",
 						"unit": "msec"
+                    },
+                    {
+						"type": "uint32",
+						"name": "positionMode",
+						"unit": ""
 					},
 					{
 						"type": "double",
@@ -749,8 +749,13 @@
 						"unit": "m/s"
 					},
 					{
-						"type": "float",
-						"name": "attitudeStatus",
+						"type": "uint32",
+						"name": "insStatus",
+						"unit": "m/s"
+                    },
+                    {
+						"type": "uint32",
+						"name": "insPositionType",
 						"unit": "m/s"
 					},
 					{
@@ -770,7 +775,17 @@
 					},
 					{
 						"type": "float",
-						"name": "attitudeRMS",
+						"name": "rollRMS",
+						"unit": "m/s"
+                    },
+                    {
+						"type": "float",
+						"name": "pitchRMS",
+						"unit": "m/s"
+                    },
+                    {
+						"type": "float",
+						"name": "headingRMS",
 						"unit": "m/s"
 					}
 				],
