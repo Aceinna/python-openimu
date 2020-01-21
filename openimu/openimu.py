@@ -888,10 +888,10 @@ class OpenIMU:
                         # print("crc error***************************************")
 
     def args_input(self):        
-        parser = argparse.ArgumentParser(description='OpenIMU input args command:', usage='%(prog)s -b [baudrate] -p [http_port] -l [log_level]' )
-        parser.add_argument('-p', type=int, default=8123, metavar='http_port', nargs=1,help='input the port')
+        parser = argparse.ArgumentParser(description='OpenIMU input args command:', usage='%(prog)s -b [baudrate] -p [http_port] -l [log_level] -c [serial_COM_port]' )
+        parser.add_argument('-p', type=int, default=8123, metavar='http_port', nargs=1,help='input the http port')
         parser.add_argument('-b', type=int, default=0, metavar='baudrate', nargs=1,help='input the baudrate',choices=[38400,57600,115200,230400])
-        parser.add_argument('-c', type=str, default='COMX', metavar='com_port', nargs=1,help='import the com port')
+        parser.add_argument('-c', type=str, default='COMX', metavar='com_port', nargs=1,help='import the serial com port')
         parser.add_argument('-l', type=int, default=20, metavar='log_level', nargs=1,help='log record level', choices=[0, 10, 20, 30, 40, 50])
         return parser.parse_args()        
 #####       
