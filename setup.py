@@ -24,7 +24,7 @@ install_requires = [
 
 setup(
     name="openimu",
-    version="1.0.0",
+    version="1.0.4",
     author="Aceinna OpenIMU",
     author_email="info@aceinna.com",
     description="Aceinna Open Source Python",

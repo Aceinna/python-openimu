@@ -276,8 +276,20 @@ class OpenIMU:
     def save_last_port(self):
         logging.debug("at {0}".format(sys._getframe().f_code.co_name))  
         connection = { "port" : self.ser.port, "baud" : self.ser.baudrate }
-        with open('app_config/connection.json', 'w') as outfile:
-            json.dump(connection, outfile)
+
+        setting_folder = 'app_config'
+        connection_file = os.path.join(setting_folder,'connection.json')
+
+        if not os.path.exists(setting_folder):
+            try:
+                os.mkdir(setting_folder)
+            except:
+                return
+        try:
+            with open(connection_file, 'w') as outfile:
+                json.dump(connection, outfile)
+        except:
+            pass
     
     def get_latest(self):
         '''Get latest converted IMU readings in converted units
