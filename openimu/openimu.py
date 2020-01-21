@@ -100,8 +100,8 @@ class OpenIMU:
             os.makedirs("data")
             
         # check the local json file openimu.json, if no, download the app json files from github.
-        if not os.path.isfile("./python-openimu/openimu.json"): 
-            local_jsonfile_flag = False # no local json file
+        if not os.path.isfile("openimu.json"): 
+            self.local_jsonfile_flag = False # no local json file 
             if not os.path.exists('app_config'):
                 print('downloading config json files from github, please waiting for a while')
                 os.makedirs('app_config')
@@ -119,18 +119,17 @@ class OpenIMU:
                     except Exception as e:
                         logging.info("downloading the JSON file failed, url: {0}".format(url)) 
             else:
-                print('the config json files have already been downloaded from github')
-
-            try:
-                # Load the basic app_config openimu.json(IMU application)
+                # Load the basic openimu.json(IMU application)
                 with open('app_config/IMU/openimu.json') as json_data:
                     self.imu_properties = json.load(json_data)
-            except Exception as e:
-                print(e)
-        else:
-            local_jsonfile_flag = True #has json file
-            with open('./python-openimu/openimu.json') as json_data:
+                        
+        else: # with local json file
+            self.local_jsonfile_flag = True
+            with open('openimu.json') as json_data:
                 self.imu_properties = json.load(json_data)
+
+    def get_file_flag(self):
+        return self.local_jsonfile_flag
 
     def find_device(self):
         ''' Finds active ports and then autobauds units

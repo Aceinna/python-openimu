@@ -62,14 +62,16 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                 fileName = ''
             
             # Load the basic openimu.json(IMU application)
-            #with open('app_config/IMU/openimu.json') as json_data:
-            #    imu.imu_properties = json.load(json_data)
             application_type = bytes.decode(imu.openimu_get_user_app_id())           
             # application_type = imu.device_id
-            for idx, item in enumerate(app_str):
-                if item in application_type:
-                    folder_path = string_folder_path.replace('APP_TYP',item)
-                    break   
+
+            if imu.get_file_flag() == False: # no local json file 
+                for idx, item in enumerate(app_str):
+                    if item in application_type:
+                        folder_path = string_folder_path.replace('APP_TYP',item)
+                        break  
+            else: #has local json file
+                folder_path = 'openimu.json'
                             
             # load application type from firmware 
             try:
