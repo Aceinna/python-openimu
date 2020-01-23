@@ -801,9 +801,7 @@ class OpenIMU:
             return False
 
         if self.ws == True:
-            self.block_blob_service = BlockBlobService(account_name='navview',
-                                                    account_key='+roYuNmQbtLvq2Tn227ELmb6s1hzavh0qVQwhLORkUpM0DN7gxFc4j+DF/rEla1EsTN2goHEA1J92moOM/lfxg==',
-                                                    protocol='http')
+            self.block_blob_service = BlockBlobService(account_name='navview', protocol='https')
             self.block_blob_service.get_blob_to_path('apps', file, file)
             self.fw = open(file, 'rb').read()
 
