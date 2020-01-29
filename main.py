@@ -4,6 +4,9 @@ import argparse
 import traceback
 from src.bootstrap.loader import Loader
 
+is_windows = sys.platform.__contains__(
+    'win32') or sys.platform.__contains__('win64')
+is_later_py_38 = sys.version_info > (3, 8)
 
 def receive_args():
     parser = argparse.ArgumentParser()
@@ -20,6 +23,11 @@ def receive_args():
 
 
 if __name__ == '__main__':
+    # compatible code for windows python 3.8
+    if is_windows and is_later_py_38:
+        import asyncio
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
     args = receive_args()
     platform = args.host
     try:
