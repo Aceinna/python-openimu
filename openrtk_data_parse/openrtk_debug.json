@@ -1,0 +1,293 @@
+{
+	"outputPackets": [
+		{
+			"name": "RawImu",
+			"messageId": "268",
+			"payload": [
+				{
+					"type": "uint32",
+					"name": "gps_week",
+					"unit": ""
+				},
+				{
+					"type": "double",
+					"name": "gps_millisecs",
+					"unit": ""
+				},
+				{
+					"type": "uint32",
+					"name": "imuStatus",
+					"unit": ""
+				},
+				{
+					"type": "float",
+					"name": "z_accel",
+					"unit": ""
+				},
+				{
+					"type": "float",
+					"name": "y_accel",
+					"unit": ""
+				},
+				{
+					"type": "float",
+					"name": "x_accel",
+					"unit": ""
+				},
+				{
+					"type": "float",
+					"name": "z_gyro",
+					"unit": ""
+				},
+				{
+					"type": "float",
+					"name": "y_gyro",
+					"unit": ""
+				},
+				{
+					"type": "float",
+					"name": "x_gyro",
+					"unit": ""
+				}
+			]
+		},
+		{
+			"name": "Position",
+			"messageId": "42",
+			"payload": [
+				{
+					"type": "uint32",
+					"name": "solution_status",
+					"unit": ""
+				},
+				{
+					"type": "uint32",
+					"name": "position_type",
+					"unit": ""
+				},
+				{
+					"type": "double",
+					"name": "latitude",
+					"unit": ""
+				},
+				{
+					"type": "double",
+					"name": "longitude",
+					"unit": ""
+				},
+				{
+					"type": "double",
+					"name": "height",
+					"unit": ""
+				},
+				{
+					"type": "float",
+					"name": "undulation",
+					"unit": ""
+				},
+				{
+					"type": "uint32",
+					"name": "datum_id",
+					"unit": ""
+				},
+				{
+					"type": "float",
+					"name": "latitude_standard_deviation",
+					"unit": ""
+				},
+				{
+					"type": "float",
+					"name": "longitude_standard_deviation",
+					"unit": ""
+				},
+				{
+					"type": "float",
+					"name": "height_standard_deviation",
+					"unit": ""
+				},
+				{
+					"type": "int8",
+					"name": "base_station_id_1",
+					"unit": ""
+				},
+				{
+					"type": "int8",
+					"name": "base_station_id_2",
+					"unit": ""
+				},
+				{
+					"type": "int8",
+					"name": "base_station_id_3",
+					"unit": ""
+				},
+				{
+					"type": "int8",
+					"name": "base_station_id_4",
+					"unit": ""
+				},
+				{
+					"type": "float",
+					"name": "differential_age",
+					"unit": ""
+				},
+				{
+					"type": "float",
+					"name": "solution_age",
+					"unit": ""
+				},
+				{
+					"type": "uint8",
+					"name": "number_of_satellites",
+					"unit": ""
+				},
+				{
+					"type": "uint8",
+					"name": "number_of_satellites_in_solution",
+					"unit": ""
+				},
+				{
+					"type": "uint8",
+					"name": "num_gps_plus_glonass_l1",
+					"unit": ""
+				},
+				{
+					"type": "uint8",
+					"name": "num_gps_plus_glonass_l2",
+					"unit": ""
+				},
+				{
+					"type": "uint8",
+					"name": "reserved",
+					"unit": ""
+				},
+				{
+					"type": "uint8",
+					"name": "extended_solution_status",
+					"unit": ""
+				},
+				{
+					"type": "uint8",
+					"name": "reserved2",
+					"unit": ""
+				},
+				{
+					"type": "uint8",
+					"name": "signals_used_mask",
+					"unit": ""
+				}
+			]
+		},
+		{
+			"name": "Velocity",
+			"messageId": "99",
+			"payload": [
+				{
+					"type": "uint32",
+					"name": "solution_status",
+					"unit": ""
+				},
+				{
+					"type": "uint32",
+					"name": "position_type",
+					"unit": ""
+				},
+				{
+					"type": "float",
+					"name": "latency",
+					"unit": ""
+				},
+				{
+					"type": "float",
+					"name": "age",
+					"unit": ""
+				},
+				{
+					"type": "double",
+					"name": "horizontal_speed",
+					"unit": ""
+				},
+				{
+					"type": "double",
+					"name": "track_over_ground",
+					"unit": ""
+				},
+				{
+					"type": "double",
+					"name": "vertical_speed",
+					"unit": ""
+				},
+				{
+					"type": "float",
+					"name": "reserved",
+					"unit": ""
+				}
+			]
+		},
+		{
+			"name": "InsPVA",
+			"messageId": "507",
+			"payload": [
+				{
+					"type": "uint32",
+					"name": "gps_week",
+					"unit": ""
+				},
+				{
+					"type": "double",
+					"name": "gps_millisecs",
+					"unit": ""
+				},
+				{
+					"type": "double",
+					"name": "latitude",
+					"unit": ""
+				},
+				{
+					"type": "double",
+					"name": "longitude",
+					"unit": ""
+				},
+				{
+					"type": "double",
+					"name": "height",
+					"unit": ""
+				},
+				{
+					"type": "double",
+					"name": "north_velocity",
+					"unit": ""
+				},
+				{
+					"type": "double",
+					"name": "east_velocity",
+					"unit": ""
+				},
+				{
+					"type": "double",
+					"name": "up_velocity",
+					"unit": ""
+				},
+				{
+					"type": "double",
+					"name": "roll",
+					"unit": ""
+				},
+				{
+					"type": "double",
+					"name": "pitch",
+					"unit": ""
+				},
+				{
+					"type": "double",
+					"name": "azimuth",
+					"unit": ""
+				},
+				{
+					"type": "int32",
+					"name": "status",
+					"unit": ""
+				}
+			]
+		}
+	]
+}
