@@ -21,7 +21,7 @@
 				},
 				{
 					"type": "float",
-					"name": "z_accel",
+					"name": "x_accel",
 					"unit": ""
 				},
 				{
@@ -31,12 +31,12 @@
 				},
 				{
 					"type": "float",
-					"name": "x_accel",
+					"name": "z_accel",
 					"unit": ""
 				},
 				{
 					"type": "float",
-					"name": "z_gyro",
+					"name": "x_gyro",
 					"unit": ""
 				},
 				{
@@ -46,7 +46,7 @@
 				},
 				{
 					"type": "float",
-					"name": "x_gyro",
+					"name": "z_gyro",
 					"unit": ""
 				}
 			]
