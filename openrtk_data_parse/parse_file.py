@@ -1,3 +1,8 @@
+import os
+import sys
+import time
+from time import sleep
+import datetime
 import collections
 import struct
 import json
@@ -163,33 +168,46 @@ class UartParse:
         crc = crc & 0xffff
         return crc
 
+def mkdir():
+    path='./' + time.strftime("%Y-%m-%d_%H-%M-%S")
+    path=path.strip()
+    path=path.rstrip("\\")
+    isExists=os.path.exists(path)
+    if not isExists:
+        os.makedirs(path)
+    return path
+
 if __name__ == "__main__":
-    print("please set data file name")
-    data_file_name = input()
+    if len(sys.argv) == 2:
+        data_file_name = str(sys.argv[1])
+        try:
+            with open(data_file_name, 'rb') as data_file:
+                data_type = 'user'
+
+                path = mkdir() # create dir
+
+                if data_type == 'user' :
+                    pos_file = open('./'+ path +'/pos.csv', 'w')
+                    sky_file = open('./'+ path +'/sky.csv', 'w')
+
+                    parse = UartParse(data_file, data_type)
+                    parse.start_pasre()
+
+                    pos_file.close
+                    sky_file.close
+                elif data_type == 'debug':
+                    imu_file = open(data_file_name+'_imu.csv', 'w')
+
+                    parse = UartParse(data_file, data_type)
+                    parse.start_pasre()
+
+                    imu_file.close
+                else:
+                    printf("data type err!")
+                
+                data_file.close
+        except FileNotFoundError:
+            print("can't find data file")
+    else:
+        print("USAGE: python .\parse_file.py [file path]")
     
-    try:
-        with open('data/'+data_file_name, 'rb') as data_file:
-            print("please set data type: user or debug")
-            data_type = input()
-            if data_type == 'user' :
-                pos_file = open(data_file_name+'_pos.csv', 'w')
-                sky_file = open(data_file_name+'_sky.csv', 'w')
-
-                parse = UartParse(data_file, data_type)
-                parse.start_pasre()
-
-                pos_file.close
-                sky_file.close
-            elif data_type == 'debug':
-                imu_file = open(data_file_name+'_imu.csv', 'w')
-
-                parse = UartParse(data_file, data_type)
-                parse.start_pasre()
-
-                imu_file.close
-            else:
-                printf("data type err!")
-            
-            data_file.close
-    except FileNotFoundError:
-        print("can't find data file")
