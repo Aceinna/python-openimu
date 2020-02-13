@@ -83,17 +83,17 @@ class P1Parse:
         output = next((x for x in self.rtk_properties['outputPackets'] if x['messageId'] == str(message_id)), None)
 
         if self.all_flag == 0:
-            self.fp_all = open("./"+self.path+"all.txt", 'w')
+            self.fp_all = open(self.path+"all.txt", 'w')
             self.all_flag = 1
 
         if message_id == 268:
             if self.rawimu_flag == 0:
-                self.fp_imu = open("./"+self.path+"imu.csv", 'w')
+                self.fp_imu = open(self.path+"imu.csv", 'w')
                 self.write_titlebar(self.fp_imu, next((x for x in self.rtk_properties['outputPackets'] if x['name'] == 'RawImu'), None))
                 self.rawimu_flag = 1
         elif message_id == 42:
             if self.position_flag == 0:
-                self.fp_pos = open("./"+self.path+"pos.csv", 'w')
+                self.fp_pos = open(self.path+"pos.csv", 'w')
                 self.fp_pos.write('gps_week')
                 self.fp_pos.write(",")
                 self.fp_pos.write('gps_millisecs')
@@ -102,7 +102,7 @@ class P1Parse:
                 self.position_flag = 1
         elif message_id == 99:
             if self.velocity_flag == 0:
-                self.fp_vel = open("./"+self.path+"vel.csv", 'w')
+                self.fp_vel = open(self.path+"vel.csv", 'w')
                 self.fp_vel.write('gps_week')
                 self.fp_vel.write(",")
                 self.fp_vel.write('gps_millisecs')
@@ -111,7 +111,7 @@ class P1Parse:
                 self.velocity_flag = 1
         elif message_id == 507:
             if self.inspva_flag == 0:
-                self.fp_ins = open("./"+self.path+"ins.csv", 'w')
+                self.fp_ins = open(self.path+"ins.csv", 'w')
                 self.write_titlebar(self.fp_ins, next((x for x in self.rtk_properties['outputPackets'] if x['name'] == 'InsPVA'), None))
                 self.inspva_flag = 1
 
@@ -320,8 +320,10 @@ if __name__ == "__main__":
         rawdata_filepath = str(sys.argv[1])
         try:
             with open(rawdata_filepath, 'rb') as fp_rawdata:
-                path = mkdir() # create dir
-                file_name = rawdata_filepath.split('\\')[-1]
+                #path = mkdir() # create dir
+                #file_name = rawdata_filepath.split('\\')[-1]
+
+                (path,file_name) = os.path.split(rawdata_filepath)
 
                 parse = P1Parse(fp_rawdata, path +'/'+ file_name + '_')
                 parse.start_pasre()

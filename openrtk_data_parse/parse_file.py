@@ -184,12 +184,14 @@ if __name__ == "__main__":
             with open(data_file_name, 'rb') as data_file:
                 data_type = 'user'
 
-                path = mkdir() # create dir
-                file_name = data_file_name.split('\\')[-1]
+                # path = mkdir() # create dir
+                # file_name = data_file_name.split('\\')[-1]
+
+                (path,file_name) = os.path.split(data_file_name)
 
                 if data_type == 'user' :
-                    pos_file = open('./'+ path +'/'+ file_name + '_pos.csv', 'w')
-                    sky_file = open('./'+ path +'/'+ file_name + '_sky.csv', 'w')
+                    pos_file = open(path +'/'+ file_name + '_pos.csv', 'w')
+                    sky_file = open(path +'/'+ file_name + '_sky.csv', 'w')
 
                     parse = UartParse(data_file, data_type)
                     parse.start_pasre()
