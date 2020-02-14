@@ -8,7 +8,6 @@ import requests
 import threading
 from azure.storage.blob import AppendBlobService
 from azure.storage.blob import ContentSettings
-from azure.storage.blob import BlockBlobService
 
 
 class FileLoger():

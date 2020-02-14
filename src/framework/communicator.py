@@ -1,15 +1,13 @@
+"""
+Communicator
+"""
 import sys
 import os
-import socket
-import select
 import time
-import datetime
 import json
-import glob
 import serial
 import serial.tools.list_ports
 from ..devices import DeviceManager
-import threading
 if sys.version_info[0] > 2:
     from queue import Queue
 else:
@@ -17,18 +15,24 @@ else:
 
 
 class CommunicatorFactory:
+    '''
+    Communicator Factory
+    '''
     @staticmethod
-    def create(type, options):
-        if type == 'uart':
+    def create(method, options):
+        '''
+        Initial communicator instance
+        '''
+        if method == 'uart':
             return SerialPort(options)
-        elif type == 'spi':
+        elif method == 'spi':
             return SPI(options)
         else:
             raise Exception('no matched communicator')
 
 
 class Communicator(object):
-    '''
+    '''Communicator base
     '''
 
     def __init__(self):
@@ -38,29 +42,45 @@ class Communicator(object):
             self.setting_folder, 'connection.json')
         self.read_size = 0
         self.device = None
-        pass
 
     def find_device(self, callback):
+        '''
+        find device, then invoke callback
+        '''
         callback()
-        pass
 
     def open(self):
-        pass
+        '''
+        open
+        '''
 
     def close(self):
-        pass
+        '''
+        close
+        '''
 
     def write(self, data, is_flush=False):
-        pass
+        '''
+        write
+        '''
 
     def read(self, size):
-        pass
+        '''
+        read
+        '''
 
     def confirm_device(self):
+        '''
+        validate the connected device
+        '''
         self.device = DeviceManager.ping(self)
 
 
 class SerialPort(Communicator):
+    '''
+    Serial Port
+    '''
+
     def __init__(self, options=None):
         super(SerialPort, self).__init__()
         self.type = 'uart'
@@ -70,10 +90,10 @@ class SerialPort(Communicator):
         self.read_size = 100
         self.baudrate_assigned = False
         # self.baudrateList = [115200]  # for test
-        self.baudrateList = [38400, 57600, 115200,
-                             230400, 460800]  # default baudrate list
+        self.baudrate_list = [38400, 57600, 115200,
+                              230400, 460800]  # default baudrate list
         if options and options.b:
-            self.baudrateList = [options.b]
+            self.baudrate_list = [options.b]
             self.baudrate_assigned = True
 
     def find_device(self, callback):
@@ -90,8 +110,11 @@ class SerialPort(Communicator):
         callback(self.device)
 
     def find_ports(self):
-        portList = list(serial.tools.list_ports.comports())
-        ports = [p.device for p in portList]
+        '''
+        Find available ports
+        '''
+        port_list = list(serial.tools.list_ports.comports())
+        ports = [p.device for p in port_list]
 
         result = []
         for port in ports:
@@ -99,45 +122,27 @@ class SerialPort(Communicator):
                 continue
             else:
                 print('Check if is a used port ' + port)
-                s = None
+                ser = None
                 try:
-                    s = serial.Serial(port)
-                    if s:
-                        s.close()
+                    ser = serial.Serial(port)
+                    if ser:
+                        ser.close()
                         result.append(port)
-                except Exception as e:
+                except Exception as ex:
                     print('port:', port, 'is in use')
-                    pass
-        # TODO: only use UART port
-        # for port in portList:
-        #     port_interface = port.interface
-        #     if not port_interface:
-        #         continue
-        #     if not port_interface.__contains__('RS232') and not port_interface.__contains__('UART'):
-        #         continue
-        #     print('Check if is a used port ' + port.device)
-        #     s = None
-        #     try:
-        #         s = serial.Serial(port.device)
-        #         if s:
-        #             s.close()
-        #             result.append(port.device)
-        #     except Exception as e:
-        #         print(e)
-        #         pass
         return result
 
     def autobaud(self, ports):
-        '''Autobauds unit - first check for stream_mode / continuous data, then check by polling unit
+        '''Autobauds unit - first check for stream_mode/continuous data, then check by polling unit
            Converts resets polled unit (temporarily) to 100Hz ODR
            :returns:
                 true when successful
         '''
         print('start to connect serial port')
-        bandListFromOptions = self.baudrateList
+        baudrate_list_from_options = self.baudrate_list
 
         for port in ports:
-            for baud in bandListFromOptions:
+            for baud in baudrate_list_from_options:
                 print("try {0}:{1}".format(port, baud))
                 self.open(port, baud)
                 if self.serial_port is not None:
@@ -164,7 +169,8 @@ class SerialPort(Communicator):
 
             with open(self.connection_file) as json_data:
                 connection = json.load(json_data)
-            connection['baud'] = self.baudrateList[0] if self.baudrate_assigned else connection['baud']
+            connection['baud'] = self.baudrate_list[0] if self.baudrate_assigned \
+                else connection['baud']
             print('try to use last connected port',
                   connection['port'], connection['baud'])
             if connection:
@@ -181,11 +187,14 @@ class SerialPort(Communicator):
                         return True
                 else:
                     return False
-        except Exception as e:
-            print(e)
+        except Exception as ex:
+            print(ex)
             return False
 
     def save_last_port(self):
+        '''
+        save connected port info
+        '''
         if not os.path.exists(self.setting_folder):
             try:
                 os.mkdir(self.setting_folder)
@@ -207,8 +216,7 @@ class SerialPort(Communicator):
         try:
             self.serial_port = serial.Serial(port, baud, timeout=timeout)
             return True
-        except Exception as e:
-            # TODO: compatible for py 2.x
+        except Exception as ex:
             print('{0} : {1} open failed'.format(port, baud))
             if self.serial_port is not None:
                 if self.serial_port.isOpen():
@@ -237,7 +245,7 @@ class SerialPort(Communicator):
             if is_flush:
                 self.serial_port.flush()
             return len_of_data
-        except Exception as e:
+        except Exception as ex:
             # print(e)
             raise
 
@@ -254,7 +262,7 @@ class SerialPort(Communicator):
             print(
                 'Serial Exception! Please check the serial port connector is stable or not.')
             raise
-        except Exception as e:
+        except Exception as ex:
             # print(e)
             raise
 
@@ -265,12 +273,16 @@ class SerialPort(Communicator):
         return self.close_serial_port()
 
     def reset_buffer(self):
+        '''
+        reset buffer
+        '''
         self.serial_port.flushInput()
         self.serial_port.flushOutput()
-        pass
 
 
 class SPI(Communicator):
-    def __init__(self):
+    '''SPI'''
+
+    def __init__(self, options=None):
+        super().__init__()
         self.type = 'spi'
-        pass

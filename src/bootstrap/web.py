@@ -1,26 +1,36 @@
-import sys
+"""
+Websocket server entry
+"""
 import json
+import traceback
 import tornado.websocket
 import tornado.ioloop
 import tornado.httpserver
 import tornado.web
-import traceback
-from .base import BootstrapBase
 from ..framework.communicator import CommunicatorFactory
-from ..framework.context import app_context
+from ..framework.context import APP_CONTEXT
 from ..framework.file_storage import FileLoger
 from ..framework.utils import helper
 
+VERSION = '2.0.0'
+
 
 class WSHandler(tornado.websocket.WebSocketHandler):
+    '''
+    Websocket handler
+    '''
     is_streaming = False
     is_logging = False
     latest_packet_collection = []
     file_logger = None
     packet_white_list = ['ping', 'upgrade_progress',
                          'upgrade_complete', 'mag_status']
+    period_output_callback = None
 
     def initialize(self, server):
+        '''
+        Websocket handler initialize
+        '''
         server.ws_handler = self
 
     def open(self):
@@ -33,7 +43,6 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         self.file_logger = FileLoger(self.get_device().properties)
 
         self.response_server_info()  # response server info at first time connected
-        pass
 
     def on_message(self, message):
         client_msg = json.loads(message)
@@ -42,8 +51,8 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         if method:
             try:
                 self.handle_message(method, parameters)
-            except Exception as e:
-                print('websocket on message error', e)
+            except Exception as ex:  # pylint:disable=broad-except
+                print('websocket on message error', ex)
                 traceback.print_exc()
                 self.response_message(
                     method, {'packetType': 'error', 'data': 'sever error'})
@@ -54,7 +63,8 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         self.reset()
         try:
             self.period_output_callback.stop()
-        except Exception as e:
+        except:  # pylint:disable=bare-except
+            # need log exception
             pass
         self.get_device().remove_client(self)
         print('close client count:', len(self.get_device().clients))
@@ -63,9 +73,15 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         return True
 
     def get_device(self):
-        return app_context.get_app().get_device()
+        '''
+        Get device
+        '''
+        return APP_CONTEXT.get_app().get_device()
 
     def on_receive_output_packet(self, method, packet_type, data):
+        '''
+        Listenr for receive output packet
+        '''
         data_updated = False
         for item in self.latest_packet_collection:
             if item['packet_type'] == packet_type:
@@ -73,7 +89,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                 data_updated = True
                 break
 
-        if data_updated == False:
+        if not data_updated:
             self.latest_packet_collection.append({
                 'packet_type': packet_type,
                 'data': data
@@ -83,12 +99,18 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             self.file_logger.append(packet_type, data)
 
     def reset(self):
+        '''
+        Reset status
+        '''
         self.is_streaming = False
         self.is_logging = False
         if self.file_logger:
             self.file_logger.stop_user_log()
 
     def handle_message(self, method, parameters):
+        '''
+        Handle received message
+        '''
         device = self.get_device()
 
         if device and device.connected and hasattr(device, method):
@@ -98,6 +120,9 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             getattr(self, method, None)(parameters)
 
     def response_message(self, method, data):
+        '''
+        Format response
+        '''
         self.write_message(
             json.dumps(
                 {
@@ -107,6 +132,9 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             ))
 
     def response_unkonwn_method(self):
+        '''
+        Format unknonwn method message
+        '''
         self.write_message(
             json.dumps({
                 'method': 'unknown',
@@ -120,21 +148,26 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         )
 
     def response_server_info(self):
+        '''
+        Send webserver info
+        '''
         self.write_message(
             json.dumps({
                 'method': 'stream',
                 'result': {
                     'packetType': 'serverInfo',
                     'data': {
-                        'version': '2.0.0',
+                        'version': VERSION,
                         'serverUpdateRate': self.get_device().server_update_rate
                     }
                 }
             })
         )
-        pass
 
     def response_output_packet(self):
+        '''
+        Response streaming data
+        '''
         for latest_packet in self.latest_packet_collection:
             if latest_packet['packet_type'] in self.packet_white_list or self.is_streaming:
                 self.write_message(
@@ -151,15 +184,24 @@ class WSHandler(tornado.websocket.WebSocketHandler):
 
     # protocol
 
-    def startStream(self, *args):
+    def startStream(self, *args):  # pylint: disable=invalid-name
+        '''
+        Start to send stream data
+        '''
         self.response_message('startStream', {'packetType': 'success'})
         self.is_streaming = True
 
-    def stopStream(self, *args):
+    def stopStream(self, *args):  # pylint: disable=invalid-name
+        '''
+        Stop sending stream data
+        '''
         self.response_message('stopStream', {'packetType': 'success'})
         self.is_streaming = False
 
-    def startLog(self, *args):
+    def startLog(self, *args):  # pylint: disable=invalid-name
+        '''
+        Start record log
+        '''
         parameters = args[0]
         self.file_logger.set_info(self.get_device().get_log_info())
         self.file_logger.set_user_id(parameters['id'])
@@ -169,37 +211,56 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         self.response_message(
             'startLog', {'packetType': 'success', 'data': parameters['fileName']+'.csv'})
 
-    def stopLog(self, *args):
+    def stopLog(self, *args):  # pylint: disable=invalid-name
+        '''
+        Stop record log
+        '''
         self.file_logger.stop_user_log()
         self.is_logging = False
         self.response_message('stopLog', {'packetType': 'success', 'data': ''})
 
 
 class Webserver:
+    '''
+    Websocket server
+    '''
+
     def __init__(self, options):
         self.communication = 'uart'
         self.options = options
         self.device_provider = None
         self.communicator = None
         self.ws_handler = None
-        pass
+        self.http_server = None
 
     def listen(self):
+        '''
+        Start to find device
+        '''
         print('start web listen')
         self.detect_device(self.device_discover_handler)
 
     def get_device(self):
+        '''
+        Get device provider
+        '''
         if self.device_provider is not None:
             return self.device_provider
         return None
 
     def device_discover_handler(self, device_provider):
+        '''
+        Handler after device discovered
+        '''
         # load device provider
         self.load_device_provider(device_provider)
         # start websocket server
         self.start_websocket_server()
 
     def device_rediscover_handler(self, device_provider):
+        '''
+        Handler after device rediscovered
+        '''
         if self.device_provider.device_info['sn'] == device_provider.device_info['sn']:
             if self.ws_handler:
                 self.ws_handler.on_receive_output_packet(
@@ -213,6 +274,9 @@ class Webserver:
         self.load_device_provider(device_provider)
 
     def device_complete_upgrade_handler(self, device_provider):
+        '''
+        Handler after device upgrade complete
+        '''
         if self.device_provider.device_info['sn'] == device_provider.device_info['sn']:
             if self.ws_handler:
                 self.ws_handler.on_receive_output_packet(
@@ -227,15 +291,20 @@ class Webserver:
         self.device_provider.upgrade_completed(self.options)
 
     def load_device_provider(self, device_provider):
+        '''
+        Load device provider
+        '''
         self.device_provider = device_provider
         self.device_provider.setup(self.options)
         self.device_provider.on('exception', self.handle_device_exception)
         self.device_provider.on(
             'complete_upgrade', self.handle_device_complete_upgrade)
         # self.device_provider.on('data', self.handle_receive_device_data)
-        pass
 
     def start_websocket_server(self):
+        '''
+        Initial websocket server
+        '''
         # add ws handler as a member
         try:
             application = tornado.web.Application(
@@ -244,11 +313,14 @@ class Webserver:
             self.http_server.listen(self.options.p)
             print('Websocket server is started on port', self.options.p)
             tornado.ioloop.IOLoop.instance().start()
-        except Exception as e:
+        except Exception:
             print('Cannot start a websocket server, please check if the port is in use')
             raise
 
     def handle_device_exception(self, error, message):
+        '''
+        Handle device exception
+        '''
         if self.ws_handler:
             self.ws_handler.reset()
             self.ws_handler.on_receive_output_packet(
@@ -258,6 +330,9 @@ class Webserver:
         self.detect_device(self.device_rediscover_handler)
 
     def handle_device_complete_upgrade(self):
+        '''
+        Handle device complete upgrade
+        '''
         self.communicator.reset_buffer()
         self.communicator.close()
         # self.device_provider.reset()
@@ -268,6 +343,7 @@ class Webserver:
     #     pass
 
     def detect_device(self, callback):
+        '''find if there is a connected device'''
         print('start to find device')
         if self.communicator is None:
             self.communicator = CommunicatorFactory.create(
@@ -276,5 +352,6 @@ class Webserver:
         self.communicator.find_device(callback)
 
     def stop(self):
+        '''close websocket server'''
         if self.http_server is not None:
             self.http_server.stop()

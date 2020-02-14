@@ -1,20 +1,24 @@
 import os
-import collections
-import requests
 import time
-import struct
 import json
 import binascii
 import math
 #import asyncio
 import datetime
 import threading
+import requests
 from ...framework.utils import helper
 from ..base.uart_base import OpenDeviceBase
-from ..configs.openimu_predefine import *
+from ..configs.openimu_predefine import (
+    APP_URL_BASE, APP_STR, get_app_names
+)
 
 
 class Provider(OpenDeviceBase):
+    '''
+    OpenIMU UART provider
+    '''
+
     def __init__(self, communicator):
         super(Provider, self).__init__(communicator)
         self.type = 'IMU'
@@ -22,9 +26,15 @@ class Provider(OpenDeviceBase):
         self.is_logging = False
         self.is_mag_align = False
         self.bootloader_baudrate = 57600
-        pass
+        self.device_info = None
+        self.app_info = None
+        self.app_config_folder = ''
+        self.parameters = None
 
     def ping(self):
+        '''
+        Check if the connected device is OpenIMU
+        '''
         print('start to check if it is openimu')
         device_info_text = self.internal_input_command('pG')
         app_info_text = self.internal_input_command('gV')
@@ -38,21 +48,27 @@ class Provider(OpenDeviceBase):
         return False
 
     def build_device_info(self, text):
+        '''
+        Build device info
+        '''
         split_text = text.split(' ')
         split_len = len(split_text)
         pre_sn = split_text[3].split(':') if split_len == 4 else ''
-        sn = pre_sn[1] if len(pre_sn) == 2 else ''
+        serial_num = pre_sn[1] if len(pre_sn) == 2 else ''
         self.device_info = {
             'name': split_text[0],
             'pn': split_text[1],
             'firmware_version': split_text[2],
-            'sn': sn
+            'sn': serial_num
         }
 
     def build_app_info(self, text):
+        '''
+        Build app info
+        '''
         split_text = text.split(' ')
         app_name = next(
-            (item for item in app_str if item in split_text), 'IMU')
+            (item for item in APP_STR if item in split_text), 'IMU')
 
         self.app_info = {
             'app_name': app_name,
@@ -79,36 +95,48 @@ class Provider(OpenDeviceBase):
             try:
                 print(
                     'downloading config json files from github, please waiting for a while')
-                r = requests.get(app_url_base + '/' +
-                                 app_name + '/openimu.json')
-                r.raise_for_status()
-                r.close()
+                http_req = requests.get(
+                    APP_URL_BASE + '/' + app_name + '/openimu.json')
+                http_req.raise_for_status()
+                http_req.close()
                 with open(app_file_path, "wb") as code:
-                    code.write(r.content)
+                    code.write(http_req.content)
                     exist_json_file = True
-            except Exception as e:
+            except Exception as ex:
                 exist_json_file = False
-                print(e)
+                print(ex)
                 raise
 
         if exist_json_file:
             with open(app_file_path) as json_data:
                 self.properties = json.load(json_data)
 
-    def on_receive_output_packet(self, packet_type, data, error=None):
+    def on_receive_output_packet(self, packet_type, data):
+        '''
+        Listener for getting output packet
+        '''
         self.add_output_packet('stream', packet_type, data)
 
     def on_receive_input_packet(self, packet_type, data, error):
+        '''
+        Listener for getting input command packet
+        '''
         #print('input packet', packet_type, data)
         self.input_result = {'packet_type': packet_type,
                              'data': data, 'error': error}
 
     def on_receive_bootloader_packet(self, packet_type, data, error):
+        '''
+        Listener for getting bootloader command packet
+        '''
         print('bootloader', packet_type, data)
         self.bootloader_result = {'packet_type': packet_type,
                                   'data': data, 'error': error}
 
     def get_input_result(self, packet_type, timeout=1):
+        '''
+        Get input command result
+        '''
         result = {'data': None, 'error': None}
         start_time = datetime.datetime.now()
         end_time = datetime.datetime.now()
@@ -135,6 +163,9 @@ class Provider(OpenDeviceBase):
         return result
 
     def get_bootloader_result(self, packet_type, timeout=1):
+        '''
+        Get bootloader result
+        '''
         result = {'data': None, 'error': None}
         start_time = datetime.datetime.now()
         end_time = datetime.datetime.now()
@@ -150,7 +181,8 @@ class Provider(OpenDeviceBase):
             print('get bootloader packet in:',
                   span.total_seconds() if span else 0, 's')
 
-        if self.bootloader_result is not None and self.bootloader_result['packet_type'] == packet_type:
+        if self.bootloader_result is not None and \
+           self.bootloader_result['packet_type'] == packet_type:
             result = self.bootloader_result.copy()
         else:
             result['data'] = 'Command timeout'
@@ -161,8 +193,11 @@ class Provider(OpenDeviceBase):
         return result
 
     def get_log_info(self):
+        '''
+        Build information for log
+        '''
         packet_rate = next(
-            (item['value'] for item in self.parameters if x['name'] == 'Packet Rate'), '100')
+            (item['value'] for item in self.parameters if item['name'] == 'Packet Rate'), '100')
         return {
             "type": self.type,
             "model": self.device_info['name'],
@@ -170,34 +205,42 @@ class Provider(OpenDeviceBase):
                 "pn": self.device_info['pn'],
                 "sn": self.device_info['sn'],
                 "sampleRate": packet_rate,
-                "appVersion": self.app_info.version,
+                "appVersion": self.app_info['version'],
                 "imuProperties": json.dumps(self.properties)
             }
         }
 
     # command list
-    def getDeviceInfo(self, *args):
+    def getDeviceInfo(self, *args):  # pylint: disable=invalid-name
+        '''
+        Get device information
+        '''
         return {
             'packetType': 'deviceInfo',
             'data':  [
-                          {'name': 'Product Name',
-                              'value': self.device_info['name']},
-                          {'name': 'PN', 'value': self.device_info['pn']},
-                          {'name': 'Firmware Version',
-                           'value': self.device_info['firmware_version']},
-                          {'name': 'SN', 'value': self.device_info['sn']},
-                          {'name': 'App Version',
-                              'value': self.app_info['version']}
+                {'name': 'Product Name',
+                 'value': self.device_info['name']},
+                {'name': 'PN', 'value': self.device_info['pn']},
+                {'name': 'Firmware Version',
+                 'value': self.device_info['firmware_version']},
+                {'name': 'SN', 'value': self.device_info['sn']},
+                {'name': 'App Version', 'value': self.app_info['version']}
             ]
         }
 
-    def getConf(self, *args):
+    def getConf(self, *args):  # pylint: disable=invalid-name
+        '''
+        Get json configuration
+        '''
         return {
             'packetType': 'conf',
             'data': self.properties
         }
 
-    def getParams(self, *args):
+    def getParams(self, *args):  # pylint: disable=invalid-name
+        '''
+        Get all parameters
+        '''
         command_line = helper.build_input_packet('gA')
         self.communicator.write(command_line)
         result = self.get_input_result('gA', timeout=2)
@@ -214,7 +257,10 @@ class Provider(OpenDeviceBase):
                 'data': 'No Response'
             }
 
-    def setParams(self, params, *args):
+    def setParams(self, params, *args):  # pylint: disable=invalid-name
+        '''
+        Update paramters value
+        '''
         for parameter in params:
             result = self.setParam(parameter)
             if result['packetType'] == 'error':
@@ -239,10 +285,10 @@ class Provider(OpenDeviceBase):
             }
         }
 
-    def getParameter(self, name, *args):
-        pass
-
-    def setParam(self, params, *args):
+    def setParam(self, params, *args):  # pylint: disable=invalid-name
+        '''
+        Update paramter value
+        '''
         command_line = helper.build_input_packet(
             'uP', properties=self.properties, param=params['paramId'], value=params['value'])
         self.communicator.write(command_line)
@@ -263,7 +309,10 @@ class Provider(OpenDeviceBase):
                 }
             }
 
-    def saveConfig(self, *args):
+    def saveConfig(self, *args):  # pylint: disable=invalid-name
+        '''
+        Save configuration
+        '''
         command_line = helper.build_input_packet('sC')
         self.communicator.write(command_line)
 
@@ -279,15 +328,17 @@ class Provider(OpenDeviceBase):
                 'packetType': 'success',
                 'data': result['error']
             }
-        pass
 
-    def magAlignStart(self, *args):
+    def magAlignStart(self, *args):  # pylint: disable=invalid-name
+        '''
+        Start mag align action
+        '''
         if not self.is_mag_align:
             self.is_mag_align = True
 
-            t = threading.Thread(
+            thread = threading.Thread(
                 target=self.thread_do_mag_align, args=())
-            t.start()
+            thread.start()
             print("Thread mag align start at:[{0}].".format(
                 datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
         return {
@@ -295,6 +346,9 @@ class Provider(OpenDeviceBase):
         }
 
     def thread_do_mag_align(self):
+        '''
+        Do mag align
+        '''
         try:
             command_line = helper.build_input_packet(
                 'ma', self.properties, 'start')
@@ -320,20 +374,23 @@ class Provider(OpenDeviceBase):
             result = self.get_input_result('ma', timeout=2)
 
             decoded_status = binascii.hexlify(result['data'])
-            mag_value = self.decodeOutput(decoded_status)
+            mag_value = self.decode_mag_align_output(decoded_status)
             self.is_mag_align = False
 
             self.add_output_packet('stream', 'mag_status', {
                 'status': 'complete',
                 'value': mag_value
             })
-        except Exception as e:
+        except Exception:  # pylint: disable=broad-except
             self.is_mag_align = False
             self.add_output_packet('stream', 'mag_status', {
                 'status': 'error'
             })
 
-    def magAlignAbort(self, *args):
+    def magAlignAbort(self, *args):  # pylint: disable=invalid-name
+        '''
+        Abort mag align action
+        '''
         self.is_mag_align = False
         command_line = helper.build_input_packet(
             'ma', self.properties, 'abort')
@@ -352,7 +409,10 @@ class Provider(OpenDeviceBase):
                 'packetType': 'success'
             }
 
-    def magAlignSave(self, *args):
+    def magAlignSave(self, *args):  # pylint: disable=invalid-name
+        '''
+        Save mag align resut
+        '''
         command_line = helper.build_input_packet(
             'ma', self.properties, 'save')
         self.communicator.write(command_line)
@@ -370,25 +430,28 @@ class Provider(OpenDeviceBase):
                 'packetType': 'success'
             }
 
-    def decodeOutput(self, value):
+    def decode_mag_align_output(self, value):
+        '''
+        decode mag align output
+        '''
         hard_iron_x = dict()
         hard_iron_y = dict()
         soft_iron_ratio = dict()
         soft_iron_angle = dict()
 
-        hard_iron_x['value'] = self.hardIronCal(value[16:20], 'axis')
+        hard_iron_x['value'] = self.hard_iron_cal(value[16:20], 'axis')
         hard_iron_x['name'] = 'Hard Iron X'
         hard_iron_x['argument'] = 'hard_iron_x'
 
-        hard_iron_y['value'] = self.hardIronCal(value[20:24], 'axis')
+        hard_iron_y['value'] = self.hard_iron_cal(value[20:24], 'axis')
         hard_iron_y['name'] = 'Hard Iron Y'
         hard_iron_y['argument'] = 'hard_iron_y'
 
-        soft_iron_ratio['value'] = self.hardIronCal(value[24:28], 'ratio')
+        soft_iron_ratio['value'] = self.hard_iron_cal(value[24:28], 'ratio')
         soft_iron_ratio['name'] = 'Soft Iron Ratio'
         soft_iron_ratio['argument'] = 'soft_iron_ratio'
 
-        soft_iron_angle['value'] = self.hardIronCal(value[28:32], 'angle')
+        soft_iron_angle['value'] = self.hard_iron_cal(value[28:32], 'angle')
         soft_iron_angle['name'] = 'Soft Iron Angle'
         soft_iron_angle['argument'] = 'soft_iron_angle'
 
@@ -396,29 +459,35 @@ class Provider(OpenDeviceBase):
 
         return output
 
-    def hardIronCal(self, value, type):
-        decodedValue = int(value, 16)
+    def hard_iron_cal(self, value, data_type):
+        '''
+        convert hard iron value
+        '''
+        decoded_value = int(value, 16)
         # print (decodedValue)
-        if type == 'axis':
-            if decodedValue > 2 ** 15:
-                newDecodedValue = (decodedValue - 2 ** 16)
-                return newDecodedValue / float(2 ** 15) * 8
+        if data_type == 'axis':
+            if decoded_value > 2 ** 15:
+                new_decoded_value = (decoded_value - 2 ** 16)
+                return new_decoded_value / float(2 ** 15) * 8
             else:
-                return decodedValue / float(2 ** 15) * 8
+                return decoded_value / float(2 ** 15) * 8
 
-        if type == 'ratio':
-            return decodedValue / float(2 ** 16 - 1)
+        if data_type == 'ratio':
+            return decoded_value / float(2 ** 16 - 1)
 
-        if type == 'angle':
-            if decodedValue > 2 ** 15:
-                decodedValue = decodedValue - 2 ** 16
-                piValue = 2 ** 15 / math.pi
-                return decodedValue / piValue
+        if data_type == 'angle':
+            if decoded_value > 2 ** 15:
+                decoded_value = decoded_value - 2 ** 16
+                pi_value = 2 ** 15 / math.pi
+                return decoded_value / pi_value
 
-            piValue = 2 ** 15 / math.pi
-            return decodedValue / piValue
+            pi_value = 2 ** 15 / math.pi
+            return decoded_value / pi_value
 
-    def upgradeFramework(self, file, *args):
+    def upgradeFramework(self, file, *args):  # pylint: disable=invalid-name
+        '''
+        upgrade framework
+        '''
         # start a thread to do upgrade
         if not self.is_upgrading:
             self.is_upgrading = True
@@ -426,9 +495,9 @@ class Provider(OpenDeviceBase):
             if self._logger is not None:
                 self._logger.stop_user_log()
 
-            t = threading.Thread(
+            thead = threading.Thread(
                 target=self.thread_do_upgrade_framework, args=(file,))
-            t.start()
+            thead.start()
             print("Thread upgarde framework OpenIMU start at:[{0}].".format(
                 datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
         return {

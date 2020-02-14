@@ -1,14 +1,19 @@
+"""
+Application Entry
+"""
 import os
 import sys
 import argparse
-import traceback
+#import traceback
 from src.bootstrap.loader import Loader
 
-is_windows = sys.platform.__contains__(
+IS_WINDOWS = sys.platform.__contains__(
     'win32') or sys.platform.__contains__('win64')
-is_later_py_38 = sys.version_info > (3, 8)
+IS_LATER_PY_38 = sys.version_info > (3, 8)
 
 def receive_args():
+    """parse input arguments
+    """
     parser = argparse.ArgumentParser()
     parser.description = argparse.ArgumentParser(
         description='Aceinna python driver input args command:')
@@ -24,20 +29,20 @@ def receive_args():
 
 if __name__ == '__main__':
     # compatible code for windows python 3.8
-    if is_windows and is_later_py_38:
+    if IS_WINDOWS and IS_LATER_PY_38:
         import asyncio
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
-    args = receive_args()
-    platform = args.host
+    ARGS = receive_args()
+    PLATFORM = ARGS.host
     try:
-        app = Loader.create(platform, options=args)
-        app.listen()
+        APP = Loader.create(PLATFORM, options=ARGS)
+        APP.listen()
     except KeyboardInterrupt:  # response for KeyboardInterrupt such as Ctrl+C
         print('User stop this program by KeyboardInterrupt! File:[{0}], Line:[{1}]'.format(
             __file__, sys._getframe().f_lineno))
-        app.stop()
+        APP.stop()
         sys.exit()
-    except Exception as e:
+    except Exception:
         # traceback.print_exc() # For development
         os._exit(1)

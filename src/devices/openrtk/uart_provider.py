@@ -1,27 +1,33 @@
 import os
-import collections
-import requests
-import time
-import struct
 import json
-from ...framework.utils import helper
-from ..base.uart_base import OpenDeviceBase
-from ..configs.openrtk_predefine import *
-# import asyncio
 import datetime
 import threading
+from ...framework.utils import helper
+from ..base.uart_base import OpenDeviceBase
+from ..configs.openrtk_predefine import JSON_FILE_NAME
+# import asyncio
 
 
 class Provider(OpenDeviceBase):
+    '''
+    OpenRTK UART provider
+    '''
+
     def __init__(self, communicator):
         super(Provider, self).__init__(communicator)
         self.type = 'RTK'
         self.server_update_rate = 100
         self.sky_data = []
         self.bootloader_baudrate = 115200
-        pass
+        self.app_config_folder = ''
+        self.device_info = None
+        self.app_info = None
+        self.parameters = None
 
     def ping(self):
+        '''
+        Check if the connected device is OpenRTK
+        '''
         print('start to check if it is openrtk')
         device_info_text = self.internal_input_command('pG')
         app_info_text = self.internal_input_command('gV')
@@ -34,6 +40,9 @@ class Provider(OpenDeviceBase):
         return False
 
     def build_device_info(self, text):
+        '''
+        Build device info
+        '''
         split_text = text.split(' ')
         self.device_info = {
             'name': split_text[0],
@@ -44,6 +53,9 @@ class Provider(OpenDeviceBase):
         }
 
     def build_app_info(self, text):
+        '''
+        Build app info
+        '''
         self.app_info = {
             'version': text
         }
@@ -52,13 +64,13 @@ class Provider(OpenDeviceBase):
         self.app_config_folder = os.path.join(
             os.getcwd(), 'setting', 'openrtk')
 
-        with open(os.path.join(self.app_config_folder, json_file_name)) as json_data:
+        with open(os.path.join(self.app_config_folder, JSON_FILE_NAME)) as json_data:
             self.properties = json.load(json_data)
 
-        # TODO: maybe we need a base config file
-        pass
-
-    def on_receive_output_packet(self, packet_type, data, error=None):
+    def on_receive_output_packet(self, packet_type, data):
+        '''
+        Listener for getting output packet
+        '''
         if packet_type == 'pS':
             self.add_output_packet('stream', 'pos', data)
 
@@ -76,18 +88,28 @@ class Provider(OpenDeviceBase):
 
         else:
             output_packet_config = next(
-                (x for x in self.properties['userMessages']['outputPackets'] if x['name'] == packet_type), None)
-            if output_packet_config and output_packet_config.__contains__('from') and output_packet_config['from'] == 'imu':
+                (x for x in self.properties['userMessages']['outputPackets']
+                 if x['name'] == packet_type), None)
+            if output_packet_config and output_packet_config.__contains__('from') \
+                    and output_packet_config['from'] == 'imu':
                 self.add_output_packet('stream', 'imu', data)
 
     def on_receive_input_packet(self, packet_type, data, error):
+        '''
+        Listener for getting input command packet
+        '''
         self.input_result = {'packet_type': packet_type,
                              'data': data, 'error': error}
 
-    def on_receive_bootloader_packet(self, packt_type, data, error):
-        pass
+    def on_receive_bootloader_packet(self, packet_type, data, error):
+        '''
+        Listener for getting bootloader command packet
+        '''
 
     def get_input_result(self, packet_type, timeout=1):
+        '''
+        Get input command result
+        '''
         result = {'data': None, 'error': None}
         start_time = datetime.datetime.now()
         end_time = datetime.datetime.now()
@@ -101,7 +123,8 @@ class Provider(OpenDeviceBase):
 
         # if self.input_result:
         #     print('get input packet in:',
-        #           span.total_seconds() if span else 0, 's', ',packet type:', self.input_result['packet_type'], packet_type)
+        #           span.total_seconds() if span \
+        #           else 0, 's', ',packet type:', self.input_result['packet_type'], packet_type)
 
         if self.input_result is not None and self.input_result['packet_type'] == packet_type:
             result = self.input_result.copy()
@@ -114,30 +137,36 @@ class Provider(OpenDeviceBase):
         return result
 
     # command list
-    def serverStatus(self, *args):
+    def serverStatus(self, *args):  # pylint: disable=invalid-name
+        '''
+        Get server connection status
+        '''
         return {
             'packetType': 'ping',
             'data': {'status': '1'}
         }
 
-    def getDeviceInfo(self, *args):
+    def getDeviceInfo(self, *args):  # pylint: disable=invalid-name
+        '''
+        Get device information
+        '''
         return {
             'packetType': 'deviceInfo',
             'data':  [
-                          {'name': 'Product Name',
-                              'value': self.device_info['name']},
-                          {'name': 'IMU',
-                              'value': self.device_info['imu']},
-                          {'name': 'PN', 'value': self.device_info['pn']},
-                          {'name': 'Firmware Version',
-                           'value': self.device_info['firmware_version']},
-                          {'name': 'SN', 'value': self.device_info['sn']},
-                          {'name': 'App Version',
-                              'value': self.app_info['version']}
+                {'name': 'Product Name', 'value': self.device_info['name']},
+                {'name': 'IMU', 'value': self.device_info['imu']},
+                {'name': 'PN', 'value': self.device_info['pn']},
+                {'name': 'Firmware Version',
+                 'value': self.device_info['firmware_version']},
+                {'name': 'SN', 'value': self.device_info['sn']},
+                {'name': 'App Version', 'value': self.app_info['version']}
             ]
         }
 
-    def get_log_info(self):
+    def get_log_info(self):  # pylint: disable=invalid-name
+        '''
+        Build information for log
+        '''
         return {
             "type": self.type,
             "model": self.device_info['name'],
@@ -148,7 +177,10 @@ class Provider(OpenDeviceBase):
             }
         }
 
-    def getConf(self, *args):
+    def getConf(self, *args):  # pylint: disable=invalid-name
+        '''
+        Get json configuration
+        '''
         return {
             'packetType': 'conf',
             'data': {
@@ -157,7 +189,10 @@ class Provider(OpenDeviceBase):
             }
         }
 
-    def getParams(self, *args):
+    def getParams(self, *args):  # pylint: disable=invalid-name
+        '''
+        Get all parameters
+        '''
         command_line = helper.build_input_packet('gA')
         self.communicator.write(command_line)
         result = self.get_input_result('gA', timeout=2)
@@ -174,7 +209,10 @@ class Provider(OpenDeviceBase):
                 'data': 'No Response'
             }
 
-    def setParams(self, params, *args):
+    def setParams(self, params, *args):  # pylint: disable=invalid-name
+        '''
+        Update paramters value
+        '''
         for parameter in params:
             result = self.setParam(parameter)
             if result['packetType'] == 'error':
@@ -199,7 +237,10 @@ class Provider(OpenDeviceBase):
             }
         }
 
-    def setParam(self, params, *args):
+    def setParam(self, params, *args):  # pylint: disable=invalid-name
+        '''
+        Update paramter value
+        '''
         command_line = helper.build_input_packet(
             'uP', properties=self.properties, param=params['paramId'], value=params['value'])
         self.communicator.write(command_line)
@@ -220,7 +261,10 @@ class Provider(OpenDeviceBase):
                 }
             }
 
-    def saveConfig(self, *args):
+    def saveConfig(self, *args):  # pylint: disable=invalid-name
+        '''
+        Save configuration
+        '''
         command_line = helper.build_input_packet('sC')
         self.communicator.write(command_line)
 
@@ -236,15 +280,21 @@ class Provider(OpenDeviceBase):
                 'packetType': 'success',
                 'data': result['error']
             }
-        pass
 
-    def startLog(self, params, *args):
-        pass
+    def startLog(self, params, *args):  # pylint: disable=invalid-name
+        '''
+        Start to log
+        '''
 
-    def stopLog(self, params, * args):
-        pass
+    def stopLog(self, params, * args):  # pylint: disable=invalid-name
+        '''
+        Stop logging
+        '''
 
-    def upgradeFramework(self, file, *args):
+    def upgradeFramework(self, file, *args):  # pylint: disable=invalid-name
+        '''
+        Upgrade framework
+        '''
         # start a thread to do upgrade
         if not self.is_upgrading:
             self.is_upgrading = True
@@ -252,9 +302,9 @@ class Provider(OpenDeviceBase):
             if self._logger is not None:
                 self._logger.stop_user_log()
 
-            t = threading.Thread(
+            thread = threading.Thread(
                 target=self.thread_do_upgrade_framework, args=(file,))
-            t.start()
+            thread.start()
             print("Thread upgarde framework OpenRTK start at:[{0}].".format(
                 datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
         return {

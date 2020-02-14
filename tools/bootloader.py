@@ -1,16 +1,15 @@
+# pylint: skip-file
 """
 Driver for Aceinna OpenIMU Series Products
 Based on PySerial https://github.com/pyserial/pyserial
 Created on 2019-08-30
 @author: m5horton
-"""
 
 
-"""
 command line: python bootloader.py <binary image name>
 
 
-WS Master Connection 
+WS Master Connection
 connect         - finds device, gets device_id/odr_setting, and loops
                 - run this in thread otherwise blocking
 disconnect      - ends loop
@@ -36,7 +35,7 @@ start_bootloader
 write_block
 start_app
 
-Syncing 
+Syncing
 sync            - trys to sync to a unit continuously transmitting
 set_quiet       - sets unit to stop continuous transmission (stream_mode = 0)
 restore_odr     - restores unit to whatever odr_setting is
@@ -58,7 +57,6 @@ reset_buffer
 
 Ping
 ping_test
-
 """
 
 
@@ -105,7 +103,9 @@ class OpenIMU:
     def find_ports(self):
         ''' Lists serial port names. Code from
             https://stackoverflow.com/questions/12090503/listing-available-com-ports-with-python
-            Successfully tested on Windows 8.1 x64, Windows 10 x64, Mac OS X 10.9.x / 10.10.x / 10.11.x and Ubuntu 14.04 / 14.10 / 15.04 / 15.10 with both Python 2 and Python 3.
+            Successfully tested on
+            Windows 8.1 x64, Windows 10 x64, Mac OS X 10.9.x / 10.10.x / 10.11.x and
+            Ubuntu 14.04 / 14.10 / 15.04 / 15.10 with both Python 2 and Python 3.
             :raises EnvironmentError:
                 On unsupported or unknown platforms
             :returns:
@@ -134,8 +134,9 @@ class OpenIMU:
         return result
 
     def autobaud(self, ports):
-        '''Autobauds unit - first check for stream_mode / continuous data, then check by polling unit
-           :returns: 
+        '''Autobauds unit - first check for stream_mode / continuous data,
+            then check by polling unit
+            :returns:
                 true when successful
         '''
 
@@ -232,7 +233,8 @@ class OpenIMU:
             return False
 
     def get_fields(self, fields, ws=False):
-        '''Executes 380 GF command for an array of fields.  GF Command get current Temporary setting of 380
+        '''Executes 380 GF command for an array of fields.
+            GF Command get current Temporary setting of 380
         '''
         # Take unit out of stream mode
         self.set_quiet()
@@ -344,7 +346,7 @@ class OpenIMU:
         FIELD = 0
         VALUE = 1
         for field_value in field_value_pairs:
-            if (field_value[FIELD] == 1):
+            if field_value[FIELD] == 1:
                 self.odr_setting = field_value[VALUE]
             field_msb = (field_value[FIELD] & 0xFF00) >> 8
             field_lsb = field_value[FIELD] & 0x00FF
@@ -499,7 +501,7 @@ class OpenIMU:
             bytes_read = bytes_read + 1
             print(bytes_read)
             self.synced = 0
-            if (bytes_read < 40):
+            if bytes_read < 40:
                 self.sync(S[0], bytes_read)
             else:
                 return False
@@ -578,7 +580,7 @@ class OpenIMU:
         C.insert(len(C), crc_msb)
         C.insert(len(C), crc_lsb)
         status = 0
-        while (status == 0):
+        while status == 0:
             self.write(C)
             if addr == 0:
                 time.sleep(8)
@@ -617,7 +619,7 @@ class OpenIMU:
 #            return False
 
         time.sleep(1)
-        while (write_len < fs_len):
+        while write_len < fs_len:
             packet_data_len = max_data_len if (
                 fs_len - write_len) > max_data_len else (fs_len-write_len)
             # From IMUView
@@ -1046,12 +1048,12 @@ class OpenIMU:
                 6	xRateCorrected  I2	7*pi/2^16[1260 deg/2^16]	rad/s  [deg/sec]	X angular rate Corrected
                 8	yRateCorrected  I2	7*pi/2^16 [1260 deg/2^16]	rad/s  [deg/sec]	Y angular rate Corrected
                 10	zRateCorrected  I2	7*pi/2^16 [1260 deg/2^16]	rad/s  [deg/sec]	Z angular rate Corrected
-                12	nVel            I2	512/2^16	m/s        North velocity	
-                14	eVel            I2	512/2^16	m/s	   East Velocity 
-                16	dVel            I2	512/2^16	m/s	   Down velocity 
-                18	longiTude       I4	2*pi/2^32	Radians    Longitude 
-                22	latiTude        I4	2*pi/2^32     	Radians    Latitude 
-                26	altiTude        I2	2^14/2^16	m          GPS altitude 
+                12	nVel            I2	512/2^16	m/s        North velocity
+                14	eVel            I2	512/2^16	m/s	   East Velocity
+                16	dVel            I2	512/2^16	m/s	   Down velocity
+                18	longiTude       I4	2*pi/2^32	Radians    Longitude
+                22	latiTude        I4	2*pi/2^32     	Radians    Latitude
+                26	altiTude        I2	2^14/2^16	m          GPS altitude
                 28	iTOW	        U2	truncated	ms	   ITOW (lower 2 bytes)
                 30	BITstatus	U2	-	        -	   Master BIT and Status'''
 
@@ -1114,12 +1116,12 @@ class OpenIMU:
                 12	xAccel	        I2	20/2^16	                        g	                X accelerometer
                 14	yAccel	        I2	20/2^16	                        g	                Y accelerometer
                 16	zAccel	        I2	20/2^16	                        g	                Z accelerometer
-                18	nVel            I2	512/2^16	m/s        North velocity	
-                20	eVel            I2	512/2^16	m/s	   East Velocity 
-                22	dVel            I2	512/2^16	m/s	   Down velocity 
-                24	longiTude       I4	2*pi/2^32	Radians    Longitude 
-                28	latiTude        I4	2*pi/2^32     	Radians    Latitude 
-                32	altiTude        I2	2^14/2^16	m          GPS altitude 
+                18	nVel            I2	512/2^16	m/s        North velocity
+                20	eVel            I2	512/2^16	m/s	   East Velocity
+                22	dVel            I2	512/2^16	m/s	   Down velocity
+                24	longiTude       I4	2*pi/2^32	Radians    Longitude
+                28	latiTude        I4	2*pi/2^32     	Radians    Latitude
+                32	altiTude        I2	2^14/2^16	m          GPS altitude
                 34	xRateTemp	I2	200/2^16	Deg C	X rate temperature
                 36	iTOW	        U2	truncated	ms	   ITOW (lower 2 bytes)'''
 
@@ -1182,14 +1184,14 @@ class OpenIMU:
         elif self.packet_type == 'T0':
             '''T0 Payload Contents
                 Byte Offset	Name	 Format	Scaling	Units	Description
-                0	BitStatus        U2	                Master BIT and Status Field 
-                2	hardwareBIT      U2	                Hardware BIT Field 
-                4	hardwarePowerBIT U2	                Hardware Power BIT Field 
-                6	hardwareEnvironmentalBIT U2             Hardware Environmental BIT Field	
+                0	BitStatus        U2	                Master BIT and Status Field
+                2	hardwareBIT      U2	                Hardware BIT Field
+                4	hardwarePowerBIT U2	                Hardware Power BIT Field
+                6	hardwareEnvironmentalBIT U2             Hardware Environmental BIT Field
                 8	comBit           U2                     communication BIT Field
                 10	comSerialABIT    U2	                Communication Serial A BIT Field
-                12      comSerialBBIT    U2                     Communication Serial B BIT Field	
-                14	softwareBIT      U2                     Software BIT Filed	
+                12      comSerialBBIT    U2                     Communication Serial B BIT Field
+                14	softwareBIT      U2                     Software BIT Filed
                 16	softwareAlgorithmBIT U2	                Software Algorithm BIT Field
                 18	softwareDataBIT  U2	                Software Data BIT Field
                 20	hardwareStatus   U2	                Hardware Status Field
