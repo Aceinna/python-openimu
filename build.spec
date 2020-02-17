@@ -25,7 +25,7 @@ a = Analysis(['main.py',
          pathex=[root_path],
          binaries=[],
          datas=[
-            (os.path.join(root_path, 'setting', 'openrtk'),os.path.join('setting','openrtk'))
+            (os.path.join(root_path,'src','aceinna','setting'), os.path.join('setting'))
          ],
          hiddenimports=[],
          hookspath=[],
@@ -50,21 +50,5 @@ exe = EXE(pyz,
          upx=True,
          upx_exclude=[],
          runtime_tmpdir=None,
-         console=True )
-# exe = EXE(pyz,
-#           a.scripts,
-#           [],
-#           exclude_binaries=True,
-#           name='ans-devices',
-#           debug=False,
-#           bootloader_ignore_signals=False,
-#           strip=False,
-#           upx=True,
-#           console=True )
-# coll = COLLECT(exe,
-#                a.binaries,
-#                a.zipfiles,
-#                a.datas,
-#                strip=False,
-#                upx=True,
-#                name='ans-devices')
+         console=True,
+         icon='aceinna.ico')

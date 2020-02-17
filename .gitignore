@@ -6,7 +6,7 @@ data/*.*
 /.vscode
 /build
 __pycache__
-/dist
+dist
 /data
 *.pem
 *.cert
