@@ -58,7 +58,9 @@ import argparse
 import logging
 from .predefine import (
     get_app_urls,
-    get_app_names
+    get_app_names,
+    app_str,
+    string_folder_path
 )
 
 root_path = os.getcwd()
@@ -131,6 +133,19 @@ class OpenIMU:
     def get_file_flag(self):
         return self.local_jsonfile_flag
 
+    def load_properties(self):
+        app_info = bytes.decode(self.openimu_get_user_app_id())
+        app_info = app_info.split(' ')
+        for item in app_str:
+            if item in app_info:
+                folder_path = string_folder_path.replace('APP_TYP',item)
+                try:
+                    with open(folder_path) as json_data:
+                        self.imu_properties = json.load(json_data)
+                except FileNotFoundError as ex:
+                    print('Canont find setting file', folder_path)
+                break
+
     def find_device(self):
         ''' Finds active ports and then autobauds units
         '''         
@@ -148,14 +163,17 @@ class OpenIMU:
             if len(ports):
                 if self.try_last_port():
                     self.set_connection_details()
+                    self.load_properties()
                     return True
                 if self.autobaud(ports):
+                    self.load_properties()
                     time.sleep(0.1)
                     return True
             else:
                 time.sleep(0.5)    
             search_history += 1
             num_ports_ago = len(ports)
+
         
     def find_ports(self):
         ''' Lists serial port names. Code from
