@@ -628,7 +628,7 @@ class OpenIMU:
             id_str = self.parse_packet(R[0:payload_length])
             self.ID = id_str
             if id_str.find('load') == -1:
-				self.boot = 0
+                self.boot = 0
             else:
                 self.boot = 1			
             return id_str
