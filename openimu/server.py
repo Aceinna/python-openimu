@@ -65,19 +65,19 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             application_type = bytes.decode(imu.openimu_get_user_app_id())           
             # application_type = imu.device_id
 
-            if imu.get_file_flag() == False: # no local json file 
-                for idx, item in enumerate(app_str):
-                    if item in application_type:
-                        folder_path = string_folder_path.replace('APP_TYP',item)
-                        break  
-            else: #has local json file
-                folder_path = 'openimu.json'
+            # if imu.get_file_flag() == False: # no local json file 
+            #     for idx, item in enumerate(app_str):
+            #         if item in application_type:
+            #             folder_path = string_folder_path.replace('APP_TYP',item)
+            #             break  
+            # else: #has local json file
+            #     folder_path = 'openimu.json'
                             
             # load application type from firmware 
             try:
                 if imu.paused == 1 and not imu.openimu_get_user_app_id() == None: 
-                    with open(folder_path) as json_data:
-                            imu.imu_properties = json.load(json_data)
+                    # with open(folder_path) as json_data:
+                    #         imu.imu_properties = json.load(json_data)
                     js_version_str = imu.imu_properties['app_version'].split(' ')[2]
                     imu.openimu_version_compare(application_type,js_version_str)
                     self.write_message(json.dumps({ 'messageType' : 'serverStatus', 'data' : { 'serverVersion' : server_version, 'serverUpdateRate' : callback_rate,  'packetType' : imu.packet_type,

@@ -14,7 +14,6 @@ from openimu.predefine import (
     string_folder_path
 )
 
-
 tcpip_port_scan = 8000
 
 if __name__ == "__main__":
@@ -25,7 +24,7 @@ if __name__ == "__main__":
         imu.find_device()
         application = tornado.web.Application([(r'/', WSHandler)])
         http_server = tornado.httpserver.HTTPServer(application)
-		#no port input,websocket server auto scan Port setup,from 8000 to 8003. 8123 just the default input value to be checked.
+        # no port input,websocket server auto scan Port setup,from 8000 to 8003. 8123 just the default input value to be checked.
         if imu.input_tcpip_port == 8123:
             while True:
                 try:
@@ -34,12 +33,13 @@ if __name__ == "__main__":
                 except Exception as e:
                     # print(e)
                     if tcpip_port_scan > 8002:
-                        print('port conflict,please input port with command: -p port_number, type -h will get the help information!')
+                        print(
+                            'port conflict,please input port with command: -p port_number, type -h will get the help information!')
                         os._exit(0)
                     tcpip_port_scan = tcpip_port_scan + 1
         # setup websocket port with input port number
         else:
-            http_server.listen(imu.input_tcpip_port) 
+            http_server.listen(imu.input_tcpip_port)
         tornado.ioloop.IOLoop.instance().start()
 
     except KeyboardInterrupt:  # response for KeyboardInterrupt such as Ctrl+C

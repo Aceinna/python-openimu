@@ -7,19 +7,19 @@ block_cipher = None
 root_path = os.getcwd()
 
 a = Analysis(['webserver.py',
-            os.path.join(os.getcwd(), 'openimu', 'bootloader_input_packet.py'),
-            os.path.join(os.getcwd(), 'openimu', 'commands.py'),
-            os.path.join(os.getcwd(), 'openimu', 'file_storage.py'),
-            os.path.join(os.getcwd(), 'openimu', 'global_vars.py'),
-            os.path.join(os.getcwd(), 'openimu', 'imu_input_packet.py'),
-            os.path.join(os.getcwd(), 'openimu', 'openimu.py'),
-            os.path.join(os.getcwd(), 'openimu', 'predefine.py'),
-            os.path.join(os.getcwd(), 'openimu', 'server.py')
+            os.path.join(root_path, 'openimu', 'bootloader_input_packet.py'),
+            os.path.join(root_path, 'openimu', 'commands.py'),
+            os.path.join(root_path, 'openimu', 'file_storage.py'),
+            os.path.join(root_path, 'openimu', 'global_vars.py'),
+            os.path.join(root_path, 'openimu', 'imu_input_packet.py'),
+            os.path.join(root_path, 'openimu', 'openimu.py'),
+            os.path.join(root_path, 'openimu', 'predefine.py'),
+            os.path.join(root_path, 'openimu', 'server.py')
          ],
          pathex=[root_path],
          binaries=[],
          datas=[
-            (os.path.join(root_path, 'app_config'),'app_config')
+            (os.path.join(root_path,'openimu', 'app_config'),'app_config')
          ],
          hiddenimports=[],
          hookspath=[],

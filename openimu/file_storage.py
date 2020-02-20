@@ -1,3 +1,4 @@
+import os
 import time
 import datetime
 import json
@@ -10,6 +11,14 @@ import threading
 from azure.storage.blob import AppendBlobService
 from azure.storage.blob import ContentSettings
 from azure.storage.blob import BlockBlobService
+
+from .utils import (
+    get_executor_path
+)
+
+EXECUTOR_PATH = get_executor_path()
+DATA_FOLDER_NAME = 'data'
+DATA_FOLDER_PATH = os.path.join(EXECUTOR_PATH, DATA_FOLDER_NAME)
 
 class OpenIMULog:
     
@@ -25,9 +34,9 @@ class OpenIMULog:
                 # self.user['fileName'] += '.csv'
                 timeStrSaveFile = time.strftime("_%Y_%m_%d_%H_%M_%S", time.localtime()) + '.csv'
                 self.user['fileName'] += timeStrSaveFile
-            self.file = open('data/' + self.user['fileName'], 'w')
+            self.file = open(os.path.join(DATA_FOLDER_PATH, self.user['fileName']), 'w')
         else:
-            self.file = open('data/' + self.name, 'w')
+            self.file = open(os.path.join(DATA_FOLDER_PATH, self.name), 'w')
         self.first_row = 0
         # decode converts out of byte array
         self.ws = imu.ws
@@ -113,7 +122,7 @@ class OpenIMULog:
 
         # record file to cloud
         # f = open("data/" + self.name,"r")
-        f = open("data/" + self.user['fileName'], "r")
+        f = open(os.path.join(DATA_FOLDER_PATH, self.user['fileName']), "r")
         text = f.read()
        
 

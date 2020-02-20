@@ -62,8 +62,18 @@ from .predefine import (
     app_str,
     string_folder_path
 )
+from .utils import (
+    get_executor_path,
+    get_content_from_bundle
+)
 
-root_path = os.getcwd()
+ROOT_PATH = os.getcwd()
+
+EXECUTOR_PATH = get_executor_path()
+CONFIG_FILE_NAME ='openimu.json'
+APP_CONFIG_FOLDER_NAME = 'app_config'
+DATA_FOLDER_NAME = 'data'
+CONNECTION_FILE_PATH = os.path.join(EXECUTOR_PATH,APP_CONFIG_FOLDER_NAME,'connection.json')
 
 class OpenIMU:
     def __init__(self, ws=False):
@@ -87,58 +97,75 @@ class OpenIMU:
         self.customer_baudrate = self.args_input().b[0] if isinstance(self.args_input().b, list) else self.args_input().b
         self.input_com_port = self.args_input().c[0] if isinstance(self.args_input().c, list) else self.args_input().c
         self.loglevel = self.args_input().l[0] if isinstance(self.args_input().l, list) else self.args_input().l
-
+        self.imu_properties = None
 
         # log init
         logging.basicConfig(level=self.loglevel,
             format='%(asctime)-28s:%(msecs)-4dms %(filename)-20s[%(funcName)-40s][line:%(lineno)4d] %(levelname)5s     %(message)s',
             datefmt='%a, %d %b %Y %H:%M:%S',                
-            filename='webserver.log',
+            filename= os.path.join(EXECUTOR_PATH,'webserver.log'),
             filemode='w')
 
-        #if no data folder, then creat one
-        if not os.path.isdir("data"):
-            print('creat data folder for store measure data in future')
-            os.makedirs("data")
-            
-        # check the local json file openimu.json, if no, download the app json files from github.
-        if not os.path.isfile("openimu.json"): 
-            self.local_jsonfile_flag = False # no local json file 
-            if not os.path.exists('app_config'):
-                print('downloading config json files from github, please waiting for a while')
-                os.makedirs('app_config')
-                for app_name in get_app_names():
-                    os.makedirs('app_config'+ '/' + app_name)
-                i = 0
-                for url in get_app_urls():
-                    filepath = 'app_config' + '/' + get_app_names()[i] + '/' + 'openimu.json'
-                    i= i+1
-                    try:
-                        r = requests.get(url) 
-                        # r = requests.session().get(url)
-                        with open(filepath, "wb") as code:
-                            code.write(r.content)     
-                    except Exception as e:
-                        logging.info("downloading the JSON file failed, url: {0}".format(url)) 
-            else:
-                # Load the basic openimu.json(IMU application)
-                with open('app_config/IMU/openimu.json') as json_data:
-                    self.imu_properties = json.load(json_data)
-                        
-        else: # with local json file
-            self.local_jsonfile_flag = True
-            with open('openimu.json') as json_data:
-                self.imu_properties = json.load(json_data)
+        self.prepare_folders()
+        self.load_properties()
 
     def get_file_flag(self):
         return self.local_jsonfile_flag
 
+    def prepare_folders(self):
+        '''
+        Prepare folders for data storage and configuration
+        '''
+        data_folder_path = os.path.join(EXECUTOR_PATH, DATA_FOLDER_NAME)
+        if not os.path.isdir(data_folder_path):
+            os.makedirs(data_folder_path)
+        
+        #copy contents of app_config under executor path
+        app_config_folder_path = os.path.join(EXECUTOR_PATH, APP_CONFIG_FOLDER_NAME)
+        
+        for app_name in get_app_names():
+            app_name_path = os.path.join(app_config_folder_path, app_name)
+            app_name_config_path = os.path.join(app_name_path, CONFIG_FILE_NAME)
+            if not os.path.isfile(app_name_config_path):
+                if not os.path.isdir(app_name_path):
+                    os.makedirs(app_name_path)
+                app_config_content = get_content_from_bundle(APP_CONFIG_FOLDER_NAME, os.path.join(app_name,CONFIG_FILE_NAME))
+                if app_config_content is None:
+                    continue
+
+                with open(app_name_config_path, "wb") as code:
+                    code.write(app_config_content) 
+
+
     def load_properties(self):
+        '''
+        Load properties from json file, the sequence should be
+        1. Find in user working path, use json file if exists.
+        2. If not exists, find in executor working path, check the app info, 
+            then load matched json content
+        '''
+        is_loaded = False
+        # Load config from user working path
+        local_config_file_path = os.path.join(ROOT_PATH, CONFIG_FILE_NAME)
+        if os.path.isfile(local_config_file_path):
+            with open(local_config_file_path) as json_data:
+                self.imu_properties = json.load(json_data)
+                return
+
+        # Load default config if there is no configuration
+        if not is_loaded and not self.imu_properties:
+            default_config_file_path = \
+                os.path.join(EXECUTOR_PATH, APP_CONFIG_FOLDER_NAME, 'IMU', CONFIG_FILE_NAME)
+            if os.path.isfile(default_config_file_path):
+                with open(default_config_file_path) as json_data:
+                    self.imu_properties = json.load(json_data)
+                    return
+            
         app_info = bytes.decode(self.openimu_get_user_app_id())
-        app_info = app_info.split(' ')
+        config_file_path_template = os.path.join(EXECUTOR_PATH, string_folder_path)
         for item in app_str:
             if item in app_info:
-                folder_path = string_folder_path.replace('APP_TYP',item)
+                folder_path = config_file_path_template.replace('APP_TYP',item)
                 try:
                     with open(folder_path) as json_data:
                         self.imu_properties = json.load(json_data)
@@ -267,7 +294,7 @@ class OpenIMU:
         ports = [ p.device for p in portList]
 
         try:
-            with open('app_config/connection.json') as json_data:
+            with open(CONNECTION_FILE_PATH) as json_data:
                 connection = json.load(json_data)
             if connection:
                 if not connection['port'] in ports:
@@ -295,16 +322,15 @@ class OpenIMU:
         logging.debug("at {0}".format(sys._getframe().f_code.co_name))  
         connection = { "port" : self.ser.port, "baud" : self.ser.baudrate }
 
-        setting_folder = 'app_config'
-        connection_file = os.path.join(setting_folder,'connection.json')
+        setting_folder = os.path.join(EXECUTOR_PATH, APP_CONFIG_FOLDER_NAME)
 
         if not os.path.exists(setting_folder):
             try:
-                os.mkdir(setting_folder)
+                os.makedirs(setting_folder)
             except:
                 return
         try:
-            with open(connection_file, 'w') as outfile:
+            with open(CONNECTION_FILE_PATH, 'w') as outfile:
                 json.dump(connection, outfile)
         except:
             pass
@@ -327,9 +353,10 @@ class OpenIMU:
             if self.paused:
                 self.connect()
             if self.odr_setting:
-                if not os.path.exists("data"):
+                data_folder_path = os.path.join(EXECUTOR_PATH, DATA_FOLDER_NAME)
+                if not os.path.isdir(data_folder_path):
                     print("Create data/ ")
-                    os.makedirs("data")
+                    os.makedirs(data_folder_path)
                 print('Logging Started ...')
                 self.logger = OpenIMULog(self,data)
                 self.logging = 1
@@ -354,7 +381,7 @@ class OpenIMU:
         logging.debug("at {0}".format(sys._getframe().f_code.co_name))  
         if param == 2:
             connection = { "port" : self.ser.port, "baud" : value }
-            with open('app_config/connection.json', 'w') as outfile:
+            with open(CONNECTION_FILE_PATH, 'w') as outfile:
                 json.dump(connection, outfile)
         C = InputPacket(self.imu_properties, 'uP', param, value) 
         self.write(C.bytes)

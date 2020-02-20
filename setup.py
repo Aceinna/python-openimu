@@ -24,7 +24,7 @@ install_requires = [
 
 setup(
     name="openimu",
-    version="1.0.4",
+    version="1.0.5",
     author="Aceinna OpenIMU",
     author_email="info@aceinna.com",
     description="Aceinna Open Source Python",
@@ -34,16 +34,10 @@ setup(
     license="Apache 2.0",
     python_requires=">=2.7, !=3.0.*, !=3.1.*",
     install_requires=install_requires,
-    packages=['openimu'],
-    package_data={'': ['LICENSE']},
-    data_files=[('', [
-        'app_config/IMU/openimu.json',
-        'app_config/INS/openimu.json',
-        'app_config/VG_AHRS/openimu.json',
-        'app_config/Leveler/openimu.json',
-        'app_config/Compass/openimu.json',
-    ])],
-    include_package_data=True,
+    packages=find_packages(),
+    package_data={
+        'openimu': ['app_config/*/*.json']
+    },
     classifiers=[
         "Environment :: Console",
         "License :: OSI Approved :: Apache Software License",
