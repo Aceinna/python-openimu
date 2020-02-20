@@ -8,10 +8,12 @@ def is_in_bundle():
 
 
 def get_executor_path():
-    path = os.path.abspath(os.path.dirname(sys.executable))
-    if not is_in_bundle():
-        path = sys.path[0]
-    print(path,is_in_bundle())
+    if is_in_bundle():
+        path = os.path.abspath(os.path.dirname(sys.executable))
+    else:
+        path = os.path.join(os.path.expanduser('~'),'openimu') #sys.path[0]
+        if not os.path.isdir(path):
+            os.makedirs(path)
     return path
 
 
