@@ -114,6 +114,7 @@ class OpenIMULog:
         str = str[:-1]
         str = str + '\n'
         self.file.write(header+str)
+        os.fsync(self.file)
 
     def write_to_azure(self):
         # check for internet 

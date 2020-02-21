@@ -17,7 +17,7 @@ from .predefine import (
 
 
 # note: version string update should follow the updating rule
-server_version = '1.1.1'
+server_version = '1.1.5'
 callback_rate = 50
 class WSHandler(tornado.websocket.WebSocketHandler):
     count = 0
