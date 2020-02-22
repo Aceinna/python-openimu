@@ -237,7 +237,8 @@ class OpenIMU:
                         result.append(port)
                 # except:
                 except Exception as e:
-                    # print(e)                    
+                    print("testing port exception:", e)      
+                    logging.debug(e)              
                     try:
                         if s:
                             s.close()
