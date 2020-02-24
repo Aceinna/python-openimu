@@ -98,6 +98,7 @@ class OpenIMU:
         self.input_com_port = self.args_input().c[0] if isinstance(self.args_input().c, list) else self.args_input().c
         self.loglevel = self.args_input().l[0] if isinstance(self.args_input().l, list) else self.args_input().l
         self.imu_properties = None
+        self.is_bootloader = False
 
         # log init
         logging.basicConfig(level=self.loglevel,
@@ -160,7 +161,10 @@ class OpenIMU:
                 with open(default_config_file_path) as json_data:
                     self.imu_properties = json.load(json_data)
                     return
-            
+
+        if self.is_bootloader: # Don't load app info if is in bootloader
+            return
+
         app_info = bytes.decode(self.openimu_get_user_app_id())
         config_file_path_template = os.path.join(EXECUTOR_PATH, string_folder_path)
         for item in app_str:
@@ -277,10 +281,12 @@ class OpenIMU:
     def set_connection_details(self):
         logging.debug("at {0}".format(sys._getframe().f_code.co_name))  
         if "Bootloader" in self.device_id:
+            self.is_bootloader = True
             print('BOOTLOADER MODE') 
             print('Connected ....{0}'.format(self.device_id))
             print('Please Upgrade FW with upgrade_fw function')
         elif self.device_id:            
+            self.is_bootloader = False
             print('Connected(port:{0} baudrate:{1}) ....{2}'.format(self.ser.name, self.ser.baudrate, self.device_id))
         self.save_last_port()   
         logging.info('Connected(port:{1} baudrate:{2}) ....{0}---------------------------------------------'.format(self.device_id,self.ser.name, self.ser.baudrate))               
@@ -511,6 +517,8 @@ class OpenIMU:
             return False
 
     def openimu_get_user_app_id(self): 
+        if self.is_bootloader:
+            return 'Unknown'
         logging.debug("at {0}".format(sys._getframe().f_code.co_name))  
         C = InputPacket(self.imu_properties, 'gV')
         # print('get id--------------1')

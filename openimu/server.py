@@ -30,6 +30,9 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         self.callback2.start()
 
     def detect_status(self):        
+        if imu.is_bootloader:
+            return
+
         if not imu.read(200):
             self.write_message(json.dumps({ "messageType": "queryResponse","data": {"packetType": "DeviceStatus","packet": { "returnStatus":1}}}))
 
@@ -62,7 +65,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                 fileName = ''
             
             # Load the basic openimu.json(IMU application)
-            application_type = bytes.decode(imu.openimu_get_user_app_id())           
+            # application_type = bytes.decode(imu.openimu_get_user_app_id())           
             # application_type = imu.device_id
 
             # if imu.get_file_flag() == False: # no local json file 
@@ -78,8 +81,8 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                 if imu.paused == 1 and not imu.openimu_get_user_app_id() == None: 
                     # with open(folder_path) as json_data:
                     #         imu.imu_properties = json.load(json_data)
-                    js_version_str = imu.imu_properties['app_version'].split(' ')[2]
-                    imu.openimu_version_compare(application_type,js_version_str)
+                    #js_version_str = imu.imu_properties['app_version'].split(' ')[2]
+                    #imu.openimu_version_compare(application_type,js_version_str)
                     self.write_message(json.dumps({ 'messageType' : 'serverStatus', 'data' : { 'serverVersion' : server_version, 'serverUpdateRate' : callback_rate,  'packetType' : imu.packet_type,
                                                                                                 'deviceProperties' : imu.imu_properties, 'deviceId' : imu.device_id, 'logging' : imu.logging, 'fileName' : fileName }}))
                 else:
