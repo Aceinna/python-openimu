@@ -73,6 +73,10 @@ class OpenDeviceBase(object):
         Listener for receiving bootloader packet
         '''
 
+    @abstractmethod
+    def after_setup(self):
+        pass
+
     def internal_input_command(self, command, read_length=500):
         '''
         Internal input command
@@ -434,6 +438,11 @@ class OpenDeviceBase(object):
             # print("Thread[{0}({1})] start at:[{2}].".format(
             #     t.name, t.ident, datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
             self.threads.append(thread)
+        self.after_setup()
+
+    @abstractmethod
+    def on_read_raw(self, data):
+        pass
 
     def thread_receiver(self):
         ''' receive rover data and push data into data_queue.
@@ -456,6 +465,7 @@ class OpenDeviceBase(object):
             if data and len(data) > 0:
                 # print(datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S:') + \
                 # ' '.join('0X{0:x}'.format(data[i]) for i in range(len(data))))
+                self.on_read_raw(data)
                 self.data_lock.acquire()
                 for data_byte in data:
                     self.data_queue.put(data_byte)
