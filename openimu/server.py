@@ -78,7 +78,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                             
             # load application type from firmware 
             try:
-                if imu.paused == 1 and not imu.openimu_get_user_app_id() == None: 
+                if imu.paused == 1 and not imu.app_id== None: 
                     # with open(folder_path) as json_data:
                     #         imu.imu_properties = json.load(json_data)
                     #js_version_str = imu.imu_properties['app_version'].split(' ')[2]
@@ -112,7 +112,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                 self.write_message(json.dumps({ "messageType" : "requestAction", "data" : { "sC" : {} }}))
             # added by dave, for connect page to show version
             elif list(message['data'].keys())[0] == 'gV':
-                data = imu.openimu_get_user_app_id()
+                data = imu.app_id
                 self.write_message(json.dumps({ "messageType" : "completeAction", "data" : { "gV" : str(data) }}))
                 logging.debug('{0} feedback: {1}'.format(list(message['data'].keys())[0], data))
 

@@ -82,6 +82,7 @@ class OpenIMU:
         self.ws = ws                # set to true if being run as a thread in a websocket server
         self.ser = None             # the active UART
         self.device_id = 0          # unit's id str
+        self.app_id = 0             # unit's app id
         self.odr_setting = 0        # units ODR rate
         self.paused = 1             # imu is successfully connected to a com port, kind of redundant with device_id property
         self.logging = 0            # logging on or off
@@ -289,6 +290,7 @@ class OpenIMU:
             self.is_bootloader = False
             print('Connected(port:{0} baudrate:{1}) ....{2}'.format(self.ser.name, self.ser.baudrate, self.device_id))
         self.save_last_port()   
+        self.app_id = self.openimu_get_user_app_id()
         logging.info('Connected(port:{1} baudrate:{2}) ....{0}---------------------------------------------'.format(self.device_id,self.ser.name, self.ser.baudrate))               
 
         # open the webside ans automatically by system browser        
@@ -520,11 +522,15 @@ class OpenIMU:
         if self.is_bootloader:
             return 'Unknown'
         logging.debug("at {0}".format(sys._getframe().f_code.co_name))  
-        C = InputPacket(self.imu_properties, 'gV')
-        # print('get id--------------1')
-        self.write(C.bytes)        
-        #time.sleep(0.05)
-        return self.openimu_get_packet('gV')
+               
+        if self.app_id == 0:
+            C = InputPacket(self.imu_properties, 'gV')
+            # print('get id--------------1')
+            self.write(C.bytes) 
+            self.app_id = self.openimu_get_packet('gV')
+            return self.app_id
+        else:
+            return self.app_id
     
     def openimu_version_compare(self, fw_version, js_version):
         if js_version in fw_version:
