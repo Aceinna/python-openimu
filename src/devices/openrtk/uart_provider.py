@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import collections
 import requests
 import time
@@ -10,7 +11,8 @@ from ..configs.openrtk_predefine import *
 # import asyncio
 import datetime
 import threading
-
+import serial
+import serial.tools.list_ports
 
 class Provider(OpenDeviceBase):
     def __init__(self, communicator):
@@ -19,6 +21,16 @@ class Provider(OpenDeviceBase):
         self.server_update_rate = 100
         self.sky_data = []
         self.bootloader_baudrate = 115200
+        self.setting_folder = os.path.join(os.getcwd(), r'setting')
+        self.connection_file = os.path.join(self.setting_folder, 'connection.json')
+        self.data_folder = os.path.join(os.getcwd(), r'data')
+        if not os.path.exists(self.data_folder):
+            os.mkdir(self.data_folder)
+        self.debug_serial_port = None
+        self.rtcm_serial_port = None
+        self.user_logf = None
+        self.debug_logf = None
+        self.rtcm_logf = None
         pass
 
     def ping(self):
@@ -57,6 +69,90 @@ class Provider(OpenDeviceBase):
 
         # TODO: maybe we need a base config file
         pass
+
+    def after_setup(self):
+        connection = None
+        debug_port = ''
+        rtcm_port = ''
+        try:
+            if not os.path.isfile(self.connection_file):
+                return False
+            with open(self.connection_file) as json_data:
+                connection = json.load(json_data)
+            user_port = connection['port']
+            user_port_num = ''
+            port_name = ''
+            for i in range(len(user_port)-1,-1,-1):
+                if (user_port[i] >= '0' and user_port[i] <= '9'):
+                    user_port_num = user_port[i] + user_port_num
+                else:
+                    port_name = user_port[:i+1]
+                    break
+            #print('user_port {0} {1}'.format(user_port_num, port_name))
+            debug_port = port_name + str(int(user_port_num) + 2)
+            rtcm_port = port_name + str(int(user_port_num) + 3)
+
+            self.debug_serial_port = serial.Serial(debug_port, '460800', timeout=0.005)
+            self.rtcm_serial_port = serial.Serial(rtcm_port, '460800', timeout=0.005)
+            if self.debug_serial_port.isOpen() and self.rtcm_serial_port.isOpen():
+                #print("debug port {0} and rtcm port {1} open success".format(debug_port, rtcm_port))
+
+                if self.data_folder is not None:
+                    file_time = time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime())
+                    self.user_logf = open(self.data_folder + '/' + 'user_' + file_time,"wb")
+                    self.debug_logf = open(self.data_folder + '/' + 'debug_' + file_time,"wb")
+                    self.rtcm_logf = open(self.data_folder + '/' + 'rtcm_' + file_time,"wb")
+
+                    funcs = [self.thread_debug_port_receiver, self.thread_rtcm_port_receiver]
+                    for func in funcs:
+                        t = threading.Thread(target=func, args=())
+                        t.start()
+
+                    return True
+            return False
+        except Exception as e:
+            if self.debug_serial_port is not None:
+                if self.debug_serial_port.isOpen():
+                    self.debug_serial_port.close()
+            if self.rtcm_serial_port is not None:
+                if self.rtcm_serial_port.isOpen():
+                    self.rtcm_serial_port.close()
+            self.debug_serial_port = None
+            self.rtcm_serial_port = None
+            print(e)
+            return False
+    
+    def on_read_raw(self, data):
+        if self.user_logf is not None:
+            self.user_logf.write(data)
+    
+    def thread_debug_port_receiver(self):
+        if self.debug_logf is None:
+            return
+        while True:
+            try:
+                data = bytearray(self.debug_serial_port.read_all())
+            except Exception as e:
+                print('DEBUG PORT Thread:receiver error:', e)
+                return  # exit thread receiver
+            if len(data):
+                self.debug_logf.write(data)
+            else:
+                time.sleep(0.001)
+    
+    def thread_rtcm_port_receiver(self):
+        if self.rtcm_logf is None:
+            return
+        while True:
+            try:
+                data = bytearray(self.rtcm_serial_port.read_all())
+            except Exception as e:
+                print('RTCM PORT Thread:receiver error:', e)
+                return  # exit thread receiver
+            if len(data):
+                self.rtcm_logf.write(data)
+            else:
+                time.sleep(0.001)
 
     def on_receive_output_packet(self, packet_type, data, error=None):
         if packet_type == 'pS':

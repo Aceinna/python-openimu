@@ -46,6 +46,10 @@ class OpenDeviceBase(object):
     def load_properties(self):
         pass
 
+    @abstractmethod
+    def after_setup(self):
+        pass
+
     def internal_input_command(self, command, read_length=500):
         command_line = helper.build_input_packet(command)
         self.communicator.write(command_line)
@@ -390,6 +394,11 @@ class OpenDeviceBase(object):
             # print("Thread[{0}({1})] start at:[{2}].".format(
             #     t.name, t.ident, datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
             self.threads.append(t)
+        self.after_setup()
+
+    @abstractmethod
+    def on_read_raw(self, data):
+        pass
 
     def thread_receiver(self):
         ''' receive rover data and push data into data_queue.
@@ -410,6 +419,7 @@ class OpenDeviceBase(object):
                 return  # exit thread receiver
 
             if len(data):
+                self.on_read_raw(data)
                 # print(datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S:') + ' '.join('0X{0:x}'.format(data[i]) for i in range(len(data))))
                 self.data_lock.acquire()
                 for d in data:
