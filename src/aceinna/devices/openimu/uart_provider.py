@@ -6,8 +6,8 @@ import math
 #import asyncio
 import datetime
 import threading
-import requests
 from ...framework.utils import helper
+from ...framework.utils import resource
 from ..base.uart_base import OpenDeviceBase
 from ..configs.openimu_predefine import (
     APP_URL_BASE, APP_STR, get_app_names
@@ -30,6 +30,37 @@ class Provider(OpenDeviceBase):
         self.app_info = None
         self.app_config_folder = ''
         self.parameters = None
+        self.prepare_folders()
+
+    def prepare_folders(self):
+        '''
+        Prepare folders for data storage and configuration
+        '''
+        executor_path = resource.get_executor_path()
+        setting_folder_name = 'setting'
+        config_file_name = 'openimu.json'
+        data_folder_path = os.path.join(executor_path, 'data')
+        if not os.path.isdir(data_folder_path):
+            os.makedirs(data_folder_path)
+
+        # copy contents of app_config under executor path
+        self.setting_folder_path = os.path.join(
+            executor_path, setting_folder_name, 'openimu')
+
+        for app_name in get_app_names():
+            app_name_path = os.path.join(self.setting_folder_path, app_name)
+            app_name_config_path = os.path.join(
+                app_name_path, config_file_name)
+            if not os.path.isfile(app_name_config_path):
+                if not os.path.isdir(app_name_path):
+                    os.makedirs(app_name_path)
+                app_config_content = resource.get_content_from_bundle(
+                    setting_folder_name, os.path.join('openimu', app_name, config_file_name))
+                if app_config_content is None:
+                    continue
+
+                with open(app_name_config_path, "wb") as code:
+                    code.write(app_config_content)
 
     def ping(self):
         '''
@@ -76,40 +107,13 @@ class Provider(OpenDeviceBase):
         }
 
     def load_properties(self):
-        self.app_config_folder = os.path.join(
-            os.getcwd(), 'setting', 'openimu')
-
-        if not os.path.exists(self.app_config_folder):
-            os.makedirs(self.app_config_folder)
-            for app_name in get_app_names():
-                os.makedirs(self.app_config_folder + '/' + app_name)
-
         # Load the openimu.json based on its app
         app_name = self.app_info['app_name']
         app_file_path = os.path.join(
-            self.app_config_folder, app_name, 'openimu.json')
+            self.setting_folder_path, app_name, 'openimu.json')
 
-        exist_json_file = os.path.isfile(app_file_path)
-
-        if not exist_json_file:
-            try:
-                print(
-                    'downloading config json files from github, please waiting for a while')
-                http_req = requests.get(
-                    APP_URL_BASE + '/' + app_name + '/openimu.json')
-                http_req.raise_for_status()
-                http_req.close()
-                with open(app_file_path, "wb") as code:
-                    code.write(http_req.content)
-                    exist_json_file = True
-            except Exception as ex:
-                exist_json_file = False
-                print(ex)
-                raise
-
-        if exist_json_file:
-            with open(app_file_path) as json_data:
-                self.properties = json.load(json_data)
+        with open(app_file_path) as json_data:
+            self.properties = json.load(json_data)
 
     def on_receive_output_packet(self, packet_type, data):
         '''

@@ -36,6 +36,7 @@ def receive_args():
 
 
 if __name__ == '__main__':
+    setattr(sys, '__dev__', True)
     # compatible code for windows python 3.8
     if IS_WINDOWS and IS_LATER_PY_38:
         import asyncio

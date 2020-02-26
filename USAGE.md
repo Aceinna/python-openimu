@@ -1,6 +1,3 @@
-# Work as service
-- Like command, host in webserver
-
 # Work as command
 start cli: `ans-devices`
 

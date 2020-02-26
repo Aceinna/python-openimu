@@ -17,7 +17,7 @@ pip install -r requirements.txt
 ```
 #### Run
 ```
-python main.py
+python ./src/main.py
 ```
 - B. Build as a execution file
 ```
@@ -27,11 +27,14 @@ pyinstaller build.spec
 #### Startup Arguments
 You can specify some arguments while run the tool
 
-Parameter | Default Value | Description
--|-|-
-`-p` | 8000 | This a port for websocket server |
-`-b`|[38400, 57600, 115200,230400, 460800]|A baudrate range for auto detect device|
-`-nolog`|True|Internal log switch, suggest to disable|
+parameters:
+
+| Name | Type | Default | Description |
+| - | :-: | :-: | - |
+| --device-type | String | 'auto' | Value should be `IMU`, `RTK` |
+| --com-port | String | 'auto' | Value should be a COM port |
+| --baudrate | String | None | Value should be baudrate |
+| --debug | Boolean | False | If log debug information |
 
 ### 2. Connect ans device
 Link device to your pc or mac. And the tool will auto detect the linked device.

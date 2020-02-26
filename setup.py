@@ -13,8 +13,9 @@
 # permissions and limitations under the License.
 
 from setuptools import find_packages, setup
+from src.aceinna import PACKAGE_NAME
 
-PACKAGE_NAME = "ans-devices"
+# PACKAGE_NAME = "ans-devices"
 PACKAGE_DESCRIPTION = "Aceinna Navigation System Open Devices Library"
 
 INSTALL_REQUIRES = [

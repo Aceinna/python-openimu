@@ -9,7 +9,7 @@ import struct
 import traceback
 from pathlib import Path
 from azure.storage.blob import BlockBlobService
-from ...framework.utils import helper
+from ...framework.utils import (helper, resource)
 from ...framework.file_storage import FileLoger
 if sys.version_info[0] > 2:
     from queue import Queue
@@ -667,7 +667,7 @@ class OpenDeviceBase(object):
         '''
         Downlaod firmware from Azure storage
         '''
-        upgarde_root = os.path.join(os.getcwd(), 'upgrade')
+        upgarde_root = os.path.join(resource.get_executor_path(), 'upgrade')
 
         if not os.path.exists(upgarde_root):
             os.makedirs(upgarde_root)

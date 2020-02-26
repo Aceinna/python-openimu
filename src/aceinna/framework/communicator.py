@@ -9,6 +9,10 @@ import serial
 import serial.tools.list_ports
 from ..devices import DeviceManager
 from .constants import BAUDRATE_LIST
+from .utils.resource import (
+    get_executor_path,
+    get_content_from_bundle
+)
 if sys.version_info[0] > 2:
     from queue import Queue
 else:
@@ -37,10 +41,12 @@ class Communicator(object):
     '''
 
     def __init__(self):
-        # use to store some configuration files.
-        self.setting_folder = os.path.join(os.getcwd(), r'setting')
-        self.connection_file = os.path.join(
-            self.setting_folder, 'connection.json')
+        executor_path = get_executor_path()
+        setting_folder_name = 'setting'
+        self.setting_folder_path = os.path.join(
+            executor_path, setting_folder_name)
+        self.connection_file_path = os.path.join(
+            self.setting_folder_path, 'connection.json')
         self.read_size = 0
         self.device = None
 
@@ -183,10 +189,10 @@ class SerialPort(Communicator):
         '''
         connection = None
         try:
-            if not os.path.isfile(self.connection_file):
+            if not os.path.isfile(self.connection_file_path):
                 return False
 
-            with open(self.connection_file) as json_data:
+            with open(self.connection_file_path) as json_data:
                 connection = json.load(json_data)
             connection['baud'] = self.baudrate_list[0] if self.baudrate_assigned \
                 else connection['baud']
@@ -214,16 +220,17 @@ class SerialPort(Communicator):
         '''
         save connected port info
         '''
-        if not os.path.exists(self.setting_folder):
+
+        if not os.path.exists(self.setting_folder_path):
             try:
-                os.mkdir(self.setting_folder)
+                os.mkdir(self.setting_folder_path)
             except:
                 return
 
         connection = {"port": self.serial_port.port,
                       "baud": self.serial_port.baudrate}
         try:
-            with open(self.connection_file, 'w') as outfile:
+            with open(self.connection_file_path, 'w') as outfile:
                 json.dump(connection, outfile)
         except:
             pass

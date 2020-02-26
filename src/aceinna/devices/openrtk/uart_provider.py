@@ -6,6 +6,7 @@ import threading
 import serial
 import serial.tools.list_ports
 from ...framework.utils import helper
+from ...framework.utils import resource
 from ..base.uart_base import OpenDeviceBase
 from ..configs.openrtk_predefine import JSON_FILE_NAME
 # import asyncio
@@ -26,16 +27,42 @@ class Provider(OpenDeviceBase):
         self.device_info = None
         self.app_info = None
         self.parameters = None
-        self.setting_folder = os.path.join(os.getcwd(), r'setting')
-        self.connection_file = os.path.join(self.setting_folder, 'connection.json')
-        self.data_folder = os.path.join(os.getcwd(), r'data')
-        if not os.path.exists(self.data_folder):
-            os.mkdir(self.data_folder)
+        self.setting_folder_path = None
+        self.connection_file = None
+        self.data_folder = None
         self.debug_serial_port = None
         self.rtcm_serial_port = None
         self.user_logf = None
         self.debug_logf = None
         self.rtcm_logf = None
+        self.prepare_folders()
+
+    def prepare_folders(self):
+        '''
+        Prepare folders for data storage and configuration
+        '''
+        executor_path = resource.get_executor_path()
+        setting_folder_name = 'setting'
+        data_folder_path = os.path.join(executor_path, 'data')
+        if not os.path.isdir(data_folder_path):
+            os.makedirs(data_folder_path)
+
+        # copy contents of app_config under executor path
+        self.setting_folder_path = os.path.join(
+            executor_path, setting_folder_name, 'openrtk')
+        self.connection_file = os.path.join(
+            executor_path, setting_folder_name, 'connection.json')
+        self.data_folder = data_folder_path
+
+        config_path = os.path.join(self.setting_folder_path, JSON_FILE_NAME)
+        if not os.path.isfile(config_path):
+            if not os.path.isdir(self.setting_folder_path):
+                os.makedirs(self.setting_folder_path)
+            app_config_content = resource.get_content_from_bundle(
+                setting_folder_name, os.path.join('openrtk', JSON_FILE_NAME))
+
+            with open(config_path, "wb") as code:
+                code.write(app_config_content)
 
     def ping(self):
         '''
@@ -74,10 +101,7 @@ class Provider(OpenDeviceBase):
         }
 
     def load_properties(self):
-        self.app_config_folder = os.path.join(
-            os.getcwd(), 'setting', 'openrtk')
-
-        with open(os.path.join(self.app_config_folder, JSON_FILE_NAME)) as json_data:
+        with open(os.path.join(self.setting_folder_path, JSON_FILE_NAME)) as json_data:
             self.properties = json.load(json_data)
 
         # TODO: maybe we need a base config file
@@ -94,7 +118,7 @@ class Provider(OpenDeviceBase):
             user_port = connection['port']
             user_port_num = ''
             port_name = ''
-            for i in range(len(user_port)-1,-1,-1):
+            for i in range(len(user_port)-1, -1, -1):
                 if (user_port[i] >= '0' and user_port[i] <= '9'):
                     user_port_num = user_port[i] + user_port_num
                 else:
@@ -104,18 +128,25 @@ class Provider(OpenDeviceBase):
             debug_port = port_name + str(int(user_port_num) + 2)
             rtcm_port = port_name + str(int(user_port_num) + 3)
 
-            self.debug_serial_port = serial.Serial(debug_port, '460800', timeout=0.005)
-            self.rtcm_serial_port = serial.Serial(rtcm_port, '460800', timeout=0.005)
+            self.debug_serial_port = serial.Serial(
+                debug_port, '460800', timeout=0.005)
+            self.rtcm_serial_port = serial.Serial(
+                rtcm_port, '460800', timeout=0.005)
             if self.debug_serial_port.isOpen() and self.rtcm_serial_port.isOpen():
                 #print("debug port {0} and rtcm port {1} open success".format(debug_port, rtcm_port))
 
                 if self.data_folder is not None:
-                    file_time = time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime())
-                    self.user_logf = open(self.data_folder + '/' + 'user_' + file_time,"wb")
-                    self.debug_logf = open(self.data_folder + '/' + 'debug_' + file_time,"wb")
-                    self.rtcm_logf = open(self.data_folder + '/' + 'rtcm_' + file_time,"wb")
+                    file_time = time.strftime(
+                        "%Y_%m_%d_%H_%M_%S", time.localtime())
+                    self.user_logf = open(
+                        self.data_folder + '/' + 'user_' + file_time, "wb")
+                    self.debug_logf = open(
+                        self.data_folder + '/' + 'debug_' + file_time, "wb")
+                    self.rtcm_logf = open(
+                        self.data_folder + '/' + 'rtcm_' + file_time, "wb")
 
-                    funcs = [self.thread_debug_port_receiver, self.thread_rtcm_port_receiver]
+                    funcs = [self.thread_debug_port_receiver,
+                             self.thread_rtcm_port_receiver]
                     for func in funcs:
                         t = threading.Thread(target=func, args=())
                         t.start()
@@ -133,11 +164,11 @@ class Provider(OpenDeviceBase):
             self.rtcm_serial_port = None
             print(e)
             return False
-    
+
     def on_read_raw(self, data):
         if self.user_logf is not None:
             self.user_logf.write(data)
-    
+
     def thread_debug_port_receiver(self):
         if self.debug_logf is None:
             return
@@ -151,7 +182,7 @@ class Provider(OpenDeviceBase):
                 self.debug_logf.write(data)
             else:
                 time.sleep(0.001)
-    
+
     def thread_rtcm_port_receiver(self):
         if self.rtcm_logf is None:
             return
