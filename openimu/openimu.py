@@ -100,6 +100,10 @@ class OpenIMU:
         self.loglevel = self.args_input().l[0] if isinstance(self.args_input().l, list) else self.args_input().l
         self.imu_properties = None
         self.is_bootloader = False
+        self.force_into_bootloader = self.args_input().f[0] if isinstance(self.args_input().f, list) else self.args_input().f
+
+        if self.force_into_bootloader:
+            self.force_entry_bootloader()
 
         # log init
         logging.basicConfig(level=self.loglevel,
@@ -943,12 +947,32 @@ class OpenIMU:
                         self.sync_state = 0  # CRC did not match
                         # print("crc error***************************************")
 
+    def force_entry_bootloader(self):  # applied for 300ZI and 300RI
+        print('***you want to start force entry bootloader mode:***\n-- connect IMU with PC, power on;') 
+        while input('are you ready(y/n)?') != 'y':  
+            pass 
+
+        portList = [p.device for p in list(serial.tools.list_ports.comports())] 
+        while len(portList) == 0:
+            print("no ports detected, pls connected HW", end='\r')        
+        print('pls select your USB port used from ports:{0}'.format(portList))
+        port = portList[int(input('index starting from 1. \nyour selection ''port index'' is:'))-1]
+
+        while input('** 2-3 seconds ** after your confirmation, you need to turning off and turning on the Unit power, and then wait 10s, are you clearly(y/n)?') != 'y':
+            pass
+        self.open(port, 57600)
+        for i in range(600):
+            time.sleep(0.02)
+            self.write([0x55, 0x55, 0x4A, 0x42, 0x00, 0xA0, 0xCE]) #JB commands  
+        self.disconnect()
+
     def args_input(self):        
         parser = argparse.ArgumentParser(description='OpenIMU input args command:', usage='%(prog)s -b [baudrate] -p [http_port] -l [log_level] -c [serial_COM_port]' )
         parser.add_argument('-p', type=int, default=8123, metavar='http_port', nargs=1,help='input the http port')
         parser.add_argument('-b', type=int, default=0, metavar='baudrate', nargs=1,help='input the baudrate',choices=[38400,57600,115200,230400])
         parser.add_argument('-c', type=str, default='COMX', metavar='com_port', nargs=1,help='import the serial com port')
         parser.add_argument('-l', type=int, default=20, metavar='log_level', nargs=1,help='log record level', choices=[0, 10, 20, 30, 40, 50])
+        parser.add_argument('-f', type=bool, default=False, metavar='Force_into_bootloader', nargs=1,help='Force into bootloader', choices=[True, False])
         return parser.parse_args()        
 #####       
 
