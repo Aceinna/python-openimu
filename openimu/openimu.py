@@ -198,6 +198,7 @@ class OpenIMU:
                     self.load_properties()
                     return True
                 if self.autobaud(ports):
+                    self.set_connection_details()
                     self.load_properties()
                     time.sleep(0.1)
                     return True
@@ -227,7 +228,6 @@ class OpenIMU:
         else:            
             logging.info('no system ports detected') 
             time.sleep(0.5)
-        # return ports
         result = []
         for port in ports:
             if "Bluetooth" in port:
@@ -240,17 +240,15 @@ class OpenIMU:
                     if s:
                         s.close()
                         result.append(port)
-                # except:
                 except Exception as e:
-                    print("testing port exception:", e)      
-                    logging.debug(e)              
+                    logging.info("testing {0} exception:{1}".format(port,e))              
                     try:
                         if s:
                             s.close()
                     except Exception as ee:
                         logging.debug(ee)
                     pass
-        logging.debug('result:{0}'.format(result))
+        logging.info('result:{0}'.format(result))
         return result
 
     def autobaud(self, ports):
@@ -268,7 +266,6 @@ class OpenIMU:
                     if self.ser:                     
                         self.device_id = self.openimu_get_device_id()
                         if self.device_id:
-                            self.set_connection_details()
                             logging.info('Connected in autobaud')
                             if sys.platform.startswith('win'):
                                 self.ser.set_buffer_size(rx_size = 128000, tx_size = 128000)
@@ -583,6 +580,7 @@ class OpenIMU:
         self.odr_setting = 0
         self.packet_size = 0        
         self.packet_type = 0
+        self.app_id = 0
         
     def parse_payload(self, ws = False):
         '''Parses packet payload using openimu.json as reference
@@ -654,7 +652,6 @@ class OpenIMU:
                 logging.debug("happened exception when close ser:{0}".format(self.ser))
     
     def read(self,n):
-        logging.debug("at {0}".format(sys._getframe().f_code.co_name))  
         bytes = []
         if self.ser:
             try: 
@@ -666,6 +663,7 @@ class OpenIMU:
                 else:
                     self.disconnect()    # sets connected to 0, and other related parameters to initial values
                     print('serial exception read') 
+                    logging.debug("at {0} serial exception read".format(sys._getframe().f_code.co_name)) 
                     self.find_device() 
         
     def write(self,n):
