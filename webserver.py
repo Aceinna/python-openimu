@@ -4,6 +4,7 @@ import tornado.websocket
 import tornado.ioloop
 import tornado.httpserver
 import tornado.web
+import traceback
 from openimu.server import (
     server_version,
     WSHandler
@@ -47,4 +48,5 @@ if __name__ == "__main__":
             __file__, sys._getframe().f_lineno))
         os._exit(1)
     except Exception as e:
+        traceback.print_exc() # For development
         print(e)
