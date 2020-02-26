@@ -444,6 +444,14 @@ class OpenDeviceBase(object):
     def on_read_raw(self, data):
         pass
 
+    def get_command_lines(self):
+        '''
+        Get command line defines
+        '''
+        if self.properties.__contains__('CLICommands'):
+            return self.properties['CLICommands']
+        return []
+
     def thread_receiver(self):
         ''' receive rover data and push data into data_queue.
             return when occur Exception

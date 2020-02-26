@@ -370,4 +370,3 @@ class Webserver:
 
     def _build_options(self, **kwargs):
         self.options = WebserverArgs(**kwargs)
-        print(self.options)

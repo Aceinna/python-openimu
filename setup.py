@@ -13,9 +13,8 @@
 # permissions and limitations under the License.
 
 from setuptools import find_packages, setup
-from src.aceinna import PACKAGE_NAME
 
-# PACKAGE_NAME = "ans-devices"
+PACKAGE_NAME = "ans-devices"
 PACKAGE_DESCRIPTION = "Aceinna Navigation System Open Devices Library"
 
 INSTALL_REQUIRES = [
@@ -40,7 +39,9 @@ setup(
     install_requires=INSTALL_REQUIRES,
     packages=find_packages("src", exclude=['test', 'tests']),
     package_dir={"": "src"},
-    # include_package_data=True,
+    package_data={
+        'aceinna': ['setting/openrtk/*.json', 'setting/openimu/*/*.json']
+    },
     classifiers=[
         "Environment :: Console",
         "License :: OSI Approved :: Apache Software License",

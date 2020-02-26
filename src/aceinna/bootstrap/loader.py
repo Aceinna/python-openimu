@@ -18,7 +18,7 @@ class Loader:
             active_app = Webserver(**options)
 
         if platform == 'cli':
-            active_app = CommandLine(options)
+            active_app = CommandLine(**options)
 
         if active_app is None:
             raise Exception('no matched bootstrap')
