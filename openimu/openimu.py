@@ -955,10 +955,10 @@ class OpenIMU:
         portList = [p.device for p in list(serial.tools.list_ports.comports())] 
         while len(portList) == 0:
             print("no ports detected, pls connected HW", end='\r')        
-        print('pls select your USB port used from ports:{0}'.format(portList))
-        port = portList[int(input('index starting from 1. \nyour selection ''port index'' is:'))-1]
+        print('Pls select which USB port index you used from ports:{0}'.format(portList))
+        port = portList[int(input('Index starting from 1. \nyour selection ''port index'' is:'))-1]
 
-        while input('** 2-3 seconds ** after your confirmation, you need to turning off and turning on the Unit power, and then wait 10s, are you clearly(y/n)?') != 'y':
+        while input('** 2-3 seconds ** after your confirmation, you need to turning off and on the Unit power, and then wait 10s, are you ready to power off and on(y/n)?') != 'y':
             pass
         self.open(port, 57600)
         for i in range(600):
