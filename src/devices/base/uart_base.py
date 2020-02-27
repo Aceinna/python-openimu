@@ -388,19 +388,20 @@ class OpenDeviceBase(object):
 
         funcs = [self.thread_receiver, self.thread_parser]
         for func in funcs:
-            t = threading.Thread(target=func, args=())
+            t = threading.Thread(target=func, args=(options.nolog,))
             t.start()
             # TODO: write to log
             # print("Thread[{0}({1})] start at:[{2}].".format(
             #     t.name, t.ident, datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
             self.threads.append(t)
-        self.after_setup()
+        if not options.nolog:
+            self.after_setup()
 
     @abstractmethod
     def on_read_raw(self, data):
         pass
 
-    def thread_receiver(self):
+    def thread_receiver(self, nolog):
         ''' receive rover data and push data into data_queue.
             return when occur Exception
         '''
@@ -419,7 +420,8 @@ class OpenDeviceBase(object):
                 return  # exit thread receiver
 
             if len(data):
-                self.on_read_raw(data)
+                if nolog:
+                    self.on_read_raw(data)
                 # print(datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S:') + ' '.join('0X{0:x}'.format(data[i]) for i in range(len(data))))
                 self.data_lock.acquire()
                 for d in data:
@@ -428,7 +430,7 @@ class OpenDeviceBase(object):
             else:
                 time.sleep(0.001)
 
-    def thread_parser(self):
+    def thread_parser(self, *args):
         ''' get rover data from data_queue and parse data into one whole frame.
             return when occur Exception in thread receiver.
         '''
