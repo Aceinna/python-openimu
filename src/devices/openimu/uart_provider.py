@@ -95,6 +95,12 @@ class Provider(OpenDeviceBase):
             with open(app_file_path) as json_data:
                 self.properties = json.load(json_data)
 
+    def after_setup(self):
+        pass
+
+    def on_read_raw(self, data):
+        pass
+
     def on_receive_output_packet(self, packet_type, data, error=None):
         self.add_output_packet('stream', packet_type, data)
 
