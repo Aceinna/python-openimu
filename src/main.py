@@ -30,8 +30,8 @@ def receive_args():
                         help="COM Port")
     parser.add_argument("--debug", type=bool,
                         help="Log debug information", default=False)
-    # parser.add_argument("-nolog", type=int,
-    #                     help="Disable internal log", default=True)
+    parser.add_argument("--with-data-log", type=int,
+                        help="Contains internal data log", default=False)
     return parser.parse_args()
 
 
@@ -49,7 +49,8 @@ if __name__ == '__main__':
             com_port=ARGS.com_port,
             port=ARGS.port,
             baudrate=ARGS.baudrate,
-            debug=ARGS.debug)
+            debug=ARGS.debug,
+            with_data_log=input_args.with_data_log)
         APP.listen()
     except KeyboardInterrupt:  # response for KeyboardInterrupt such as Ctrl+C
         print('User stop this program by KeyboardInterrupt! File:[{0}], Line:[{1}]'.format(

@@ -11,8 +11,7 @@ dist
 *.pem
 *.cert
 *.key
-/setting/openimu
-/setting/connection.json
+/setting
 /app_config
 /upgrade
 *.egg-info

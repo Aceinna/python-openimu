@@ -22,10 +22,14 @@ Detect device
 from aceinna.tools import Detector
 
 def on_find_device(device):
+    # prepare to use
+    device.setup()
     # get device info
     device.getDeviceInfo()
     # start to log
     device.startLog()
+    # stop to log
+    device.stopLog()
 
 detector = Detector(
     device_type='IMU',

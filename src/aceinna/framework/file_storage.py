@@ -4,10 +4,11 @@ import os
 import time
 import datetime
 import json
-import requests
 import threading
+import requests
 from azure.storage.blob import AppendBlobService
 from azure.storage.blob import ContentSettings
+from .utils import resource
 
 
 class FileLoger():
@@ -19,7 +20,7 @@ class FileLoger():
         if not self.device_properties:
             os._exit(1)
 
-        self.root_folder = os.path.join(os.getcwd(), r'data')
+        self.root_folder = os.path.join(resource.get_executor_path(), r'data')
         if not os.path.exists(self.root_folder):
             os.mkdir(self.root_folder)
         self.output_packets = self.device_properties['userMessages']['outputPackets']
@@ -35,7 +36,8 @@ class FileLoger():
         self.file_name = ''
         self.sas_token = ''
         self.db_user_access_token = ''
-        self.host_url = 'https://api.aceinna.com/' #'http://40.118.233.18:3000/'  # TODO: set a host url
+        # 'http://40.118.233.18:3000/'  # TODO: set a host url
+        self.host_url = 'https://api.aceinna.com/'
 
         #
         self.threads = []  # thread of receiver and paser
@@ -72,7 +74,7 @@ class FileLoger():
                 save2file = 1
                 if has_save2file:
                     save2file = packet['save2file']
-                    
+
                 if save2file == 1:
                     self.msgs_need_to_log.append(packet['name'])
 
@@ -346,7 +348,7 @@ class FileLoger():
             self.device_log_info['url'] = file_name
             self.device_log_info['userId'] = self.user_id
             self.device_log_info['logInfo']['packetType'] = packet_type
-            data =  self.device_log_info
+            data = self.device_log_info
 
             # data = {
             #     "type": self.device_log_info['type'],

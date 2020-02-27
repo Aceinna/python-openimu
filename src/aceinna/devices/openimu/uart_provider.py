@@ -10,7 +10,7 @@ from ...framework.utils import helper
 from ...framework.utils import resource
 from ..base.uart_base import OpenDeviceBase
 from ..configs.openimu_predefine import (
-    APP_URL_BASE, APP_STR, get_app_names
+    APP_STR, get_app_names
 )
 
 
@@ -107,6 +107,13 @@ class Provider(OpenDeviceBase):
         }
 
     def load_properties(self):
+        # Load config from user working path
+        local_config_file_path = os.path.join(os.getcwd(), 'openimu.json')
+        if os.path.isfile(local_config_file_path):
+            with open(local_config_file_path) as json_data:
+                self.imu_properties = json.load(json_data)
+                return
+
         # Load the openimu.json based on its app
         app_name = self.app_info['app_name']
         app_file_path = os.path.join(

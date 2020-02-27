@@ -11,6 +11,7 @@ def on_find_device(device):
     '''
     callback after find device
     '''
+    device.setup()
     print('1. Get device info', device.getDeviceInfo())
 
 

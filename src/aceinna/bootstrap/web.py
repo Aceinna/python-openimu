@@ -329,8 +329,9 @@ class Webserver:
                 activated_port = self.options.port
             print('Websocket server is started on port', activated_port)
             tornado.ioloop.IOLoop.instance().start()
-        except Exception:
-            print('Cannot start a websocket server, please check if the port is in use')
+        except Exception as ex:
+            print(ex)
+            #print('Cannot start a websocket server, please check if the port is in use')
             raise
 
     def handle_device_exception(self, error, message):

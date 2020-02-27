@@ -420,8 +420,8 @@ class OpenDeviceBase(object):
         '''
         self.load_properties()
         self._logger = FileLoger(self.properties)
-        # if not options.nolog:
-        #     self._logger.start_user_log('data')
+        if options and not options.with_data_log:
+            self._logger.start_user_log('data')
 
         if not self.has_running_checker:
             thread = threading.Thread(
@@ -438,7 +438,9 @@ class OpenDeviceBase(object):
             # print("Thread[{0}({1})] start at:[{2}].".format(
             #     t.name, t.ident, datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
             self.threads.append(thread)
-        self.after_setup()
+
+        if options and not options.with_data_log:
+            self.after_setup()
 
     @abstractmethod
     def on_read_raw(self, data):
@@ -764,8 +766,9 @@ class OpenDeviceBase(object):
 
         self.load_properties()
         self._logger = FileLoger(self.properties)
-        # if not options.nolog:
-        #     self._logger.start_user_log('data')
+        
+        if options and not options.with_data_log:
+            self._logger.start_user_log('data')
 
     def on_upgarde_failed(self, message):
         '''
