@@ -420,7 +420,9 @@ class OpenDeviceBase(object):
         '''
         self.load_properties()
         self._logger = FileLoger(self.properties)
-        if options and not options.with_data_log:
+        with_data_log = options and options.with_data_log
+
+        if with_data_log:
             self._logger.start_user_log('data')
 
         if not self.has_running_checker:
@@ -433,13 +435,13 @@ class OpenDeviceBase(object):
 
         funcs = [self.thread_receiver, self.thread_parser]
         for func in funcs:
-            thread = threading.Thread(target=func, args=())
+            thread = threading.Thread(target=func, args=(with_data_log,))
             thread.start()
             # print("Thread[{0}({1})] start at:[{2}].".format(
             #     t.name, t.ident, datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
             self.threads.append(thread)
 
-        if options and not options.with_data_log:
+        if with_data_log:
             self.after_setup()
 
     @abstractmethod
@@ -454,7 +456,8 @@ class OpenDeviceBase(object):
             return self.properties['CLICommands']
         return []
 
-    def thread_receiver(self):
+    def thread_receiver(self, *args, **kwargs):
+        with_data_log = args[0]
         ''' receive rover data and push data into data_queue.
             return when occur Exception
         '''
@@ -475,7 +478,8 @@ class OpenDeviceBase(object):
             if data and len(data) > 0:
                 # print(datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S:') + \
                 # ' '.join('0X{0:x}'.format(data[i]) for i in range(len(data))))
-                self.on_read_raw(data)
+                if with_data_log:
+                    self.on_read_raw(data)
                 self.data_lock.acquire()
                 for data_byte in data:
                     self.data_queue.put(data_byte)
@@ -483,7 +487,7 @@ class OpenDeviceBase(object):
             else:
                 time.sleep(0.001)
 
-    def thread_parser(self):
+    def thread_parser(self, *args, **kwargs):
         ''' get rover data from data_queue and parse data into one whole frame.
             return when occur Exception in thread receiver.
         '''
@@ -766,7 +770,7 @@ class OpenDeviceBase(object):
 
         self.load_properties()
         self._logger = FileLoger(self.properties)
-        
+
         if options and not options.with_data_log:
             self._logger.start_user_log('data')
 
