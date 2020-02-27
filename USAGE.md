@@ -10,26 +10,23 @@ parameters:
 | --baudrate | String | None | Value should be baudrate |
 | --debug | Boolean | False | If log debug information |
 
-command:
-* get_param :name
-* set_param :name :value
-* save_config
-* exit
 
 # Work as sdk
 Detect device
 ```python
+import time
 from aceinna.tools import Detector
 
 def on_find_device(device):
     # prepare to use
-    device.setup()
+    device.setup(None)
     # get device info
-    device.getDeviceInfo()
+    device.get_device_info()
     # start to log
-    device.startLog()
+    device.start_data_log()
+    time.sleep(10)
     # stop to log
-    device.stopLog()
+    device.stop_data_log()
 
 detector = Detector(
     device_type='IMU',
@@ -53,4 +50,4 @@ app.listen()
 
 
 # Use source code
-Invoke sdk and start a webserver `python main.py`
+Invoke sdk and start a webserver `python ./src/main.py`

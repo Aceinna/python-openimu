@@ -68,7 +68,7 @@ class Provider(OpenDeviceBase):
         '''
         Check if the connected device is OpenRTK
         '''
-        print('start to check if it is openrtk')
+        # print('start to check if it is openrtk')
         device_info_text = self.internal_input_command('pG')
         app_info_text = self.internal_input_command('gV')
 
@@ -76,6 +76,7 @@ class Provider(OpenDeviceBase):
             self.build_device_info(device_info_text)
             self.build_app_info(app_info_text)
             self.connected = True
+            print('Connected', device_info_text)
             return True
         return False
 
@@ -148,8 +149,8 @@ class Provider(OpenDeviceBase):
                     funcs = [self.thread_debug_port_receiver,
                              self.thread_rtcm_port_receiver]
                     for func in funcs:
-                        t = threading.Thread(target=func, args=())
-                        t.start()
+                        thread = threading.Thread(target=func, args=())
+                        thread.start()
 
                     return True
             return False
@@ -267,7 +268,7 @@ class Provider(OpenDeviceBase):
         return result
 
     # command list
-    def serverStatus(self, *args):  # pylint: disable=invalid-name
+    def server_status(self, *args):  # pylint: disable=invalid-name
         '''
         Get server connection status
         '''
@@ -276,7 +277,7 @@ class Provider(OpenDeviceBase):
             'data': {'status': '1'}
         }
 
-    def getDeviceInfo(self, *args):  # pylint: disable=invalid-name
+    def get_device_info(self, *args):  # pylint: disable=invalid-name
         '''
         Get device information
         '''
@@ -307,7 +308,7 @@ class Provider(OpenDeviceBase):
             }
         }
 
-    def getConf(self, *args):  # pylint: disable=invalid-name
+    def get_conf(self, *args):  # pylint: disable=invalid-name
         '''
         Get json configuration
         '''
@@ -319,7 +320,7 @@ class Provider(OpenDeviceBase):
             }
         }
 
-    def getParams(self, *args):  # pylint: disable=invalid-name
+    def get_params(self, *args):  # pylint: disable=invalid-name
         '''
         Get all parameters
         '''
@@ -339,12 +340,12 @@ class Provider(OpenDeviceBase):
                 'data': 'No Response'
             }
 
-    def setParams(self, params, *args):  # pylint: disable=invalid-name
+    def set_params(self, params, *args):  # pylint: disable=invalid-name
         '''
         Update paramters value
         '''
         for parameter in params:
-            result = self.setParam(parameter)
+            result = self.set_param(parameter)
             if result['packetType'] == 'error':
                 return {
                     'packetType': 'error',
@@ -367,7 +368,7 @@ class Provider(OpenDeviceBase):
             }
         }
 
-    def setParam(self, params, *args):  # pylint: disable=invalid-name
+    def set_param(self, params, *args):  # pylint: disable=invalid-name
         '''
         Update paramter value
         '''
@@ -391,7 +392,7 @@ class Provider(OpenDeviceBase):
                 }
             }
 
-    def saveConfig(self, *args):  # pylint: disable=invalid-name
+    def save_config(self, *args):  # pylint: disable=invalid-name
         '''
         Save configuration
         '''
@@ -411,17 +412,8 @@ class Provider(OpenDeviceBase):
                 'data': result['error']
             }
 
-    def startLog(self, params, *args):  # pylint: disable=invalid-name
-        '''
-        Start to log
-        '''
 
-    def stopLog(self, params, * args):  # pylint: disable=invalid-name
-        '''
-        Stop logging
-        '''
-
-    def upgradeFramework(self, file, *args):  # pylint: disable=invalid-name
+    def upgrade_framework(self, file, *args):  # pylint: disable=invalid-name
         '''
         Upgrade framework
         '''

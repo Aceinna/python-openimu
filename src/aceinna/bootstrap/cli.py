@@ -33,12 +33,8 @@ class CommandLine:
         '''
         self.detect_device(self.device_discover_handler)
 
-    def stop(self):
-        pass
-
     def detect_device(self, callback):
         '''find if there is a connected device'''
-        print('start to find device')
         if self.communicator is None:
             self.communicator = CommunicatorFactory.create(
                 self.communication, self.options)
@@ -49,10 +45,14 @@ class CommandLine:
         '''
         Handler after device discovered
         '''
+        # check if device is in bootloader
+        # TODO: if in bootloader, only allow upgrade
+        
+        # TODO: if a normal device, allow other commands
+
         # load device provider
         self.webserver.load_device_provider(device_provider)
         # setup command
-        # print(device_provider.getConf())
         self.device_provider = device_provider
         self.setup_command_handler()
 
@@ -117,21 +117,21 @@ class CommandLine:
         else:
             file_name = self.input_string[1]
             # TODO: check device is idel
-            self.device_provider.upgradeFramework(file_name)
+            self.device_provider.upgrade_framework(file_name)
         return True
 
     def record_handler(self):
         '''record command is used to save the outputs into local machine
         '''
         # TODO: check device is idel
-        # self.device_provider.startLog()
+        self.device_provider.start_log()
         return True
 
     def stop_handler(self):
         '''record command is used to save the outputs into local machine
         '''
         # TODO: check device is idel
-        # self.device_provider.stopLog()
+        self.device_provider.stop_log()
         return True
 
     def get_handler(self):
@@ -148,7 +148,7 @@ class CommandLine:
         '''
         Save device configuration
         '''
-        self.device_provider.saveConfig()
+        self.device_provider.save_config()
         return True
 
     def server_start_handler(self):

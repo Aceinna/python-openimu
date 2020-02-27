@@ -257,12 +257,12 @@ class FileLoger():
                           ' [' + \
                           output_packet['payload'][i]['unit'] + \
                           ']'''
-                dataStr = output_packet['payload'][i]['name']
-                unitStr = output_packet['payload'][i]['unit']
-                if unitStr == '':
-                    labels = labels + '{0:s},'.format(dataStr)
+                data_str = output_packet['payload'][i]['name']
+                unit_str = output_packet['payload'][i]['unit']
+                if unit_str == '':
+                    labels = labels + '{0:s},'.format(data_str)
                 else:
-                    labels = labels + '{0:s} ({1:s}),'.format(dataStr, unitStr)
+                    labels = labels + '{0:s} ({1:s}),'.format(data_str, unit_str)
 
             # Remove the comma at the end of the string and append a new-line character
             labels = labels[:-1]
@@ -276,22 +276,22 @@ class FileLoger():
         #   (with precision based on the data type defined in the json properties file)
         str = ''
         for i, (k, v) in enumerate(data.items()):
-            outputPcktType = output_packet['payload'][i]['type']
+            output_packet_type = output_packet['payload'][i]['type']
 
-            if outputPcktType == 'uint32' or outputPcktType == 'int32' or \
-               outputPcktType == 'uint16' or outputPcktType == 'int16' or \
-               outputPcktType == 'uint64' or outputPcktType == 'int64':
+            if output_packet_type == 'uint32' or output_packet_type == 'int32' or \
+               output_packet_type == 'uint16' or output_packet_type == 'int16' or \
+               output_packet_type == 'uint64' or output_packet_type == 'int64':
                 # integers and unsigned integers
                 str += '{0:d},'.format(v)
-            elif outputPcktType == 'double':
+            elif output_packet_type == 'double':
                 # double
                 str += '{0:0.8f},'.format(v)  # 15.12
-            elif outputPcktType == 'float':
+            elif output_packet_type == 'float':
                 str += '{0:0.4f},'.format(v)  # 12.8
-            elif outputPcktType == 'uint8':
+            elif output_packet_type == 'uint8':
                 # byte
                 str += '{0:d},'.format(v)
-            elif outputPcktType == 'uchar' or outputPcktType == 'char' or outputPcktType == 'string':
+            elif output_packet_type == 'uchar' or output_packet_type == 'char' or output_packet_type == 'string':
                 # character
                 str += '{:},'.format(v)
             else:

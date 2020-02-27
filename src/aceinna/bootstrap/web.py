@@ -114,11 +114,13 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         '''
         device = self.get_device()
 
-        if device and device.connected and hasattr(device, method):
-            result = getattr(device, method, None)(parameters)
+        converted_method = helper.name_convert_camel_to_snake(method)
+
+        if device and device.connected and hasattr(device, converted_method):
+            result = getattr(device, converted_method, None)(parameters)
             self.response_message(method, result)
-        elif hasattr(self, method):
-            getattr(self, method, None)(parameters)
+        elif hasattr(self, converted_method):
+            getattr(self, converted_method, None)(parameters)
 
     def response_message(self, method, data):
         '''
@@ -185,21 +187,21 @@ class WSHandler(tornado.websocket.WebSocketHandler):
 
     # protocol
 
-    def startStream(self, *args):  # pylint: disable=invalid-name
+    def start_stream(self, *args):  # pylint: disable=invalid-name
         '''
         Start to send stream data
         '''
         self.response_message('startStream', {'packetType': 'success'})
         self.is_streaming = True
 
-    def stopStream(self, *args):  # pylint: disable=invalid-name
+    def stop_stream(self, *args):  # pylint: disable=invalid-name
         '''
         Stop sending stream data
         '''
         self.response_message('stopStream', {'packetType': 'success'})
         self.is_streaming = False
 
-    def startLog(self, *args):  # pylint: disable=invalid-name
+    def start_log(self, *args):  # pylint: disable=invalid-name
         '''
         Start record log
         '''
@@ -212,7 +214,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         self.response_message(
             'startLog', {'packetType': 'success', 'data': parameters['fileName']+'.csv'})
 
-    def stopLog(self, *args):  # pylint: disable=invalid-name
+    def stop_log(self, *args):  # pylint: disable=invalid-name
         '''
         Stop record log
         '''

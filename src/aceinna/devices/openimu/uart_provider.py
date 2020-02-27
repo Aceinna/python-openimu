@@ -66,7 +66,7 @@ class Provider(OpenDeviceBase):
         '''
         Check if the connected device is OpenIMU
         '''
-        print('start to check if it is openimu')
+        # print('start to check if it is openimu')
         device_info_text = self.internal_input_command('pG')
         app_info_text = self.internal_input_command('gV')
 
@@ -75,6 +75,7 @@ class Provider(OpenDeviceBase):
             self.build_device_info(device_info_text)
             self.build_app_info(app_info_text)
             self.connected = True
+            print('Connected', device_info_text)
             return True
         return False
 
@@ -111,7 +112,7 @@ class Provider(OpenDeviceBase):
         local_config_file_path = os.path.join(os.getcwd(), 'openimu.json')
         if os.path.isfile(local_config_file_path):
             with open(local_config_file_path) as json_data:
-                self.imu_properties = json.load(json_data)
+                self.properties = json.load(json_data)
                 return
 
         # Load the openimu.json based on its app
@@ -121,6 +122,12 @@ class Provider(OpenDeviceBase):
 
         with open(app_file_path) as json_data:
             self.properties = json.load(json_data)
+
+    def after_setup(self):
+        pass
+
+    def on_read_raw(self, data):
+        pass
 
     def on_receive_output_packet(self, packet_type, data):
         '''
@@ -222,7 +229,7 @@ class Provider(OpenDeviceBase):
         }
 
     # command list
-    def getDeviceInfo(self, *args):  # pylint: disable=invalid-name
+    def get_device_info(self, *args):  # pylint: disable=invalid-name
         '''
         Get device information
         '''
@@ -239,7 +246,7 @@ class Provider(OpenDeviceBase):
             ]
         }
 
-    def getConf(self, *args):  # pylint: disable=invalid-name
+    def get_conf(self, *args):  # pylint: disable=invalid-name
         '''
         Get json configuration
         '''
@@ -248,7 +255,7 @@ class Provider(OpenDeviceBase):
             'data': self.properties
         }
 
-    def getParams(self, *args):  # pylint: disable=invalid-name
+    def get_params(self, *args):  # pylint: disable=invalid-name
         '''
         Get all parameters
         '''
@@ -268,12 +275,12 @@ class Provider(OpenDeviceBase):
                 'data': 'No Response'
             }
 
-    def setParams(self, params, *args):  # pylint: disable=invalid-name
+    def set_params(self, params, *args):  # pylint: disable=invalid-name
         '''
         Update paramters value
         '''
         for parameter in params:
-            result = self.setParam(parameter)
+            result = self.set_param(parameter)
             if result['packetType'] == 'error':
                 return {
                     'packetType': 'error',
@@ -296,7 +303,7 @@ class Provider(OpenDeviceBase):
             }
         }
 
-    def setParam(self, params, *args):  # pylint: disable=invalid-name
+    def set_param(self, params, *args):  # pylint: disable=invalid-name
         '''
         Update paramter value
         '''
@@ -320,7 +327,7 @@ class Provider(OpenDeviceBase):
                 }
             }
 
-    def saveConfig(self, *args):  # pylint: disable=invalid-name
+    def save_config(self, *args):  # pylint: disable=invalid-name
         '''
         Save configuration
         '''
@@ -340,7 +347,7 @@ class Provider(OpenDeviceBase):
                 'data': result['error']
             }
 
-    def magAlignStart(self, *args):  # pylint: disable=invalid-name
+    def mag_align_start(self, *args):  # pylint: disable=invalid-name
         '''
         Start mag align action
         '''
@@ -398,7 +405,7 @@ class Provider(OpenDeviceBase):
                 'status': 'error'
             })
 
-    def magAlignAbort(self, *args):  # pylint: disable=invalid-name
+    def mag_align_abort(self, *args):  # pylint: disable=invalid-name
         '''
         Abort mag align action
         '''
@@ -420,7 +427,7 @@ class Provider(OpenDeviceBase):
                 'packetType': 'success'
             }
 
-    def magAlignSave(self, *args):  # pylint: disable=invalid-name
+    def mag_align_save(self, *args):  # pylint: disable=invalid-name
         '''
         Save mag align resut
         '''
@@ -495,7 +502,7 @@ class Provider(OpenDeviceBase):
             pi_value = 2 ** 15 / math.pi
             return decoded_value / pi_value
 
-    def upgradeFramework(self, file, *args):  # pylint: disable=invalid-name
+    def upgrade_framework(self, file, *args):  # pylint: disable=invalid-name
         '''
         upgrade framework
         '''

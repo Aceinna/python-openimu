@@ -167,3 +167,26 @@ def dict_to_object(dict_obj):
     for key, val in dict_obj.items():
         inst[key] = dict_to_object(val)
     return inst
+
+
+def name_convert_camel_to_snake(camel_name):
+    '''
+    Convert Camel naming to snake case
+    '''
+    chars = []
+    underscore = '_'
+
+    lower_camel_name = camel_name.lower()
+
+    for i, char in enumerate(camel_name):
+        add_underscore = False
+        lower_char = lower_camel_name[i]
+        if char != lower_char:
+            add_underscore = True if i > 0 else False
+
+        if add_underscore:
+            chars.append(underscore+lower_char)
+        else:
+            chars.append(lower_char)
+
+    return ''.join(chars)

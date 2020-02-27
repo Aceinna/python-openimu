@@ -1,4 +1,5 @@
 import sys
+import time
 try:
     from aceinna.tools import Detector
 except:  # pylint: disable=bare-except
@@ -11,8 +12,14 @@ def on_find_device(device):
     '''
     callback after find device
     '''
-    device.setup()
-    print('1. Get device info', device.getDeviceInfo())
+    device.setup(None)
+    # start log
+    # device.start_data_log()
+    # print('Logging...')
+    # time.sleep(10)
+    # stop log
+    # device.stop_data_log()
+    device.close()
 
 
 def simple_start():

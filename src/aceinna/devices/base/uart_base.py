@@ -36,7 +36,6 @@ class OpenDeviceBase(object):
         self.listeners = {}
         self.is_streaming = False
         self.has_running_checker = False
-        self._logger = None
         self.connected = False
         self.is_upgrading = False
         self.complete_upgrade = False
@@ -48,6 +47,8 @@ class OpenDeviceBase(object):
         self.addr = 0
         self.max_data_len = 240
         self.block_blob_service = None
+        self._logger = None
+        self.is_logging = False
 
     @abstractmethod
     def load_properties(self):
@@ -422,8 +423,11 @@ class OpenDeviceBase(object):
         self._logger = FileLoger(self.properties)
         with_data_log = options and options.with_data_log
 
-        if with_data_log:
-            self._logger.start_user_log('data')
+        if with_data_log and not self.is_logging:
+            log_result = self._logger.start_user_log('data')
+            if log_result == 1 or log_result == 2:
+                raise Exception('Cannot start data logger')
+            self.is_logging = True
 
         if not self.has_running_checker:
             thread = threading.Thread(
@@ -462,6 +466,9 @@ class OpenDeviceBase(object):
             return when occur Exception
         '''
         while True:
+            if self.exit_thread:
+                return
+
             if self.is_upgrading:
                 time.sleep(0.1)
                 continue
@@ -500,6 +507,9 @@ class OpenDeviceBase(object):
         payload_len = 0
 
         while True:
+            if self.exit_thread:
+                return
+
             self.exception_lock.acquire()
             if self.exception_thread:
                 self.exception_lock.release()
@@ -623,6 +633,7 @@ class OpenDeviceBase(object):
         self.is_upgrading = False
         if self._logger is not None:
             self._logger.stop_user_log()
+            self.is_logging = False
 
     def reset(self):
         '''
@@ -699,6 +710,7 @@ class OpenDeviceBase(object):
             self.firmware_content = open(firmware_file_path, 'rb').read()
 
         print('upgrade fw: %s' % file)
+        self.addr = 0
         self.fs_len = len(self.firmware_content)
         return True
 
@@ -772,7 +784,34 @@ class OpenDeviceBase(object):
         self._logger = FileLoger(self.properties)
 
         if options and not options.with_data_log:
-            self._logger.start_user_log('data')
+            log_result = self._logger.start_user_log('data')
+            if log_result == 1 or log_result == 2:
+                raise Exception('Cannot start data logger')
+            self.is_logging = True
+
+    def start_data_log(self):
+        '''
+        Start to log
+        '''
+        if self.is_logging:
+            return False
+
+        if self._logger is None:
+            self._logger = FileLoger(self.properties)
+
+        log_result = self._logger.start_user_log('data')
+        if log_result == 1 or log_result == 2:
+            raise Exception('Cannot start data logger')
+        self.is_logging = True
+
+    def stop_data_log(self):
+        '''
+        Stop logging
+        '''
+        if self.is_logging and not self._logger:
+            self._logger.stop_user_log()
+            self.is_logging = False
+        
 
     def on_upgarde_failed(self, message):
         '''

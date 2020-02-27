@@ -1,6 +1,7 @@
 """
 predefined params for openimu
 """
+JSON_FILE_NAME = 'openimu.json'
 
 
 def get_app_names():
@@ -17,5 +18,4 @@ def get_app_names():
     return app_names
 
 
-APP_URL_BASE = 'https://raw.githubusercontent.com/Aceinna/python-openimu/bugfix/app_config'
-APP_STR = ['INS', 'VG_AHRS', 'IMU', 'Compass', 'Leveler']
+APP_STR = ['INS', 'VG_AHRS', 'IMU', 'Compass', 'Leveler', 'OpenIMU']
