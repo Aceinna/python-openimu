@@ -148,11 +148,89 @@ class CommandLine:
         '''
         Get parameter of device
         '''
+        input_args = len(self.input_string)
+        conf = self.device_provider.get_conf()
+        input_params_properties = conf['data']['inputParams']
+        select_param = None
+        if (input_args == 1):
+            print("Usage: get [options]")
+            print("Option: ")
+            i = 2
+            while i < len(input_params_properties):
+                print(input_params_properties[i]['argument'])
+                i += 1
+            return True
+        else:
+            i = 2
+            while i < len(input_params_properties):
+                select_param = input_params_properties[i]
+                if (select_param['argument'] == self.input_string[1]):
+                    break
+                i += 1
+                if (i == len(input_params_properties)):
+                    print("Usage: get [options]")
+                    print("Option: ")
+                    i = 2
+                    while i < len(input_params_properties):
+                        print(input_params_properties[i]['argument'])
+                        i += 1
+                    return True
+
+        param = self.device_provider.get_param(
+            {'paramId': select_param['paramId']})
+        print(param['data']['value'])
+        return True
 
     def set_handler(self):
         '''
         Set parameter of device
         '''
+        input_args = len(self.input_string)
+        conf = self.device_provider.get_conf()
+        input_params_properties = conf['data']['inputParams']
+        select_param = None
+
+        if input_args == 1:
+            print("Usage: set <options> <values>")
+            i = 2
+            while i < len(input_params_properties):
+                print(input_params_properties[i]['argument'])
+                i += 1
+            return True
+        else:
+            i = 2
+            while i < len(input_params_properties):
+                select_param = input_params_properties[i]
+                if (select_param['argument'] == self.input_string[1]):
+                    break
+                i += 1
+
+        if input_args == 2:
+            if i == len(input_params_properties):
+                print("Usage: set <options> <values>")
+                i = 2
+                while i < len(input_params_properties):
+                    print(input_params_properties[i]['argument'])
+                    i += 1
+            else:
+                print("Usage: set " + select_param['argument'] + " <values>")
+                print("values: ")
+                print(select_param['options'])
+            return True
+
+        if ((select_param['type'] == "char8" and self.input_string[2] not in x['options']) or
+                (select_param['type'] == "int64" and int(self.input_string[2]) not in x['options'])):
+            print("Usage: set " + select_param['argument'] + " <values>")
+            print("values: ")
+            print(select_param['options'])
+            return True
+        else:
+            self.device_provider.set_param({
+                'paramId': self.input_string[1],
+                'value': self.input_string[2]
+            })
+
+        return True
 
     def save_handler(self):
         '''

@@ -287,14 +287,15 @@ class OpenDeviceBase(object):
                     {"paramId": param_id, "name": name, "value": value})
         elif response_playload_type_config == 'userParameter':
             param_id = self._unpack_one('uint32', payload[0:4])
-
-            param = filter(lambda item: item.paramId ==
+            param = filter(lambda item: item['paramId'] ==
                            param_id, user_configuration)
-            if len(param) > 0:
-                param_value = self._unpack_one(param['type'], payload[4:12])
+            try:
+                first_item = next(param)
+                param_value = self._unpack_one(
+                    first_item['type'], payload[4:12])
                 data = {"paramId": param_id,
-                        "name": param['name'], "value": param_value}
-            else:
+                        "name": first_item['name'], "value": param_value}
+            except StopIteration:
                 error = True
         elif response_playload_type_config == 'paramId':
             data = self._unpack_one('uint32', payload[0:4])
@@ -811,7 +812,6 @@ class OpenDeviceBase(object):
         if self.is_logging and not self._logger:
             self._logger.stop_user_log()
             self.is_logging = False
-        
 
     def on_upgarde_failed(self, message):
         '''

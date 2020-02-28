@@ -252,7 +252,10 @@ class Provider(OpenDeviceBase):
         '''
         return {
             'packetType': 'conf',
-            'data': self.properties
+            'data': {
+                'outputs': self.properties['userMessages']['outputPackets'],
+                'inputParams': self.properties['userConfiguration']
+            }
         }
 
     def get_params(self, *args):  # pylint: disable=invalid-name
@@ -267,6 +270,27 @@ class Provider(OpenDeviceBase):
             self.parameters = result['data']
             return {
                 'packetType': 'inputParams',
+                'data': result['data']
+            }
+        else:
+            return {
+                'packetType': 'error',
+                'data': 'No Response'
+            }
+    
+    def get_param(self, params, *args):  # pylint: disable=invalid-name
+        '''
+        Update paramter value
+        '''
+        command_line = helper.build_input_packet(
+            'gP', properties=self.properties, param=params['paramId'])
+        self.communicator.write(command_line)
+        result = self.get_input_result('gP', timeout=1)
+
+        if result['data']:
+            self.parameters = result['data']
+            return {
+                'packetType': 'inputParam',
                 'data': result['data']
             }
         else:

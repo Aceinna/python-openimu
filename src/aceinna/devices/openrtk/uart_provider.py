@@ -340,6 +340,27 @@ class Provider(OpenDeviceBase):
                 'data': 'No Response'
             }
 
+    def get_param(self, params, *args):  # pylint: disable=invalid-name
+        '''
+        Update paramter value
+        '''
+        command_line = helper.build_input_packet(
+            'gP', properties=self.properties, param=params['paramId'])
+        self.communicator.write(command_line)
+        result = self.get_input_result('gP', timeout=1)
+
+        if result['data']:
+            self.parameters = result['data']
+            return {
+                'packetType': 'inputParam',
+                'data': result['data']
+            }
+        else:
+            return {
+                'packetType': 'error',
+                'data': 'No Response'
+            }
+
     def set_params(self, params, *args):  # pylint: disable=invalid-name
         '''
         Update paramters value
@@ -411,7 +432,6 @@ class Provider(OpenDeviceBase):
                 'packetType': 'success',
                 'data': result['error']
             }
-
 
     def upgrade_framework(self, file, *args):  # pylint: disable=invalid-name
         '''
