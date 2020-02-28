@@ -366,6 +366,9 @@ class Webserver:
 
         self.communicator.find_device(callback)
 
+    def set_communicator(self, communicator):
+        self.communicator = communicator
+
     def stop(self):
         '''close websocket server'''
         if self.http_server is not None:

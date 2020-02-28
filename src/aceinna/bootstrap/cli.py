@@ -23,7 +23,6 @@ class CommandLine:
         self.current_command = None
         self._build_options(**kwargs)
         self.webserver = Webserver(**kwargs)
-        self.webserver_thread = threading.Thread(target=self.start_webserver)
         self.webserver_running = False
 
     def listen(self):
@@ -47,10 +46,11 @@ class CommandLine:
         '''
         # check if device is in bootloader
         # TODO: if in bootloader, only allow upgrade
-        
+
         # TODO: if a normal device, allow other commands
 
         # load device provider
+        self.webserver.set_communicator(self.communicator)
         self.webserver.load_device_provider(device_provider)
         # setup command
         self.device_provider = device_provider
@@ -68,6 +68,10 @@ class CommandLine:
 
             if token.strip() == 'exit':
                 break
+
+            if self.webserver_running and token.strip() != 'stop':
+                print("server is on-going, please stop it")
+                continue
 
             for command in self.supported_commands:
                 if command['name'] == self.input_string[0]:
@@ -124,14 +128,20 @@ class CommandLine:
         '''record command is used to save the outputs into local machine
         '''
         # TODO: check device is idel
-        self.device_provider.start_log()
+        if not self.device_provider.is_logging:
+            self.device_provider.start_data_log()
         return True
 
     def stop_handler(self):
         '''record command is used to save the outputs into local machine
         '''
         # TODO: check device is idel
-        self.device_provider.stop_log()
+        if self.device_provider.is_logging:
+            self.device_provider.stop_data_log()
+
+        if self.webserver_running:
+            self.webserver.stop()
+            self.webserver_running = False
         return True
 
     def get_handler(self):
@@ -156,7 +166,8 @@ class CommandLine:
         start a websocket server
         '''
         # self.webserver.start_websocket_server()
-        self.webserver_thread.start()
+        webserver_thread = threading.Thread(target=self.start_webserver)
+        webserver_thread.start()
         self.webserver_running = True
         return True
 
@@ -165,6 +176,7 @@ class CommandLine:
         Exit current process
         '''
         self.webserver.stop()
+        self.webserver_running = False
         pid = getpid()
         process = psutil.Process(pid)
         process.kill()

@@ -681,6 +681,7 @@ class OpenDeviceBase(object):
                 self.on_upgarde_failed('Bootloader Start Failed')
                 return
             # step.3 write to block
+            print('Firmware upgrading...')
             self.write_firmware()
             # step.4 restart app
             self.restart()
@@ -709,7 +710,6 @@ class OpenDeviceBase(object):
                 'apps', file, firmware_file_path)
             self.firmware_content = open(firmware_file_path, 'rb').read()
 
-        print('upgrade fw: %s' % file)
         self.addr = 0
         self.fs_len = len(self.firmware_content)
         return True
