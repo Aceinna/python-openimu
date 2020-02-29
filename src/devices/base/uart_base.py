@@ -375,7 +375,7 @@ class OpenDeviceBase(object):
         '''
         self.load_properties()
         self._logger = FileLoger(self.properties)
-        if not options.nolog:
+        if not options.nolog and self.properties['type'] != 'openrtk':
             self._logger.start_user_log('data')
 
         if not self.has_running_checker:
@@ -684,7 +684,7 @@ class OpenDeviceBase(object):
 
         self.load_properties()
         self._logger = FileLoger(self.properties)
-        if not options.nolog:
+        if not options.nolog and self.properties['type'] != 'openrtk':
             self._logger.start_user_log('data')
 
     def on_upgarde_failed(self, message):
