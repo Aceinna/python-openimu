@@ -44,7 +44,8 @@ def main():
         port=input_args.port,
         baudrate=input_args.baudrate,
         debug=input_args.debug,
-        with_data_log=input_args.with_data_log
+        with_data_log=input_args.with_data_log,
+        with_raw_log=input_args.with_raw_log
     )
     command_line.listen()
 

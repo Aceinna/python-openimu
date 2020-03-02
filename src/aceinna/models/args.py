@@ -35,7 +35,8 @@ class WebserverArgs(KeyValuesArgumentBase):
         'baudrate': 'auto',
         'com_port': 'auto',
         'debug': False,
-        'with_data_log': False
+        'with_data_log': False,
+        'with_raw_log': False
     }
 
 

@@ -52,7 +52,8 @@ if __name__ == '__main__':
             port=ARGS.port,
             baudrate=ARGS.baudrate,
             debug=ARGS.debug,
-            with_data_log=ARGS.with_data_log)
+            with_data_log=ARGS.with_data_log,
+            with_raw_log=ARGS.with_raw_log)
         APP.listen()
     except KeyboardInterrupt:  # response for KeyboardInterrupt such as Ctrl+C
         print('User stop this program by KeyboardInterrupt! File:[{0}], Line:[{1}]'.format(
