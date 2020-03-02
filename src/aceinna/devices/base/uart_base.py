@@ -49,6 +49,8 @@ class OpenDeviceBase(object):
         self.block_blob_service = None
         self._logger = None
         self.is_logging = False
+        self.enable_data_log = True
+        self.cli_options = None
 
     @abstractmethod
     def load_properties(self):
@@ -422,9 +424,11 @@ class OpenDeviceBase(object):
         '''
         self.load_properties()
         self._logger = FileLoger(self.properties)
+        self.cli_options = options
+
         with_data_log = options and options.with_data_log
 
-        if with_data_log and not self.is_logging:
+        if with_data_log and not self.is_logging and self.enable_data_log:
             log_result = self._logger.start_user_log('data')
             if log_result == 1 or log_result == 2:
                 raise Exception('Cannot start data logger')
@@ -446,8 +450,7 @@ class OpenDeviceBase(object):
             #     t.name, t.ident, datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
             self.threads.append(thread)
 
-        if with_data_log:
-            self.after_setup()
+        self.after_setup()
 
     @abstractmethod
     def on_read_raw(self, data):
@@ -783,8 +786,9 @@ class OpenDeviceBase(object):
 
         self.load_properties()
         self._logger = FileLoger(self.properties)
+        self.cli_options = options
 
-        if options and not options.with_data_log:
+        if options and not options.with_data_log and self.enable_data_log:
             log_result = self._logger.start_user_log('data')
             if log_result == 1 or log_result == 2:
                 raise Exception('Cannot start data logger')

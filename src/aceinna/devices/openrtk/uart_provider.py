@@ -35,6 +35,7 @@ class Provider(OpenDeviceBase):
         self.user_logf = None
         self.debug_logf = None
         self.rtcm_logf = None
+        self.enable_data_log = False
         self.prepare_folders()
 
     def prepare_folders(self):
@@ -108,6 +109,11 @@ class Provider(OpenDeviceBase):
         # TODO: maybe we need a base config file
 
     def after_setup(self):
+        with_raw_log = self.cli_options and self.cli_options.with_raw_log
+
+        if not with_raw_log:
+            return
+        
         connection = None
         debug_port = ''
         rtcm_port = ''
@@ -137,17 +143,15 @@ class Provider(OpenDeviceBase):
                 #print("debug port {0} and rtcm port {1} open success".format(debug_port, rtcm_port))
 
                 if self.data_folder is not None:
-                    file_time = time.strftime(
-                        "%Y_%m_%d_%H_%M_%S", time.localtime())
-                    self.user_logf = open(
-                        self.data_folder + '/' + 'user_' + file_time, "wb")
-                    self.debug_logf = open(
-                        self.data_folder + '/' + 'debug_' + file_time, "wb")
-                    self.rtcm_logf = open(
-                        self.data_folder + '/' + 'rtcm_' + file_time, "wb")
+                    dir_time = time.strftime("%Y%m%d_%H%M%S", time.localtime())
+                    file_time = time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime())
+                    file_name = self.data_folder + '/' + 'openrtk_log_' + dir_time
+                    os.mkdir(file_name)
+                    self.user_logf = open(file_name + '/' + 'user_' + file_time + '.bin',"wb")
+                    self.debug_logf = open(file_name + '/' + 'debug_' + file_time + '.bin',"wb")
+                    self.rtcm_logf = open(file_name + '/' + 'rtcm_' + file_time + '.bin',"wb")
 
-                    funcs = [self.thread_debug_port_receiver,
-                             self.thread_rtcm_port_receiver]
+                    funcs = [self.thread_debug_port_receiver, self.thread_rtcm_port_receiver]
                     for func in funcs:
                         thread = threading.Thread(target=func, args=())
                         thread.start()

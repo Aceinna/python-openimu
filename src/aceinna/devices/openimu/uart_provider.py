@@ -30,6 +30,7 @@ class Provider(OpenDeviceBase):
         self.app_info = None
         self.app_config_folder = ''
         self.parameters = None
+        self.enable_data_log = False
         self.prepare_folders()
 
     def prepare_folders(self):

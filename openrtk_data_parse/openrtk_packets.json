@@ -1,0 +1,827 @@
+{
+	"userPacketsTypeList": ["K1", "pS", "sK", "e1", "e2"],
+	"debugPacketsTypeList": [268, 42, 99, 507],
+	"userOutputPackets": [
+		{
+			"name": "K1",
+			"isList": 0,
+			"payload": [
+				{
+					"type": "uint32",
+					"name": "timeCntr",
+					"unit": "msec"
+				},
+				{
+					"type": "uint32",
+					"name": "time",
+					"unit": "msec"
+				},
+				{
+					"type": "double",
+					"name": "lat",
+					"unit": "deg"
+				},
+				{
+					"type": "double",
+					"name": "lon",
+					"unit": "deg"
+				},
+				{
+					"type": "double",
+					"name": "alt",
+					"unit": "m"
+				},
+				{
+					"type": "float",
+					"name": "velNorth",
+					"unit": "m/s"
+				},
+				{
+					"type": "float",
+					"name": "velEast",
+					"unit": "m/s"
+				},
+				{
+					"type": "float",
+					"name": "velDown",
+					"unit": "m/s"
+				},
+				{
+					"type": "float",
+					"name": "hdop",
+					"unit": "m/s"
+				},
+				{
+					"type": "float",
+					"name": "GPSHorizAcc",
+					"unit": "m/s"
+				},
+				{
+					"type": "float",
+					"name": "GPSVertAcc",
+					"unit": "m/s"
+				},
+				{
+					"type": "float",
+					"name": "hhva3",
+					"unit": "m/s"
+				},
+				{
+					"type": "float",
+					"name": "xAccel",
+					"unit": "g"
+				},
+				{
+					"type": "float",
+					"name": "yAccel",
+					"unit": "g"
+				},
+				{
+					"type": "float",
+					"name": "zAccel",
+					"unit": "g"
+				},
+				{
+					"type": "float",
+					"name": "xRate",
+					"unit": "deg/s"
+				},
+				{
+					"type": "float",
+					"name": "yRate",
+					"unit": "deg/s"
+				},
+				{
+					"type": "float",
+					"name": "zRate",
+					"unit": "deg/s"
+				},
+				{
+					"type": "uint8",
+					"name": "gpsValid",
+					"unit": ""
+				},
+				{
+					"type": "uint8",
+					"name": "reserve_1",
+					"unit": ""
+				},
+				{
+					"type": "uint8",
+					"name": "reserve_2",
+					"unit": ""
+				}
+			]
+		},
+		{
+			"name": "pS",
+			"isList": 0,
+			"payload": [
+				{
+					"type": "uint32",
+					"name": "systemTime",
+					"unit": "msec"
+				},
+				{
+					"type": "double",
+					"name": "timeOfWeek",
+					"unit": "msec"
+				},
+				{
+					"type": "uint32",
+					"name": "positionMode",
+					"unit": ""
+				},
+				{
+					"type": "double",
+					"name": "latitude",
+					"unit": "deg"
+				},
+				{
+					"type": "double",
+					"name": "longitude",
+					"unit": "deg"
+				},
+				{
+					"type": "double",
+					"name": "ellipsoidalHeight",
+					"unit": "m"
+				},
+				{
+					"type": "double",
+					"name": "mslHeight",
+					"unit": "m"
+				},
+				{
+					"type": "double",
+					"name": "positionRMS",
+					"unit": "m"
+				},
+				{
+					"type": "uint32",
+					"name": "velocityMode",
+					"unit": "m"
+				},
+				{
+					"type": "float",
+					"name": "velocityNorth",
+					"unit": "m/s"
+				},
+				{
+					"type": "float",
+					"name": "velocityEast",
+					"unit": "m/s"
+				},
+				{
+					"type": "float",
+					"name": "velocityDown",
+					"unit": "m/s"
+				},
+				{
+					"type": "float",
+					"name": "velocityRMS",
+					"unit": "m/s"
+				},
+				{
+					"type": "uint32",
+					"name": "insStatus",
+					"unit": "m/s"
+				},
+				{
+					"type": "uint32",
+					"name": "insPositionType",
+					"unit": "m/s"
+				},
+				{
+					"type": "float",
+					"name": "roll",
+					"unit": "m/s"
+				},
+				{
+					"type": "float",
+					"name": "pitch",
+					"unit": "m/s"
+				},
+				{
+					"type": "float",
+					"name": "heading",
+					"unit": "m/s"
+				},
+				{
+					"type": "float",
+					"name": "rollRMS",
+					"unit": "m/s"
+				},
+				{
+					"type": "float",
+					"name": "pitchRMS",
+					"unit": "m/s"
+				},
+				{
+					"type": "float",
+					"name": "headingRMS",
+					"unit": "m/s"
+				}
+			]
+		},
+		{
+			"name": "sK",
+			"isList": 1,
+			"payload": [
+				{
+					"type": "double",
+					"name": "timeOfWeek",
+					"unit": "msec"
+				},
+				{
+					"type": "uint8",
+					"name": "satelliteId",
+					"unit": ""
+				},
+				{
+					"type": "uint8",
+					"name": "systemId",
+					"unit": ""
+				},
+				{
+					"type": "uint8",
+					"name": "antennaId",
+					"unit": ""
+				},
+				{
+					"type": "uint8",
+					"name": "l1cn0",
+					"unit": ""
+				},
+				{
+					"type": "uint8",
+					"name": "l2cn0",
+					"unit": ""
+				},
+				
+				{
+					"type": "float",
+					"name": "azimuth",
+					"unit": ""
+				},
+				{
+					"type": "float",
+					"name": "elevation",
+					"unit": ""
+				}
+			]
+		},
+		{
+			"name": "e1",
+			"isList": 0,
+			"payload": [
+				{
+					"type": "uint32",
+					"name": "timeCntr",
+					"unit": "msec"
+				},
+				{
+					"type": "double",
+					"name": "time",
+					"unit": "s"
+				},
+				{
+					"type": "float",
+					"name": "roll",
+					"unit": "rad"
+				},
+				{
+					"type": "float",
+					"name": "pitch",
+					"unit": "rad"
+				},
+				{
+					"type": "float",
+					"name": "heading",
+					"unit": "rad"
+				},
+				{
+					"type": "float",
+					"name": "xAccel",
+					"unit": "g"
+				},
+				{
+					"type": "float",
+					"name": "yAccel",
+					"unit": "g"
+				},
+				{
+					"type": "float",
+					"name": "zAccel",
+					"unit": "g"
+				},
+				{
+					"type": "float",
+					"name": "xRate",
+					"unit": "deg/s"
+				},
+				{
+					"type": "float",
+					"name": "yRate",
+					"unit": "deg/s"
+				},
+				{
+					"type": "float",
+					"name": "zRate",
+					"unit": "deg/s"
+				},
+				{
+					"type": "float",
+					"name": "xRateBias",
+					"unit": "deg/s"
+				},
+				{
+					"type": "float",
+					"name": "yRateBias",
+					"unit": "deg/s"
+				},
+				{
+					"type": "float",
+					"name": "zRateBias",
+					"unit": "deg/s"
+				},
+				{
+					"type": "float",
+					"name": "xMag",
+					"unit": "G"
+				},
+				{
+					"type": "float",
+					"name": "yMag",
+					"unit": "G"
+				},
+				{
+					"type": "float",
+					"name": "zMag",
+					"unit": "G"
+				},
+				{
+					"type": "uint8",
+					"name": "opMode",
+					"unit": "unitless"
+				},
+				{
+					"type": "uint8",
+					"name": "linAccSw",
+					"unit": "unitless"
+				},
+				{
+					"type": "uint8",
+					"name": "turnSw",
+					"unit": "unitless"
+				}
+			]
+		},
+		{
+			"name": "e2",
+			"isList": 0,
+			"payload": [
+				{
+					"type": "uint32",
+					"name": "timeCntr",
+					"unit": "msec"
+				},
+				{
+					"type": "double",
+					"name": "time",
+					"unit": "s"
+				},
+				{
+					"type": "float",
+					"name": "roll",
+					"unit": "rad"
+				},
+				{
+					"type": "float",
+					"name": "pitch",
+					"unit": "rad"
+				},
+				{
+					"type": "float",
+					"name": "heading",
+					"unit": "rad"
+				},
+				{
+					"type": "float",
+					"name": "xAccel",
+					"unit": "g"
+				},
+				{
+					"type": "float",
+					"name": "yAccel",
+					"unit": "g"
+				},
+				{
+					"type": "float",
+					"name": "zAccel",
+					"unit": "g"
+				},
+				{
+					"type": "float",
+					"name": "xAccelBias",
+					"unit": "g"
+				},
+				{
+					"type": "float",
+					"name": "yAccelBias",
+					"unit": "g"
+				},
+				{
+					"type": "float",
+					"name": "zAccelBias",
+					"unit": "g"
+				},
+				{
+					"type": "float",
+					"name": "xRate",
+					"unit": "deg/s"
+				},
+				{
+					"type": "float",
+					"name": "yRate",
+					"unit": "deg/s"
+				},
+				{
+					"type": "float",
+					"name": "zRate",
+					"unit": "deg/s"
+				},
+				{
+					"type": "float",
+					"name": "xRateBias",
+					"unit": "deg/s"
+				},
+				{
+					"type": "float",
+					"name": "yRateBias",
+					"unit": "deg/s"
+				},
+				{
+					"type": "float",
+					"name": "zRateBias",
+					"unit": "deg/s"
+				},
+				{
+					"type": "float",
+					"name": "velNorth",
+					"unit": "m/s"
+				},
+				{
+					"type": "float",
+					"name": "velEast",
+					"unit": "m/s"
+				},
+				{
+					"type": "float",
+					"name": "velDown",
+					"unit": "m/s"
+				},
+				{
+					"type": "float",
+					"name": "xMag",
+					"unit": "G"
+				},
+				{
+					"type": "float",
+					"name": "yMag",
+					"unit": "G"
+				},
+				{
+					"type": "float",
+					"name": "zMag",
+					"unit": "G"
+				},
+				{
+					"type": "double",
+					"name": "lat",
+					"unit": "deg"
+				},
+				{
+					"type": "double",
+					"name": "lon",
+					"unit": "deg"
+				},
+				{
+					"type": "double",
+					"name": "alt",
+					"unit": "m"
+				},
+				{
+					"type": "uint8",
+					"name": "opMode",
+					"unit": "unitless"
+				},
+				{
+					"type": "uint8",
+					"name": "linAccSw",
+					"unit": "unitless"
+				},
+				{
+					"type": "uint8",
+					"name": "turnSw",
+					"unit": "unitless"
+				}
+			]
+		}
+	],
+	"debugOutputPackets": [
+		{
+			"name": "imu",
+			"messageId": "268",
+			"needHeadTime": 0,
+			"payload": [
+				{
+					"type": "uint32",
+					"name": "gps_week",
+					"unit": ""
+				},
+				{
+					"type": "double",
+					"name": "gps_millisecs",
+					"unit": ""
+				},
+				{
+					"type": "uint32",
+					"name": "imuStatus",
+					"unit": ""
+				},
+				{
+					"type": "float",
+					"name": "x_accel",
+					"unit": ""
+				},
+				{
+					"type": "float",
+					"name": "y_accel",
+					"unit": ""
+				},
+				{
+					"type": "float",
+					"name": "z_accel",
+					"unit": ""
+				},
+				{
+					"type": "float",
+					"name": "x_gyro",
+					"unit": ""
+				},
+				{
+					"type": "float",
+					"name": "y_gyro",
+					"unit": ""
+				},
+				{
+					"type": "float",
+					"name": "z_gyro",
+					"unit": ""
+				}
+			]
+		},
+		{
+			"name": "pos",
+			"messageId": "42",
+			"needHeadTime": 1,
+			"payload": [
+				{
+					"type": "uint32",
+					"name": "solution_status",
+					"unit": ""
+				},
+				{
+					"type": "uint32",
+					"name": "position_type",
+					"unit": ""
+				},
+				{
+					"type": "double",
+					"name": "latitude",
+					"unit": ""
+				},
+				{
+					"type": "double",
+					"name": "longitude",
+					"unit": ""
+				},
+				{
+					"type": "double",
+					"name": "height",
+					"unit": ""
+				},
+				{
+					"type": "float",
+					"name": "undulation",
+					"unit": ""
+				},
+				{
+					"type": "uint32",
+					"name": "datum_id",
+					"unit": ""
+				},
+				{
+					"type": "float",
+					"name": "latitude_standard_deviation",
+					"unit": ""
+				},
+				{
+					"type": "float",
+					"name": "longitude_standard_deviation",
+					"unit": ""
+				},
+				{
+					"type": "float",
+					"name": "height_standard_deviation",
+					"unit": ""
+				},
+				{
+					"type": "int8",
+					"name": "base_station_id_1",
+					"unit": ""
+				},
+				{
+					"type": "int8",
+					"name": "base_station_id_2",
+					"unit": ""
+				},
+				{
+					"type": "int8",
+					"name": "base_station_id_3",
+					"unit": ""
+				},
+				{
+					"type": "int8",
+					"name": "base_station_id_4",
+					"unit": ""
+				},
+				{
+					"type": "float",
+					"name": "differential_age",
+					"unit": ""
+				},
+				{
+					"type": "float",
+					"name": "solution_age",
+					"unit": ""
+				},
+				{
+					"type": "uint8",
+					"name": "number_of_satellites",
+					"unit": ""
+				},
+				{
+					"type": "uint8",
+					"name": "number_of_satellites_in_solution",
+					"unit": ""
+				},
+				{
+					"type": "uint8",
+					"name": "num_gps_plus_glonass_l1",
+					"unit": ""
+				},
+				{
+					"type": "uint8",
+					"name": "num_gps_plus_glonass_l2",
+					"unit": ""
+				},
+				{
+					"type": "uint8",
+					"name": "reserved",
+					"unit": ""
+				},
+				{
+					"type": "uint8",
+					"name": "extended_solution_status",
+					"unit": ""
+				},
+				{
+					"type": "uint8",
+					"name": "reserved2",
+					"unit": ""
+				},
+				{
+					"type": "uint8",
+					"name": "signals_used_mask",
+					"unit": ""
+				}
+			]
+		},
+		{
+			"name": "vel",
+			"messageId": "99",
+			"needHeadTime": 1,
+			"payload": [
+				{
+					"type": "uint32",
+					"name": "solution_status",
+					"unit": ""
+				},
+				{
+					"type": "uint32",
+					"name": "position_type",
+					"unit": ""
+				},
+				{
+					"type": "float",
+					"name": "latency",
+					"unit": ""
+				},
+				{
+					"type": "float",
+					"name": "age",
+					"unit": ""
+				},
+				{
+					"type": "double",
+					"name": "horizontal_speed",
+					"unit": ""
+				},
+				{
+					"type": "double",
+					"name": "track_over_ground",
+					"unit": ""
+				},
+				{
+					"type": "double",
+					"name": "vertical_speed",
+					"unit": ""
+				},
+				{
+					"type": "float",
+					"name": "reserved",
+					"unit": ""
+				}
+			]
+		},
+		{
+			"name": "ins",
+			"messageId": "507",
+			"needHeadTime": 0,
+			"payload": [
+				{
+					"type": "uint32",
+					"name": "gps_week",
+					"unit": ""
+				},
+				{
+					"type": "double",
+					"name": "gps_millisecs",
+					"unit": ""
+				},
+				{
+					"type": "double",
+					"name": "latitude",
+					"unit": ""
+				},
+				{
+					"type": "double",
+					"name": "longitude",
+					"unit": ""
+				},
+				{
+					"type": "double",
+					"name": "height",
+					"unit": ""
+				},
+				{
+					"type": "double",
+					"name": "north_velocity",
+					"unit": ""
+				},
+				{
+					"type": "double",
+					"name": "east_velocity",
+					"unit": ""
+				},
+				{
+					"type": "double",
+					"name": "up_velocity",
+					"unit": ""
+				},
+				{
+					"type": "double",
+					"name": "roll",
+					"unit": ""
+				},
+				{
+					"type": "double",
+					"name": "pitch",
+					"unit": ""
+				},
+				{
+					"type": "double",
+					"name": "azimuth",
+					"unit": ""
+				},
+				{
+					"type": "int32",
+					"name": "status",
+					"unit": ""
+				}
+			]
+		}
+	]
+}
