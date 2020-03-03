@@ -102,15 +102,15 @@ class OpenIMU:
         self.is_bootloader = False
         self.force_into_bootloader = self.args_input().f[0] if isinstance(self.args_input().f, list) else self.args_input().f
 
-        if self.force_into_bootloader:
-            self.force_entry_bootloader()
-
         # log init
         logging.basicConfig(level=self.loglevel,
             format='%(asctime)-28s:%(msecs)-4dms %(filename)-20s[%(funcName)-40s][line:%(lineno)4d] %(levelname)5s     %(message)s',
             datefmt='%a, %d %b %Y %H:%M:%S',                
             filename= os.path.join(EXECUTOR_PATH,'webserver.log'),
             filemode='w')
+
+        if self.force_into_bootloader:
+            self.force_entry_bootloader()
 
         self.prepare_folders()
         self.load_properties()
