@@ -420,7 +420,7 @@ class OpenDeviceBase(object):
                 return  # exit thread receiver
 
             if len(data):
-                if nolog:
+                if not nolog:
                     self.on_read_raw(data)
                 # print(datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S:') + ' '.join('0X{0:x}'.format(data[i]) for i in range(len(data))))
                 self.data_lock.acquire()
