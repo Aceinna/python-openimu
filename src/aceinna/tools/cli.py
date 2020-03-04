@@ -28,7 +28,7 @@ def receive_args():
                         help="COM Port")
     parser.add_argument("--debug", type=bool,
                         help="Log debug information", default=False)
-    parser.add_argument("--with-data-log", type=int,
+    parser.add_argument("--with-data-log", type=bool,
                         help="Contains internal data log (OpenIMU only)", default=False)
     parser.add_argument("--with-raw-log", type=bool,
                         help="Contains raw data log (OpenRTK only)", default=False)

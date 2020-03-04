@@ -1,3 +1,3 @@
 # Package Version
-VERSION = '1.0.0'
-PACKAGE_NAME = 'ans-devices'
+VERSION = '2.0.0'
+PACKAGE_NAME = 'openimu'

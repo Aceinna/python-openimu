@@ -13,8 +13,8 @@
 # permissions and limitations under the License.
 
 from setuptools import find_packages, setup
+from src.aceinna import (PACKAGE_NAME, VERSION)
 
-PACKAGE_NAME = "ans-devices"
 PACKAGE_DESCRIPTION = "Aceinna Navigation System Open Devices Library"
 
 INSTALL_REQUIRES = [
@@ -27,7 +27,7 @@ INSTALL_REQUIRES = [
 
 setup(
     name=PACKAGE_NAME,
-    version="1.0.0",
+    version=VERSION,
     author="Aceinna, Inc",
     author_email="info@aceinna.com",
     description=PACKAGE_DESCRIPTION,
@@ -50,7 +50,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "ans-devices = aceinna.tools.cli:main",
+            "openimu = aceinna.tools.cli:main",
         ]
     }
 )
