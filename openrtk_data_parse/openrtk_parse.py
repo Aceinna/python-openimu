@@ -68,10 +68,26 @@ class UserRawParse:
             self.write_titlebar(self.log_files[output['name']], output)
 
     def log(self, name, data):
-        for i in range(len(data)):
-            self.log_files[name].write(data[i].__str__())
-            self.log_files[name].write(",")
-        self.log_files[name].write("\n")
+        if name == 's1':
+            for i in range(len(data)):
+                if i == 0:
+                    self.log_files[name].write(format((data[i]), '11.4f'))
+                elif i >= 1 and i <= 3:
+                    self.log_files[name].write(format(data[i]*9.7803267714e0, '14.10f'))
+                elif i >= 4 and i <= 6:
+                    self.log_files[name].write(format(data[i], '14.10f'))
+                elif i == 7:
+                    self.log_files[name].write(format(data[i], '14.10f'))
+                else:
+                    self.log_files[name].write(data[i].__str__())
+                if i < len(data)-1:
+                    self.log_files[name].write(",")
+            self.log_files[name].write("\n")
+        else:
+            for i in range(len(data)):
+                self.log_files[name].write(data[i].__str__())
+                self.log_files[name].write(",")
+            self.log_files[name].write("\n")
 
     def parse_output_packet_payload(self, packet_type):
         payload_lenth = self.packet_buffer[2]
@@ -246,18 +262,21 @@ class DebugRawParse:
                 elif i == 3:
                     self.log_files[name].write(format(data[5]*9.7803267714e0, '14.10f'))
                     self.fp_all.write(format(data[5]*9.7803267714e0, '14.10f'))
+                elif i == 4:
+                    self.log_files[name].write(format(data[4]*9.7803267714e0, '14.10f'))
+                    self.fp_all.write(format(data[4]*9.7803267714e0, '14.10f'))
                 elif i == 5:
                     self.log_files[name].write(format(data[3]*9.7803267714e0, '14.10f'))
                     self.fp_all.write(format(data[3]*9.7803267714e0, '14.10f'))
                 elif i == 6:
-                    self.log_files[name].write(format(data[8]*9.7803267714e0, '14.10f'))
-                    self.fp_all.write(format(data[8]*9.7803267714e0, '14.10f'))
+                    self.log_files[name].write(format(data[8], '14.10f'))
+                    self.fp_all.write(format(data[8], '14.10f'))
+                elif i == 7:
+                    self.log_files[name].write(format(data[7], '14.10f'))
+                    self.fp_all.write(format(data[7], '14.10f'))
                 elif i == 8:
-                    self.log_files[name].write(format(data[6]*9.7803267714e0, '14.10f'))
-                    self.fp_all.write(format(data[6]*9.7803267714e0, '14.10f'))
-                elif i == 4 or i == 7:
-                    self.log_files[name].write(format(data[i]*9.7803267714e0, '14.10f'))
-                    self.fp_all.write(format(data[i]*9.7803267714e0, '14.10f'))
+                    self.log_files[name].write(format(data[6], '14.10f'))
+                    self.fp_all.write(format(data[6], '14.10f'))
                 else:
                     self.log_files[name].write(data[i].__str__())
                     self.fp_all.write(data[i].__str__())

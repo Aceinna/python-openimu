@@ -1,7 +1,53 @@
 {
-	"userPacketsTypeList": ["K1", "pS", "sK", "e1", "e2"],
+	"userPacketsTypeList": ["s1", "K1", "pS", "sK", "e1", "e2"],
 	"debugPacketsTypeList": [268, 42, 99, 507],
 	"userOutputPackets": [
+        {
+            "name": "s1",
+            "isList": 0,
+            "payload": [
+                {
+                    "type": "double",
+					"name": "time",
+					"unit": ""
+                },
+                {
+                    "type": "float",
+					"name": "x_accel",
+					"unit": ""
+                },
+                {
+                    "type": "float",
+					"name": "y_accel",
+					"unit": ""
+                },
+                {
+                    "type": "float",
+					"name": "z_accel",
+					"unit": ""
+                },
+                {
+                    "type": "float",
+					"name": "x_rate",
+					"unit": ""
+                },
+                {
+                    "type": "float",
+					"name": "y_rate",
+					"unit": ""
+                },
+                {
+                    "type": "float",
+					"name": "z_rate",
+					"unit": ""
+                },
+                {
+                    "type": "float",
+					"name": "temperature",
+					"unit": ""
+                }
+            ]
+        },
 		{
 			"name": "K1",
 			"isList": 0,
