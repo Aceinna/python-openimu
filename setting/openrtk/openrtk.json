@@ -870,17 +870,17 @@
                     {
                         "type": "float",
                         "name": "x_rate",
-                        "unit": "rad/s"
+                        "unit": "rad"
                     },
                     {
                         "type": "float",
                         "name": "y_rate",
-                        "unit": "rad/s"
+                        "unit": "rad"
                     },
                     {
                         "type": "float",
                         "name": "z_rate",
-                        "unit": "rad/s"
+                        "unit": "rad"
                     },
                     {
                         "type": "float",
