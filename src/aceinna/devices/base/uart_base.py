@@ -427,6 +427,7 @@ class OpenDeviceBase(object):
         self.cli_options = options
 
         with_data_log = options and options.with_data_log
+        with_raw_log = options and options.with_raw_log
 
         if with_data_log and not self.is_logging and self.enable_data_log:
             log_result = self._logger.start_user_log('data')
@@ -444,7 +445,7 @@ class OpenDeviceBase(object):
 
         funcs = [self.thread_receiver, self.thread_parser]
         for func in funcs:
-            thread = threading.Thread(target=func, args=(with_data_log,))
+            thread = threading.Thread(target=func, args=(with_raw_log,))
             thread.start()
             # print("Thread[{0}({1})] start at:[{2}].".format(
             #     t.name, t.ident, datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
@@ -465,7 +466,7 @@ class OpenDeviceBase(object):
         return []
 
     def thread_receiver(self, *args, **kwargs):
-        with_data_log = args[0]
+        with_raw_log = args[0]
         ''' receive rover data and push data into data_queue.
             return when occur Exception
         '''
@@ -478,7 +479,7 @@ class OpenDeviceBase(object):
                 continue
             data = None
             try:
-                data = bytearray(self.communicator.read())
+                data = self.communicator.read()
             except Exception as ex:  # pylint: disable=broad-except
                 print('Thread:receiver error:', ex)
                 self.exception_lock.acquire()
@@ -489,7 +490,7 @@ class OpenDeviceBase(object):
             if data and len(data) > 0:
                 # print(datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S:') + \
                 # ' '.join('0X{0:x}'.format(data[i]) for i in range(len(data))))
-                if with_data_log:
+                if with_raw_log:
                     self.on_read_raw(data)
                 self.data_lock.acquire()
                 for data_byte in data:
