@@ -52,6 +52,7 @@
 			],
 			"value_accuracy": 6,
 			"options": [
+                "s1",
 				"e1",
 				"e2",
 				"K1",
@@ -839,7 +840,89 @@
 					}
 				],
 				"graphs": []
-			},
+            },
+            {
+                "name": "s1",
+                "description": "imu raw data Message",
+				"save2file": 1,
+				"from": "imu",
+                "payload": [
+                    {
+                        "type": "double",
+                        "name": "time",
+                        "unit": "s"
+                    },
+                    {
+                        "type": "float",
+                        "name": "x_accel",
+                        "unit": "g"
+                    },
+                    {
+                        "type": "float",
+                        "name": "y_accel",
+                        "unit": "g"
+                    },
+                    {
+                        "type": "float",
+                        "name": "z_accel",
+                        "unit": "g"
+                    },
+                    {
+                        "type": "float",
+                        "name": "x_rate",
+                        "unit": "rad"
+                    },
+                    {
+                        "type": "float",
+                        "name": "y_rate",
+                        "unit": "rad"
+                    },
+                    {
+                        "type": "float",
+                        "name": "z_rate",
+                        "unit": "rad"
+                    },
+                    {
+                        "type": "float",
+                        "name": "temperature",
+                        "unit": ""
+                    }
+                ],
+				"graphs": [
+					{
+						"name": "Acceleration",
+						"units": "g",
+						"xAxis": "Time (s)",
+						"yAxes": [
+							"x_accel",
+							"y_accel",
+							"z_accel"
+						],
+						"colors": [
+							"#FF0000",
+							"#00FF00",
+							"#0000FF"
+						],
+						"yMax": 5
+					},
+					{
+						"name": "Angular-Rate",
+						"units": "deg/s",
+						"xAxis": "Time (s)",
+						"yAxes": [
+							"x_rate",
+							"y_rate",
+							"z_rate"
+						],
+						"colors": [
+							"#FF0000",
+							"#00FF00",
+							"#0000FF"
+						],
+						"yMax": 200
+					}
+				]
+            },
 			{
 				"name": "e1",
 				"description": "VG/AHRS Output Message",
