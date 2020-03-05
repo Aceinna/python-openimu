@@ -12,7 +12,6 @@ IS_WINDOWS = sys.platform.__contains__(
     'win32') or sys.platform.__contains__('win64')
 IS_LATER_PY_38 = sys.version_info > (3, 8)
 
-
 def receive_args():
     """parse input arguments
     """
@@ -38,7 +37,6 @@ def receive_args():
 
 
 if __name__ == '__main__':
-    setattr(sys, '__dev__', True)
     # compatible code for windows python 3.8
     if IS_WINDOWS and IS_LATER_PY_38:
         import asyncio

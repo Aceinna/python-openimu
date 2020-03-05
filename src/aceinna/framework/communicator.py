@@ -145,7 +145,7 @@ class SerialPort(Communicator):
             if "Bluetooth" in port:
                 continue
             else:
-                print('Check if is a used port ' + port)
+                # print('Check if is a used port ' + port)
                 ser = None
                 try:
                     ser = serial.Serial(port)

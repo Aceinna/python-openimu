@@ -6,7 +6,7 @@ sys.setrecursionlimit(5000)
 block_cipher = None
 root_path = os.path.join(os.getcwd(),'src')
 
-a = Analysis([os.path.join(root_path,'main.py'),
+a = Analysis([os.path.join(root_path,'executor.py'),
             # os.path.join(os.getcwd(), 'src', 'bootstrap/base.py'),
             # os.path.join(os.getcwd(), 'src', 'bootstrap/cli.py'),
             # os.path.join(os.getcwd(), 'src', 'bootstrap/loader.py'),

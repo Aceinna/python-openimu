@@ -50,4 +50,4 @@ app.listen()
 
 
 # Use source code
-Invoke sdk and start a webserver `python ./src/main.py`
+Invoke sdk and start a webserver `python main.py`
