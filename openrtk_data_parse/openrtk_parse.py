@@ -70,13 +70,13 @@ class UserRawParse:
     def log(self, name, data):
         if name == 's1':
             for i in range(len(data)):
-                if i == 0:
+                if i == 1:
                     self.log_files[name].write(format((data[i]), '11.4f'))
-                elif i >= 1 and i <= 3:
+                elif i >= 2 and i <= 4:
                     self.log_files[name].write(format(data[i]*9.7803267714e0, '14.10f'))
-                elif i >= 4 and i <= 6:
+                elif i >= 5 and i <= 7:
                     self.log_files[name].write(format(data[i]*57.295779513082320, '14.10f'))
-                elif i == 7:
+                elif i == 8:
                     self.log_files[name].write(format(data[i], '14.10f'))
                 else:
                     self.log_files[name].write(data[i].__str__())
@@ -250,7 +250,21 @@ class DebugRawParse:
             self.write_titlebar(self.log_files[output['name']], output)
     
     def log(self, name, data):
-        if name == 'imu':
+        if name == 'odb':
+            self.fp_all.write("$ODB,")
+            for i in range(len(data)):
+                if i == 0:
+                    self.log_files[name].write(format((data[i]/1000), '11.4f'))
+                    self.fp_all.write(format((data[i]/1000), '11.4f'))
+                elif i == 1:
+                    self.log_files[name].write(format(data[i], '10.4f'))
+                    self.fp_all.write(format(data[i], '10.4f'))
+                if i < len(data)-1:
+                    self.log_files[name].write(",")
+                    self.fp_all.write(",")
+            self.log_files[name].write("\n")
+            self.fp_all.write("\n")
+        elif name == 'imu':
             self.fp_all.write("$GPIMU,")
             for i in range(len(data)):
                 if i == 1:

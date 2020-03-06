@@ -1,15 +1,20 @@
 {
 	"userPacketsTypeList": ["s1", "K1", "pS", "sK", "e1", "e2"],
-	"debugPacketsTypeList": [268, 42, 99, 507],
+	"debugPacketsTypeList": [177, 268, 42, 99, 507],
 	"userOutputPackets": [
         {
             "name": "s1",
             "isList": 0,
             "payload": [
                 {
+                    "type": "uint32",
+                    "name": "systemTime",
+                    "unit": "msec"
+                },
+                {
                     "type": "double",
-					"name": "time",
-					"unit": ""
+                    "name": "timeOfWeek",
+                    "unit": "msec"
                 },
                 {
                     "type": "float",
@@ -576,6 +581,23 @@
 		}
 	],
 	"debugOutputPackets": [
+		{
+			"name": "odb",
+			"messageId": "177",
+			"needHeadTime": 0,
+			"payload": [
+				{
+					"type": "double",
+					"name": "gps_millisecs",
+					"unit": ""
+				},
+				{
+					"type": "double",
+					"name": "speed",
+					"unit": "m/s"
+				}
+			]
+		},
 		{
 			"name": "imu",
 			"messageId": "268",

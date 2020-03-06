@@ -848,9 +848,14 @@
 				"from": "imu",
                 "payload": [
                     {
-                        "type": "double",
-                        "name": "time",
-                        "unit": "s"
+						"type": "uint32",
+						"name": "systemTime",
+						"unit": "msec"
+					},
+					{
+						"type": "double",
+						"name": "timeOfWeek",
+						"unit": "msec"
                     },
                     {
                         "type": "float",
