@@ -8,13 +8,13 @@
             "payload": [
                 {
                     "type": "uint32",
-                    "name": "systemTime",
-                    "unit": "msec"
+                    "name": "GPS_Week",
+                    "unit": ""
                 },
                 {
                     "type": "double",
                     "name": "timeOfWeek",
-                    "unit": "msec"
+                    "unit": "sec"
                 },
                 {
                     "type": "float",
