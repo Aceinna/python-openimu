@@ -271,8 +271,9 @@ class DebugRawParse:
                     self.log_files[name].write(format((data[i]/1000), '11.4f'))
                     self.fp_all.write(format((data[i]/1000), '11.4f'))
                 elif i == 2:
-                    self.log_files[name].write(format(data[i], '10.4f'))
-                    self.fp_all.write(format(data[i], '10.4f'))
+                    # self.log_files[name].write(format(data[i], '10.4f'))
+                    # self.fp_all.write(format(data[i], '10.4f'))
+                    pass # imuStatus
                 elif i == 3:
                     self.log_files[name].write(format(data[5]*9.7803267714e0, '14.10f'))
                     self.fp_all.write(format(data[5]*9.7803267714e0, '14.10f'))
@@ -294,40 +295,41 @@ class DebugRawParse:
                 else:
                     self.log_files[name].write(data[i].__str__())
                     self.fp_all.write(data[i].__str__())
-                if i < len(data)-1:
+                if i < len(data)-1 and i != 2:
                     self.log_files[name].write(",")
                     self.fp_all.write(",")
             self.log_files[name].write("\n")
             self.fp_all.write("\n")
         elif name == 'pos':
-            self.fp_all.write("$GPGNSS,")
-            for i in range(len(self.time_tag)):
-                if i == 1:
-                    self.log_files[name].write(format((float(self.time_tag[i])/1000), '11.4f'))
-                    self.fp_all.write(format((float(self.time_tag[i])/1000), '11.4f'))
-                else:
-                    self.log_files[name].write(self.time_tag[i].__str__())
-                    self.fp_all.write(self.time_tag[i].__str__())
-                self.log_files[name].write(",")
-                self.fp_all.write(",")
-            for i in range(len(data)):
-                if i == 0 or i == 1:
-                    self.log_files[name].write(format(data[i], '3.0f'))
-                    self.fp_all.write(format(data[i], '3.0f'))
-                elif i == 2 or i == 3:
-                    self.log_files[name].write(format(data[i], '14.9f'))
-                    self.fp_all.write(format(data[i], '14.9f'))
-                elif i >= 4:
-                    self.log_files[name].write(format(data[i], '10.4f'))
-                    self.fp_all.write(format(data[i], '10.4f'))
-                else:
-                    self.log_files[name].write(data[i].__str__())
-                    self.fp_all.write(data[i].__str__())
-                if i < len(data)-1:
+            if len(data) > 5 and data[2] != 0 and data[3] != 0:
+                self.fp_all.write("$GPGNSS,")
+                for i in range(len(self.time_tag)):
+                    if i == 1:
+                        self.log_files[name].write(format((float(self.time_tag[i])/1000), '11.4f'))
+                        self.fp_all.write(format((float(self.time_tag[i])/1000), '11.4f'))
+                    else:
+                        self.log_files[name].write(self.time_tag[i].__str__())
+                        self.fp_all.write(self.time_tag[i].__str__())
                     self.log_files[name].write(",")
                     self.fp_all.write(",")
-            self.log_files[name].write("\n")
-            self.fp_all.write("\n")
+                for i in range(len(data)):
+                    if i == 0 or i == 1:
+                        self.log_files[name].write(format(data[i], '3.0f'))
+                        self.fp_all.write(format(data[i], '3.0f'))
+                    elif i == 2 or i == 3:
+                        self.log_files[name].write(format(data[i], '14.9f'))
+                        self.fp_all.write(format(data[i], '14.9f'))
+                    elif i >= 4:
+                        self.log_files[name].write(format(data[i], '10.4f'))
+                        self.fp_all.write(format(data[i], '10.4f'))
+                    else:
+                        self.log_files[name].write(data[i].__str__())
+                        self.fp_all.write(data[i].__str__())
+                    if i < len(data)-1:
+                        self.log_files[name].write(",")
+                        self.fp_all.write(",")
+                self.log_files[name].write("\n")
+                self.fp_all.write("\n")
         elif name == 'vel':
             self.fp_all.write("$GPVEL,")
             for i in range(len(self.time_tag)):
@@ -446,13 +448,16 @@ class DebugRawParse:
     
     def write_titlebar(self, file, output):
         if output['needHeadTime']:
-            file.write('gps_week')
+            file.write('GPS_Week')
             file.write(",")
-            file.write('gps_millisecs')
+            file.write('GPS_TimeofWeek')
             file.write(",")
-        for value in output['payload']:
-            file.write(value['name'])
-            file.write(",")
+        for value in output['payload']: # imuStatus
+            if output['name'] == 'imu' and value['name'] == 'imuStatus':
+                pass
+            else:            
+                file.write(value['name'])
+                file.write(",")
         file.write("\n")
 
     def calc_32value(self, value):

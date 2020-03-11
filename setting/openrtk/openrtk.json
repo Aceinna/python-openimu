@@ -886,11 +886,6 @@
                         "type": "float",
                         "name": "z_rate",
                         "unit": "rad"
-                    },
-                    {
-                        "type": "float",
-                        "name": "temperature",
-                        "unit": ""
                     }
                 ],
 				"graphs": [

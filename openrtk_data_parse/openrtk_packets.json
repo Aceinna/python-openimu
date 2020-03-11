@@ -13,7 +13,7 @@
                 },
                 {
                     "type": "double",
-                    "name": "timeOfWeek",
+                    "name": "GPS_TimeofWeek",
                     "unit": "sec"
                 },
                 {
@@ -44,11 +44,6 @@
                 {
                     "type": "float",
 					"name": "z_rate",
-					"unit": ""
-                },
-                {
-                    "type": "float",
-					"name": "temperature",
 					"unit": ""
                 }
             ]
@@ -170,12 +165,12 @@
 			"payload": [
 				{
 					"type": "uint32",
-					"name": "systemTime",
+					"name": "GPS_Week",
 					"unit": "msec"
 				},
 				{
 					"type": "double",
-					"name": "timeOfWeek",
+					"name": "GPS_TimeofWeek",
 					"unit": "msec"
 				},
 				{
@@ -281,7 +276,7 @@
 			"payload": [
 				{
 					"type": "double",
-					"name": "timeOfWeek",
+					"name": "GPS_TimeofWeek",
 					"unit": "msec"
 				},
 				{
@@ -588,7 +583,7 @@
 			"payload": [
 				{
 					"type": "double",
-					"name": "gps_millisecs",
+					"name": "GPS_TimeofWeek",
 					"unit": ""
 				},
 				{
@@ -605,12 +600,12 @@
 			"payload": [
 				{
 					"type": "uint32",
-					"name": "gps_week",
+					"name": "GPS_Week",
 					"unit": ""
 				},
 				{
 					"type": "double",
-					"name": "gps_millisecs",
+					"name": "GPS_TimeofWeek",
 					"unit": ""
 				},
 				{
@@ -831,12 +826,12 @@
 			"payload": [
 				{
 					"type": "uint32",
-					"name": "gps_week",
+					"name": "GPS_Week",
 					"unit": ""
 				},
 				{
 					"type": "double",
-					"name": "gps_millisecs",
+					"name": "GPS_TimeofWeek",
 					"unit": ""
 				},
 				{
