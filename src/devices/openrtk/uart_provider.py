@@ -56,7 +56,13 @@ class Provider(OpenDeviceBase):
         }
 
     def build_app_info(self, text):
+        split_text = text.split(' ')
+        app_name = ''
+        if len(split_text) > 2:
+            app_name = split_text[1]
+            
         self.app_info = {
+            'app_name': app_name,
             'version': text
         }
 
@@ -103,8 +109,12 @@ class Provider(OpenDeviceBase):
                     file_name = self.data_folder + '/' + 'openrtk_log_' + dir_time
                     os.mkdir(file_name)
                     self.user_logf = open(file_name + '/' + 'user_' + file_time + '.bin',"wb")
-                    self.debug_logf = open(file_name + '/' + 'debug_' + file_time + '.bin',"wb")
-                    self.rtcm_logf = open(file_name + '/' + 'rtcm_' + file_time + '.bin',"wb")
+                    if self.app_info['app_name'] == 'RAWDATA':
+                        self.debug_logf = open(file_name + '/' + 'rtcm_base_' + file_time + '.bin',"wb")
+                        self.rtcm_logf = open(file_name + '/' + 'rtcm_rover_' + file_time + '.bin',"wb")
+                    else: 
+                        self.debug_logf = open(file_name + '/' + 'debug_' + file_time + '.bin',"wb")
+                        self.rtcm_logf = open(file_name + '/' + 'rtcm_' + file_time + '.bin',"wb")
 
                     funcs = [self.thread_debug_port_receiver, self.thread_rtcm_port_receiver]
                     for func in funcs:
