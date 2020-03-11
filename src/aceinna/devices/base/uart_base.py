@@ -9,6 +9,7 @@ import struct
 import traceback
 from pathlib import Path
 from azure.storage.blob import BlockBlobService
+from .event_base import EventBase
 from ...framework.utils import (helper, resource)
 from ...framework.file_storage import FileLoger
 if sys.version_info[0] > 2:
@@ -17,13 +18,14 @@ else:
     from Queue import Queue
 
 
-class OpenDeviceBase(object):
+class OpenDeviceBase(EventBase):
     '''
     Base class of open device(openimu, openrtk)
     '''
     __metaclass__ = ABCMeta
 
     def __init__(self, communicator):
+        super(OpenDeviceBase, self).__init__()
         self.threads = []  # thread of receiver and paser
         self.exception_thread = False  # flag of exit threads
         self.exception_lock = threading.Lock()  # lock of exception_thread
@@ -33,7 +35,6 @@ class OpenDeviceBase(object):
         self.clients = []
         self.input_result = None
         self.bootloader_result = None
-        self.listeners = {}
         self.is_streaming = False
         self.has_running_checker = False
         self.connected = False
@@ -825,21 +826,3 @@ class OpenDeviceBase(object):
         self.is_upgrading = False
         self.add_output_packet(
             'stream', 'upgrade_complete', {'success': False, 'message': message})
-
-    def on(self, event_type, handler):
-        '''
-        Listen event
-        '''
-        if not self.listeners.__contains__(event_type):
-            self.listeners[event_type] = []
-
-        self.listeners[event_type].append(handler)
-
-    def emit(self, event_type, *args):
-        '''
-        Trigger event
-        '''
-        handlers = self.listeners[event_type]
-        if handlers is not None and len(handlers) > 0:
-            for handler in handlers:
-                handler(*args)
