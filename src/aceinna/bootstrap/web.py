@@ -1,19 +1,32 @@
 """
 Websocket server entry
 """
+import os
+import sys
+import asyncio
 import json
 import traceback
+import threading
 import tornado.websocket
 import tornado.ioloop
 import tornado.httpserver
 import tornado.web
+from tornado import gen
 from .. import VERSION
+from ..devices.base.event_base import EventBase
 from ..framework.communicator import CommunicatorFactory
 from ..framework.context import APP_CONTEXT
 from ..framework.file_storage import FileLoger
-from ..framework.utils import helper
+from ..framework.utils import (helper, resource)
 from ..models import WebserverArgs
 from ..framework.constants import DEFAULT_PORT_RANGE
+from ..framework import AppLogger
+if sys.version_info[0] > 2:
+    from queue import Queue
+else:
+    from Queue import Queue
+
+SERVER_UPDATE_RATE = 50
 
 
 class WSHandler(tornado.websocket.WebSocketHandler):
@@ -35,15 +48,15 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         server.ws_handler = self
 
     def open(self):
-        self.get_device().append_client(self)
-        print('open client count:', len(self.get_device().clients))
+        connected_device = self.get_device()
+        if connected_device:
+            self.handle_device_found(connected_device)
+        else:
+            self.response_device_isnot_connected()
+
         self.period_output_callback = tornado.ioloop.PeriodicCallback(
-            self.response_output_packet, self.get_device().server_update_rate)
+            self.response_output_packet, SERVER_UPDATE_RATE)
         self.period_output_callback.start()
-
-        self.file_logger = FileLoger(self.get_device().properties)
-
-        self.response_server_info()  # response server info at first time connected
 
     def on_message(self, message):
         client_msg = json.loads(message)
@@ -67,8 +80,10 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         except:  # pylint:disable=bare-except
             # need log exception
             pass
-        self.get_device().remove_client(self)
-        print('close client count:', len(self.get_device().clients))
+        connected_device = self.get_device()
+        if connected_device:
+            connected_device.remove_client(self)
+            print('close client count:', len(connected_device.clients))
 
     def check_origin(self, origin):
         return True
@@ -83,6 +98,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         '''
         Listenr for receive output packet
         '''
+
         data_updated = False
         for item in self.latest_packet_collection:
             if item['packet_type'] == packet_type:
@@ -122,6 +138,20 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         elif hasattr(self, converted_method):
             getattr(self, converted_method, None)(parameters)
 
+    def handle_device_found(self, device):
+        '''
+        If detect device, setup output and logger
+        '''
+        if len(device.clients) == 1:
+            self.response_only_allow_one_client()
+            return
+
+        device.append_client(self)
+        print('open client count:', len(device.clients))
+
+        self.file_logger = FileLoger(device.properties)
+        self.response_server_info()
+
     def response_message(self, method, data):
         '''
         Format response
@@ -154,18 +184,14 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         '''
         Send webserver info
         '''
-        self.write_message(
-            json.dumps({
-                'method': 'stream',
-                'result': {
-                    'packetType': 'serverInfo',
-                    'data': {
-                        'version': VERSION,
-                        'serverUpdateRate': self.get_device().server_update_rate
-                    }
-                }
-            })
-        )
+        self.response_message('stream', {
+            'packetType': 'serverInfo',
+            'data': {
+                'version': VERSION,
+                'serverUpdateRate': 50,
+                'deviceConnected': True,
+                'clientCount': 0
+            }})
 
     def response_output_packet(self):
         '''
@@ -185,6 +211,31 @@ class WSHandler(tornado.websocket.WebSocketHandler):
 
         helper.clear_elements(self.latest_packet_collection)
 
+    def response_device_isnot_connected(self):
+        '''
+        Response device is not connected
+        '''
+        self.response_message('stream', {
+            'packetType': 'serverInfo',
+            'data': {
+                'version': VERSION,
+                'serverUpdateRate': SERVER_UPDATE_RATE,
+                'deviceConnected': False,
+                'clientCount': 0
+            }})
+
+    def response_only_allow_one_client(self):
+        '''
+        Response only allow one client connect
+        '''
+        self.response_message('stream', {
+            'packetType': 'serverInfo',
+            'data': {
+                'version': VERSION,
+                'serverUpdateRate': SERVER_UPDATE_RATE,
+                'deviceConnected': True,
+                'clientCount': 1
+            }})
     # protocol
 
     def start_stream(self, *args):  # pylint: disable=invalid-name
@@ -223,24 +274,117 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         self.response_message('stopLog', {'packetType': 'success', 'data': ''})
 
 
-class Webserver:
+class MessageStore(object):
+    def __init__(self):
+        self.messages = Queue()
+        self.ready = False
+        self.max_length = 100
+
+    def append(self, msg):
+        format_msg = '{} - {}: {}'.format(
+            msg['asctime'],
+            msg['levelname'],
+            msg['message']
+        )
+
+        current_msg_len = self.messages.qsize()
+        overflow_len = current_msg_len - self.max_length + 1
+        for _ in range(overflow_len):
+            self.messages.get()
+
+        self.messages.put(format_msg)
+
+    def get_messages(self):
+        output_msg = []
+        current_msg_len = self.messages.qsize()
+        for _ in range(current_msg_len):
+            output_msg.append(self.messages.get())
+        return output_msg
+
+    def empty(self):
+        self.messages.empty()
+
+    def size(self):
+        return self.messages.qsize()
+
+
+class LoggerServerSentEvent(tornado.web.RequestHandler):
+    '''
+    Send device data to client
+    '''
+
+    def __init__(self, *args, **kwargs):
+        super(LoggerServerSentEvent, self).__init__(*args, **kwargs)
+        self.set_header('Content-Type', 'text/event-stream')
+        self.set_header('Access-Control-Allow-Origin', '*')
+
+    def initialize(self, store):
+        '''
+        Websocket handler initialize
+        '''
+        self.store = store
+        self._auto_finish = False
+
+    def get(self):
+        self._loop = tornado.ioloop.PeriodicCallback(
+            lambda: {self.emit()}, 1000)
+        self._loop.start()
+
+    @gen.coroutine
+    def emit(self):
+        '''
+        Fetch log information from logger
+        '''
+        try:
+            if self.store.size() == 0:
+                yield self.flush()
+
+            self.write('data:{}\n\n'.format(
+                json.dumps({
+                    'msg': self.store.get_messages()
+                })
+            ))
+            yield self.flush()
+        except tornado.iostream.StreamClosedError as e:
+            self._loop.stop()
+            self.finish()
+        except RuntimeError as e:
+            self._loop.stop()
+            self.finish()
+
+
+class Webserver(EventBase):
     '''
     Websocket server
     '''
 
     def __init__(self, **kwargs):
+        super(Webserver, self).__init__()
         self.communication = 'uart'
         self.device_provider = None
         self.communicator = None
         self.ws_handler = None
+        self.sse_handler = None
         self.http_server = None
         self._build_options(**kwargs)
         APP_CONTEXT.set_app(self)
+
+        executor_path = resource.get_executor_path()
+        APP_CONTEXT.set_logger(
+            AppLogger(
+                filename=os.path.join(executor_path, 'loggers', 'trace.log'), 
+                gen_file=True,
+                level='debug' if self.options.debug else 'info'
+            ))
 
     def listen(self):
         '''
         Start to find device
         '''
+        # start websocket server
+        webserver_thread = threading.Thread(target=self.start_webserver)
+        webserver_thread.start()
+
         self.detect_device(self.device_discover_handler)
 
     def get_device(self):
@@ -257,8 +401,10 @@ class Webserver:
         '''
         # load device provider
         self.load_device_provider(device_provider)
-        # start websocket server
-        self.start_websocket_server()
+        # notify ws handler
+        if self.ws_handler:
+            self.ws_handler.handle_device_found(
+                device_provider)
 
     def device_rediscover_handler(self, device_provider):
         '''
@@ -302,17 +448,24 @@ class Webserver:
         self.device_provider.on('exception', self.handle_device_exception)
         self.device_provider.on(
             'complete_upgrade', self.handle_device_complete_upgrade)
-        # self.device_provider.on('data', self.handle_receive_device_data)
+
+    def start_webserver(self):
+        # self.webserver_io_loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(asyncio.new_event_loop())
+        self.start_websocket_server()
 
     def start_websocket_server(self):
         '''
         Initial websocket server
         '''
         # add ws handler as a member
-
+        store = MessageStore()
         try:
             application = tornado.web.Application(
-                [(r'/', WSHandler, dict(server=self))])
+                [
+                    (r'/', WSHandler, dict(server=self)),
+                    (r'/sse', LoggerServerSentEvent, dict(store=store))
+                ])
             self.http_server = tornado.httpserver.HTTPServer(application)
             # self.http_server.listen(self.options.port)
             activated_port = 0
@@ -330,10 +483,12 @@ class Webserver:
                 self.http_server.listen(self.options.port)
                 activated_port = self.options.port
             print('Websocket server is started on port', activated_port)
+
+            APP_CONTEXT.get_logger().enable_msg_store_handler(store)
             tornado.ioloop.IOLoop.instance().start()
         except Exception as ex:
             print(ex)
-            #print('Cannot start a websocket server, please check if the port is in use')
+            # print('Cannot start a websocket server, please check if the port is in use')
             raise
 
     def handle_device_exception(self, error, message):

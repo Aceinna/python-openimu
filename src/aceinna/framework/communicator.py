@@ -5,13 +5,14 @@ import sys
 import os
 import time
 import json
+import fcntl
 import serial
 import serial.tools.list_ports
 from ..devices import DeviceManager
 from .constants import BAUDRATE_LIST
+from .context import APP_CONTEXT
 from .utils.resource import (
-    get_executor_path,
-    get_content_from_bundle
+    get_executor_path
 )
 if sys.version_info[0] > 2:
     from queue import Queue
@@ -141,6 +142,7 @@ class SerialPort(Communicator):
         ports = [p.device for p in port_list]
 
         result = []
+
         for port in ports:
             if "Bluetooth" in port:
                 continue
@@ -149,12 +151,20 @@ class SerialPort(Communicator):
                 ser = None
                 try:
                     ser = serial.Serial(port)
-                    if ser:
-                        ser.close()
-                        result.append(port)
+                    if ser and ser.isOpen():
+                        try:
+                            fcntl.flock(ser.fileno(), fcntl.LOCK_EX |
+                                        fcntl.LOCK_NB)
+                            result.append(port)
+                        except IOError:
+                            ser.close()
+                            APP_CONTEXT.get_logger().logger.info(
+                                'Port can open, but {0} is busy'.format(port))
                 except Exception as ex:
-                    print('actual port exception', ex)
-                    print('port:', port, 'is in use')
+                    APP_CONTEXT.get_logger().logger.debug(
+                        'actual port exception {0}'.format(str(ex)))
+                    APP_CONTEXT.get_logger().logger.info(
+                        'port:{0} is in use'.format(port))
         return result
 
     def autobaud(self, ports):
@@ -163,7 +173,7 @@ class SerialPort(Communicator):
            :returns:
                 true when successful
         '''
-        print('start to connect serial port')
+        APP_CONTEXT.get_logger().logger.info('start to connect serial port')
         baudrate_list_from_options = self.baudrate_list
 
         for port in ports:
@@ -196,8 +206,8 @@ class SerialPort(Communicator):
                 connection = json.load(json_data)
             connection['baud'] = self.baudrate_list[0] if self.baudrate_assigned \
                 else connection['baud']
-            print('try to use last connected port',
-                  connection['port'], connection['baud'])
+            APP_CONTEXT.get_logger().logger.info('try to use last connected port {} {}'.format(
+                connection['port'], connection['baud']))
             if connection:
                 self.open_serial_port(
                     port=connection['port'], baud=connection['baud'], timeout=0.005)
@@ -241,9 +251,12 @@ class SerialPort(Communicator):
         '''
         try:
             self.serial_port = serial.Serial(port, baud, timeout=timeout)
+            fcntl.flock(self.serial_port.fileno(), fcntl.LOCK_EX |
+                        fcntl.LOCK_NB)
             return True
         except Exception as ex:
-            print('{0} : {1} open failed'.format(port, baud))
+            APP_CONTEXT.get_logger().logger.info(
+                '{0} : {1} open failed'.format(port, baud))
             if self.serial_port is not None:
                 if self.serial_port.isOpen():
                     self.serial_port.close()

@@ -2,9 +2,9 @@
 Command line entry
 """
 import asyncio
-import psutil
 import threading
 from os import getpid
+import psutil
 from .web import Webserver
 from ..models import WebserverArgs
 from ..framework.communicator import CommunicatorFactory
@@ -88,8 +88,8 @@ class CommandLine:
         '''
         Start websocket server
         '''
-        asyncio.set_event_loop(asyncio.new_event_loop())
-        self.webserver.start_websocket_server()
+        # asyncio.set_event_loop(asyncio.new_event_loop())
+        self.webserver.start_webserver()
 
     def _build_options(self, **kwargs):
         self.options = WebserverArgs(**kwargs)

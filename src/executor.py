@@ -12,6 +12,7 @@ IS_WINDOWS = sys.platform.__contains__(
     'win32') or sys.platform.__contains__('win64')
 IS_LATER_PY_38 = sys.version_info > (3, 8)
 
+
 def receive_args():
     """parse input arguments
     """
@@ -27,11 +28,11 @@ def receive_args():
                         help="Baudrate for uart", choices=BAUDRATE_LIST)
     parser.add_argument("-c", "--com-port", type=str,
                         help="COM Port")
-    parser.add_argument("--debug", type=bool,
+    parser.add_argument("--debug", dest='debug', action='store_true',
                         help="Log debug information", default=False)
-    parser.add_argument("--with-data-log", type=bool,
+    parser.add_argument("--with-data-log", dest='with_data_log', action='store_true',
                         help="Contains internal data log (OpenIMU only)", default=False)
-    parser.add_argument("--with-raw-log", type=bool,
+    parser.add_argument("--with-raw-log", dest='with_raw_log', action='store_true',
                         help="Contains raw data log (OpenRTK only)", default=False)
     return parser.parse_args()
 

@@ -12,6 +12,7 @@ from ..base.uart_base import OpenDeviceBase
 from ..configs.openimu_predefine import (
     APP_STR, get_app_names
 )
+from ...framework.context import APP_CONTEXT
 
 
 class Provider(OpenDeviceBase):
@@ -76,7 +77,7 @@ class Provider(OpenDeviceBase):
             self.build_device_info(device_info_text)
             self.build_app_info(app_info_text)
             self.connected = True
-            print('Connected', device_info_text)
+            APP_CONTEXT.get_logger().logger.info('Connected {0}'.format(device_info_text))
             return True
         return False
 

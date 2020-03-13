@@ -14,11 +14,11 @@ def on_find_device(device):
     '''
     device.setup(None)
     # start log
-    # device.start_data_log()
+    device.start_data_log()
     # print('Logging...')
-    # time.sleep(10)
+    time.sleep(10)
     # stop log
-    # device.stop_data_log()
+    device.stop_data_log()
     device.close()
 
 
