@@ -52,112 +52,72 @@
 			"name": "K1",
 			"isList": 0,
 			"payload": [
-				{
-					"type": "uint32",
-					"name": "timeCntr",
-					"unit": "msec"
-				},
-				{
-					"type": "uint32",
-					"name": "time",
-					"unit": "msec"
-				},
-				{
-					"type": "double",
-					"name": "lat",
-					"unit": "deg"
-				},
-				{
-					"type": "double",
-					"name": "lon",
-					"unit": "deg"
-				},
-				{
-					"type": "double",
-					"name": "alt",
-					"unit": "m"
-				},
-				{
-					"type": "float",
-					"name": "velNorth",
-					"unit": "m/s"
-				},
-				{
-					"type": "float",
-					"name": "velEast",
-					"unit": "m/s"
-				},
-				{
-					"type": "float",
-					"name": "velDown",
-					"unit": "m/s"
-				},
-				{
-					"type": "float",
-					"name": "hdop",
-					"unit": "m/s"
-				},
-				{
-					"type": "float",
-					"name": "GPSHorizAcc",
-					"unit": "m/s"
-				},
-				{
-					"type": "float",
-					"name": "GPSVertAcc",
-					"unit": "m/s"
-				},
-				{
-					"type": "float",
-					"name": "hhva3",
-					"unit": "m/s"
-				},
-				{
-					"type": "float",
-					"name": "xAccel",
-					"unit": "g"
-				},
-				{
-					"type": "float",
-					"name": "yAccel",
-					"unit": "g"
-				},
-				{
-					"type": "float",
-					"name": "zAccel",
-					"unit": "g"
-				},
-				{
-					"type": "float",
-					"name": "xRate",
-					"unit": "deg/s"
-				},
-				{
-					"type": "float",
-					"name": "yRate",
-					"unit": "deg/s"
-				},
-				{
-					"type": "float",
-					"name": "zRate",
-					"unit": "deg/s"
-				},
-				{
-					"type": "uint8",
-					"name": "gpsValid",
-					"unit": ""
-				},
-				{
-					"type": "uint8",
-					"name": "reserve_1",
-					"unit": ""
-				},
-				{
-					"type": "uint8",
-					"name": "reserve_2",
-					"unit": ""
-				}
-			]
+                {
+                    "type": "uint32",
+                    "name": "systemTime",
+                    "unit": "msec"
+                },
+                {
+                    "type": "double",
+                    "name": "timeOfWeek",
+                    "unit": "msec"
+                },
+                {
+                    "type": "uint32",
+                    "name": "positionMode",
+                    "unit": ""
+                },
+                {
+                    "type": "double",
+                    "name": "latitude",
+                    "unit": "deg"
+                },
+                {
+                    "type": "double",
+                    "name": "longitude",
+                    "unit": "deg"
+                },
+                {
+                    "type": "double",
+                    "name": "ellipsoidalHeight",
+                    "unit": "m"
+                },
+                {
+                    "type": "double",
+                    "name": "mslHeight",
+                    "unit": "m"
+                },
+                {
+                    "type": "double",
+                    "name": "positionRMS",
+                    "unit": "m"
+                },
+                {
+                    "type": "uint32",
+                    "name": "velocityMode",
+                    "unit": "m"
+                },
+                {
+                    "type": "float",
+                    "name": "velocityNorth",
+                    "unit": "m/s"
+                },
+                {
+                    "type": "float",
+                    "name": "velocityEast",
+                    "unit": "m/s"
+                },
+                {
+                    "type": "float",
+                    "name": "velocityDown",
+                    "unit": "m/s"
+                },
+                {
+                    "type": "float",
+                    "name": "velocityRMS",
+                    "unit": "m/s"
+                }
+            ]
 		},
 		{
 			"name": "pS",
