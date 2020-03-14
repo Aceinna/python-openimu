@@ -98,7 +98,12 @@ class Provider(OpenDeviceBase):
         '''
         Build app info
         '''
+        split_text = text.split(' ')
+        app_name = ''
+        if len(split_text) > 2:
+            app_name = split_text[1]
         self.app_info = {
+            'app_name': app_name,
             'version': text
         }
 
@@ -135,29 +140,50 @@ class Provider(OpenDeviceBase):
             debug_port = port_name + str(int(user_port_num) + 2)
             rtcm_port = port_name + str(int(user_port_num) + 3)
 
-            self.debug_serial_port = serial.Serial(
-                debug_port, '460800', timeout=0.005)
-            self.rtcm_serial_port = serial.Serial(
-                rtcm_port, '460800', timeout=0.005)
-            if self.debug_serial_port.isOpen() and self.rtcm_serial_port.isOpen():
-                #print("debug port {0} and rtcm port {1} open success".format(debug_port, rtcm_port))
+            if self.app_info['app_name'] == 'RTK':
+                self.rtcm_serial_port = serial.Serial(rtcm_port, '460800', timeout=0.005)
+                if self.rtcm_serial_port.isOpen():
+                    if self.data_folder is not None:
+                        dir_time = time.strftime("%Y%m%d_%H%M%S", time.localtime())
+                        file_time = time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime())
+                        file_name = self.data_folder + '/' + 'openrtk_log_' + dir_time
+                        os.mkdir(file_name)
+                        self.user_logf = open(file_name + '/' + 'user_' + file_time + '.bin',"wb")
+                        self.rtcm_logf = open(file_name + '/' + 'rtcm_' + file_time + '.bin',"wb")
 
-                if self.data_folder is not None:
-                    dir_time = time.strftime("%Y%m%d_%H%M%S", time.localtime())
-                    file_time = time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime())
-                    file_name = self.data_folder + '/' + 'openrtk_log_' + dir_time
-                    os.mkdir(file_name)
-                    self.user_logf = open(file_name + '/' + 'user_' + file_time + '.bin',"wb")
-                    self.debug_logf = open(file_name + '/' + 'debug_' + file_time + '.bin',"wb")
-                    self.rtcm_logf = open(file_name + '/' + 'rtcm_' + file_time + '.bin',"wb")
+                        funcs = [self.thread_rtcm_port_receiver]
+                        for func in funcs:
+                            t = threading.Thread(target=func, args=())
+                            t.start()
 
-                    funcs = [self.thread_debug_port_receiver, self.thread_rtcm_port_receiver]
-                    for func in funcs:
-                        thread = threading.Thread(target=func, args=())
-                        thread.start()
+                        return True
+                return False
+            else:
+                self.debug_serial_port = serial.Serial(debug_port, '460800', timeout=0.005)
+                self.rtcm_serial_port = serial.Serial(rtcm_port, '460800', timeout=0.005)
+                if self.debug_serial_port.isOpen() and self.rtcm_serial_port.isOpen():
+                    #print("debug port {0} and rtcm port {1} open success".format(debug_port, rtcm_port))
 
-                    return True
-            return False
+                    if self.data_folder is not None:
+                        dir_time = time.strftime("%Y%m%d_%H%M%S", time.localtime())
+                        file_time = time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime())
+                        file_name = self.data_folder + '/' + 'openrtk_log_' + dir_time
+                        os.mkdir(file_name)
+                        self.user_logf = open(file_name + '/' + 'user_' + file_time + '.bin',"wb")
+                        if self.app_info['app_name'] == 'RAWDATA':
+                            self.debug_logf = open(file_name + '/' + 'rtcm_base_' + file_time + '.bin',"wb")
+                            self.rtcm_logf = open(file_name + '/' + 'rtcm_rover_' + file_time + '.bin',"wb")
+                        else: 
+                            self.debug_logf = open(file_name + '/' + 'debug_' + file_time + '.bin',"wb")
+                            self.rtcm_logf = open(file_name + '/' + 'rtcm_' + file_time + '.bin',"wb")
+
+                        funcs = [self.thread_debug_port_receiver, self.thread_rtcm_port_receiver]
+                        for func in funcs:
+                            t = threading.Thread(target=func, args=())
+                            t.start()
+
+                        return True
+                return False
         except Exception as e:
             if self.debug_serial_port is not None:
                 if self.debug_serial_port.isOpen():
@@ -207,6 +233,9 @@ class Provider(OpenDeviceBase):
         Listener for getting output packet
         '''
         if packet_type == 'pS':
+            self.add_output_packet('stream', 'pos', data)
+
+        elif packet_type == 'K1':
             self.add_output_packet('stream', 'pos', data)
 
         elif packet_type == 'sK':
