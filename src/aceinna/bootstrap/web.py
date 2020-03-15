@@ -369,13 +369,7 @@ class Webserver(EventBase):
         self._build_options(**kwargs)
         APP_CONTEXT.set_app(self)
 
-        executor_path = resource.get_executor_path()
-        APP_CONTEXT.set_logger(
-            AppLogger(
-                filename=os.path.join(executor_path, 'loggers', 'trace.log'), 
-                gen_file=True,
-                level='debug' if self.options.debug else 'info'
-            ))
+        self.prepare_logger()
 
     def listen(self):
         '''
@@ -386,6 +380,18 @@ class Webserver(EventBase):
         webserver_thread.start()
 
         self.detect_device(self.device_discover_handler)
+
+    def prepare_logger(self):
+        executor_path = resource.get_executor_path()
+        log_level = 'info'
+        if self.options.debug:
+            log_level = 'debug'
+        APP_CONTEXT.set_logger(
+            AppLogger(
+                filename=os.path.join(executor_path, 'loggers', 'trace.log'),
+                gen_file=True,
+                level=log_level
+            ))
 
     def get_device(self):
         '''
