@@ -510,19 +510,34 @@ if __name__ == '__main__':
     if args.c > 2:
         args.c = 0
 
-    for file_name in os.listdir(args.p):
-        file_path = args.p + '/' + file_name
-        if os.path.isfile(file_path):
-            if file_name.startswith('user') or file_name.startswith('debug'):
+    # for file_name in os.listdir(args.p):
+    #     file_path = args.p + '/' + file_name
+    #     if os.path.isfile(file_path):
+    #         if file_name.startswith('user') or file_name.startswith('debug'):
+    #             path = mkdir(file_path)
+    #             try:
+    #                 with open(file_path, 'rb') as fp_rawdata:
+    #                     if file_name.startswith('user'):
+    #                         parse = UserRawParse(fp_rawdata, path + '/' + file_name.rstrip(".bin") + '_')
+    #                     elif file_name.startswith('debug'):
+    #                         parse = DebugRawParse(fp_rawdata, path + '/' + file_name.rstrip(".bin") + '_')
+    #                     parse.start_pasre()
+    #                     fp_rawdata.close
+    #             except Exception as e:
+    #                 print(e)
+    for root, dirs, file_name in os.walk(args.p):
+        for fname in file_name:
+            if fname.startswith('user') or fname.startswith('debug'):
+                file_path = os.path.join(root, fname)
+                print('precessing {0}'.format(file_path))
                 path = mkdir(file_path)
                 try:
                     with open(file_path, 'rb') as fp_rawdata:
-                        if file_name.startswith('user'):
-                            parse = UserRawParse(fp_rawdata, path + '/' + file_name.rstrip(".bin") + '_')
-                        elif file_name.startswith('debug'):
-                            parse = DebugRawParse(fp_rawdata, path + '/' + file_name.rstrip(".bin") + '_')
+                        if fname.startswith('user'):
+                            parse = UserRawParse(fp_rawdata, path + '/' + fname.rstrip(".bin") + '_')
+                        elif fname.startswith('debug'):
+                            parse = DebugRawParse(fp_rawdata, path + '/' + fname.rstrip(".bin") + '_')
                         parse.start_pasre()
                         fp_rawdata.close
                 except Exception as e:
                     print(e)
-                
