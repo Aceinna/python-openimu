@@ -5,7 +5,6 @@ import sys
 import os
 import time
 import json
-import fcntl
 import serial
 import serial.tools.list_ports
 from ..devices import DeviceManager
@@ -150,16 +149,10 @@ class SerialPort(Communicator):
                 # print('Check if is a used port ' + port)
                 ser = None
                 try:
-                    ser = serial.Serial(port)
-                    if ser and ser.isOpen():
-                        try:
-                            fcntl.flock(ser.fileno(), fcntl.LOCK_EX |
-                                        fcntl.LOCK_NB)
-                            result.append(port)
-                        except IOError:
-                            ser.close()
-                            APP_CONTEXT.get_logger().logger.info(
-                                'Port can open, but {0} is busy'.format(port))
+                    ser = serial.Serial(port, exclusive=True)
+                    if ser:
+                        ser.close()
+                        result.append(port)
                 except Exception as ex:
                     APP_CONTEXT.get_logger().logger.debug(
                         'actual port exception {0}'.format(str(ex)))
@@ -250,9 +243,7 @@ class SerialPort(Communicator):
             returns: true when successful
         '''
         try:
-            self.serial_port = serial.Serial(port, baud, timeout=timeout)
-            fcntl.flock(self.serial_port.fileno(), fcntl.LOCK_EX |
-                        fcntl.LOCK_NB)
+            self.serial_port = serial.Serial(port, baud, timeout=timeout, exclusive=True)
             return True
         except Exception as ex:
             APP_CONTEXT.get_logger().logger.info(
