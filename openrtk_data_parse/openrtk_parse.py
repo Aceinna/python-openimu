@@ -527,9 +527,9 @@ if __name__ == '__main__':
     #                 print(e)
     for root, dirs, file_name in os.walk(args.p):
         for fname in file_name:
-            if fname.startswith('user') or fname.startswith('debug'):
+            if (fname.startswith('user') or fname.startswith('debug')) and fname.endswith('.bin'):
                 file_path = os.path.join(root, fname)
-                print('precessing {0}'.format(file_path))
+                print('processing {0}'.format(file_path))
                 path = mkdir(file_path)
                 try:
                     with open(file_path, 'rb') as fp_rawdata:
