@@ -15,6 +15,10 @@
 		{ "paramId": 7, "category": "General","paramType": "select", "type": "char8", "name": "Orientation", "argument": "orien", "value_range":[-1,1],"value_accuracy":6,"options": ["+X+Y+Z"] },
 		{ "paramId": 8, "category": "Advanced","paramType": "select", "type": "int64", "name": "GPS Baud Rate", "argument": "gps_baud_rate", "value_range":[-1,1],"value_accuracy":6,"options": [38400, 57600, 115200, 230400 ] },
 		{ "paramId": 9, "category": "Advanced","paramType": "select", "type": "int64", "name": "GPS Protocol", "argument": "gps_protocal", "value_range":[-1,1],"value_accuracy":6,"options": [{"key":"0","value":"UBLOX_BINARY"},{"key":"1","value":"NOVATEL_BINARY"},{"key":"3","value":"NMEA_TEXT"}]},
+		{ "paramId": 10,"category": "Advanced","paramType": "disabled", "type": "double", "name": "hard iron x", "argument": "hard_iron_x", "value_range":[-1,1],"value_accuracy":6,"options": [0.0 ] },
+		{ "paramId": 11, "category": "Advanced","paramType": "disabled", "type": "double", "name": "hard iron y", "argument": "hard_iron_y", "value_range":[-1,1],"value_accuracy":6,"options": [0.0 ] },
+		{ "paramId": 12, "category": "Advanced","paramType": "disabled", "type": "double", "name": "soft iron ratio", "argument": "soft_iron_ratio", "value_range":[-1,1],"value_accuracy":6,"options": [1.0 ] },
+		{ "paramId": 13, "category": "Advanced","paramType": "disabled", "type": "double", "name": "soft iron angle", "argument": "soft_iron_angle", "value_range":[-1,1],"value_accuracy":6,"options": [0.0 ] }
 		{ "paramId": 14, "category": "Advanced","paramType": "input", "type": "double", "name": "lever arm x", "argument": "lever_arm_x", "value_range":[-1,1],"value_accuracy":6,"options": [-10, 0, 10] },
 		{ "paramId": 15, "category": "Advanced","paramType": "input", "type": "double", "name": "lever arm y", "argument": "lever_arm_y", "value_range":[-1,1],"value_accuracy":6,"options": [-10, 0, 10] },
 		{ "paramId": 16, "category": "Advanced","paramType": "input", "type": "double", "name": "lever arm z", "argument": "lever_arm_z", "value_range":[-1,1],"value_accuracy":6,"options": [-10, 0, 10] },

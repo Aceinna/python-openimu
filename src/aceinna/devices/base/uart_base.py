@@ -16,6 +16,7 @@ if sys.version_info[0] > 2:
     from queue import Queue
 else:
     from Queue import Queue
+from ...framework.context import APP_CONTEXT
 
 
 class OpenDeviceBase(EventBase):
@@ -604,6 +605,12 @@ class OpenDeviceBase(EventBase):
                 (x for x in self.properties['userMessages']['inputPackets']
                  if x['name'] == packet_type), None)
             self.unpack_input_packet(input_packet_config, payload)
+
+            if output_packet_config is None and input_packet_config is None:
+                APP_CONTEXT.get_logger().logger.info(
+                    "%s packet not found in JSON!" % packet_type
+                    )
+
 
         if self.properties.__contains__('bootloaderMessages'):
             bootloader_packet_config = next(
