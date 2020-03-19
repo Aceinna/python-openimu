@@ -77,7 +77,8 @@ class Provider(OpenDeviceBase):
             self.build_device_info(device_info_text)
             self.build_app_info(app_info_text)
             self.connected = True
-            APP_CONTEXT.get_logger().logger.info('Connected {0}'.format(device_info_text))
+            APP_CONTEXT.get_logger().logger.info(
+                'Connected {0}'.format(device_info_text))
             return True
         return False
 
@@ -279,7 +280,7 @@ class Provider(OpenDeviceBase):
                 'packetType': 'error',
                 'data': 'No Response'
             }
-    
+
     def get_param(self, params, *args):  # pylint: disable=invalid-name
         '''
         Update paramter value
@@ -383,8 +384,7 @@ class Provider(OpenDeviceBase):
             thread = threading.Thread(
                 target=self.thread_do_mag_align, args=())
             thread.start()
-            print("Thread mag align start at:[{0}].".format(
-                datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+
         return {
             'packetType': 'success'
         }
@@ -412,6 +412,10 @@ class Provider(OpenDeviceBase):
                 else:
                     time.sleep(0.5)
 
+            if not has_result:
+                return
+
+            # print('mag status', result['data'])
             command_line = helper.build_input_packet(
                 'ma', self.properties, 'stored')
             self.communicator.write(command_line)
@@ -421,6 +425,7 @@ class Provider(OpenDeviceBase):
             mag_value = self.decode_mag_align_output(decoded_status)
             self.is_mag_align = False
 
+            # TODO: reset packet rate after operation successful
             self.add_output_packet('stream', 'mag_status', {
                 'status': 'complete',
                 'value': mag_value
@@ -436,6 +441,7 @@ class Provider(OpenDeviceBase):
         Abort mag align action
         '''
         self.is_mag_align = False
+        
         command_line = helper.build_input_packet(
             'ma', self.properties, 'abort')
         self.communicator.write(command_line)
