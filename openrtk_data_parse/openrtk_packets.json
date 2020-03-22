@@ -544,238 +544,301 @@
 				{
 					"type": "double",
 					"name": "GPS_TimeofWeek",
-					"unit": ""
+                    "unit": "s",
+                    "need": 1,
+                    "format": "11.4f"
 				},
 				{
 					"type": "double",
 					"name": "speed",
-					"unit": "m/s"
+                    "unit": "m/s",
+                    "need": 2,
+                    "format": "10.4f"
 				}
 			]
 		},
 		{
 			"name": "imu",
 			"messageId": "268",
-			"needHeadTime": 0,
-			"payload": [
-				{
-					"type": "uint32",
-					"name": "GPS_Week",
-					"unit": ""
-				},
-				{
-					"type": "double",
-					"name": "GPS_TimeofWeek",
-					"unit": ""
-				},
-				{
-					"type": "uint32",
-					"name": "imuStatus",
-					"unit": ""
-				},
-				{
-					"type": "float",
-					"name": "x_accel",
-					"unit": ""
-				},
-				{
-					"type": "float",
-					"name": "y_accel",
-					"unit": ""
-				},
-				{
-					"type": "float",
-					"name": "z_accel",
-					"unit": ""
-				},
-				{
-					"type": "float",
-					"name": "x_gyro",
-					"unit": ""
-				},
-				{
-					"type": "float",
-					"name": "y_gyro",
-					"unit": ""
-				},
-				{
-					"type": "float",
-					"name": "z_gyro",
-					"unit": ""
-				}
-			]
-		},
-		{
-			"name": "pos",
-			"messageId": "42",
 			"needHeadTime": 1,
 			"payload": [
 				{
 					"type": "uint32",
+					"name": "GPS_Week",
+                    "unit": "",
+                    "need": 1,
+                    "format": ""
+				},
+				{
+					"type": "double",
+					"name": "GPS_TimeofWeek",
+                    "unit": "s",
+                    "need": 1,
+                    "format": "11.4f"
+				},
+				{
+					"type": "uint32",
+					"name": "imuStatus",
+                    "unit": "",
+                    "need": 0
+                },
+                {
+					"type": "float",
+					"name": "x_accel",
+                    "unit": "",
+                    "need": 1,
+                    "format": "14.10f"
+                },
+                {
+					"type": "float",
+					"name": "y_accel",
+                    "unit": "",
+                    "need": 1,
+                    "format": "14.10f"
+				},
+				{
+					"type": "float",
+					"name": "z_accel",
+                    "unit": "",
+                    "need": 1,
+                    "format": "14.10f"
+				},
+				{
+					"type": "float",
+					"name": "x_gyro",
+                    "unit": "",
+                    "need": 1,
+                    "format": "14.10f"
+                },
+				{
+					"type": "float",
+					"name": "y_gyro",
+                    "unit": "",
+                    "need": 1,
+                    "format": "14.10f"
+				},
+				{
+					"type": "float",
+					"name": "z_gyro",
+                    "unit": "",
+                    "need": 2,
+                    "format": "14.10f"
+				}
+			]
+		},
+		{
+			"name": "gnss",
+			"messageId": "42",
+			"needHeadTime": 2,
+			"payload": [
+				{
+					"type": "uint32",
 					"name": "solution_status",
-					"unit": ""
+                    "unit": "",
+                    "need": 0
 				},
 				{
 					"type": "uint32",
 					"name": "position_type",
-					"unit": ""
+					"unit": "",
+                    "need": 2,
+                    "format": ""
 				},
 				{
 					"type": "double",
 					"name": "latitude",
-					"unit": ""
+                    "unit": "",
+                    "need": 1,
+                    "format": "14.9f"
 				},
 				{
 					"type": "double",
 					"name": "longitude",
-					"unit": ""
+					"unit": "",
+                    "need": 1,
+                    "format": "14.9f"
 				},
 				{
 					"type": "double",
 					"name": "height",
-					"unit": ""
+					"unit": "",
+                    "need": 1,
+                    "format": "10.4f"
 				},
 				{
 					"type": "float",
 					"name": "undulation",
-					"unit": ""
+                    "unit": "",
+                    "need": 0
 				},
 				{
 					"type": "uint32",
 					"name": "datum_id",
-					"unit": ""
+					"unit": "",
+                    "need": 0
 				},
 				{
 					"type": "float",
 					"name": "latitude_standard_deviation",
-					"unit": ""
+					"unit": "",
+                    "need": 1,
+                    "format": "10.4f"
 				},
 				{
 					"type": "float",
 					"name": "longitude_standard_deviation",
-					"unit": ""
+					"unit": "",
+                    "need": 1,
+                    "format": "10.4f"
 				},
 				{
 					"type": "float",
 					"name": "height_standard_deviation",
-					"unit": ""
+					"unit": "",
+                    "need": 1,
+                    "format": "10.4f"
 				},
 				{
 					"type": "int8",
 					"name": "base_station_id_1",
-					"unit": ""
+                    "unit": "",
+                    "need": 0
 				},
 				{
 					"type": "int8",
 					"name": "base_station_id_2",
-					"unit": ""
+					"unit": "",
+                    "need": 0
 				},
 				{
 					"type": "int8",
 					"name": "base_station_id_3",
-					"unit": ""
+					"unit": "",
+                    "need": 0
 				},
 				{
 					"type": "int8",
 					"name": "base_station_id_4",
-					"unit": ""
+					"unit": "",
+                    "need": 0
 				},
 				{
 					"type": "float",
 					"name": "differential_age",
-					"unit": ""
+					"unit": "",
+                    "need": 0
 				},
 				{
 					"type": "float",
 					"name": "solution_age",
-					"unit": ""
+					"unit": "",
+                    "need": 0
 				},
 				{
 					"type": "uint8",
 					"name": "number_of_satellites",
-					"unit": ""
+					"unit": "",
+                    "need": 0
 				},
 				{
 					"type": "uint8",
 					"name": "number_of_satellites_in_solution",
-					"unit": ""
+					"unit": "",
+                    "need": 0
 				},
 				{
 					"type": "uint8",
 					"name": "num_gps_plus_glonass_l1",
-					"unit": ""
+					"unit": "",
+                    "need": 0
 				},
 				{
 					"type": "uint8",
 					"name": "num_gps_plus_glonass_l2",
-					"unit": ""
+					"unit": "",
+                    "need": 0
 				},
 				{
 					"type": "uint8",
 					"name": "reserved",
-					"unit": ""
+					"unit": "",
+                    "need": 0
 				},
 				{
 					"type": "uint8",
 					"name": "extended_solution_status",
-					"unit": ""
+					"unit": "",
+                    "need": 0
 				},
 				{
 					"type": "uint8",
 					"name": "reserved2",
-					"unit": ""
+					"unit": "",
+                    "need": 0
 				},
 				{
 					"type": "uint8",
 					"name": "signals_used_mask",
-					"unit": ""
+					"unit": "",
+                    "need": 0
 				}
 			]
 		},
 		{
 			"name": "vel",
 			"messageId": "99",
-			"needHeadTime": 1,
+			"needHeadTime": 2,
 			"payload": [
 				{
 					"type": "uint32",
 					"name": "solution_status",
-					"unit": ""
+                    "unit": "",
+                    "need": 0
 				},
 				{
 					"type": "uint32",
 					"name": "position_type",
-					"unit": ""
+                    "unit": "",
+                    "need": 0
 				},
 				{
 					"type": "float",
 					"name": "latency",
-					"unit": ""
+                    "unit": "",
+                    "need": 0
 				},
 				{
 					"type": "float",
 					"name": "age",
-					"unit": ""
+                    "unit": "",
+                    "need": 0
 				},
 				{
 					"type": "double",
 					"name": "horizontal_speed",
-					"unit": ""
+                    "unit": "",
+                    "need": 1,
+                    "format": "14.9f"
 				},
 				{
 					"type": "double",
 					"name": "track_over_ground",
-					"unit": ""
+					"unit": "",
+                    "need": 1,
+                    "format": "14.9f"
 				},
 				{
 					"type": "double",
 					"name": "vertical_speed",
-					"unit": ""
+					"unit": "",
+                    "need": 2,
+                    "format": "10.4f"
 				},
 				{
 					"type": "float",
 					"name": "reserved",
-					"unit": ""
+					"unit": "",
+                    "need": 0
 				}
 			]
 		},
@@ -787,62 +850,86 @@
 				{
 					"type": "uint32",
 					"name": "GPS_Week",
-					"unit": ""
+					"unit": "",
+                    "need": 1,
+                    "format": ""
 				},
 				{
 					"type": "double",
 					"name": "GPS_TimeofWeek",
-					"unit": ""
+					"unit": "",
+                    "need": 1,
+                    "format": "11.4f"
 				},
 				{
 					"type": "double",
 					"name": "latitude",
-					"unit": ""
+					"unit": "",
+                    "need": 1,
+                    "format": "14.9f"
 				},
 				{
 					"type": "double",
 					"name": "longitude",
-					"unit": ""
+					"unit": "",
+                    "need": 1,
+                    "format": "14.9f"
 				},
 				{
 					"type": "double",
 					"name": "height",
-					"unit": ""
+					"unit": "",
+                    "need": 1,
+                    "format": "10.4f"
 				},
 				{
 					"type": "double",
 					"name": "north_velocity",
-					"unit": ""
+					"unit": "",
+                    "need": 1,
+                    "format": "10.4f"
 				},
 				{
 					"type": "double",
 					"name": "east_velocity",
-					"unit": ""
+					"unit": "",
+                    "need": 1,
+                    "format": "10.4f"
 				},
 				{
 					"type": "double",
 					"name": "up_velocity",
-					"unit": ""
+					"unit": "",
+                    "need": 1,
+                    "format": "10.4f"
 				},
 				{
 					"type": "double",
 					"name": "roll",
-					"unit": ""
+					"unit": "",
+                    "need": 1,
+                    "format": "14.9f"
 				},
 				{
 					"type": "double",
 					"name": "pitch",
-					"unit": ""
+					"unit": "",
+                    "need": 1,
+                    "format": "14.9f"
 				},
 				{
 					"type": "double",
 					"name": "azimuth",
-					"unit": ""
+					"unit": "",
+                    "need": 1,
+                    "format": "14.9f"
 				},
 				{
 					"type": "int32",
 					"name": "status",
-					"unit": ""
+                    "unit": "",
+                    "need": 2,
+                    "format": ""
 				}
 			]
 		}

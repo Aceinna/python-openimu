@@ -249,139 +249,98 @@ class DebugRawParse:
             self.log_files[output['name']] = open(self.path + output['name'] + '.csv', 'w')
             self.write_titlebar(self.log_files[output['name']], output)
     
-    def log(self, name, data):
+    def write_data(self, name, data):
+        self.log_files[name].write(data.__str__())
+        self.fp_all.write(data.__str__())
+
+    def write_data_fm(self, name, data, fm):
+        self.log_files[name].write(format(data, fm))
+        self.fp_all.write(format(data, fm))
+
+    def write_data_output(self, name, data):
+        pass
+
+    def log(self, output, data):
+        name = output['name']
+        payload = output['payload']
+
         if name == 'odb':
             self.fp_all.write("$ODB,")
             for i in range(len(data)):
-                if i == 0:
-                    self.log_files[name].write(format((data[i]/1000), '11.4f'))
-                    self.fp_all.write(format((data[i]/1000), '11.4f'))
-                elif i == 1:
-                    self.log_files[name].write(format(data[i], '10.4f'))
-                    self.fp_all.write(format(data[i], '10.4f'))
-                if i < len(data)-1:
-                    self.log_files[name].write(",")
-                    self.fp_all.write(",")
-            self.log_files[name].write("\n")
-            self.fp_all.write("\n")
+                if payload[i]['need']:
+                    if i == 0:
+                        self.write_data_fm(name, data[i]/1000, payload[i]['format'])
+                    else:
+                        self.write_data_fm(name, data[i], payload[i]['format'])
+                    if payload[i]['need'] == 1:
+                        self.write_data(name, ",")
+
         elif name == 'imu':
             self.fp_all.write("$GPIMU,")
             for i in range(len(data)):
-                if i == 1:
-                    self.log_files[name].write(format((data[i]/1000), '11.4f'))
-                    self.fp_all.write(format((data[i]/1000), '11.4f'))
-                elif i == 2:
-                    # self.log_files[name].write(format(data[i], '10.4f'))
-                    # self.fp_all.write(format(data[i], '10.4f'))
-                    pass # imuStatus
-                elif i == 3:
-                    self.log_files[name].write(format(data[5]*9.7803267714e0, '14.10f'))
-                    self.fp_all.write(format(data[5]*9.7803267714e0, '14.10f'))
-                elif i == 4:
-                    self.log_files[name].write(format(data[4]*9.7803267714e0, '14.10f'))
-                    self.fp_all.write(format(data[4]*9.7803267714e0, '14.10f'))
-                elif i == 5:
-                    self.log_files[name].write(format(data[3]*9.7803267714e0, '14.10f'))
-                    self.fp_all.write(format(data[3]*9.7803267714e0, '14.10f'))
-                elif i == 6:
-                    self.log_files[name].write(format(data[8], '14.10f'))
-                    self.fp_all.write(format(data[8], '14.10f'))
-                elif i == 7:
-                    self.log_files[name].write(format(data[7], '14.10f'))
-                    self.fp_all.write(format(data[7], '14.10f'))
-                elif i == 8:
-                    self.log_files[name].write(format(data[6], '14.10f'))
-                    self.fp_all.write(format(data[6], '14.10f'))
-                else:
-                    self.log_files[name].write(data[i].__str__())
-                    self.fp_all.write(data[i].__str__())
-                if i < len(data)-1 and i != 2:
-                    self.log_files[name].write(",")
-                    self.fp_all.write(",")
-            self.log_files[name].write("\n")
-            self.fp_all.write("\n")
-        elif name == 'pos':
-            if len(data) > 5 and data[2] != 0 and data[3] != 0:
-                self.fp_all.write("$GPGNSS,")
-                for i in range(len(self.time_tag)):
+                if i == 2:
+                    self.write_data_fm(name, float(self.time_tag[1])/1000, '10.4f')
+                    self.write_data(name, ",")
+                if payload[i]['need']:
                     if i == 1:
-                        self.log_files[name].write(format((float(self.time_tag[i])/1000), '11.4f'))
-                        self.fp_all.write(format((float(self.time_tag[i])/1000), '11.4f'))
+                        self.write_data_fm(name, data[i]/1000, payload[i]['format'])
+                    elif i == 3:
+                        self.write_data_fm(name, data[5]*9.7803267714e0, payload[i]['format'])
+                    elif i == 4:
+                        self.write_data_fm(name, data[4]*9.7803267714e0, payload[i]['format'])
+                    elif i == 5:
+                        self.write_data_fm(name, data[3]*9.7803267714e0, payload[i]['format'])
+                    elif i == 6:
+                        self.write_data_fm(name, data[8], payload[i]['format'])
+                    elif i == 7:
+                        self.write_data_fm(name, data[7], payload[i]['format'])
+                    elif i == 8:
+                        self.write_data_fm(name, data[6], payload[i]['format'])
                     else:
-                        self.log_files[name].write(self.time_tag[i].__str__())
-                        self.fp_all.write(self.time_tag[i].__str__())
-                    self.log_files[name].write(",")
-                    self.fp_all.write(",")
-                for i in range(len(data)):
-                    if i == 0 or i == 1:
-                        self.log_files[name].write(format(data[i], '3.0f'))
-                        self.fp_all.write(format(data[i], '3.0f'))
-                    elif i == 2 or i == 3:
-                        self.log_files[name].write(format(data[i], '14.9f'))
-                        self.fp_all.write(format(data[i], '14.9f'))
-                    elif i >= 4:
-                        self.log_files[name].write(format(data[i], '10.4f'))
-                        self.fp_all.write(format(data[i], '10.4f'))
-                    else:
-                        self.log_files[name].write(data[i].__str__())
-                        self.fp_all.write(data[i].__str__())
-                    if i < len(data)-1:
-                        self.log_files[name].write(",")
-                        self.fp_all.write(",")
-                self.log_files[name].write("\n")
-                self.fp_all.write("\n")
+                        self.write_data_fm(name, data[i], payload[i]['format'])
+                    if payload[i]['need'] == 1:
+                        self.write_data(name, ",")
+
+        elif name == 'gnss':
+            self.fp_all.write("$GPGNSS,")
+            if output['needHeadTime'] == 2:
+                self.write_data_fm(name, self.time_tag[0], '')
+                self.write_data(name, ",")
+                self.write_data_fm(name, float(self.time_tag[1])/1000, '11.4f')
+                self.write_data(name, ",")
+            for i in range(len(data)):
+                if payload[i]['need']:
+                    if i != 1:
+                        self.write_data_fm(name, data[i], payload[i]['format'])
+                    if payload[i]['need'] == 1:
+                        self.write_data(name, ",")
+            self.write_data_fm(name, data[1], payload[1]['format'])
+
         elif name == 'vel':
             self.fp_all.write("$GPVEL,")
-            for i in range(len(self.time_tag)):
-                if i == 1:
-                    self.log_files[name].write(format((float(self.time_tag[i])/1000), '11.4f'))
-                    self.fp_all.write(format((float(self.time_tag[i])/1000), '11.4f'))
-                else:
-                    self.log_files[name].write(self.time_tag[i].__str__())
-                    self.fp_all.write(self.time_tag[i].__str__())
-                self.log_files[name].write(",")
-                self.fp_all.write(",")
+            if output['needHeadTime'] == 2:
+                self.write_data_fm(name, self.time_tag[0], '')
+                self.write_data(name, ",")
+                self.write_data_fm(name, float(self.time_tag[1])/1000, '11.4f')
+                self.write_data(name, ",")
             for i in range(len(data)):
-                if i == 0 or i == 1:
-                    self.log_files[name].write(format(data[i], '3.0f'))
-                    self.fp_all.write(format(data[i], '3.0f'))
-                elif i == 2 or i == 3:
-                    self.log_files[name].write(format(data[i], '10.4f'))
-                    self.fp_all.write(format(data[i], '10.4f'))
-                elif i >= 4 and i <= 6:
-                    self.log_files[name].write(format(data[i], '14.9f'))
-                    self.fp_all.write(format(data[i], '14.9f'))
-                else:
-                    self.log_files[name].write(data[i].__str__())
-                    self.fp_all.write(data[i].__str__())
-                if i < len(data)-1:
-                    self.log_files[name].write(",")
-                    self.fp_all.write(",")
-            self.log_files[name].write("\n")
-            self.fp_all.write("\n")
+                if payload[i]['need']:
+                    self.write_data_fm(name, data[i], payload[i]['format'])
+                    if payload[i]['need'] == 1:
+                        self.write_data(name, ",")
+
         elif name == 'ins':
             self.fp_all.write("$GPINS,")
             for i in range(len(data)):
-                if i == 1:
-                    self.log_files[name].write(format((data[i]/1000), '11.4f'))
-                    self.fp_all.write(format((data[i]/1000), '11.4f'))
-                elif i == 2 or i == 3:
-                    self.log_files[name].write(format(data[i], '14.9f'))
-                    self.fp_all.write(format(data[i], '14.9f'))
-                elif i >= 4 and i <=7:
-                    self.log_files[name].write(format(data[i], '10.4f'))
-                    self.fp_all.write(format(data[i], '10.4f'))
-                elif i >= 8 and i <=10:
-                    self.log_files[name].write(format(data[i], '14.9f'))
-                    self.fp_all.write(format(data[i], '14.9f'))
-                else:
-                    self.log_files[name].write(data[i].__str__())
-                    self.fp_all.write(data[i].__str__())
-                if i < len(data)-1:
-                    self.log_files[name].write(",")
-                    self.fp_all.write(",")
-            self.log_files[name].write("\n")
-            self.fp_all.write("\n")
+                if payload[i]['need']:
+                    if i == 1:
+                        self.write_data_fm(name, data[i]/1000, payload[i]['format'])
+                    else:
+                        self.write_data_fm(name, data[i], payload[i]['format'])
+                    if payload[i]['need'] == 1:
+                        self.write_data(name, ",")
+
+        self.write_data(name, "\n")
 
     def parse_output_packet_payload(self, message_id):
         head_lenth = self.packet_buffer[3]
@@ -393,7 +352,7 @@ class DebugRawParse:
             self.start_log(output)
             data = self.openrtk_unpack_output_packet(output, payload)
             if data != None:
-                self.log(output['name'], data)
+                self.log(output, data)
         else:
             print('no packet type {0} in json'.format(str(message_id)))
 
@@ -447,17 +406,36 @@ class DebugRawParse:
             print("error happened when decode the payload, pls restart IMU firmware: {0}".format(e))    
     
     def write_titlebar(self, file, output):
-        if output['needHeadTime']:
-            file.write('GPS_Week')
-            file.write(",")
-            file.write('GPS_TimeofWeek')
-            file.write(",")
-        for value in output['payload']: # imuStatus
-            if output['name'] == 'imu' and value['name'] == 'imuStatus':
-                pass
-            else:            
-                file.write(value['name'])
+        if output['name'] == 'gnss':
+            if output['needHeadTime'] == 2:
+                file.write('GPS_Week')
                 file.write(",")
+                file.write('GPS_TimeofWeek')
+                file.write(",")
+            for value in output['payload']:
+                if value['need'] and value['name'] != 'position_type':
+                    file.write(value['name'])
+                    file.write(",")
+            file.write('position_type')
+            file.write(",")
+        elif output['name'] == 'imu':
+            for value in output['payload']:
+                if value['need']:
+                    file.write(value['name'])
+                    file.write(",")
+                if value['name'] == 'GPS_TimeofWeek' and output['needHeadTime'] == 1:
+                    file.write('Time_Stamped')
+                    file.write(",")
+        else:
+            if output['needHeadTime'] == 2:
+                file.write('GPS_Week')
+                file.write(",")
+                file.write('GPS_TimeofWeek')
+                file.write(",")
+            for value in output['payload']:
+                if value['need']:
+                    file.write(value['name'])
+                    file.write(",")
         file.write("\n")
 
     def calc_32value(self, value):
@@ -510,21 +488,6 @@ if __name__ == '__main__':
     if args.c > 2:
         args.c = 0
 
-    # for file_name in os.listdir(args.p):
-    #     file_path = args.p + '/' + file_name
-    #     if os.path.isfile(file_path):
-    #         if file_name.startswith('user') or file_name.startswith('debug'):
-    #             path = mkdir(file_path)
-    #             try:
-    #                 with open(file_path, 'rb') as fp_rawdata:
-    #                     if file_name.startswith('user'):
-    #                         parse = UserRawParse(fp_rawdata, path + '/' + file_name.rstrip(".bin") + '_')
-    #                     elif file_name.startswith('debug'):
-    #                         parse = DebugRawParse(fp_rawdata, path + '/' + file_name.rstrip(".bin") + '_')
-    #                     parse.start_pasre()
-    #                     fp_rawdata.close
-    #             except Exception as e:
-    #                 print(e)
     for root, dirs, file_name in os.walk(args.p):
         for fname in file_name:
             if (fname.startswith('user') or fname.startswith('debug')) and fname.endswith('.bin'):
