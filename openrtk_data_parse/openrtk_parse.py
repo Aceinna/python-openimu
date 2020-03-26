@@ -264,12 +264,14 @@ class DebugRawParse:
         name = output['name']
         payload = output['payload']
 
-        if name == 'odb':
-            self.fp_all.write("$ODB,")
+        if name == 'odo':
+            self.fp_all.write("$ODO,")
             for i in range(len(data)):
                 if payload[i]['need']:
                     if i == 0:
                         self.write_data_fm(name, data[i]/1000, payload[i]['format'])
+                        self.write_data(name, ",")
+                        self.write_data_fm(name, float(self.time_tag[1])/1000, '10.4f')
                     else:
                         self.write_data_fm(name, data[i], payload[i]['format'])
                     if payload[i]['need'] == 1:
@@ -424,6 +426,14 @@ class DebugRawParse:
                     file.write(value['name'])
                     file.write(",")
                 if value['name'] == 'GPS_TimeofWeek' and output['needHeadTime'] == 1:
+                    file.write('Time_Stamped')
+                    file.write(",")
+        elif output['name'] == 'odo':
+            for value in output['payload']:
+                if value['need']:
+                    file.write(value['name'])
+                    file.write(",")
+                if value['name'] == 'GPS_TimeofWeek':
                     file.write('Time_Stamped')
                     file.write(",")
         else:

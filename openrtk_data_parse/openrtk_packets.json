@@ -537,7 +537,7 @@
 	],
 	"debugOutputPackets": [
 		{
-			"name": "odb",
+			"name": "odo",
 			"messageId": "177",
 			"needHeadTime": 0,
 			"payload": [
