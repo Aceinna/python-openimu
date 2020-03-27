@@ -400,7 +400,12 @@
 						"type": "double",
 						"name": "ellipsoidalHeight",
 						"unit": "m"
-					},
+                    },
+                    {
+                        "type": "uint32",
+						"name": "satellites",
+						"unit": ""
+                    },
 					{
 						"type": "double",
 						"name": "mslHeight",
@@ -472,12 +477,17 @@
 						"type": "double",
 						"name": "ellipsoidalHeight",
 						"unit": "m"
-					},
+                    },
+                    {
+                        "type": "uint32",
+						"name": "satellites",
+						"unit": ""
+                    },
 					{
 						"type": "double",
 						"name": "mslHeight",
 						"unit": "m"
-					},
+                    },
 					{
 						"type": "double",
 						"name": "positionRMS",
