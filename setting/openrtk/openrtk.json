@@ -373,13 +373,13 @@
 				"payload": [
 					{
 						"type": "uint32",
-						"name": "systemTime",
-						"unit": "msec"
+						"name": "GPS_Week",
+						"unit": ""
 					},
 					{
 						"type": "double",
-						"name": "timeOfWeek",
-						"unit": "msec"
+						"name": "GPS_TimeofWeek",
+						"unit": "sec"
                     },
                     {
 						"type": "uint32",
@@ -398,28 +398,23 @@
 					},
 					{
 						"type": "double",
-						"name": "ellipsoidalHeight",
+						"name": "height",
 						"unit": "m"
                     },
                     {
                         "type": "uint32",
-						"name": "satellites",
+						"name": "numberOfSVs",
 						"unit": ""
                     },
 					{
-						"type": "double",
-						"name": "mslHeight",
-						"unit": "m"
-					},
-					{
-						"type": "double",
-						"name": "positionRMS",
-						"unit": "m"
-					},
+						"type": "float",
+						"name": "hdop",
+						"unit": ""
+                    },
 					{
 						"type": "uint32",
 						"name": "velocityMode",
-						"unit": "m"
+						"unit": ""
 					},
 					{
 						"type": "float",
@@ -435,13 +430,8 @@
 						"type": "float",
 						"name": "velocityDown",
 						"unit": "m/s"
-					},
-					{
-						"type": "float",
-						"name": "velocityRMS",
-						"unit": "m/s"
-					}
-				],
+                    }
+                ],
 				"graphs": []
 			},
 			{
@@ -450,13 +440,13 @@
 				"payload": [
 					{
 						"type": "uint32",
-						"name": "systemTime",
-						"unit": "msec"
+						"name": "GPS_Week",
+						"unit": ""
 					},
 					{
 						"type": "double",
-						"name": "timeOfWeek",
-						"unit": "msec"
+						"name": "GPS_TimeofWeek",
+						"unit": "sec"
                     },
                     {
 						"type": "uint32",
@@ -475,28 +465,23 @@
 					},
 					{
 						"type": "double",
-						"name": "ellipsoidalHeight",
+						"name": "height",
 						"unit": "m"
                     },
                     {
                         "type": "uint32",
-						"name": "satellites",
+						"name": "numberOfSVs",
 						"unit": ""
                     },
 					{
-						"type": "double",
-						"name": "mslHeight",
-						"unit": "m"
+						"type": "float",
+						"name": "hdop",
+						"unit": ""
                     },
-					{
-						"type": "double",
-						"name": "positionRMS",
-						"unit": "m"
-					},
 					{
 						"type": "uint32",
 						"name": "velocityMode",
-						"unit": "m"
+						"unit": ""
 					},
 					{
 						"type": "float",
@@ -514,19 +499,14 @@
 						"unit": "m/s"
 					},
 					{
-						"type": "float",
-						"name": "velocityRMS",
-						"unit": "m/s"
-					},
-					{
 						"type": "uint32",
 						"name": "insStatus",
-						"unit": "m/s"
+						"unit": ""
                     },
                     {
 						"type": "uint32",
 						"name": "insPositionType",
-						"unit": "m/s"
+						"unit": ""
 					},
 					{
 						"type": "float",
@@ -541,21 +521,6 @@
 					{
 						"type": "float",
 						"name": "heading",
-						"unit": "m/s"
-					},
-					{
-						"type": "float",
-						"name": "rollRMS",
-						"unit": "m/s"
-                    },
-                    {
-						"type": "float",
-						"name": "pitchRMS",
-						"unit": "m/s"
-                    },
-                    {
-						"type": "float",
-						"name": "headingRMS",
 						"unit": "m/s"
 					}
 				],
@@ -617,14 +582,14 @@
 				"from": "imu",
                 "payload": [
                     {
-						"type": "uint32",
-						"name": "systemTime",
-						"unit": "msec"
-					},
-					{
-						"type": "double",
-						"name": "timeOfWeek",
-						"unit": "msec"
+                        "type": "uint32",
+                        "name": "GPS_Week",
+                        "unit": ""
+                    },
+                    {
+                        "type": "double",
+                        "name": "GPS_TimeofWeek",
+                        "unit": "sec"
                     },
                     {
                         "type": "float",
