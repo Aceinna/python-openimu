@@ -114,11 +114,6 @@ class Provider(OpenDeviceBase):
         # TODO: maybe we need a base config file
 
     def after_setup(self):
-        with_raw_log = self.cli_options and self.cli_options.with_raw_log
-
-        if not with_raw_log:
-            return
-        
         connection = None
         debug_port = ''
         rtcm_port = ''
@@ -130,7 +125,7 @@ class Provider(OpenDeviceBase):
             user_port = connection['port']
             user_port_num = ''
             port_name = ''
-            for i in range(len(user_port)-1, -1, -1):
+            for i in range(len(user_port)-1,-1,-1):
                 if (user_port[i] >= '0' and user_port[i] <= '9'):
                     user_port_num = user_port[i] + user_port_num
                 else:
@@ -140,50 +135,34 @@ class Provider(OpenDeviceBase):
             debug_port = port_name + str(int(user_port_num) + 2)
             rtcm_port = port_name + str(int(user_port_num) + 3)
 
-            if self.app_info['app_name'] == 'RTK':
-                self.rtcm_serial_port = serial.Serial(rtcm_port, '460800', timeout=0.005)
-                if self.rtcm_serial_port.isOpen():
-                    if self.data_folder is not None:
-                        dir_time = time.strftime("%Y%m%d_%H%M%S", time.localtime())
-                        file_time = time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime())
-                        file_name = self.data_folder + '/' + 'openrtk_log_' + dir_time
-                        os.mkdir(file_name)
-                        self.user_logf = open(file_name + '/' + 'user_' + file_time + '.bin',"wb")
-                        self.rtcm_logf = open(file_name + '/' + 'rtcm_' + file_time + '.bin',"wb")
+            self.debug_serial_port = serial.Serial(debug_port, '460800', timeout=0.005)
+            self.rtcm_serial_port = serial.Serial(rtcm_port, '460800', timeout=0.005)
+            if self.debug_serial_port.isOpen() and self.rtcm_serial_port.isOpen():
+                #print("debug port {0} and rtcm port {1} open success".format(debug_port, rtcm_port))
 
-                        funcs = [self.thread_rtcm_port_receiver]
-                        for func in funcs:
-                            t = threading.Thread(target=func, args=())
-                            t.start()
+                if self.data_folder is not None:
+                    dir_time = time.strftime("%Y%m%d_%H%M%S", time.localtime())
+                    file_time = time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime())
+                    file_name = self.data_folder + '/' + 'openrtk_log_' + dir_time
+                    os.mkdir(file_name)
+                    self.user_logf = open(file_name + '/' + 'user_' + file_time + '.bin',"wb")
+                    if self.app_info['app_name'] == 'RAWDATA':
+                        self.debug_logf = open(file_name + '/' + 'rtcm_base_' + file_time + '.bin',"wb")
+                        self.rtcm_logf = open(file_name + '/' + 'rtcm_rover_' + file_time + '.bin',"wb")
+                    elif self.app_info['app_name'] == 'RTK':
+                        self.debug_logf = open(file_name + '/' + 'rtcm_base_' + file_time + '.bin',"wb")
+                        self.rtcm_logf = open(file_name + '/' + 'rtcm_rover_' + file_time + '.bin',"wb")
+                    else: 
+                        self.debug_logf = open(file_name + '/' + 'debug_' + file_time + '.bin',"wb")
+                        self.rtcm_logf = open(file_name + '/' + 'rtcm_rover_' + file_time + '.bin',"wb")
 
-                        return True
-                return False
-            else:
-                self.debug_serial_port = serial.Serial(debug_port, '460800', timeout=0.005)
-                self.rtcm_serial_port = serial.Serial(rtcm_port, '460800', timeout=0.005)
-                if self.debug_serial_port.isOpen() and self.rtcm_serial_port.isOpen():
-                    #print("debug port {0} and rtcm port {1} open success".format(debug_port, rtcm_port))
+                    funcs = [self.thread_debug_port_receiver, self.thread_rtcm_port_receiver]
+                    for func in funcs:
+                        t = threading.Thread(target=func, args=())
+                        t.start()
 
-                    if self.data_folder is not None:
-                        dir_time = time.strftime("%Y%m%d_%H%M%S", time.localtime())
-                        file_time = time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime())
-                        file_name = self.data_folder + '/' + 'openrtk_log_' + dir_time
-                        os.mkdir(file_name)
-                        self.user_logf = open(file_name + '/' + 'user_' + file_time + '.bin',"wb")
-                        if self.app_info['app_name'] == 'RAWDATA':
-                            self.debug_logf = open(file_name + '/' + 'rtcm_base_' + file_time + '.bin',"wb")
-                            self.rtcm_logf = open(file_name + '/' + 'rtcm_rover_' + file_time + '.bin',"wb")
-                        else: 
-                            self.debug_logf = open(file_name + '/' + 'debug_' + file_time + '.bin',"wb")
-                            self.rtcm_logf = open(file_name + '/' + 'rtcm_' + file_time + '.bin',"wb")
-
-                        funcs = [self.thread_debug_port_receiver, self.thread_rtcm_port_receiver]
-                        for func in funcs:
-                            t = threading.Thread(target=func, args=())
-                            t.start()
-
-                        return True
-                return False
+                    return True
+            return False
         except Exception as e:
             if self.debug_serial_port is not None:
                 if self.debug_serial_port.isOpen():
@@ -199,7 +178,7 @@ class Provider(OpenDeviceBase):
     def on_read_raw(self, data):
         if self.user_logf is not None:
             self.user_logf.write(data)
-
+    
     def thread_debug_port_receiver(self):
         if self.debug_logf is None:
             return
@@ -213,7 +192,7 @@ class Provider(OpenDeviceBase):
                 self.debug_logf.write(data)
             else:
                 time.sleep(0.001)
-
+    
     def thread_rtcm_port_receiver(self):
         if self.rtcm_logf is None:
             return

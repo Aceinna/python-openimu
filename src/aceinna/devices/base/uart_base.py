@@ -453,7 +453,8 @@ class OpenDeviceBase(EventBase):
             #     t.name, t.ident, datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
             self.threads.append(thread)
 
-        self.after_setup()
+        if with_raw_log:
+            self.after_setup()
 
     @abstractmethod
     def on_read_raw(self, data):

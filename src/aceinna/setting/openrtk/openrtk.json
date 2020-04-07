@@ -9,73 +9,39 @@
 			"paramId": 0,
 			"category": "General",
 			"paramType": "disabled",
-			"type": "uint64",
+			"type": "uint16",
 			"name": "Data CRC"
 		},
 		{
 			"paramId": 1,
 			"category": "General",
 			"paramType": "disabled",
-			"type": "uint64",
+			"type": "uint16",
 			"name": "Data Size"
 		},
 		{
 			"paramId": 2,
 			"category": "General",
 			"paramType": "select",
-			"type": "uint64",
-			"name": "Baud Rate",
-			"argument": "baud_rate",
-			"value_range": [
-				-1,
-				1
-			],
-			"value_accuracy": 6,
+			"type": "char2",
+			"name": "Packet Type",
+			"argument": "type",
 			"options": [
-				460800,
-				115200,
-				57600,
-				230400,
-				38400
+                "s1"
 			]
 		},
 		{
 			"paramId": 3,
 			"category": "General",
 			"paramType": "select",
-			"type": "char8",
-			"name": "Packet Type",
-			"argument": "type",
-			"value_range": [
-				-1,
-				1
-			],
-			"value_accuracy": 6,
-			"options": [
-                "s1",
-				"e1",
-				"e2",
-				"K1",
-				"pS",
-				"sK"
-			]
-		},
-		{
-			"paramId": 4,
-			"category": "General",
-			"paramType": "select",
-			"type": "uint64",
+			"type": "uint16",
 			"name": "Packet Rate",
 			"argument": "rate",
-			"value_range": [
-				-1,
-				1
-			],
-			"value_accuracy": 6,
 			"options": [
 				200,
 				100,
 				50,
+				25,
 				20,
 				10,
 				5,
@@ -84,82 +50,7 @@
 			]
 		},
 		{
-			"paramId": 5,
-			"category": "General",
-			"paramType": "select",
-			"type": "uint64",
-			"name": "Accel LPF",
-			"argument": "xl_lpf",
-			"value_range": [
-				-1,
-				1
-			],
-			"value_accuracy": 6,
-			"options": [
-				50,
-				40,
-				25,
-				20,
-				10,
-				5,
-				2
-			]
-		},
-		{
-			"paramId": 6,
-			"category": "General",
-			"paramType": "select",
-			"type": "uint64",
-			"name": "Rate LPF",
-			"argument": "rate_lpf",
-			"value_range": [
-				-1,
-				1
-			],
-			"value_accuracy": 6,
-			"options": [
-				50,
-				40,
-				25,
-				20,
-				10,
-				5,
-				2
-			]
-		},
-		{
-			"paramId": 7,
-			"category": "General",
-			"paramType": "select",
-			"type": "char8",
-			"name": "Orientation",
-			"argument": "orien",
-			"value_range": [
-				-1,
-				1
-			],
-			"value_accuracy": 6,
-			"options": [
-				"+X+Y+Z"
-			]
-		},
-		{
-			"paramId": 8,
-			"category": "Advanced",
-			"paramType": "input",
-			"type": "uint32",
-			"name": "Profile",
-			"argument": "profile",
-			"value_range": [
-				-1,
-				1
-			],
-			"value_accuracy": 0,
-			"options": [
-			]
-		},
-		{
-			"paramId": 9,
+			"paramId": 4,
 			"category": "Advanced",
 			"paramType": "input",
 			"type": "float",
@@ -174,7 +65,7 @@
 			]
 		},
 		{
-			"paramId": 10,
+			"paramId": 5,
 			"category": "Advanced",
 			"paramType": "input",
 			"type": "float",
@@ -189,7 +80,7 @@
 			]
 		},
 		{
-			"paramId": 11,
+			"paramId": 6,
 			"category": "Advanced",
 			"paramType": "input",
 			"type": "float",
@@ -204,7 +95,7 @@
 			]
 		},
 		{
-			"paramId": 12,
+			"paramId": 7,
 			"category": "Advanced",
 			"paramType": "input",
 			"type": "float",
@@ -219,7 +110,7 @@
 			]
 		},
 		{
-			"paramId": 13,
+			"paramId": 8,
 			"category": "Advanced",
 			"paramType": "input",
 			"type": "float",
@@ -234,7 +125,7 @@
 			]
 		},
 		{
-			"paramId": 14,
+			"paramId": 9,
 			"category": "Advanced",
 			"paramType": "input",
 			"type": "float",
@@ -249,7 +140,7 @@
 			]
         },
         {
-			"paramId": 15,
+			"paramId": 10,
 			"category": "Advanced",
 			"paramType": "input",
 			"type": "float",
@@ -264,7 +155,7 @@
 			]
 		},
 		{
-			"paramId": 16,
+			"paramId": 11,
 			"category": "Advanced",
 			"paramType": "input",
 			"type": "float",
@@ -279,7 +170,7 @@
 			]
 		},
 		{
-			"paramId": 17,
+			"paramId": 12,
 			"category": "Advanced",
 			"paramType": "input",
 			"type": "float",
@@ -294,7 +185,7 @@
 			]
         },
         {
-			"paramId": 18,
+			"paramId": 13,
 			"category": "Ethnet",
 			"paramType": "select",
 			"type": "uint8",
@@ -309,7 +200,7 @@
 			]
         },
         {
-			"paramId": 19,
+			"paramId": 14,
 			"category": "Ethnet",
 			"paramType": "input",
 			"type": "ip4",
@@ -322,7 +213,7 @@
 			]
         },
 		{
-			"paramId": 20,
+			"paramId": 15,
 			"category": "Ethnet",
 			"paramType": "input",
 			"type": "ip4",
@@ -335,7 +226,7 @@
 			]
         },
         {
-			"paramId": 21,
+			"paramId": 16,
 			"category": "Ethnet",
 			"paramType": "input",
 			"type": "ip4",
@@ -348,7 +239,7 @@
 			]
         },
         {
-			"paramId": 22,
+			"paramId": 17,
 			"category": "Ethnet",
 			"paramType": "input",
 			"type": "ip6",
@@ -362,26 +253,10 @@
 			]
         },
         {
-			"paramId": 23,
-			"category": "Ntrip",
-			"paramType": "select",
-			"type": "uint8",
-			"name": "RTK Type",
-            "argument": "RTK Type",
-            "disabled":true,
-			"value_range": [
-			],
-			"value_accuracy": 6,
-			"options": [
-                {"key":"0","value":"LocalRTK"},
-                {"key":"1","value":"CloudRTK"}
-			]
-        },
-        {
-			"paramId": 24,
+			"paramId": 18,
 			"category": "Ntrip",
 			"paramType": "input",
-			"type": "char22",
+			"type": "char23",
 			"name": "IP",
 			"argument": "IP",
 			"value_range": [
@@ -391,7 +266,7 @@
 			]
         },
         {
-			"paramId": 25,
+			"paramId": 19,
 			"category": "Ntrip",
 			"paramType": "input",
 			"type": "uint16",
@@ -404,7 +279,7 @@
 			]
         },
         {
-			"paramId": 26,
+			"paramId": 20,
 			"category": "Ntrip",
 			"paramType": "input",
 			"type": "char20",
@@ -417,7 +292,7 @@
 			]
         },
         {
-			"paramId": 27,
+			"paramId": 21,
 			"category": "Ntrip",
 			"paramType": "input",
 			"type": "char16",
@@ -430,7 +305,7 @@
 			]
         },
         {
-			"paramId": 28,
+			"paramId": 22,
 			"category": "Ntrip",
 			"paramType": "input",
 			"type": "char24",
@@ -498,13 +373,13 @@
 				"payload": [
 					{
 						"type": "uint32",
-						"name": "systemTime",
-						"unit": "msec"
+						"name": "GPS_Week",
+						"unit": ""
 					},
 					{
 						"type": "double",
-						"name": "timeOfWeek",
-						"unit": "msec"
+						"name": "GPS_TimeofWeek",
+						"unit": "sec"
                     },
                     {
 						"type": "uint32",
@@ -523,23 +398,23 @@
 					},
 					{
 						"type": "double",
-						"name": "ellipsoidalHeight",
+						"name": "height",
 						"unit": "m"
-					},
+                    },
+                    {
+                        "type": "uint32",
+						"name": "numberOfSVs",
+						"unit": ""
+                    },
 					{
-						"type": "double",
-						"name": "mslHeight",
-						"unit": "m"
-					},
-					{
-						"type": "double",
-						"name": "positionRMS",
-						"unit": "m"
-					},
+						"type": "float",
+						"name": "hdop",
+						"unit": ""
+                    },
 					{
 						"type": "uint32",
 						"name": "velocityMode",
-						"unit": "m"
+						"unit": ""
 					},
 					{
 						"type": "float",
@@ -555,13 +430,8 @@
 						"type": "float",
 						"name": "velocityDown",
 						"unit": "m/s"
-					},
-					{
-						"type": "float",
-						"name": "velocityRMS",
-						"unit": "m/s"
-					}
-				],
+                    }
+                ],
 				"graphs": []
 			},
 			{
@@ -570,13 +440,13 @@
 				"payload": [
 					{
 						"type": "uint32",
-						"name": "systemTime",
-						"unit": "msec"
+						"name": "GPS_Week",
+						"unit": ""
 					},
 					{
 						"type": "double",
-						"name": "timeOfWeek",
-						"unit": "msec"
+						"name": "GPS_TimeofWeek",
+						"unit": "sec"
                     },
                     {
 						"type": "uint32",
@@ -595,23 +465,23 @@
 					},
 					{
 						"type": "double",
-						"name": "ellipsoidalHeight",
+						"name": "height",
 						"unit": "m"
-					},
+                    },
+                    {
+                        "type": "uint32",
+						"name": "numberOfSVs",
+						"unit": ""
+                    },
 					{
-						"type": "double",
-						"name": "mslHeight",
-						"unit": "m"
-					},
-					{
-						"type": "double",
-						"name": "positionRMS",
-						"unit": "m"
-					},
+						"type": "float",
+						"name": "hdop",
+						"unit": ""
+                    },
 					{
 						"type": "uint32",
 						"name": "velocityMode",
-						"unit": "m"
+						"unit": ""
 					},
 					{
 						"type": "float",
@@ -629,19 +499,14 @@
 						"unit": "m/s"
 					},
 					{
-						"type": "float",
-						"name": "velocityRMS",
-						"unit": "m/s"
-					},
-					{
 						"type": "uint32",
 						"name": "insStatus",
-						"unit": "m/s"
+						"unit": ""
                     },
                     {
 						"type": "uint32",
 						"name": "insPositionType",
-						"unit": "m/s"
+						"unit": ""
 					},
 					{
 						"type": "float",
@@ -656,21 +521,6 @@
 					{
 						"type": "float",
 						"name": "heading",
-						"unit": "m/s"
-					},
-					{
-						"type": "float",
-						"name": "rollRMS",
-						"unit": "m/s"
-                    },
-                    {
-						"type": "float",
-						"name": "pitchRMS",
-						"unit": "m/s"
-                    },
-                    {
-						"type": "float",
-						"name": "headingRMS",
 						"unit": "m/s"
 					}
 				],
@@ -732,14 +582,14 @@
 				"from": "imu",
                 "payload": [
                     {
-						"type": "uint32",
-						"name": "systemTime",
-						"unit": "msec"
-					},
-					{
-						"type": "double",
-						"name": "timeOfWeek",
-						"unit": "msec"
+                        "type": "uint32",
+                        "name": "GPS_Week",
+                        "unit": ""
+                    },
+                    {
+                        "type": "double",
+                        "name": "GPS_TimeofWeek",
+                        "unit": "sec"
                     },
                     {
                         "type": "float",
