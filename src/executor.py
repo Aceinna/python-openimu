@@ -32,7 +32,7 @@ def receive_args():
                         help="Log debug information", default=False)
     parser.add_argument("--with-data-log", dest='with_data_log', action='store_true',
                         help="Contains internal data log (OpenIMU only)", default=False)
-    parser.add_argument("--with-raw-log", dest='with_raw_log', action='store_true',
+    parser.add_argument("--with-raw-log", "-r", dest='with_raw_log', action='store_true',
                         help="Contains raw data log (OpenRTK only)", default=False)
     return parser.parse_args()
 
