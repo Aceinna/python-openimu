@@ -133,7 +133,7 @@ class Provider(OpenDeviceBase):
                     break
             #print('user_port {0} {1}'.format(user_port_num, port_name))
             debug_port = port_name + str(int(user_port_num) + 2)
-            rtcm_port = port_name + str(int(user_port_num) + 3)
+            rtcm_port = port_name + str(int(user_port_num) + 1)
 
             self.debug_serial_port = serial.Serial(debug_port, '460800', timeout=0.005)
             self.rtcm_serial_port = serial.Serial(rtcm_port, '460800', timeout=0.005)
