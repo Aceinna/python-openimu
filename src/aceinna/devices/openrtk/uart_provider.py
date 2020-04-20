@@ -35,6 +35,7 @@ class Provider(OpenDeviceBase):
         self.user_logf = None
         self.debug_logf = None
         self.rtcm_logf = None
+        self.debug_c_f = None
         self.enable_data_log = False
         self.prepare_folders()
 
@@ -158,7 +159,7 @@ class Provider(OpenDeviceBase):
 
                     funcs = [self.thread_debug_port_receiver, self.thread_rtcm_port_receiver]
                     for func in funcs:
-                        t = threading.Thread(target=func, args=())
+                        t = threading.Thread(target=func, args=(file_name,))
                         t.start()
 
                     return True
@@ -179,9 +180,46 @@ class Provider(OpenDeviceBase):
         if self.user_logf is not None:
             self.user_logf.write(data)
     
-    def thread_debug_port_receiver(self):
+    def thread_debug_port_receiver(self, *args, **kwargs):
         if self.debug_logf is None:
             return
+        is_get_configuration = 0
+        file_name = args[0]
+        self.debug_c_f = open(file_name + '/' + 'configuration.txt',"w")
+
+        while True:
+            if is_get_configuration:
+                break
+            cmd_configuration  = 'get configuration\r'
+            self.debug_serial_port.write(cmd_configuration.encode())
+            try_times = 20
+            for i in range(try_times):
+                data_buffer = self.debug_serial_port.read(500)
+                if len(data_buffer):
+                    try:
+                        #print('len = {0}'.format(len(data_buffer)))
+                        str_data = bytes.decode(data_buffer)
+                        #print('{0}'.format(str_data))
+                        json_data = json.loads(data_buffer)
+                        for key in json_data.keys():
+                            if key == 'openrtk configuration':
+                                print('{0}'.format(json_data))
+                                if self.debug_c_f:
+                                    self.debug_c_f.write(str_data)
+                                    self.debug_c_f.close()
+                                is_get_configuration = 1
+                        if is_get_configuration:
+                            break
+                    except Exception as e:
+                        #print('DEBUG PORT Thread:json error:', e)
+                        #the json will not be completed
+                        pass
+                    
+
+        cmd_log = 'log com3 P1\r'
+        self.debug_serial_port.write(cmd_log.encode())
+
+        # log data
         while True:
             try:
                 data = bytearray(self.debug_serial_port.read_all())
@@ -193,7 +231,7 @@ class Provider(OpenDeviceBase):
             else:
                 time.sleep(0.001)
     
-    def thread_rtcm_port_receiver(self):
+    def thread_rtcm_port_receiver(self, *args, **kwargs):
         if self.rtcm_logf is None:
             return
         while True:
