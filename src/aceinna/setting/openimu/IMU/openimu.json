@@ -202,17 +202,17 @@
 					{
 						"type": "float",
 						"name": "xAccel",
-						"unit": "g"
+						"unit": "m/s^2"
 					},
 					{
 						"type": "float",
 						"name": "yAccel",
-						"unit": "g"
+						"unit": "m/s^2"
 					},
 					{
 						"type": "float",
 						"name": "zAccel",
-						"unit": "g"
+						"unit": "m/s^2"
 					},
 					{
 						"type": "float",
@@ -252,7 +252,7 @@
 				],
 				"graphs": [{
 						"name": "Acceleration",
-						"units": "g",
+						"units": "m/s^2",
 						"xAxis": "Time (s)",
 						"yAxes": ["xAccel", "yAccel", "zAccel"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
