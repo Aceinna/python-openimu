@@ -21,6 +21,7 @@ from ..framework.utils import (helper, resource)
 from ..models import WebserverArgs
 from ..framework.constants import DEFAULT_PORT_RANGE
 from ..framework import AppLogger
+from ..devices.message_center import EventMessage
 if sys.version_info[0] > 2:
     from queue import Queue
 else:
@@ -38,7 +39,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
     latest_packet_collection = []
     file_logger = None
     packet_white_list = ['ping', 'upgrade_progress',
-                         'upgrade_complete', 'mag_status']
+                         'upgrade_complete', 'mag_status', 'backup_status','restore_status']
     period_output_callback = None
 
     def initialize(self, server):
@@ -133,8 +134,16 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         converted_method = helper.name_convert_camel_to_snake(method)
 
         if device and device.connected and hasattr(device, converted_method):
-            result = getattr(device, converted_method, None)(parameters)
-            self.response_message(method, result)
+            device_command = getattr(
+                device, converted_method, None)(parameters)
+
+            if isinstance(device_command, EventMessage):
+                device_command.then(
+                    lambda result: self.response_message(method, result)
+                )
+            else:
+                self.response_message(method, device_command)
+
         elif hasattr(self, converted_method):
             getattr(self, converted_method, None)(parameters)
 
@@ -435,6 +444,8 @@ class Webserver(EventBase):
         '''
         Handler after device upgrade complete
         '''
+        self.device_provider = device_provider
+        self.device_provider.upgrade_completed(self.options)
         if self.device_provider.device_info['sn'] == device_provider.device_info['sn']:
             if self.ws_handler:
                 self.ws_handler.on_receive_output_packet(
@@ -443,10 +454,7 @@ class Webserver(EventBase):
             if self.ws_handler:
                 self.ws_handler.on_receive_output_packet(
                     'stream', 'upgrade_complete', {'success': False})
-            self.device_provider.close()
-
-        self.device_provider = device_provider
-        self.device_provider.upgrade_completed(self.options)
+         #   self.device_provider.close()
 
     def load_device_provider(self, device_provider):
         '''

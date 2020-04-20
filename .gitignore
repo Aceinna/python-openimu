@@ -18,3 +18,4 @@ dist
 aceinna.ico
 .pytest_cache
 loggers/
+/backup

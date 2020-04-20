@@ -9,6 +9,7 @@ from ...framework.utils import helper
 from ...framework.utils import resource
 from ..base.uart_base import OpenDeviceBase
 from ..configs.openrtk_predefine import JSON_FILE_NAME
+from ..decorator import with_device_message
 # import asyncio
 
 
@@ -126,7 +127,7 @@ class Provider(OpenDeviceBase):
             user_port = connection['port']
             user_port_num = ''
             port_name = ''
-            for i in range(len(user_port)-1,-1,-1):
+            for i in range(len(user_port)-1, -1, -1):
                 if (user_port[i] >= '0' and user_port[i] <= '9'):
                     user_port_num = user_port[i] + user_port_num
                 else:
@@ -136,28 +137,39 @@ class Provider(OpenDeviceBase):
             debug_port = port_name + str(int(user_port_num) + 2)
             rtcm_port = port_name + str(int(user_port_num) + 1)
 
-            self.debug_serial_port = serial.Serial(debug_port, '460800', timeout=0.005)
-            self.rtcm_serial_port = serial.Serial(rtcm_port, '460800', timeout=0.005)
+            self.debug_serial_port = serial.Serial(
+                debug_port, '460800', timeout=0.005)
+            self.rtcm_serial_port = serial.Serial(
+                rtcm_port, '460800', timeout=0.005)
             if self.debug_serial_port.isOpen() and self.rtcm_serial_port.isOpen():
                 #print("debug port {0} and rtcm port {1} open success".format(debug_port, rtcm_port))
 
                 if self.data_folder is not None:
                     dir_time = time.strftime("%Y%m%d_%H%M%S", time.localtime())
-                    file_time = time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime())
+                    file_time = time.strftime(
+                        "%Y_%m_%d_%H_%M_%S", time.localtime())
                     file_name = self.data_folder + '/' + 'openrtk_log_' + dir_time
                     os.mkdir(file_name)
-                    self.user_logf = open(file_name + '/' + 'user_' + file_time + '.bin',"wb")
+                    self.user_logf = open(
+                        file_name + '/' + 'user_' + file_time + '.bin', "wb")
                     if self.app_info['app_name'] == 'RAWDATA':
-                        self.debug_logf = open(file_name + '/' + 'rtcm_base_' + file_time + '.bin',"wb")
-                        self.rtcm_logf = open(file_name + '/' + 'rtcm_rover_' + file_time + '.bin',"wb")
+                        self.debug_logf = open(
+                            file_name + '/' + 'rtcm_base_' + file_time + '.bin', "wb")
+                        self.rtcm_logf = open(
+                            file_name + '/' + 'rtcm_rover_' + file_time + '.bin', "wb")
                     elif self.app_info['app_name'] == 'RTK':
-                        self.debug_logf = open(file_name + '/' + 'rtcm_base_' + file_time + '.bin',"wb")
-                        self.rtcm_logf = open(file_name + '/' + 'rtcm_rover_' + file_time + '.bin',"wb")
-                    else: 
-                        self.debug_logf = open(file_name + '/' + 'debug_' + file_time + '.bin',"wb")
-                        self.rtcm_logf = open(file_name + '/' + 'rtcm_rover_' + file_time + '.bin',"wb")
+                        self.debug_logf = open(
+                            file_name + '/' + 'rtcm_base_' + file_time + '.bin', "wb")
+                        self.rtcm_logf = open(
+                            file_name + '/' + 'rtcm_rover_' + file_time + '.bin', "wb")
+                    else:
+                        self.debug_logf = open(
+                            file_name + '/' + 'debug_' + file_time + '.bin', "wb")
+                        self.rtcm_logf = open(
+                            file_name + '/' + 'rtcm_rover_' + file_time + '.bin', "wb")
 
-                    funcs = [self.thread_debug_port_receiver, self.thread_rtcm_port_receiver]
+                    funcs = [self.thread_debug_port_receiver,
+                             self.thread_rtcm_port_receiver]
                     for func in funcs:
                         t = threading.Thread(target=func, args=(file_name,))
                         t.start()
@@ -275,48 +287,6 @@ class Provider(OpenDeviceBase):
                     and output_packet_config['from'] == 'imu':
                 self.add_output_packet('stream', 'imu', data)
 
-    def on_receive_input_packet(self, packet_type, data, error):
-        '''
-        Listener for getting input command packet
-        '''
-        self.input_result = {'packet_type': packet_type,
-                             'data': data, 'error': error}
-
-    def on_receive_bootloader_packet(self, packet_type, data, error):
-        '''
-        Listener for getting bootloader command packet
-        '''
-
-    def get_input_result(self, packet_type, timeout=1):
-        '''
-        Get input command result
-        '''
-        result = {'data': None, 'error': None}
-        start_time = datetime.datetime.now()
-        end_time = datetime.datetime.now()
-        span = None
-
-        while self.input_result is None:
-            end_time = datetime.datetime.now()
-            span = end_time - start_time
-            if span.total_seconds() > timeout:
-                break
-
-        # if self.input_result:
-        #     print('get input packet in:',
-        #           span.total_seconds() if span \
-        #           else 0, 's', ',packet type:', self.input_result['packet_type'], packet_type)
-
-        if self.input_result is not None and self.input_result['packet_type'] == packet_type:
-            result = self.input_result.copy()
-        else:
-            result['data'] = 'Command timeout'
-            result['error'] = True
-
-        self.input_result = None
-
-        return result
-
     # command list
     def server_status(self, *args):  # pylint: disable=invalid-name
         '''
@@ -344,7 +314,7 @@ class Provider(OpenDeviceBase):
             ]
         }
 
-    def get_log_info(self):  # pylint: disable=invalid-name
+    def get_log_info(self):
         '''
         Build information for log
         '''
@@ -358,7 +328,7 @@ class Provider(OpenDeviceBase):
             }
         }
 
-    def get_conf(self, *args):  # pylint: disable=invalid-name
+    def get_conf(self, *args):  # pylint: disable=unused-argument
         '''
         Get json configuration
         '''
@@ -370,13 +340,15 @@ class Provider(OpenDeviceBase):
             }
         }
 
-    def get_params(self, *args):  # pylint: disable=invalid-name
+    @with_device_message
+    def get_params(self, *args):  # pylint: disable=unused-argument
         '''
         Get all parameters
         '''
         command_line = helper.build_input_packet('gA')
-        self.communicator.write(command_line)
-        result = self.get_input_result('gA', timeout=2)
+        # self.communicator.write(command_line)
+        # result = self.get_input_result('gA', timeout=2)
+        result = yield self._message_center.build(command=command_line)
 
         if result['data']:
             self.parameters = result['data']
@@ -384,20 +356,22 @@ class Provider(OpenDeviceBase):
                 'packetType': 'inputParams',
                 'data': result['data']
             }
-        else:
-            return {
-                'packetType': 'error',
-                'data': 'No Response'
-            }
 
-    def get_param(self, params, *args):  # pylint: disable=invalid-name
+        return {
+            'packetType': 'error',
+            'data': 'No Response'
+        }
+
+    @with_device_message
+    def get_param(self, params, *args):  # pylint: disable=unused-argument
         '''
         Update paramter value
         '''
         command_line = helper.build_input_packet(
             'gP', properties=self.properties, param=params['paramId'])
-        self.communicator.write(command_line)
-        result = self.get_input_result('gP', timeout=1)
+        # self.communicator.write(command_line)
+        # result = self.get_input_result('gP', timeout=1)
+        result = yield self._message_center.build(command=command_line)
 
         if result['data']:
             self.parameters = result['data']
@@ -405,30 +379,41 @@ class Provider(OpenDeviceBase):
                 'packetType': 'inputParam',
                 'data': result['data']
             }
-        else:
-            return {
-                'packetType': 'error',
-                'data': 'No Response'
-            }
 
-    def set_params(self, params, *args):  # pylint: disable=invalid-name
+        return {
+            'packetType': 'error',
+            'data': 'No Response'
+        }
+
+    @with_device_message
+    def set_params(self, params, *args):  # pylint: disable=unused-argument
         '''
         Update paramters value
         '''
         for parameter in params:
-            result = self.set_param(parameter)
-            if result['packetType'] == 'error':
+            # result = self.set_param(parameter)
+            command_line = helper.build_input_packet(
+                'uP', properties=self.properties,
+                param=parameter['paramId'],
+                value=parameter['value'])
+
+            result = yield self._message_center.build(command=command_line)
+
+            packet_type = result['packet_type']
+            data = result['data']
+
+            if packet_type == 'error':
                 return {
                     'packetType': 'error',
                     'data': {
-                        'error': result['data']['error']
+                        'error': data['error']
                     }
                 }
-            if result['data']['error'] > 0:
+            if data['error'] > 0:
                 return {
                     'packetType': 'error',
                     'data': {
-                        'error': result['data']['error']
+                        'error': data['error']
                     }
                 }
 
@@ -439,51 +424,58 @@ class Provider(OpenDeviceBase):
             }
         }
 
-    def set_param(self, params, *args):  # pylint: disable=invalid-name
+    @with_device_message
+    def set_param(self, params, *args):  # pylint: disable=unused-argument
         '''
         Update paramter value
         '''
         command_line = helper.build_input_packet(
             'uP', properties=self.properties, param=params['paramId'], value=params['value'])
-        self.communicator.write(command_line)
-        result = self.get_input_result('uP', timeout=1)
+        # self.communicator.write(command_line)
+        # result = self.get_input_result('uP', timeout=1)
+        result = yield self._message_center.build(command=command_line)
 
-        if result['error']:
+        error = result['error']
+        data = result['data']
+        if error:
             return {
                 'packetType': 'error',
                 'data': {
-                    'error': result['data']
-                }
-            }
-        else:
-            return {
-                'packetType': 'success',
-                'data': {
-                    'error': result['data']
+                    'error': data
                 }
             }
 
-    def save_config(self, *args):  # pylint: disable=invalid-name
+        return {
+            'packetType': 'success',
+            'data': {
+                'error': data
+            }
+        }
+
+    @with_device_message
+    def save_config(self, *args):  # pylint: disable=unused-argument
         '''
         Save configuration
         '''
         command_line = helper.build_input_packet('sC')
-        self.communicator.write(command_line)
+        # self.communicator.write(command_line)
+        # result = self.get_input_result('sC', timeout=2)
+        result = yield self._message_center.build(command=command_line)
 
-        result = self.get_input_result('sC', timeout=2)
-
-        if result['data']:
+        data = result['data']
+        error = result['error']
+        if data:
             return {
                 'packetType': 'success',
-                'data': result['data']
-            }
-        else:
-            return {
-                'packetType': 'success',
-                'data': result['error']
+                'data': error
             }
 
-    def upgrade_framework(self, file, *args):  # pylint: disable=invalid-name
+        return {
+            'packetType': 'success',
+            'data': error
+        }
+
+    def upgrade_framework(self, file, *args):  # pylint: disable=unused-argument
         '''
         Upgrade framework
         '''

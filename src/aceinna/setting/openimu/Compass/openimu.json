@@ -99,12 +99,6 @@
 				"responsePayload": {}
 			},
 			{
-				"name": "ma01",
-				"description": "Start Mag Align",
-				"inputPayload": {},
-				"responsePayload": {}
-			},
-			{
 				"name": "uP",
 				"description": "Update Configuration Parameter",
 				"inputPayload": {

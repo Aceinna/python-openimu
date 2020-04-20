@@ -3,9 +3,11 @@ import time
 import json
 import binascii
 import math
-#import asyncio
+# import asyncio
 import datetime
 import threading
+import struct
+from azure.storage.blob import BlockBlobService
 from ...framework.utils import helper
 from ...framework.utils import resource
 from ..base.uart_base import OpenDeviceBase
@@ -13,6 +15,8 @@ from ..configs.openimu_predefine import (
     APP_STR, get_app_names
 )
 from ...framework.context import APP_CONTEXT
+from ..decorator import with_device_message
+from ...framework.ans_platform_api import AnsPlatformAPI
 
 
 class Provider(OpenDeviceBase):
@@ -33,6 +37,9 @@ class Provider(OpenDeviceBase):
         self.parameters = None
         self.enable_data_log = True
         self.prepare_folders()
+        self.is_backup = False
+        self.is_restore = False
+        self.ans_platform = AnsPlatformAPI()
 
     def prepare_folders(self):
         '''
@@ -71,7 +78,7 @@ class Provider(OpenDeviceBase):
         # print('start to check if it is openimu')
         device_info_text = self.internal_input_command('pG')
         app_info_text = self.internal_input_command('gV')
-
+        print(device_info_text)
         if device_info_text.find('OpenIMU') > -1 and \
                 device_info_text.find('OpenRTK') == -1:
             self.build_device_info(device_info_text)
@@ -138,81 +145,6 @@ class Provider(OpenDeviceBase):
         '''
         self.add_output_packet('stream', packet_type, data)
 
-    def on_receive_input_packet(self, packet_type, data, error):
-        '''
-        Listener for getting input command packet
-        '''
-        #print('input packet', packet_type, data)
-        self.input_result = {'packet_type': packet_type,
-                             'data': data, 'error': error}
-
-    def on_receive_bootloader_packet(self, packet_type, data, error):
-        '''
-        Listener for getting bootloader command packet
-        '''
-        print('bootloader', packet_type, data)
-        self.bootloader_result = {'packet_type': packet_type,
-                                  'data': data, 'error': error}
-
-    def get_input_result(self, packet_type, timeout=1):
-        '''
-        Get input command result
-        '''
-        result = {'data': None, 'error': None}
-        start_time = datetime.datetime.now()
-        end_time = datetime.datetime.now()
-        span = None
-
-        while self.input_result is None:
-            end_time = datetime.datetime.now()
-            span = end_time - start_time
-            if span.total_seconds() > timeout:
-                break
-
-        # if self.input_result:
-        #     print('get input packet in:',
-        #           span.total_seconds() if span else 0, 's')
-
-        if self.input_result is not None and self.input_result['packet_type'] == packet_type:
-            result = self.input_result.copy()
-        else:
-            result['data'] = 'Command timeout'
-            result['error'] = True
-
-        self.input_result = None
-
-        return result
-
-    def get_bootloader_result(self, packet_type, timeout=1):
-        '''
-        Get bootloader result
-        '''
-        result = {'data': None, 'error': None}
-        start_time = datetime.datetime.now()
-        end_time = datetime.datetime.now()
-        span = None
-
-        while self.bootloader_result is None:
-            end_time = datetime.datetime.now()
-            span = end_time - start_time
-            if span.total_seconds() > timeout:
-                break
-
-        if self.bootloader_result:
-            print('get bootloader packet in:',
-                  span.total_seconds() if span else 0, 's')
-
-        if self.bootloader_result is not None and \
-           self.bootloader_result['packet_type'] == packet_type:
-            result = self.bootloader_result.copy()
-        else:
-            result['data'] = 'Command timeout'
-            result['error'] = True
-
-        self.bootloader_result = None
-
-        return result
-
     def get_log_info(self):
         '''
         Build information for log
@@ -261,65 +193,78 @@ class Provider(OpenDeviceBase):
             }
         }
 
+    @with_device_message
     def get_params(self, *args):  # pylint: disable=invalid-name
         '''
         Get all parameters
         '''
         command_line = helper.build_input_packet('gA')
-        self.communicator.write(command_line)
-        result = self.get_input_result('gA', timeout=2)
 
-        if result['data']:
-            self.parameters = result['data']
+        result = yield self._message_center.build(command=command_line)
+
+        data = result['data']
+
+        self.parameters = data
+
+        if data:
             return {
                 'packetType': 'inputParams',
-                'data': result['data']
+                'data': data
             }
-        else:
-            return {
-                'packetType': 'error',
-                'data': 'No Response'
-            }
+        return {
+            'packetType': 'error',
+            'data': 'No Response'
+        }
 
+    @with_device_message
     def get_param(self, params, *args):  # pylint: disable=invalid-name
         '''
         Update paramter value
         '''
         command_line = helper.build_input_packet(
             'gP', properties=self.properties, param=params['paramId'])
-        self.communicator.write(command_line)
-        result = self.get_input_result('gP', timeout=1)
 
-        if result['data']:
-            self.parameters = result['data']
+        result = yield self._message_center.build(command=command_line)
+
+        data = result['data']
+        if data:
             return {
                 'packetType': 'inputParam',
-                'data': result['data']
+                'data': data
             }
-        else:
-            return {
-                'packetType': 'error',
-                'data': 'No Response'
-            }
+        return {
+            'packetType': 'error',
+            'data': 'No Response'
+        }
 
+    @with_device_message
     def set_params(self, params, *args):  # pylint: disable=invalid-name
         '''
         Update paramters value
         '''
         for parameter in params:
-            result = self.set_param(parameter)
-            if result['packetType'] == 'error':
+            command_line = helper.build_input_packet(
+                'uP', properties=self.properties,
+                param=parameter['paramId'],
+                value=parameter['value'])
+
+            result = yield self._message_center.build(command=command_line)
+
+            packet_type = result['packet_type']
+            data = result['data']
+
+            if packet_type == 'error':
                 return {
                     'packetType': 'error',
                     'data': {
-                        'error': result['data']['error']
+                        'error': data['error']
                     }
                 }
-            if result['data']['error'] > 0:
+            if data['error'] > 0:
                 return {
                     'packetType': 'error',
                     'data': {
-                        'error': result['data']['error']
+                        'error': data['error']
                     }
                 }
 
@@ -330,51 +275,55 @@ class Provider(OpenDeviceBase):
             }
         }
 
+    @with_device_message
     def set_param(self, params, *args):  # pylint: disable=invalid-name
         '''
         Update paramter value
         '''
         command_line = helper.build_input_packet(
             'uP', properties=self.properties, param=params['paramId'], value=params['value'])
-        self.communicator.write(command_line)
-        result = self.get_input_result('uP', timeout=1)
 
-        if result['error']:
+        result = yield self._message_center.build(command=command_line)
+
+        error = result['error']
+        data = result['data']
+        if error:
             return {
                 'packetType': 'error',
                 'data': {
-                    'error': result['data']
-                }
-            }
-        else:
-            return {
-                'packetType': 'success',
-                'data': {
-                    'error': result['data']
+                    'error': data
                 }
             }
 
-    def save_config(self, *args):  # pylint: disable=invalid-name
+        return {
+            'packetType': 'success',
+            'data': {
+                'error': data
+            }
+        }
+
+    @with_device_message
+    def save_config(self, *args):  # pylint: disable=unused-argument
         '''
         Save configuration
         '''
         command_line = helper.build_input_packet('sC')
-        self.communicator.write(command_line)
+        result = yield self._message_center.build(command=command_line)
 
-        result = self.get_input_result('sC', timeout=1)
-
-        if result['data']:
+        data = result['data']
+        error = result['error']
+        if data:
             return {
                 'packetType': 'success',
-                'data': result['data']
-            }
-        else:
-            return {
-                'packetType': 'success',
-                'data': result['error']
+                'data': data
             }
 
-    def mag_align_start(self, *args):  # pylint: disable=invalid-name
+        return {
+            'packetType': 'success',
+            'data': error
+        }
+
+    def mag_align_start(self, *args):  # pylint: disable=unused-argument
         '''
         Start mag align action
         '''
@@ -389,6 +338,7 @@ class Provider(OpenDeviceBase):
             'packetType': 'success'
         }
 
+    @with_device_message
     def thread_do_mag_align(self):
         '''
         Do mag align
@@ -396,30 +346,41 @@ class Provider(OpenDeviceBase):
         try:
             command_line = helper.build_input_packet(
                 'ma', self.properties, 'start')
-            self.communicator.write(command_line)
-            result = self.get_input_result('ma', timeout=3)
+            # self.communicator.write(command_line)
+            # result = self.get_input_result('ma', timeout=3)
+            result = yield self._message_center.build(command=command_line)
 
             time.sleep(1)
             has_result = False
-            while not has_result and self.is_mag_align:
+            while not has_result:
                 command_line = helper.build_input_packet(
                     'ma', self.properties, 'status')
-                self.communicator.write(command_line)
-                print('ma status', command_line)
-                result = self.get_input_result('ma', timeout=1)
+                # self.communicator.write(command_line)
+                # print('send ma status', command_line)
+                result = yield self._message_center.build(command=command_line)
+                print(result['data'], self.is_mag_align)
+                if not self.is_mag_align:
+                    break
+                # result = self.get_input_result('ma', timeout=1)
+                # print('got ma status', result['data'])
                 if result['data'] == b'\x00':
                     has_result = True
                 else:
                     time.sleep(0.5)
 
             if not has_result:
+                print('exit mag')
                 return
 
+            print('ma status', result['data'])
             # print('mag status', result['data'])
             command_line = helper.build_input_packet(
                 'ma', self.properties, 'stored')
-            self.communicator.write(command_line)
-            result = self.get_input_result('ma', timeout=2)
+            # self.communicator.write(command_line)
+            print('send ma stored', command_line)
+            result = yield self._message_center.build(command=command_line)
+            print('ma stored result', result['data'])
+            # result = self.get_input_result('ma', timeout=2)
 
             decoded_status = binascii.hexlify(result['data'])
             mag_value = self.decode_mag_align_output(decoded_status)
@@ -436,16 +397,21 @@ class Provider(OpenDeviceBase):
                 'status': 'error'
             })
 
+    @with_device_message
     def mag_align_abort(self, *args):  # pylint: disable=invalid-name
         '''
         Abort mag align action
         '''
         self.is_mag_align = False
-        
+
+        time.sleep(1)
         command_line = helper.build_input_packet(
             'ma', self.properties, 'abort')
-        self.communicator.write(command_line)
-        result = self.get_input_result('ma', timeout=1)
+        print('send mag abort', command_line)
+        result = yield self._message_center.build(command=command_line)
+        print('mag abort result', result['data'])
+        # self.communicator.write(command_line)
+        # result = self.get_input_result('ma', timeout=1)
 
         if result['error']:
             return {
@@ -459,14 +425,16 @@ class Provider(OpenDeviceBase):
                 'packetType': 'success'
             }
 
+    @with_device_message
     def mag_align_save(self, *args):  # pylint: disable=invalid-name
         '''
         Save mag align resut
         '''
         command_line = helper.build_input_packet(
             'ma', self.properties, 'save')
-        self.communicator.write(command_line)
-        result = self.get_input_result('ma', timeout=1)
+        # self.communicator.write(command_line)
+        # result = self.get_input_result('ma', timeout=1)
+        result = yield self._message_center.build(command=command_line)
 
         if result['error']:
             return {
@@ -475,10 +443,10 @@ class Provider(OpenDeviceBase):
                     'error': 1
                 }
             }
-        else:
-            return {
-                'packetType': 'success'
-            }
+
+        return {
+            'packetType': 'success'
+        }
 
     def decode_mag_align_output(self, value):
         '''
@@ -541,6 +509,7 @@ class Provider(OpenDeviceBase):
         # start a thread to do upgrade
         if not self.is_upgrading:
             self.is_upgrading = True
+            self._message_center.pause()
 
             if self._logger is not None:
                 self._logger.stop_user_log()
@@ -553,3 +522,427 @@ class Provider(OpenDeviceBase):
         return {
             'packetType': 'success'
         }
+
+    def backup_calibration(self, params):
+        '''
+        start a thread to backup
+        '''
+        if not self.is_backup:
+            self.is_backup = True
+            self.ans_platform.set_access_token(params['token'])
+            thread = threading.Thread(
+                target=self.thread_do_backup, args=())
+            thread.start()
+
+        return {
+            'packetType': 'success'
+        }
+
+    def restore_calibration(self, params):
+        '''
+        start a thread to restore
+        '''
+        # if not self.is_restore:
+        #     self.is_restore = True
+        #     self.ans_platform.set_access_token(params['token'])
+        #     thread = threading.Thread(
+        #         target=self.thread_do_restore, args=())
+        #     thread.start()
+
+        return {
+            'packetType': 'success'
+        }
+
+    @with_device_message
+    def thread_do_backup(self):
+        '''
+        Do Calibration Backup
+        '''
+        # get current odr
+        packet_rate_param_index = 4
+        command_line = helper.build_input_packet(
+            'gP', properties=self.properties, param=packet_rate_param_index)
+        packet_rate_result = yield self._message_center.build(command=command_line)
+
+        if packet_rate_result['error']:
+            self.is_backup = False
+            self.add_output_packet('stream', 'backup_status', {
+                'status': 'fail'
+            })
+
+            return
+
+        # set quiet
+        command_line = helper.build_input_packet(
+            'uP', properties=self.properties, param=packet_rate_param_index, value=0)
+        result = yield self._message_center.build(command=command_line)
+
+        if packet_rate_result['error']:
+            self.is_backup = False
+            self.add_output_packet('stream', 'backup_status', {
+                'status': 'fail'
+            })
+
+            return
+
+        file_name = self.device_info['sn']+'.bin'  # todo: sn-yyyy-mm-dd-hhmmss
+        start = 0x0
+        read_size = 0x7E
+        max_length = 4096
+        file_write_size = 0
+        file_result = bytearray()
+
+        while file_write_size < max_length:
+            actual_read_size = read_size
+            plan_file_write_size = file_write_size + actual_read_size
+
+            if plan_file_write_size >= max_length:
+                actual_read_size = max_length - file_write_size
+
+            command_line = helper.build_read_eeprom_input_packet(
+                start, actual_read_size)
+            result = yield self._message_center.build(command=command_line)
+
+            if result['error']:
+                self.is_backup = False
+                self.add_output_packet('stream', 'backup_status', {
+                    'status': 'fail'
+                })
+                break
+
+            data = result['data']
+            if plan_file_write_size >= max_length:
+                file_result.extend(data[0:actual_read_size])
+            else:
+                file_result.extend(data)
+
+            file_write_size += len(data)
+            start += actual_read_size
+
+        self._write_to_file(file_name, file_result)
+
+        # restore odr
+        command_line = helper.build_input_packet(
+            'uP', properties=self.properties,
+            param=packet_rate_param_index,
+            value=packet_rate_result['data']['value'])
+        yield self._message_center.build(command=command_line)
+
+    def _write_to_file(self, file_name, result):
+        # save to local path, backup/{device_type}/{file_name}
+        executor_path = resource.get_executor_path()
+        backup_folder_path = os.path.join(
+            executor_path, 'backup', 'openimu')
+        file_path = os.path.join(backup_folder_path, file_name)
+        if not os.path.isdir(backup_folder_path):
+            os.makedirs(backup_folder_path)
+
+        with open(file_path, 'wb') as file_stream:
+            file_stream.write(result)
+
+        stream = 'stream'
+        backup_status = 'backup_status'
+        status_complete = 'complete'
+        status_fail = 'fail'
+
+        try:
+            account_name = 'navview'  # TODO:upload to azure, prepare the account information
+            countainer_name = 'testing'  # TODO:upload to azure, prepare the account information
+            sas_token = self.ans_platform.get_sas_token()
+            if sas_token == '':
+                raise Exception('cannot get sas token')
+            self.block_blob_service = BlockBlobService(account_name=account_name,
+                                                       sas_token=sas_token,
+                                                       protocol='http')
+            self.block_blob_service.create_blob_from_path(container_name=countainer_name,
+                                                          blob_name=file_name,
+                                                          file_path=file_path)
+        except Exception as ex:
+            print('azure exception', ex)
+            self.is_backup = False
+            self.add_output_packet(stream, backup_status, {
+                'status': status_fail
+            })
+            return
+
+        # save to db
+        serial_num = self.device_info['sn']
+        save_result = self.ans_platform.save_backup_restult(
+            serial_num, file_name, 'IMU')
+
+        if save_result.__contains__('error'):
+            self.is_backup = False
+            self.add_output_packet(stream, backup_status, {
+                'status': status_fail
+            })
+            return
+
+        self.is_backup = False
+        self.add_output_packet(stream, backup_status, {
+            'status': status_complete,
+            'date': save_result['data']['lastBackupTime']
+        })
+
+    @with_device_message
+    def thread_do_restore(self):
+        '''
+        Do Calibration Restore
+        '''
+        # 1.download bin from azure
+        file_name = self.device_info['sn']+'.bin'
+        content_data = bytearray()
+        executor_path = resource.get_executor_path()
+        backup_folder_path = os.path.join(
+            executor_path, 'backup', 'openimu')
+        file_path = os.path.join(backup_folder_path, file_name)
+        file = open(file_path, 'rb')
+        content_data = file.read()
+        file.close()
+        # 2.save odr, then set quiet
+        # get current odr
+        packet_rate_param_index = 4
+        command_line = helper.build_input_packet(
+            'gP', properties=self.properties, param=packet_rate_param_index)
+        packet_rate_result = yield self._message_center.build(command=command_line)
+
+        if packet_rate_result['error']:
+            self._restore_fail()
+            return
+
+        # set quiet
+        command_line = helper.build_input_packet(
+            'uP', properties=self.properties, param=packet_rate_param_index, value=0)
+        result = yield self._message_center.build(command=command_line)
+
+        if result['error']:
+            self._restore_fail()
+            return
+        # 3.do restore
+        # 3.1 unlock eeprom
+        command_line = helper.build_read_eeprom_input_packet(0x100, 2)
+        result = yield self._message_center.build(command=command_line, timeout=2)
+        if result['error']:
+            self._restore_fail()
+            return
+
+        command_line = helper.build_unlock_eeprom_packet(result['data'])
+        unlock_result = yield self._message_center.build(command=command_line, timeout=2)
+
+        if unlock_result['error']:
+            self._restore_fail()
+            return
+        print('unlock -- successfull', unlock_result['data'])
+        # 3.2 write eeprom
+        skip_range = [0x200, 0x284]
+
+        sn_string = self._build_sn_string(content_data[0x200, 0x204])
+        model_string = self._build_model_string(content_data[0x204:0x284])
+
+        can_write = self._clear_calibration_area()
+        if not can_write:
+            self._restore_fail()
+            return
+
+        can_write = self._write_calibration_from_data(content_data, skip_range)
+
+        if not can_write:
+            self._restore_fail()
+            return
+
+        can_write = self._write_sn_and_model_string(sn_string, model_string)
+
+        if not can_write:
+            self._restore_fail()
+            return
+
+        print('write eeporm -- successfull')
+
+        self._lock()
+
+        # 4.write operation result to db
+
+        # 5.restore odr
+        command_line = helper.build_input_packet(
+            'uP', properties=self.properties,
+            param=packet_rate_param_index,
+            value=packet_rate_result['data']['value'])
+        yield self._message_center.build(command=command_line)
+
+        self.is_restore = False
+        self.add_output_packet('stream', 'restore_status', {
+            'status': 'success'
+        })
+
+    def _build_sn_string(self, data_range):
+        data = []
+        start = 0
+        for _ in range(2):
+            if start == 4:
+                break
+            data.extend([
+                struct.unpack('B', data_range[start+1: start+2])[0],
+                struct.unpack('B', data_range[start: start+1])[0]
+            ])
+            start += 2
+        return data
+
+    def _build_model_string(self, data_range):
+        end = [0]
+        data = []
+        for item in data_range:
+            if item == 0:
+                break
+            data.append(item)
+
+        data.extend(end)
+        return data
+
+    @with_device_message
+    def _clear_calibration_area(self):
+        start = 0
+        end = 4096
+        block_size = 20
+        write_offset = 0
+        while write_offset < end:
+            write_data = []
+            plan_write_offset = write_offset + block_size * 2
+
+            if plan_write_offset >= end:
+                plan_write_offset = end
+                block_size = int((plan_write_offset - write_offset)/2)
+
+            for _ in range(plan_write_offset - write_offset):
+                write_data.append(0xFF)
+            command_line = helper.build_write_eeprom_input_packet(
+                start, block_size, write_data)
+            result = yield self._message_center.build(command=command_line, timeout=2)
+            if result['error']:
+                return False
+
+            write_offset = plan_write_offset
+            start += block_size
+
+        return True
+
+    @with_device_message
+    def _write_sn_and_model_string(self, sn_string, model_string):
+        command_line = helper.build_write_eeprom_input_packet(
+            0x100, 2, sn_string)
+        result = yield self._message_center.build(command=command_line, timeout=2)
+        if result['error']:
+            return False
+
+        command_line = helper.build_write_eeprom_input_packet(
+            0x104, len(model_string), self._build_16bit_data_range(model_string))
+        result = yield self._message_center.build(command=command_line, timeout=2)
+        if result['error']:
+            return False
+
+        return True
+
+    @with_device_message
+    def _write_calibration_from_data(self, data, skip_range):
+        end = 4096
+        block_size = 20
+        write_offset = 0
+
+        while write_offset < end:
+            plan_write_offset = write_offset + block_size * 2
+
+            if plan_write_offset >= end:
+                plan_write_offset = end
+                block_size = int((plan_write_offset - write_offset)/2)
+
+            # plan write range
+            plan_write_range = [write_offset, plan_write_offset]
+            # build a new range with skip range
+            new_range = self._build_calibration_write_range(
+                data, plan_write_range, skip_range)
+
+            for write_range in new_range:
+                command_line = helper.build_write_eeprom_input_packet(
+                    int(write_range['start']/2),
+                    int(write_range['length']/2),
+                    write_range['data'])
+                result = yield self._message_center.build(command=command_line, timeout=2)
+
+                if result['error']:
+                    return False
+        return True
+
+    def _build_calibration_write_range(self, content_data, plan_write_range, skip_range):
+        # range struct {'start': start, 'data': data, 'length': length}
+        new_range = []
+        write_data = []
+        if plan_write_range[1] >= skip_range[0] and plan_write_range[1] <= skip_range[1]:
+            if plan_write_range[0] < skip_range[0]:
+                write_data.extend(
+                    content_data[plan_write_range[0]: skip_range[0]])
+                new_range.append({'start': int(plan_write_range[0]/2),
+                                  'length': int((skip_range[0]-plan_write_range[0])/2),
+                                  'data': write_data})
+
+        if plan_write_range[0] >= skip_range[0] and plan_write_range[0] <= skip_range[1]:
+            if plan_write_range[1] > skip_range[1]:
+                write_data.extend(
+                    content_data[skip_range[1]: plan_write_range[1]])
+                new_range.append({'start': int(skip_range[1]/2),
+                                  'length': int((plan_write_range[1] - skip_range[1])/2),
+                                  'data': write_data})
+
+        if plan_write_range[0] < skip_range[0] and skip_range[1] < plan_write_range[1]:
+            new_range.append({'start': int(plan_write_range[0]/2),
+                              'length': int((skip_range[0] - plan_write_range[0])/2),
+                              'data': content_data[plan_write_range[0]: skip_range[0]]})
+
+            new_range.append({'start': int(skip_range[1]/2),
+                              'length': int((plan_write_range[1] - skip_range[1])/2),
+                              'data': content_data[skip_range[1]: plan_write_range[1]]})
+
+        if plan_write_range[1] < skip_range[0] or plan_write_range[0] > skip_range[1]:
+            write_data.extend(
+                content_data[plan_write_range[0]: plan_write_range[1]])
+            new_range.append({'start': int(plan_write_range[0]/2),
+                              'length': int((plan_write_range[1] - plan_write_range[0])/2),
+                              'data': write_data})
+
+        return new_range
+
+    def _build_16bit_data_range(self, data_range):
+        data = []
+        for item in data_range:
+            data.extend(struct.pack('>H', item))
+        return data
+
+    def _build_reserve_data(self, data_range):
+        data = []
+        start = 0
+        for _ in range(int(len(data_range)/2)):
+            if start == len(data_range):
+                break
+            data.extend([
+                struct.unpack('B', data_range[start+1: start+2])[0],
+                struct.unpack('B', data_range[start: start+1])[0]
+            ])
+            start += 2
+        return data
+
+    def _lock(self):
+        # lock eeprom
+        command_line = helper.build_input_packet('LE')
+        result = yield self._message_center.build(command=command_line)
+
+        if result['error']:
+            self._restore_fail()
+            return
+        print('lock eeporm -- successfull', result['data'])
+
+        # software reset
+        command_line = helper.build_input_packet('SR')
+        yield self._message_center.build(command=command_line)
+
+    def _restore_fail(self):
+        self.is_restore = False
+        self.add_output_packet('stream', 'restore_status', {
+            'status': 'fail'
+        })

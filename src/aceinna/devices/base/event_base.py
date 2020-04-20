@@ -15,7 +15,7 @@ class EventBase(object):
 
         self.listeners[event_type].append(handler)
 
-    def emit(self, event_type, *args):
+    def emit(self, event_type, *args, **kwargs):
         '''
         Trigger event
         '''
@@ -25,4 +25,4 @@ class EventBase(object):
         handlers = self.listeners[event_type]
         if handlers is not None and len(handlers) > 0:
             for handler in handlers:
-                handler(*args)
+                handler(*args, **kwargs)

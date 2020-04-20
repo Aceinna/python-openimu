@@ -40,6 +40,53 @@ def build_bootloader_input_packet(name, data_len=False, addr=False, data=False):
     return packet
 
 
+def build_read_eeprom_input_packet(start, word_len):
+    '''
+    Build RE command
+    '''
+    name_bytes = list(struct.unpack('BB', bytearray('RE', 'utf-8')))
+    payload = []
+    payload.append((start & 0xFF00) >> 8)
+    payload.append(start & 0x00FF)
+    payload.append(word_len)
+    command = COMMAND_START + name_bytes + [0x03] + payload
+    packet = command + calc_crc(command[2:command[4]+5])
+    return packet
+
+def build_write_eeprom_input_packet(start, word_len, data):
+    '''
+    Build RE command
+    '''
+    name_bytes = list(struct.unpack('BB', bytearray('WE', 'utf-8')))
+    payload = []
+    payload.append((start & 0xFF00) >> 8)
+    payload.append(start & 0x00FF)
+    payload.append(word_len)
+    payload.extend(data)
+    command = COMMAND_START + name_bytes + [word_len*2+3] + payload
+    packet = command + calc_crc(command[2:command[4]+5])
+    return packet
+
+def build_unlock_eeprom_packet(sn):
+    '''
+    Build UE command
+    '''
+    name_bytes = list(struct.unpack('BB', bytearray('UE', 'utf-8')))
+    sn_crc = calc_crc(sn)
+    payload = sn_crc
+    command = COMMAND_START + name_bytes + [0x02] + payload
+    packet = command + calc_crc(command[2:command[4]+5])
+    return packet
+
+def build_lock_eeprom_packet():
+    '''
+    Build UE command
+    '''
+    name_bytes = list(struct.unpack('BB', bytearray('LE', 'utf-8')))
+    command = COMMAND_START + name_bytes + [0]
+    packet = command + calc_crc(command[2:4] + [0x00])
+    return packet
+
 def unpack_payload(name, properties, param=False, value=False):
     '''
     Unpack payload

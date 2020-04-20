@@ -12,11 +12,13 @@ from azure.storage.blob import BlockBlobService
 from .event_base import EventBase
 from ...framework.utils import (helper, resource)
 from ...framework.file_storage import FileLoger
+from ...framework.context import APP_CONTEXT
+from ..message_center import DeviceMessageCenter
+from ..mssage_parser import UartMessageParser
 if sys.version_info[0] > 2:
     from queue import Queue
 else:
     from Queue import Queue
-from ...framework.context import APP_CONTEXT
 
 
 class OpenDeviceBase(EventBase):
@@ -38,6 +40,7 @@ class OpenDeviceBase(EventBase):
         self.bootloader_result = None
         self.is_streaming = False
         self.has_running_checker = False
+        self.has_backup_checker = False
         self.connected = False
         self.is_upgrading = False
         self.complete_upgrade = False
@@ -53,6 +56,7 @@ class OpenDeviceBase(EventBase):
         self.is_logging = False
         self.enable_data_log = True
         self.cli_options = None
+        self._message_center = None
 
     @abstractmethod
     def load_properties(self):
@@ -64,18 +68,6 @@ class OpenDeviceBase(EventBase):
     def on_receive_output_packet(self, packet_type, data):
         '''
         Listener for receiving output packet
-        '''
-
-    @abstractmethod
-    def on_receive_input_packet(self, packet_type, data, error):
-        '''
-        Listener for receiving input packet
-        '''
-
-    @abstractmethod
-    def on_receive_bootloader_packet(self, packet_type, data, error):
-        '''
-        Listener for receiving bootloader packet
         '''
 
     @abstractmethod
@@ -147,279 +139,25 @@ class OpenDeviceBase(EventBase):
 
         return response
 
-    def unpack_output_packet(self, packet_config, payload):
-        '''
-        Unpack output packet
-        '''
-        if packet_config is None:
-            return
+    def _setup_message_center(self):
+        if not self._message_center:
+            self._message_center = DeviceMessageCenter(self.communicator)
 
-        data = None
-        is_list = 0
-        length = 0
-        pack_fmt = '<'
-        for value in packet_config['payload']:
-            if value['type'] == 'float':
-                pack_fmt += 'f'
-                length += 4
-            elif value['type'] == 'uint32':
-                pack_fmt += 'I'
-                length += 4
-            elif value['type'] == 'int32':
-                pack_fmt += 'i'
-                length += 4
-            elif value['type'] == 'int16':
-                pack_fmt += 'h'
-                length += 2
-            elif value['type'] == 'uint16':
-                pack_fmt += 'H'
-                length += 2
-            elif value['type'] == 'double':
-                pack_fmt += 'd'
-                length += 8
-            elif value['type'] == 'int64':
-                pack_fmt += 'q'
-                length += 8
-            elif value['type'] == 'uint64':
-                pack_fmt += 'Q'
-                length += 8
-            elif value['type'] == 'char':
-                pack_fmt += 'c'
-                length += 1
-            elif value['type'] == 'uchar':
-                pack_fmt += 'B'
-                length += 1
-            elif value['type'] == 'uint8':
-                pack_fmt += 'B'
-                length += 1
-        len_fmt = '{0}B'.format(length)
-
-        has_list = packet_config.__contains__('isList')
-        if has_list:
-            is_list = packet_config['isList']
-
-        if is_list == 1:
-            packet_num = len(payload) // length
-            data = []
-            for i in range(packet_num):
-                payload_c = payload[i*length:(i+1)*length]
-                try:
-                    pack_item = struct.pack(len_fmt, *payload_c)
-                    item = struct.unpack(pack_fmt, pack_item)
-                    out = [(value['name'], item[idx])
-                           for idx, value in enumerate(packet_config['payload'])]
-                    item = collections.OrderedDict(out)
-                    data.append(item)
-                    self._logger.append(packet_config['name'], item)
-                except Exception as ex:  # pylint: disable=broad-except
-                    print(
-                        "error happened when decode the payload, pls restart driver: {0}"
-                        .format(ex))
+        if not self._message_center.is_ready():
+            uart_parser = UartMessageParser(self.properties)
+            self._message_center.set_parser(uart_parser)
+            self._message_center.on(
+                'continuous_message', self.on_receive_continuous_messsage)
+            self._message_center.on(
+                'error', self.on_recevie_message_center_error
+            )
+            self._message_center.on(
+                'read_block', self.on_read_raw
+            )
+            self._message_center.setup()
         else:
-            try:
-                pack_item = struct.pack(len_fmt, *payload)
-                data = struct.unpack(pack_fmt, pack_item)
-                out = [(value['name'], data[idx])
-                       for idx, value in enumerate(packet_config['payload'])]
-                data = collections.OrderedDict(out)
-                self._logger.append(packet_config['name'], data)
-                # return data
-            except Exception as ex:  # pylint: disable=broad-except
-                print(
-                    "error happened when decode the payload of packets, pls restart driver: {0}"
-                    .format(ex))
-
-        self.on_receive_output_packet(packet_config['name'], data)
-
-    def unpack_input_packet(self, packet_config, payload):
-        '''
-        Unpack input packet
-        '''
-        if packet_config is None:
-            return
-
-        data = None
-        error = False
-        response_playload_type_config = packet_config['responsePayload']['type'] \
-            if packet_config['responsePayload'].__contains__('type') else ''
-        user_configuration = self.properties['userConfiguration']
-
-        if response_playload_type_config == 'userConfiguration':
-            data = []
-            data_len = 0
-            for parameter in user_configuration:
-                param_id = parameter['paramId']
-                param_type = parameter['type']
-                name = parameter['name']
-
-                if param_type == 'uint8' or param_type == 'int8':
-                    value = self._unpack_one(
-                        param_type, payload[data_len:data_len + 1])
-                    data_len = data_len + 1
-                elif param_type == 'uint16' or param_type == 'int16':
-                    value = self._unpack_one(
-                        param_type, payload[data_len:data_len + 2])
-                    data_len = data_len + 2
-                elif param_type == 'uint32' or param_type == 'int32' or param_type == 'float':
-                    value = self._unpack_one(
-                        param_type, payload[data_len:data_len + 4])
-                    data_len = data_len + 4
-                elif param_type == 'uint64' or param_type == 'int64' or param_type == 'double':
-                    value = self._unpack_one(
-                        param_type, payload[data_len:data_len + 8])
-                    data_len = data_len + 8
-                elif param_type == 'ip4':
-                    value = self._unpack_one(
-                        param_type, payload[data_len:data_len + 4])
-                    data_len = data_len + 4
-                elif param_type == 'ip6':
-                    value = self._unpack_one(
-                        param_type, payload[data_len:data_len + 6])
-                    data_len = data_len + 6
-                elif 'char' in param_type:
-                    ctype_n = param_type.replace('char', '')
-                    ctype_l = int(ctype_n)
-                    value = self._unpack_one(
-                        param_type, payload[data_len:data_len + ctype_l])
-                    data_len = data_len + ctype_l
-                else:
-                    print(
-                        "no [{0}] when unpack_input_packet".format(param_type))
-                    value = False
-
-                data.append(
-                    {"paramId": param_id, "name": name, "value": value})
-        elif response_playload_type_config == 'userParameter':
-            param_id = self._unpack_one('uint32', payload[0:4])
-            param = filter(lambda item: item['paramId'] ==
-                           param_id, user_configuration)
-            try:
-                first_item = next(param)
-                param_value = self._unpack_one(
-                    first_item['type'], payload[4:12])
-                data = {"paramId": param_id,
-                        "name": first_item['name'], "value": param_value}
-            except StopIteration:
-                error = True
-        elif response_playload_type_config == 'paramId':
-            data = self._unpack_one('uint32', payload[0:4])
-            if data:
-                error = True
-        elif response_playload_type_config == 'string':
-            data = self._unpack_one('string', payload)
-        else:
-            data = True
-
-        self.on_receive_input_packet(packet_config['name'], data, error)
-
-    def unpack_bootloader_packet(self, packet_config, payload):
-        '''
-        Unpack bootloader packet
-        '''
-        if packet_config is None:
-            return
-
-        data = payload
-        error = False
-        self.on_receive_bootloader_packet(packet_config['name'], data, error)
-
-    def _unpack_one(self, data_type, data):
-        if data_type == 'uint64':
-            try:
-                pack_item = struct.pack('8B', *data)
-            except:  # pylint: disable=bare-except
-                return False
-            return struct.unpack('<Q', pack_item)[0]
-        elif data_type == 'int64':
-            try:
-                pack_item = struct.pack('8B', *data)
-            except:  # pylint: disable=bare-except
-                return False
-            return struct.unpack('<q', pack_item)[0]
-        elif data_type == 'double':
-            try:
-                pack_item = struct.pack('8B', *data)
-            except:  # pylint: disable=bare-except
-                return False
-            return struct.unpack('d', pack_item)[0]
-        elif data_type == 'uint32':
-            try:
-                pack_item = struct.pack('4B', *data)
-            except:  # pylint: disable=bare-except
-                return False
-            return struct.unpack('<I', pack_item)[0]
-        elif data_type == 'int32':
-            try:
-                pack_item = struct.pack('4B', *data)
-            except:  # pylint: disable=bare-except
-                return False
-            return struct.unpack('<i', pack_item)[0]
-        elif data_type == 'float':
-            try:
-                pack_item = struct.pack('4B', *data)
-            except:  # pylint: disable=bare-except
-                return False
-            return struct.unpack('<f', pack_item)[0]
-        elif data_type == 'uint16':
-            try:
-                pack_item = struct.pack('2B', *data)
-            except:  # pylint: disable=bare-except
-                return False
-            return struct.unpack('<H', pack_item)[0]
-        elif data_type == 'int16':
-            try:
-                pack_item = struct.pack('2B', *data)
-            except:  # pylint: disable=bare-except
-                return False
-            return struct.unpack('<h', pack_item)[0]
-        elif data_type == 'uint8':
-            try:
-                pack_item = struct.pack('1B', *data)
-            except:  # pylint: disable=bare-except
-                return False
-            return struct.unpack('<B', pack_item)[0]
-        elif data_type == 'int8':
-            try:
-                pack_item = struct.pack('1B', *data)
-            except:  # pylint: disable=bare-except
-                return False
-            return struct.unpack('<b', pack_item)[0]
-        elif 'char' in data_type:
-            try:
-                ctype_n = data_type.replace('char', '')
-                pack_item = struct.pack(ctype_n + 'B', *data)
-                return pack_item.decode()
-            except:  # pylint: disable=bare-except
-                return False
-        elif data_type == 'string':
-            try:
-                fmt_str = '{0}B'.format(len(data))
-                pack_item = struct.pack(fmt_str, *data)
-                return pack_item
-            except:  # pylint: disable=bare-except
-                return False
-        elif data_type == 'ip4':
-            try:
-                ip_1 = str(data[0])
-                ip_2 = str(data[1])
-                ip_3 = str(data[2])
-                ip_4 = str(data[3])
-                return ip_1+'.'+ip_2+'.'+ip_3+'.'+ip_4
-            except:  # pylint: disable=bare-except
-                return False
-        elif data_type == 'ip6':
-            try:
-                ip_1 = str(data[0])
-                ip_2 = str(data[1])
-                ip_3 = str(data[2])
-                ip_4 = str(data[3])
-                ip_5 = str(data[4])
-                ip_6 = str(data[5])
-                return ip_1+'.'+ip_2+'.'+ip_3+'.'+ip_4+'.'+ip_5+'.'+ip_6
-            except:  # pylint: disable=bare-except
-                return False
-        else:
-            return False
+            self._message_center.get_parser().set_configuration(self.properties)
+            self._message_center.setup()
 
     def setup(self, options):
         ''' start 2 threads, receiver, parser
@@ -431,30 +169,41 @@ class OpenDeviceBase(EventBase):
         with_data_log = options and options.with_data_log
         with_raw_log = options and options.with_raw_log
 
+        self._setup_message_center()
+
         if with_data_log and not self.is_logging and self.enable_data_log:
             log_result = self._logger.start_user_log('data')
             if log_result == 1 or log_result == 2:
                 raise Exception('Cannot start data logger')
             self.is_logging = True
 
-        if not self.has_running_checker:
-            thread = threading.Thread(
-                target=self.thread_running_checker, args=())
-            thread.start()
-            # print("Thread checker start at:[{0}].".format(
-            #     datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
-            self.has_running_checker = True
-
-        funcs = [self.thread_receiver, self.thread_parser]
-        for func in funcs:
-            thread = threading.Thread(target=func, args=(with_raw_log,))
-            thread.start()
-            # print("Thread[{0}({1})] start at:[{2}].".format(
-            #     t.name, t.ident, datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
-            self.threads.append(thread)
-
         if with_raw_log:
             self.after_setup()
+
+        # Backup mode checker
+        # if not self.has_backup_checker:
+        #     thread = threading.Thread(
+        #         target=self.thread_backup_checker, args=())
+        #     thread.start()
+        #     self.has_backup_checker = True
+
+    def on_recevie_message_center_error(self, error_type, message):
+        '''
+        event handler after got message center error
+        '''
+        self.emit('exception', error_type, message)
+
+    def on_receive_continuous_messsage(self, packet_type, data):
+        '''
+        event handler after got continuous message
+        '''
+        if isinstance(data, list):
+            for item in data:
+                self._logger.append(packet_type, item)
+        else:
+            self._logger.append(packet_type, data)
+
+        self.on_receive_output_packet(packet_type, data)
 
     @abstractmethod
     def on_read_raw(self, data):
@@ -467,158 +216,6 @@ class OpenDeviceBase(EventBase):
         if self.properties.__contains__('CLICommands'):
             return self.properties['CLICommands']
         return []
-
-    def thread_receiver(self, *args, **kwargs):
-        with_raw_log = args[0]
-        ''' receive rover data and push data into data_queue.
-            return when occur Exception
-        '''
-        while True:
-            if self.exit_thread:
-                return
-
-            if self.is_upgrading:
-                time.sleep(0.1)
-                continue
-            data = None
-            try:
-                data = self.communicator.read()
-            except Exception as ex:  # pylint: disable=broad-except
-                print('Thread:receiver error:', ex)
-                self.exception_lock.acquire()
-                self.exception_thread = True  # Notice thread paser to exit.
-                self.exception_lock.release()
-                return  # exit thread receiver
-
-            if data and len(data) > 0:
-                # print(datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S:') + \
-                # ' '.join('0X{0:x}'.format(data[i]) for i in range(len(data))))
-                if with_raw_log:
-                    self.on_read_raw(data)
-                self.data_lock.acquire()
-                for data_byte in data:
-                    self.data_queue.put(data_byte)
-                self.data_lock.release()
-            else:
-                time.sleep(0.001)
-
-    def thread_parser(self, *args, **kwargs):
-        ''' get rover data from data_queue and parse data into one whole frame.
-            return when occur Exception in thread receiver.
-        '''
-        msg_header = [0x55, 0x55]
-        payload_len_idx = 5
-
-        sync_pattern = collections.deque(2*[0], 2)
-        find_header = False
-        frame = []
-        payload_len = 0
-
-        while True:
-            if self.exit_thread:
-                return
-
-            self.exception_lock.acquire()
-            if self.exception_thread:
-                self.exception_lock.release()
-                return  # exit thread parser
-            self.exception_lock.release()
-
-            if self.is_upgrading:
-                time.sleep(0.1)
-                continue
-
-            self.data_lock.acquire()
-            if self.data_queue.empty():
-                self.data_lock.release()
-                time.sleep(0.001)
-                continue
-            else:
-                data = self.data_queue.get()
-                self.data_lock.release()
-
-                if find_header:
-                    frame.append(data)
-                    if payload_len_idx == len(frame):
-                        payload_len = data
-                    # 5: 2 msg_header + 2 packet_type + 1 payload_len 2:len of checksum.
-                    elif 5 + payload_len + 2 == len(frame):
-                        find_header = False
-                        result = helper.calc_crc(frame[2:-2])
-                        if result[0] == frame[-2] and result[1] == frame[-1]:
-                            # find a whole frame
-                            self._parse_frame(frame, payload_len)
-                            find_header = False
-                            payload_len = 0
-                            sync_pattern = collections.deque(2*[0], 2)
-                        else:
-                            print("crc check error!")
-                    else:
-                        pass
-
-                    # if payload_len > MAX_FRAME_LIMIT or len(frame) > MAX_FRAME_LIMIT:
-                    #     find_header = False
-                    #     payload_len = 0
-                else:
-                    sync_pattern.append(data)
-                    if operator.eq(list(sync_pattern), msg_header):
-                        frame = msg_header[:]  # header_tp.copy()
-                        find_header = True
-
-    def thread_running_checker(self):
-        '''
-        Check running status
-        '''
-        while True:
-            self.exception_lock.acquire()
-            if self.exception_thread:
-                self.connected = False
-                self.emit('exception', 'app', 'communicator read error')
-            self.exception_lock.release()
-
-            if self.complete_upgrade:
-                self.emit('complete_upgrade')
-                self.complete_upgrade = False
-
-            if self.exit_thread:
-                return
-
-            try:
-                time.sleep(0.1)
-            except KeyboardInterrupt:  # response for KeyboardInterrupt such as Ctrl+C
-                return True
-
-    def _parse_frame(self, frame, payload_len):
-        packet_type_index = 2
-        payload_len_idx = 4
-        packet_type = ''.join(
-            ["%c" % x for x in frame[packet_type_index:payload_len_idx]])
-        frame_offset = payload_len_idx+1
-        payload = frame[frame_offset:payload_len+frame_offset]
-        # print(packet_type)
-        if self.properties.__contains__('userMessages'):
-            output_packet_config = next(
-                (x for x in self.properties['userMessages']['outputPackets']
-                 if x['name'] == packet_type), None)
-            self.unpack_output_packet(output_packet_config, payload)
-
-            input_packet_config = next(
-                (x for x in self.properties['userMessages']['inputPackets']
-                 if x['name'] == packet_type), None)
-            self.unpack_input_packet(input_packet_config, payload)
-
-            if output_packet_config is None and input_packet_config is None:
-                APP_CONTEXT.get_logger().logger.info(
-                    "%s packet not found in JSON!" % packet_type
-                    )
-
-
-        if self.properties.__contains__('bootloaderMessages'):
-            bootloader_packet_config = next(
-                (x for x in self.properties['bootloaderMessages']
-                 if x['name'] == packet_type), None)
-            self.unpack_bootloader_packet(
-                bootloader_packet_config, payload)
 
     def add_output_packet(self, method, packet_type, data):
         '''
@@ -645,6 +242,9 @@ class OpenDeviceBase(EventBase):
         self.bootloader_result = None
         self.is_streaming = False
         self.is_upgrading = False
+
+        self._message_center.resume()
+
         if self._logger is not None:
             self._logger.stop_user_log()
             self.is_logging = False
@@ -666,6 +266,7 @@ class OpenDeviceBase(EventBase):
         Close and disconnect
         '''
         self.reset()
+        self._message_center.stop()
         self.exit_thread = True
 
     def restart(self):
@@ -679,7 +280,7 @@ class OpenDeviceBase(EventBase):
         print('Restarting app ...')
         time.sleep(5)
 
-        self.complete_upgrade = True
+        self.emit('complete_upgrade')
 
     def thread_do_upgrade_framework(self, file):
         '''
@@ -798,6 +399,9 @@ class OpenDeviceBase(EventBase):
         self._logger = FileLoger(self.properties)
         self.cli_options = options
 
+        self._message_center.get_parser().set_configuration(self.properties)
+        self._message_center.resume()
+
         if options and not options.with_data_log and self.enable_data_log:
             log_result = self._logger.start_user_log('data')
             if log_result == 1 or log_result == 2:
@@ -832,5 +436,6 @@ class OpenDeviceBase(EventBase):
         Linstener for upgrade failure
         '''
         self.is_upgrading = False
+        self._message_center.resume()
         self.add_output_packet(
             'stream', 'upgrade_complete', {'success': False, 'message': message})
