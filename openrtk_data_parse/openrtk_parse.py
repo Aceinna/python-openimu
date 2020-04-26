@@ -201,6 +201,8 @@ class DebugRawParse:
 
         self.time_tag = None # in packet's head
 
+        self.err_count = 0
+
         with open('openrtk_packets.json') as json_data:
             self.rtk_properties = json.load(json_data)
     
@@ -225,7 +227,8 @@ class DebugRawParse:
                             self.packet_buffer = []
                             self.sync_state = 0
                         else:
-                            print('debug data crc err!')
+                            self.err_count = self.err_count + 1
+                            print('debug data crc err. type {0} count{1}'.format(packet_type, self.err_count))
                             self.sync_state = 0  # CRC did not match
             else:
                 for message_id in self.debugPacketsTypeList:
