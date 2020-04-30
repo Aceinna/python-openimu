@@ -348,7 +348,7 @@ class Provider(OpenDeviceBase):
                 'ma', self.properties, 'start')
             # self.communicator.write(command_line)
             # result = self.get_input_result('ma', timeout=3)
-            result = yield self._message_center.build(command=command_line)
+            result = yield self._message_center.build(command=command_line, timeout=3)
 
             time.sleep(1)
             has_result = False

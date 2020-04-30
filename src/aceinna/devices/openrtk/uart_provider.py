@@ -348,7 +348,7 @@ class Provider(OpenDeviceBase):
         command_line = helper.build_input_packet('gA')
         # self.communicator.write(command_line)
         # result = self.get_input_result('gA', timeout=2)
-        result = yield self._message_center.build(command=command_line)
+        result = yield self._message_center.build(command=command_line, timeout=2)
 
         if result['data']:
             self.parameters = result['data']
@@ -460,7 +460,7 @@ class Provider(OpenDeviceBase):
         command_line = helper.build_input_packet('sC')
         # self.communicator.write(command_line)
         # result = self.get_input_result('sC', timeout=2)
-        result = yield self._message_center.build(command=command_line)
+        result = yield self._message_center.build(command=command_line, timeout=2)
 
         data = result['data']
         error = result['error']
