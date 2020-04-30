@@ -382,6 +382,9 @@ class Webserver(EventBase):
         self.detect_device(self.device_discover_handler)
 
     def prepare_logger(self):
+        '''
+        Set default log handler: console logger, file logger
+        '''
         executor_path = resource.get_executor_path()
         log_level = 'info'
         if self.options.debug:

@@ -16,5 +16,5 @@ dist
 /upgrade
 *.egg-info
 aceinna.ico
-.pytest_cachel
+.pytest_cache
 loggers/
