@@ -257,14 +257,14 @@ class Provider(OpenDeviceBase):
                 return {
                     'packetType': 'error',
                     'data': {
-                        'error': data['error']
+                        'error': data
                     }
                 }
-            if data['error'] > 0:
+            if data > 0:
                 return {
                     'packetType': 'error',
                     'data': {
-                        'error': data['error']
+                        'error': data
                     }
                 }
 
