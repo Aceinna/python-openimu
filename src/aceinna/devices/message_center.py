@@ -172,6 +172,11 @@ class DeviceMessageCenter(EventBase):
         '''
         Check running status
         '''
+        if sys.version_info[0] > 2:
+            import asyncio
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+
         while True:
             self.exception_lock.acquire()
             if self._has_exception:

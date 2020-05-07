@@ -26,11 +26,13 @@ def with_device_message(func):
                 else:
                     event_message.set_result(next_device_message)
             except StopIteration as ex:
+                # set a default return for python 2.x
+                # refer link https://stackoverflow.com/questions/15809296/python-syntaxerror-return-with-argument-inside-generator
                 value = {
                     'packetType': 'error',
                     'data': 'No Response'
                 }
-                
+
                 if hasattr(ex, 'value'):
                     value = ex.value
 

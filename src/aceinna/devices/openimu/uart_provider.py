@@ -358,7 +358,7 @@ class Provider(OpenDeviceBase):
                 # self.communicator.write(command_line)
                 # print('send ma status', command_line)
                 result = yield self._message_center.build(command=command_line)
-                print(result['data'], self.is_mag_align)
+                # print(result['data'], self.is_mag_align)
                 if not self.is_mag_align:
                     break
                 # result = self.get_input_result('ma', timeout=1)
@@ -372,7 +372,7 @@ class Provider(OpenDeviceBase):
                 print('exit mag')
                 return
 
-            print('ma status', result['data'])
+            # print('ma status', result['data'])
             # print('mag status', result['data'])
             command_line = helper.build_input_packet(
                 'ma', self.properties, 'stored')
