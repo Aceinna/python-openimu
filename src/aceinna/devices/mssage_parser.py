@@ -44,9 +44,12 @@ class UartMessageParser(EventBase):
                     self.sync_pattern = collections.deque(2*[0], 2)
                 else:
                     print("crc check error! packet_type:", packet_type)
-                    # TODO: if packet_type is a input command, then emit it
-                    self.emit('command', packet_type=packet_type,
-                              data=[], error=True)
+                    input_packet_config = next(
+                        (x for x in self.properties['userMessages']['inputPackets']
+                         if x['name'] == packet_type), None)
+                    if input_packet_config:
+                        self.emit('command', packet_type=packet_type,
+                                  data=[], error=True)
 
             # if payload_len > MAX_FRAME_LIMIT or len(frame) > MAX_FRAME_LIMIT:
             #     find_header = False
@@ -90,7 +93,6 @@ class UartMessageParser(EventBase):
                  if x['name'] == packet_type), None)
             self.unpack_bootloader_packet(
                 bootloader_packet_config, payload)
-        
 
     def unpack_output_packet(self, packet_config, payload):
         '''
