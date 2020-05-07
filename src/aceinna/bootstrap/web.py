@@ -3,7 +3,7 @@ Websocket server entry
 """
 import os
 import sys
-import asyncio
+
 import json
 import traceback
 import threading
@@ -468,7 +468,9 @@ class Webserver(EventBase):
 
     def start_webserver(self):
         # self.webserver_io_loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(asyncio.new_event_loop())
+        if sys.version_info[0] > 2:
+            import asyncio
+            asyncio.set_event_loop(asyncio.new_event_loop())
         self.start_websocket_server()
 
     def start_websocket_server(self):

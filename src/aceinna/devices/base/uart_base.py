@@ -12,7 +12,7 @@ from azure.storage.blob import BlockBlobService
 from .event_base import EventBase
 from ...framework.utils import (helper, resource)
 from ...framework.file_storage import FileLoger
-from ...framework.context import APP_CONTEXT
+from ...framework.configuration import get_config
 from ..message_center import DeviceMessageCenter
 from ..mssage_parser import UartMessageParser
 if sys.version_info[0] > 2:
@@ -316,13 +316,15 @@ class OpenDeviceBase(EventBase):
         firmware_file_path = os.path.join(upgarde_root, file)
         firmware_file = Path(firmware_file_path)
 
+        config = get_config()
+
         if firmware_file.is_file():
             self.firmware_content = open(firmware_file_path, 'rb').read()
         else:
             self.block_blob_service = BlockBlobService(
-                account_name='navview', protocol='https')
+                account_name=config.AZURE_STORAGE_ACCOUNT, protocol='https')
             self.block_blob_service.get_blob_to_path(
-                'apps', file, firmware_file_path)
+                config.AZURE_STORAGE_APPS_CONTAINER, file, firmware_file_path)
             self.firmware_content = open(firmware_file_path, 'rb').read()
 
         self.addr = 0

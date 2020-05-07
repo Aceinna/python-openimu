@@ -17,7 +17,7 @@ from ..configs.openimu_predefine import (
 from ...framework.context import APP_CONTEXT
 from ..decorator import with_device_message
 from ...framework.ans_platform_api import AnsPlatformAPI
-
+from ...framework.configuration import get_config
 
 class Provider(OpenDeviceBase):
     '''
@@ -200,18 +200,18 @@ class Provider(OpenDeviceBase):
         '''
         command_line = helper.build_input_packet('gA')
 
-        result = yield self._message_center.build(command=command_line)
+        result = yield self._message_center.build(command=command_line,timeout=3)
 
         data = result['data']
 
         self.parameters = data
 
         if data:
-            return {
+            yield {
                 'packetType': 'inputParams',
                 'data': data
             }
-        return {
+        yield {
             'packetType': 'error',
             'data': 'No Response'
         }
@@ -228,11 +228,11 @@ class Provider(OpenDeviceBase):
 
         data = result['data']
         if data:
-            return {
+            yield {
                 'packetType': 'inputParam',
                 'data': data
             }
-        return {
+        yield {
             'packetType': 'error',
             'data': 'No Response'
         }
@@ -254,21 +254,21 @@ class Provider(OpenDeviceBase):
             data = result['data']
 
             if packet_type == 'error':
-                return {
+                yield {
                     'packetType': 'error',
                     'data': {
                         'error': data
                     }
                 }
             if data > 0:
-                return {
+                yield {
                     'packetType': 'error',
                     'data': {
                         'error': data
                     }
                 }
 
-        return {
+        yield {
             'packetType': 'success',
             'data': {
                 'error': 0
@@ -288,14 +288,14 @@ class Provider(OpenDeviceBase):
         error = result['error']
         data = result['data']
         if error:
-            return {
+            yield {
                 'packetType': 'error',
                 'data': {
                     'error': data
                 }
             }
 
-        return {
+        yield {
             'packetType': 'success',
             'data': {
                 'error': data
@@ -313,12 +313,12 @@ class Provider(OpenDeviceBase):
         data = result['data']
         error = result['error']
         if data:
-            return {
+            yield {
                 'packetType': 'success',
                 'data': data
             }
 
-        return {
+        yield {
             'packetType': 'success',
             'data': error
         }
@@ -377,9 +377,9 @@ class Provider(OpenDeviceBase):
             command_line = helper.build_input_packet(
                 'ma', self.properties, 'stored')
             # self.communicator.write(command_line)
-            print('send ma stored', command_line)
+            # print('send ma stored', command_line)
             result = yield self._message_center.build(command=command_line)
-            print('ma stored result', result['data'])
+            # print('ma stored result', result['data'])
             # result = self.get_input_result('ma', timeout=2)
 
             decoded_status = binascii.hexlify(result['data'])
@@ -414,14 +414,14 @@ class Provider(OpenDeviceBase):
         # result = self.get_input_result('ma', timeout=1)
 
         if result['error']:
-            return {
+            yield {
                 'packetType': 'error',
                 'data': {
                     'error': 1
                 }
             }
         else:
-            return {
+            yield {
                 'packetType': 'success'
             }
 
@@ -437,14 +437,14 @@ class Provider(OpenDeviceBase):
         result = yield self._message_center.build(command=command_line)
 
         if result['error']:
-            return {
+            yield {
                 'packetType': 'error',
                 'data': {
                     'error': 1
                 }
             }
 
-        return {
+        yield {
             'packetType': 'success'
         }
 
@@ -646,8 +646,9 @@ class Provider(OpenDeviceBase):
         status_fail = 'fail'
 
         try:
-            account_name = 'navview'  # TODO:upload to azure, prepare the account information
-            countainer_name = 'testing'  # TODO:upload to azure, prepare the account information
+            config = get_config()
+            account_name = config.AZURE_STORAGE_ACCOUNT
+            countainer_name = config.AZURE_STORAGE_BACKUP_CONTAINER
             sas_token = self.ans_platform.get_sas_token()
             if sas_token == '':
                 raise Exception('cannot get sas token')
@@ -817,12 +818,12 @@ class Provider(OpenDeviceBase):
                 start, block_size, write_data)
             result = yield self._message_center.build(command=command_line, timeout=2)
             if result['error']:
-                return False
+                yield False
 
             write_offset = plan_write_offset
             start += block_size
 
-        return True
+        yield True
 
     @with_device_message
     def _write_sn_and_model_string(self, sn_string, model_string):
@@ -830,15 +831,15 @@ class Provider(OpenDeviceBase):
             0x100, 2, sn_string)
         result = yield self._message_center.build(command=command_line, timeout=2)
         if result['error']:
-            return False
+            yield False
 
         command_line = helper.build_write_eeprom_input_packet(
             0x104, len(model_string), self._build_16bit_data_range(model_string))
         result = yield self._message_center.build(command=command_line, timeout=2)
         if result['error']:
-            return False
+            yield False
 
-        return True
+        yield True
 
     @with_device_message
     def _write_calibration_from_data(self, data, skip_range):
@@ -867,8 +868,8 @@ class Provider(OpenDeviceBase):
                 result = yield self._message_center.build(command=command_line, timeout=2)
 
                 if result['error']:
-                    return False
-        return True
+                    yield False
+        yield True
 
     def _build_calibration_write_range(self, content_data, plan_write_range, skip_range):
         # range struct {'start': start, 'data': data, 'length': length}

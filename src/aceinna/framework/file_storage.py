@@ -9,7 +9,7 @@ import requests
 from azure.storage.blob import AppendBlobService
 from azure.storage.blob import ContentSettings
 from .utils import resource
-
+from .configuration import get_config
 
 class FileLoger():
     def __init__(self, device_properties):
@@ -37,7 +37,7 @@ class FileLoger():
         self.sas_token = ''
         self.db_user_access_token = ''
         # 'http://40.118.233.18:3000/'  # TODO: set a host url
-        self.host_url = 'https://api.aceinna.com/'
+        self.host_url = get_config().ANS_PLATFORM_URL
 
         #
         self.threads = []  # thread of receiver and paser
@@ -143,8 +143,9 @@ class FileLoger():
         print(datetime.datetime.now().strftime(
             '%Y_%m_%d_%H_%M_%S:'), log_file_name, ' start.')
 
-        accountName = 'navview'
-        countainerName = 'data-1000'
+        config = get_config()
+        accountName = config.AZURE_STORAGE_ACCOUNT
+        countainerName = config.AZURE_STORAGE_DATA_CONTAINER
         fileName = log_file_name
         bcreate_blob_ok = False
 

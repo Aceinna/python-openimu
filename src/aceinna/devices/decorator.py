@@ -20,11 +20,21 @@ def with_device_message(func):
                     'error': error
                 })
 
-                if isinstance(device_message, DeviceMessage):
+                if isinstance(next_device_message, DeviceMessage):
                     next_device_message.on('finished', on_resolve)
                     next_device_message.send()
+                else:
+                    event_message.set_result(next_device_message)
             except StopIteration as ex:
-                event_message.set_result(ex.value)
+                value = {
+                    'packetType': 'error',
+                    'data': 'No Response'
+                }
+                
+                if hasattr(ex, 'value'):
+                    value = ex.value
+
+                event_message.set_result(value)
 
         try:
             device_message = generator_func.send(None)

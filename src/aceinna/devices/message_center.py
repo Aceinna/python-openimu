@@ -1,4 +1,4 @@
-import asyncio
+#import asyncio
 import sys
 import threading
 import datetime
@@ -63,6 +63,10 @@ class DeviceMessage(EventBase):
 
 
 class DeviceMessageCenter(EventBase):
+    '''
+    Device message center, it handles status of message, and also work as a message factory
+    '''
+
     def __init__(self, communicator):
         super(DeviceMessageCenter, self).__init__()
         self.threads = []
@@ -112,6 +116,7 @@ class DeviceMessageCenter(EventBase):
         self._running_message = message
         message.set_start_time(datetime.datetime.now())
         self._communicator.write(message.get_command())
+        #print('run command', message.get_command())
 
     def run_post(self):
         if self.prerun_queue.empty():
@@ -219,8 +224,10 @@ class DeviceMessageCenter(EventBase):
         ''' get rover data from data_queue and parse data into one whole frame.
             return when occur Exception in thread receiver.
         '''
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
+        if sys.version_info[0] > 2:
+            import asyncio
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
 
         while True:
             if self._has_exception or self._is_stop:
@@ -246,11 +253,14 @@ class DeviceMessageCenter(EventBase):
                 self.data_lock.release()
 
             if self._parser:
+                if sys.version_info[0] < 3:
+                    data = ord(data)
                 self._parser.analyse(data)
 
     def on_command_receive(self, *args, **kwargs):
         self.run_post()
-        self._running_message.finish(**kwargs)
+        if self._running_message:
+            self._running_message.finish(**kwargs)
 
     def on_continuous_messageReceive(self, *args, **kwargs):
         self.emit('continuous_message', **kwargs)

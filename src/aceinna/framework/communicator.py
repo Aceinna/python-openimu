@@ -155,9 +155,9 @@ class SerialPort(Communicator):
                         result.append(port)
                 except Exception as ex:
                     APP_CONTEXT.get_logger().logger.debug(
-                        'actual port exception {0}'.format(str(ex)))
+                        'actual port exception %s', ex)
                     APP_CONTEXT.get_logger().logger.info(
-                        'port:{0} is in use'.format(port))
+                        'port:%s is in use', port)
         return result
 
     def autobaud(self, ports):

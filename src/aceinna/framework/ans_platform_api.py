@@ -1,15 +1,12 @@
 import json
 import requests
-from .utils.resource import is_dev_mode
-
-DEV_URL = 'http://localhost:3000/'
-PROD_URL = 'https://api.aceinna.com/'
+from .configuration import get_config
 
 
 class AnsPlatformAPI:
     def __init__(self):
         self.access_token = ''
-        self.host_url = DEV_URL if is_dev_mode() else PROD_URL
+        self.host_url = get_config().ANS_PLATFORM_URL
 
     def set_access_token(self, token):
         self.access_token = token

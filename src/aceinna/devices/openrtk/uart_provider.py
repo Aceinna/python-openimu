@@ -352,12 +352,12 @@ class Provider(OpenDeviceBase):
 
         if result['data']:
             self.parameters = result['data']
-            return {
+            yield {
                 'packetType': 'inputParams',
                 'data': result['data']
             }
 
-        return {
+        yield {
             'packetType': 'error',
             'data': 'No Response'
         }
@@ -375,12 +375,12 @@ class Provider(OpenDeviceBase):
 
         if result['data']:
             self.parameters = result['data']
-            return {
+            yield {
                 'packetType': 'inputParam',
                 'data': result['data']
             }
 
-        return {
+        yield {
             'packetType': 'error',
             'data': 'No Response'
         }
@@ -403,21 +403,21 @@ class Provider(OpenDeviceBase):
             data = result['data']
 
             if packet_type == 'error':
-                return {
+                yield {
                     'packetType': 'error',
                     'data': {
                         'error': data
                     }
                 }
             if data > 0:
-                return {
+                yield {
                     'packetType': 'error',
                     'data': {
                         'error': data
                     }
                 }
 
-        return {
+        yield {
             'packetType': 'success',
             'data': {
                 'error': 0
@@ -438,14 +438,14 @@ class Provider(OpenDeviceBase):
         error = result['error']
         data = result['data']
         if error:
-            return {
+            yield {
                 'packetType': 'error',
                 'data': {
                     'error': data
                 }
             }
 
-        return {
+        yield {
             'packetType': 'success',
             'data': {
                 'error': data
@@ -465,12 +465,12 @@ class Provider(OpenDeviceBase):
         data = result['data']
         error = result['error']
         if data:
-            return {
+            yield {
                 'packetType': 'success',
                 'data': error
             }
 
-        return {
+        yield {
             'packetType': 'success',
             'data': error
         }

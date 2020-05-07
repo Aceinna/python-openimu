@@ -64,7 +64,6 @@ class UartMessageParser(EventBase):
             ["%c" % x for x in frame[packet_type_index:payload_len_idx]])
         frame_offset = payload_len_idx+1
         payload = frame[frame_offset:payload_len+frame_offset]
-
         if PRIVATE_PACKET_TYPE.__contains__(packet_type):
             self.unpack_private_packet(packet_type, payload)
             return
