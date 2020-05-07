@@ -8,7 +8,7 @@ Python driver for OpenIMU and OpenRTK
 ## Steps
 
 ### 1. Start the tool
-There are 3 ways to run the tool
+There are 2 ways to run the tool
 
 #### Prepare
 Install the dependency library. It is better to create a virtual environments before to do it.

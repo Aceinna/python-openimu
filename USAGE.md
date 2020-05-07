@@ -1,10 +1,9 @@
 # Work as command
-start cli: `openimu`
+start cli: `./ans-device`
 
 parameters:
 
 | Name | Type | Default | Description |
-| - | :-: | :-: | - |
 | - | :-: | :-: | - |
 | --port | Number | '8000' | Value should be an available port |
 | --device-type | String | 'auto' | Value should be `IMU`, `RTK` |
