@@ -482,7 +482,8 @@ class Provider(OpenDeviceBase):
         # start a thread to do upgrade
         if not self.is_upgrading:
             self.is_upgrading = True
-
+            self._message_center.pause()
+            
             if self._logger is not None:
                 self._logger.stop_user_log()
 
