@@ -1,14 +1,18 @@
 # Work as command
-start cli: `ans-devices`
+start cli: `openimu`
 
 parameters:
 
 | Name | Type | Default | Description |
 | - | :-: | :-: | - |
+| - | :-: | :-: | - |
+| --port | Number | '8000' | Value should be an available port |
 | --device-type | String | 'auto' | Value should be `IMU`, `RTK` |
-| --com-port | String | 'auto' | Value should be a COM port |
 | --baudrate | String | None | Value should be baudrate |
-| --debug | Boolean | False | If log debug information |
+| --com-port | String | 'auto' | Value should be a COM port |
+| --debug | Boolean | False | Log debug information |
+| --with-data-log | Boolean | False | Contains internal data log (OpenIMU only) |
+| --with-raw-log | Boolean | False | Contains raw data log (OpenRTK only) |
 
 
 # Work as sdk
