@@ -19,6 +19,7 @@ from ..decorator import with_device_message
 from ...framework.ans_platform_api import AnsPlatformAPI
 from ...framework.configuration import get_config
 
+
 class Provider(OpenDeviceBase):
     '''
     OpenIMU UART provider
@@ -200,13 +201,12 @@ class Provider(OpenDeviceBase):
         '''
         command_line = helper.build_input_packet('gA')
 
-        result = yield self._message_center.build(command=command_line,timeout=3)
+        result = yield self._message_center.build(command=command_line, timeout=3)
 
         data = result['data']
 
-        self.parameters = data
-
         if data:
+            self.parameters = data
             yield {
                 'packetType': 'inputParams',
                 'data': data
@@ -648,14 +648,14 @@ class Provider(OpenDeviceBase):
         try:
             config = get_config()
             account_name = config.AZURE_STORAGE_ACCOUNT
-            countainer_name = config.AZURE_STORAGE_BACKUP_CONTAINER
+            container_name = config.AZURE_STORAGE_BACKUP_CONTAINER
             sas_token = self.ans_platform.get_sas_token()
             if sas_token == '':
                 raise Exception('cannot get sas token')
             self.block_blob_service = BlockBlobService(account_name=account_name,
                                                        sas_token=sas_token,
                                                        protocol='http')
-            self.block_blob_service.create_blob_from_path(container_name=countainer_name,
+            self.block_blob_service.create_blob_from_path(container_name=container_name,
                                                           blob_name=file_name,
                                                           file_path=file_path)
         except Exception as ex:
