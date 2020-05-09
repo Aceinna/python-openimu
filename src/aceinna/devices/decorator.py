@@ -1,5 +1,5 @@
 import functools
-from .message_center import (DeviceMessage, EventMessage)
+from .message_center import (DeviceMessage)
 
 
 def with_device_message(func):
@@ -7,45 +7,50 @@ def with_device_message(func):
     This is a decorator for method with DeviceMessage, it would looks like
     code: yield message_center.build(command=command_line)
     '''
+
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        event_message = EventMessage()
         generator_func = func(*args, **kwargs)
+        global generator_result
+        generator_result = None
 
-        def on_resolve(packet_type, data, error):
-            try:
-                next_device_message = generator_func.send({
-                    'packet_type': packet_type,
-                    'data': data,
-                    'error': error
-                })
+        def check_result():
+            global generator_result
+            while not generator_result:
+                continue
 
+            if generator_result:
+                next_device_message = generator_func.send(generator_result)
                 if isinstance(next_device_message, DeviceMessage):
+                    generator_result = None
                     next_device_message.on('finished', on_resolve)
                     next_device_message.send()
+                    return check_result()
                 else:
-                    event_message.set_result(next_device_message)
-            except StopIteration as ex:
-                # set a default return for python 2.x
-                # refer link https://stackoverflow.com/questions/15809296/python-syntaxerror-return-with-argument-inside-generator
-                value = {
-                    'packetType': 'error',
-                    'data': 'No Response'
-                }
+                    return next_device_message
 
-                if hasattr(ex, 'value'):
-                    value = ex.value
-
-                event_message.set_result(value)
+        def on_resolve(packet_type, data, error):
+            global generator_result
+            generator_result = {
+                'packet_type': packet_type,
+                'data': data,
+                'error': error
+            }
 
         try:
             device_message = generator_func.send(None)
             if isinstance(device_message, DeviceMessage):
                 device_message.on('finished', on_resolve)
                 device_message.send()
+                return check_result()
         except StopIteration as ex:
-            event_message.set_result(ex.value)
+            value = {
+                'packetType': 'error',
+                'data': 'No Response'
+            }
 
-        return event_message
+            if hasattr(ex, 'value'):
+                value = ex.value
+            return value
 
     return wrapper
