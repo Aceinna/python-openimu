@@ -243,7 +243,7 @@ class UartMessageParser(EventBase):
             param = filter(lambda item: item['paramId'] ==
                            param_id, user_configuration)
             try:
-                first_item = next(param)
+                first_item = next(iter(param), None)
                 param_value = self._unpack_one(
                     first_item['type'], payload[4:12])
                 data = {"paramId": param_id,
