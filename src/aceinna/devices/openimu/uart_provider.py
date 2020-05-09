@@ -619,7 +619,9 @@ class Provider(OpenDeviceBase):
             file_write_size += len(data)
             start += actual_read_size
 
-        self._write_to_file(file_name, file_result)
+        reserved_data = self._reserve_by_word(file_result)
+
+        self._write_to_file(file_name, reserved_data)
 
         # restore odr
         command_line = helper.build_input_packet(
@@ -627,6 +629,17 @@ class Provider(OpenDeviceBase):
             param=packet_rate_param_index,
             value=packet_rate_result['data']['value'])
         yield self._message_center.build(command=command_line)
+
+    def _reserve_by_word(self, data):
+        start_index = 0x284
+        reserved_data = bytearray()
+        reserved_data.extend(data[0:start_index])
+        need_reserve = data[start_index:]
+        total_len = int((4096 - start_index)/2)
+        for i in range(total_len):
+            reserved_data.extend([need_reserve[i*2+1], need_reserve[i*2]])
+
+        return reserved_data
 
     def _write_to_file(self, file_name, result):
         # save to local path, backup/{device_type}/{file_name}
