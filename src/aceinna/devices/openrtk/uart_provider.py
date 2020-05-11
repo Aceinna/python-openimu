@@ -23,6 +23,7 @@ class Provider(OpenDeviceBase):
         self.type = 'RTK'
         self.server_update_rate = 100
         self.sky_data = []
+        self.pS_data = []
         self.bootloader_baudrate = 115200
         self.app_config_folder = ''
         self.device_info = None
@@ -262,10 +263,17 @@ class Provider(OpenDeviceBase):
         Listener for getting output packet
         '''
         if packet_type == 'pS':
-            self.add_output_packet('stream', 'pos', data)
-
-        elif packet_type == 'K1':
-            self.add_output_packet('stream', 'pos', data)
+            if self.pS_data:
+                if self.pS_data['GPS_Week'] == data['GPS_Week']:
+                    if data['GPS_TimeofWeek'] - self.pS_data['GPS_TimeofWeek'] >= 0.2:
+                        self.add_output_packet('stream', 'pos', data)
+                        self.pS_data = data
+                else:
+                    self.add_output_packet('stream', 'pos', data)
+                    self.pS_data = data
+            else: 
+                self.add_output_packet('stream', 'pos', data)
+                self.pS_data = data
 
         elif packet_type == 'sK':
             if self.sky_data:

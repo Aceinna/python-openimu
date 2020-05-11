@@ -159,8 +159,23 @@
                     "unit": ""
                 },
                 {
+                    "type": "float",
+                    "name": "age",
+                    "unit": ""
+                },
+                {
                     "type": "uint32",
                     "name": "velocityMode",
+                    "unit": ""
+                },
+                {
+                    "type": "uint32",
+                    "name": "insStatus",
+                    "unit": ""
+                },
+                {
+                    "type": "uint32",
+                    "name": "insPositionType",
                     "unit": ""
                 },
                 {
@@ -175,33 +190,68 @@
                 },
                 {
                     "type": "float",
-                    "name": "velocityDown",
+                    "name": "velocityUp",
                     "unit": "m/s"
-                },
-                {
-                    "type": "uint32",
-                    "name": "insStatus",
-                    "unit": ""
-                },
-                {
-                    "type": "uint32",
-                    "name": "insPositionType",
-                    "unit": ""
                 },
                 {
                     "type": "float",
                     "name": "roll",
-                    "unit": "deg"
+                    "unit": "m/s"
                 },
                 {
                     "type": "float",
                     "name": "pitch",
-                    "unit": "deg"
+                    "unit": "m/s"
                 },
                 {
                     "type": "float",
                     "name": "heading",
-                    "unit": "deg"
+                    "unit": "m/s"
+                },
+                {
+                    "type": "float",
+                    "name": "latitude_std",
+                    "unit": ""
+                },
+                {
+                    "type": "float",
+                    "name": "longitude_std",
+                    "unit": ""
+                },
+                {
+                    "type": "float",
+                    "name": "height_std",
+                    "unit": ""
+                },
+                {
+                    "type": "float",
+                    "name": "north_vel_std",
+                    "unit": ""
+                },
+                {
+                    "type": "float",
+                    "name": "east_vel_std",
+                    "unit": ""
+                },
+                {
+                    "type": "float",
+                    "name": "up_vel_std",
+                    "unit": ""
+                },
+                {
+                    "type": "float",
+                    "name": "roll_std",
+                    "unit": ""
+                },
+                {
+                    "type": "float",
+                    "name": "pitch_std",
+                    "unit": ""
+                },
+                {
+                    "type": "float",
+                    "name": "heading_std",
+                    "unit": ""
                 }
             ]
 		},
