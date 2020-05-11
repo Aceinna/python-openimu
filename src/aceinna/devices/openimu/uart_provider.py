@@ -633,9 +633,10 @@ class Provider(OpenDeviceBase):
     def _reserve_by_word(self, data):
         start_index = 0x284
         reserved_data = bytearray()
+        reserved_data.extend([00, 00])  # append 16 bit count of erases
         reserved_data.extend(data[0:start_index])
         need_reserve = data[start_index:]
-        total_len = int((4096 - start_index)/2)
+        total_len = int((4095 - start_index)/2)
         for i in range(total_len):
             reserved_data.extend([need_reserve[i*2+1], need_reserve[i*2]])
 
