@@ -1,4 +1,5 @@
 {
+    "userNMEAList": ["$GPGGA", "$GPGSV", "$GPRMC", "$GPGSA", "$GLGSA", "$GAGSA", "$BDGSA"],
 	"userPacketsTypeList": ["s1", "K1", "pS", "sK"],
 	"debugPacketsTypeList": [177, 268, 42, 99, 507],
 	"userOutputPackets": [
