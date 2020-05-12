@@ -1,7 +1,6 @@
-azure-common==1.1.23
-azure-core==1.1.1
-azure-storage-blob==1.4.0
-azure-storage-common==1.4.2
+azure-common==1.1.24
+azure-storage-blob==2.1.0
+azure-storage-common==2.1.0
 certifi==2019.11.28
 cffi==1.13.2
 chardet==3.0.4
