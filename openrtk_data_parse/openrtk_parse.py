@@ -42,6 +42,7 @@ class UserRawParse:
         self.userNMEAList = self.rtk_properties['userNMEAList']
         self.start_log_nmea()
         packet_type = ''
+        nmea_header_len = 0
         for i,new_byte in enumerate(self.rawdata):
             self.sync_pattern.append(new_byte)
             if self.sync_state == 1:
@@ -71,19 +72,24 @@ class UserRawParse:
                         self.nmea_sync = 1
                         self.nmea_buffer.append(new_byte)
                         self.nmea_pattern.append(new_byte)
+                        nmea_header_len = 1
                 elif self.nmea_sync == 1:
                     self.nmea_buffer.append(new_byte)
                     self.nmea_pattern.append(new_byte)
-                    for nmea_type in self.userNMEAList:
-                        nmea_type_0 = ord(nmea_type[0])
-                        nmea_type_1 = ord(nmea_type[1])
-                        nmea_type_2 = ord(nmea_type[2])
-                        nmea_type_3 = ord(nmea_type[3])
-                        nmea_type_4 = ord(nmea_type[4])
-                        nmea_type_5 = ord(nmea_type[5])
-                        if list(self.nmea_pattern) == [nmea_type_0, nmea_type_1, nmea_type_2, nmea_type_3, nmea_type_4, nmea_type_5]:
-                            self.nmea_sync = 2
-                            break
+                    nmea_header_len = nmea_header_len + 1
+                    if nmea_header_len == 6:
+                        for nmea_type in self.userNMEAList:
+                            nmea_type_0 = ord(nmea_type[0])
+                            nmea_type_1 = ord(nmea_type[1])
+                            nmea_type_2 = ord(nmea_type[2])
+                            nmea_type_3 = ord(nmea_type[3])
+                            nmea_type_4 = ord(nmea_type[4])
+                            nmea_type_5 = ord(nmea_type[5])
+                            if list(self.nmea_pattern) == [nmea_type_0, nmea_type_1, nmea_type_2, nmea_type_3, nmea_type_4, nmea_type_5]:
+                                self.nmea_sync = 2
+                                break
+                        if self.nmea_sync != 2:
+                            self.nmea_sync = 0
                 elif self.nmea_sync == 2:
                     self.nmea_buffer.append(new_byte)
                     if self.nmea_buffer[-1] == 0x0A and self.nmea_buffer[-2] == 0x0D:
