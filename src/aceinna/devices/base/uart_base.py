@@ -88,12 +88,15 @@ class OpenDeviceBase(EventBase):
 
         format_string = None
         if parsed is not None:
-            if sys.version_info < (3, 0):
-                format_string = str(struct.pack(
-                    '{0}B'.format(len(parsed)), *parsed))
-            else:
-                format_string = str(struct.pack(
-                    '{0}B'.format(len(parsed)), *parsed), 'utf-8')
+            try:
+                if sys.version_info < (3, 0):
+                    format_string = str(struct.pack(
+                        '{0}B'.format(len(parsed)), *parsed))
+                else:
+                    format_string = str(struct.pack(
+                        '{0}B'.format(len(parsed)), *parsed), 'utf-8')
+            except UnicodeDecodeError:
+                return ''
 
         if format_string is not None:
             return format_string
