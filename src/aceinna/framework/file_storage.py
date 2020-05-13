@@ -11,6 +11,7 @@ from azure.storage.blob import ContentSettings
 from .utils import resource
 from .configuration import get_config
 
+
 class FileLoger():
     def __init__(self, device_properties):
         '''Initialize and create a CSV file
@@ -146,7 +147,8 @@ class FileLoger():
         config = get_config()
         accountName = config.AZURE_STORAGE_ACCOUNT
         countainerName = config.AZURE_STORAGE_DATA_CONTAINER
-        fileName = log_file_name
+        url_name = datetime.datetime.now().strftime(
+            '%Y_%m_%d_%H_%M_%S') + '-' + self.user_id + '-' + log_file_name
         bcreate_blob_ok = False
 
         error_connection = 'ConnectionError'
@@ -181,11 +183,11 @@ class FileLoger():
                     self.append_blob_service = AppendBlobService(account_name=accountName,
                                                                  sas_token=self.sas_token,
                                                                  protocol='http')
-                    self.append_blob_service.create_blob(container_name=countainerName, blob_name=fileName,
+                    self.append_blob_service.create_blob(container_name=countainerName, blob_name=url_name,
                                                          content_settings=ContentSettings(content_type='text/plain'))
                     bcreate_blob_ok = True
                     threading.Thread(target=self.save_to_db_task, args=(
-                        packet_type, log_file_name)).start()
+                        packet_type, log_file_name, url_name)).start()
                 except Exception as e:
                     # print('Exception when create_blob:', type(e), e)
                     if error_connection in str(e):
@@ -202,7 +204,7 @@ class FileLoger():
             try:
                 # self.append_blob_service.append_blob_from_text(countainerName, fileName, text, progress_callback=self.upload_callback)
                 self.append_blob_service.append_blob_from_text(
-                    countainerName, fileName, text)
+                    countainerName, url_name, text)
             except Exception as e:
                 # print('Exception when append_blob:', type(e), e)
                 if error_connection in str(e):
@@ -224,8 +226,8 @@ class FileLoger():
             print(datetime.datetime.now().strftime(
                 '%Y_%m_%d_%H_%M_%S:'), log_file_name, ' done.')
 
-    def save_to_db_task(self, packet_type, file_name):
-        if not self.save_to_ans_platform(packet_type, file_name):
+    def save_to_db_task(self, packet_type, file_name, url_name):
+        if not self.save_to_ans_platform(packet_type, file_name, url_name):
             print('save_to_ans_platform failed.')
 
     def append(self, packet_type, packet):
@@ -263,7 +265,8 @@ class FileLoger():
                 if unit_str == '':
                     labels = labels + '{0:s},'.format(data_str)
                 else:
-                    labels = labels + '{0:s} ({1:s}),'.format(data_str, unit_str)
+                    labels = labels + \
+                        '{0:s} ({1:s}),'.format(data_str, unit_str)
 
             # Remove the comma at the end of the string and append a new-line character
             labels = labels[:-1]
@@ -338,7 +341,7 @@ class FileLoger():
         except Exception as e:
             print('Exception when get_sas_token:', e)
 
-    def save_to_ans_platform(self, packet_type, file_name):
+    def save_to_ans_platform(self, packet_type, file_name, url_name):
         ''' Upload CSV related information to the database.
         '''
         if not self.device_log_info:
@@ -346,7 +349,7 @@ class FileLoger():
 
         try:
             self.device_log_info['fileName'] = file_name
-            self.device_log_info['url'] = file_name
+            self.device_log_info['url'] = url_name
             self.device_log_info['userId'] = self.user_id
             self.device_log_info['logInfo']['packetType'] = packet_type
             data = self.device_log_info
