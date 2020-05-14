@@ -20,32 +20,32 @@
                 {
                     "type": "float",
                     "name": "x_accel",
-                    "unit": "g"
+                    "unit": "m/s^2"
                 },
                 {
                     "type": "float",
                     "name": "y_accel",
-                    "unit": "g"
+                    "unit": "m/s^2"
                 },
                 {
                     "type": "float",
                     "name": "z_accel",
-                    "unit": "g"
+                    "unit": "m/s^2"
                 },
                 {
                     "type": "float",
                     "name": "x_rate",
-                    "unit": "rad"
+                    "unit": "deg/s"
                 },
                 {
                     "type": "float",
                     "name": "y_rate",
-                    "unit": "rad"
+                    "unit": "deg/s"
                 },
                 {
                     "type": "float",
                     "name": "z_rate",
-                    "unit": "rad"
+                    "unit": "deg/s"
                 }
             ]
         },

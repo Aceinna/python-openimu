@@ -116,9 +116,9 @@ class UserRawParse:
                 if i == 1:
                     self.log_files[name].write(format((data[i]), '11.4f'))
                 elif i >= 2 and i <= 4:
-                    self.log_files[name].write(format(data[i]*9.7803267714e0, '14.10f'))
+                    self.log_files[name].write(format(data[i], '14.10f'))
                 elif i >= 5 and i <= 7:
-                    self.log_files[name].write(format(data[i]*57.295779513082320, '14.10f'))
+                    self.log_files[name].write(format(data[i], '14.10f'))
                 elif i == 8:
                     self.log_files[name].write(format(data[i], '14.10f'))
                 else:

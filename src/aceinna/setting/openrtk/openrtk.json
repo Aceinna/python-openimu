@@ -644,38 +644,38 @@
                     {
                         "type": "float",
                         "name": "x_accel",
-                        "unit": "g"
+                        "unit": "m/s^2"
                     },
                     {
                         "type": "float",
                         "name": "y_accel",
-                        "unit": "g"
+                        "unit": "m/s^2"
                     },
                     {
                         "type": "float",
                         "name": "z_accel",
-                        "unit": "g"
+                        "unit": "m/s^2"
                     },
                     {
                         "type": "float",
                         "name": "x_rate",
-                        "unit": "rad"
+                        "unit": "deg/s"
                     },
                     {
                         "type": "float",
                         "name": "y_rate",
-                        "unit": "rad"
+                        "unit": "deg/s"
                     },
                     {
                         "type": "float",
                         "name": "z_rate",
-                        "unit": "rad"
+                        "unit": "deg/s"
                     }
                 ],
 				"graphs": [
 					{
 						"name": "Acceleration",
-						"units": "g",
+						"units": "m/s^2",
 						"xAxis": {"name":"GPS_TimeofWeek", "unit":"sec"},
 						"yAxes": [
 							"x_accel",
@@ -687,7 +687,7 @@
 							"#00FF00",
 							"#0000FF"
 						],
-						"yMax": 5
+						"yMax": 20
 					},
 					{
 						"name": "Angular-Rate",
