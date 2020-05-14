@@ -676,7 +676,7 @@
 					{
 						"name": "Acceleration",
 						"units": "g",
-						"xAxis": "Time (s)",
+						"xAxis": {"name":"GPS_TimeofWeek", "unit":"sec"},
 						"yAxes": [
 							"x_accel",
 							"y_accel",
@@ -692,7 +692,7 @@
 					{
 						"name": "Angular-Rate",
 						"units": "deg/s",
-						"xAxis": "Time (s)",
+						"xAxis": {"name":"GPS_TimeofWeek", "unit":"sec"},
 						"yAxes": [
 							"x_rate",
 							"y_rate",
