@@ -26,6 +26,8 @@ def receive_args():
                         help="Baudrate for uart", choices=BAUDRATE_LIST)
     parser.add_argument("-c", "--com-port", type=str,
                         help="COM Port")
+    parser.add_argument("--console-log", dest='console_log', action='store_true',
+                        help="Output log on console", default=False)
     parser.add_argument("--debug", dest='debug', action='store_true',
                         help="Log debug information", default=False)
     parser.add_argument("--with-data-log", dest='with_data_log', action='store_true',
@@ -43,6 +45,7 @@ def main():
         com_port=input_args.com_port,
         port=input_args.port,
         baudrate=input_args.baudrate,
+        console_log=input_args.console_log,
         debug=input_args.debug,
         with_data_log=input_args.with_data_log,
         with_raw_log=input_args.with_raw_log

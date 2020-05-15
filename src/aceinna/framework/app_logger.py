@@ -26,15 +26,16 @@ class AppLogger(object):
     }
 
     def __init__(self, filename, level='info', when='D',
-                 backCount=3, gen_file=False,
+                 backCount=1, gen_file=False, console_log=False,
                  fmt='%(asctime)s - %(pathname)s[line:%(lineno)d] - %(levelname)s: %(message)s'):
         self._store = None
         self.logger = logging.getLogger()
         self.format_str = logging.Formatter(fmt)
         self.logger.setLevel(self.level_relations.get(level))
-        console_output = logging.StreamHandler()
-        #console_output.setFormatter(self.format_str)
-        self.logger.addHandler(console_output)
+        if console_log:
+            console_output = logging.StreamHandler()
+            console_output.setFormatter(self.format_str)
+            self.logger.addHandler(console_output)
 
         if gen_file:
             folder_path = os.path.dirname(filename)

@@ -5,10 +5,10 @@ import os
 import sys
 import argparse
 import traceback
-from aceinna.bootstrap import Webserver
-from aceinna.framework.constants import BAUDRATE_LIST
 import signal
 import time
+from aceinna.bootstrap import Webserver
+from aceinna.framework.constants import BAUDRATE_LIST
 
 IS_WINDOWS = sys.platform.__contains__(
     'win32') or sys.platform.__contains__('win64')
@@ -30,6 +30,8 @@ def receive_args():
                         help="Baudrate for uart", choices=BAUDRATE_LIST)
     parser.add_argument("-c", "--com-port", type=str,
                         help="COM Port")
+    parser.add_argument("--console-log", dest='console_log', action='store_true',
+                        help="Output log on console", default=False)
     parser.add_argument("--debug", dest='debug', action='store_true',
                         help="Log debug information", default=False)
     parser.add_argument("--with-data-log", dest='with_data_log', action='store_true',
@@ -39,13 +41,14 @@ def receive_args():
     return parser.parse_args()
 
 
-def kill_app(signal_int,call_back):
-    #print ('kill app')
-    os.kill(os.getpid(),signal.SIGILL)
+def kill_app(signal_int, call_back):
+    '''Kill main thread
+    '''
+    os.kill(os.getpid(), signal.SIGTERM)
 
 
 if __name__ == '__main__':
-    signal.signal(signal.SIGINT,kill_app)
+    signal.signal(signal.SIGINT, kill_app)
     # compatible code for windows python 3.8
     if IS_WINDOWS and IS_LATER_PY_38:
         import asyncio
@@ -58,6 +61,7 @@ if __name__ == '__main__':
             com_port=ARGS.com_port,
             port=ARGS.port,
             baudrate=ARGS.baudrate,
+            console_log=ARGS.console_log,
             debug=ARGS.debug,
             with_data_log=ARGS.with_data_log,
             with_raw_log=ARGS.with_raw_log)
@@ -70,5 +74,6 @@ if __name__ == '__main__':
     except:  # pylint: disable=bare-except
         traceback.print_exc()  # For development
         os._exit(1)
+
     while True:
         time.sleep(10)

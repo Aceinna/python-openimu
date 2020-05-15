@@ -54,6 +54,7 @@ parameters:
 | --device-type | String | 'auto' | Value should be `IMU`, `RTK` |
 | --baudrate | String | None | Value should be baudrate |
 | --com-port | String | 'auto' | Value should be a COM port |
+| --console-log | Boolean | False | Output log on console |
 | --debug | Boolean | False | Log debug information |
 | --with-data-log | Boolean | False | Contains internal data log (OpenIMU only) |
 | --with-raw-log | Boolean | False | Contains raw data log (OpenRTK only) |

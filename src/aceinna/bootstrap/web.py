@@ -39,7 +39,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
     latest_packet_collection = []
     file_logger = None
     packet_white_list = ['ping', 'upgrade_progress',
-                         'upgrade_complete', 'mag_status', 'backup_status','restore_status']
+                         'upgrade_complete', 'mag_status', 'backup_status', 'restore_status']
     period_output_callback = None
 
     def initialize(self, server):
@@ -398,11 +398,15 @@ class Webserver(EventBase):
         log_level = 'info'
         if self.options.debug:
             log_level = 'debug'
+
+        console_log = self.options.console_log
+
         APP_CONTEXT.set_logger(
             AppLogger(
                 filename=os.path.join(executor_path, 'loggers', 'trace.log'),
                 gen_file=True,
-                level=log_level
+                level=log_level,
+                console_log=console_log
             ))
 
     def get_device(self):

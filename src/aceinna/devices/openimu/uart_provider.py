@@ -40,6 +40,7 @@ class Provider(OpenDeviceBase):
         self.prepare_folders()
         self.is_backup = False
         self.is_restore = False
+        self.is_app_matched = False
         self.ans_platform = AnsPlatformAPI()
 
     def prepare_folders(self):
@@ -111,8 +112,15 @@ class Provider(OpenDeviceBase):
         '''
         split_text = text.split(' ')
         app_name = next(
-            (item for item in APP_STR if item in split_text), 'IMU')
+            (item for item in APP_STR if item in split_text), None)
 
+        if not app_name:
+            app_name = 'IMU'
+            self.is_app_matched = False
+        else:
+            self.is_app_matched = True
+
+        self.is_app_matched = False
         self.app_info = {
             'app_name': app_name,
             'version': text
@@ -130,6 +138,14 @@ class Provider(OpenDeviceBase):
         app_name = self.app_info['app_name']
         app_file_path = os.path.join(
             self.setting_folder_path, app_name, 'openimu.json')
+
+        if not self.is_app_matched:
+            APP_CONTEXT.get_logger().warning(
+                ('Failed to extract app version information from unit. The supported application list is {0}.').format(get_app_names()))
+            APP_CONTEXT.get_logger().warning(
+                'To keep runing, use IMU configuration as default.')
+            APP_CONTEXT.get_logger().warning(
+                'You can choose to place your json file under exection path if it is an unknown application.')
 
         with open(app_file_path) as json_data:
             self.properties = json.load(json_data)
