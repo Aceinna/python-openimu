@@ -218,8 +218,8 @@ class CommandLine:
                 print(select_param['options'])
             return True
 
-        if ((select_param['type'] == "char8" and self.input_string[2] not in x['options']) or
-                (select_param['type'] == "int64" and int(self.input_string[2]) not in x['options'])):
+        if ((select_param['type'] == "char8" and self.input_string[2] not in select_param['options']) or
+                (select_param['type'] == "int64" and int(self.input_string[2]) not in select_param['options'])):
             print("Usage: set " + select_param['argument'] + " <values>")
             print("values: ")
             print(select_param['options'])
