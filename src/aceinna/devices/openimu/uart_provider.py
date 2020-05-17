@@ -80,6 +80,11 @@ class Provider(OpenDeviceBase):
         # print('start to check if it is openimu')
         device_info_text = self.internal_input_command('pG')
         app_info_text = self.internal_input_command('gV')
+
+        # TODO: Prevent action. Get app info again,
+        # if cannot retrieve any info at the first time of ping. Should find the root cause.
+        if app_info_text == '':
+            app_info_text = self.internal_input_command('gV')
         print(device_info_text)
         if device_info_text.find('OpenIMU') > -1 and \
                 device_info_text.find('OpenRTK') == -1:

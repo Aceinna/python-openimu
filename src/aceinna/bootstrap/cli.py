@@ -189,6 +189,8 @@ class CommandLine:
         conf = self.device_provider.get_conf()
         input_params_properties = conf['data']['inputParams']
         select_param = None
+        not_in_options = False
+        options = []
 
         if input_args == 1:
             print("Usage: set <options> <values>")
@@ -218,17 +220,35 @@ class CommandLine:
                 print(select_param['options'])
             return True
 
-        if ((select_param['type'] == "char8" and self.input_string[2] not in x['options']) or
-                (select_param['type'] == "int64" and int(self.input_string[2]) not in x['options'])):
+        if select_param.__contains__('options'):
+            for item in select_param['options']:
+                if isinstance(item, dict):
+                    options.append(int(item['key']))
+                else:
+                    options.append(item)
+
+        if select_param['type'] == 'int64':
+            self.input_string[2] = int(self.input_string[2])
+
+        if select_param['type'] == "char8" and self.input_string[2] not in select_param['options']:
+            not_in_options = True
+
+        if select_param['type'] == "int64" and\
+                self.input_string[2] not in options:
+            not_in_options = True
+
+        if not_in_options:
             print("Usage: set " + select_param['argument'] + " <values>")
             print("values: ")
             print(select_param['options'])
             return True
-        else:
-            self.device_provider.set_param({
-                'paramId': self.input_string[1],
-                'value': self.input_string[2]
-            })
+
+        self.device_provider.set_param({
+            'paramId': select_param['paramId'],
+            'value': self.input_string[2]
+        })
+
+        #TODO: display a response message to user
 
         return True
 
