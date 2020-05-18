@@ -85,14 +85,16 @@ class Provider(OpenDeviceBase):
         # if cannot retrieve any info at the first time of ping. Should find the root cause.
         if app_info_text == '':
             app_info_text = self.internal_input_command('gV')
-        print(device_info_text)
         if device_info_text.find('OpenIMU') > -1 and \
                 device_info_text.find('OpenRTK') == -1:
             self.build_device_info(device_info_text)
             self.build_app_info(app_info_text)
             self.connected = True
+            print('# Connected Information #')
+            print('Device:', device_info_text)
+            print('Firmware:', app_info_text)
             APP_CONTEXT.get_logger().logger.info(
-                'Connected {0}'.format(device_info_text))
+                'Connected {0}, {1}'.format(device_info_text, app_info_text))
             return True
         return False
 
@@ -125,7 +127,6 @@ class Provider(OpenDeviceBase):
         else:
             self.is_app_matched = True
 
-        self.is_app_matched = False
         self.app_info = {
             'app_name': app_name,
             'version': text

@@ -21,7 +21,6 @@ from ..framework.utils import (helper, resource)
 from ..models import WebserverArgs
 from ..framework.constants import DEFAULT_PORT_RANGE
 from ..framework import AppLogger
-from ..devices.message_center import EventMessage
 if sys.version_info[0] > 2:
     from queue import Queue
 else:

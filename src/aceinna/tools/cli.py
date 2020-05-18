@@ -1,3 +1,4 @@
+import os
 import sys
 import argparse
 
@@ -54,4 +55,11 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:  # response for KeyboardInterrupt such as Ctrl+C
+        print('User stop this program by KeyboardInterrupt! File:[{0}], Line:[{1}]'.format(
+            __file__, sys._getframe().f_lineno))
+        sys.exit()
+    except:  # pylint: disable=bare-except
+        os._exit(1)

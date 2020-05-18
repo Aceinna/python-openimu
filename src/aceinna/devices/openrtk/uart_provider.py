@@ -7,6 +7,7 @@ import serial
 import serial.tools.list_ports
 from ...framework.utils import helper
 from ...framework.utils import resource
+from ...framework.context import APP_CONTEXT
 from ..base.uart_base import OpenDeviceBase
 from ..configs.openrtk_predefine import JSON_FILE_NAME
 from ..decorator import with_device_message
@@ -75,12 +76,17 @@ class Provider(OpenDeviceBase):
         # print('start to check if it is openrtk')
         device_info_text = self.internal_input_command('pG')
         app_info_text = self.internal_input_command('gV')
-
+        print('Device Info:', device_info_text)
+        print('Firmware Info:', app_info_text)
         if device_info_text.find('OpenRTK') > -1:
             self.build_device_info(device_info_text)
             self.build_app_info(app_info_text)
             self.connected = True
-            print('Connected', device_info_text)
+            print('# Connected Information #')
+            print('Device:', device_info_text)
+            print('Firmware:', app_info_text)
+            APP_CONTEXT.get_logger().logger.info(
+                'Connected {0}, {1}'.format(device_info_text, app_info_text))
             return True
         return False
 
@@ -192,19 +198,19 @@ class Provider(OpenDeviceBase):
     def on_read_raw(self, data):
         if self.user_logf is not None:
             self.user_logf.write(data)
-    
+
     def thread_debug_port_receiver(self, *args, **kwargs):
         if self.debug_logf is None:
             return
-        
+
         is_get_configuration = 0
         file_name = args[0]
-        self.debug_c_f = open(file_name + '/' + 'configuration.txt',"w")
+        self.debug_c_f = open(file_name + '/' + 'configuration.txt', "w")
 
         while True:
             if is_get_configuration:
                 break
-            cmd_configuration  = 'get configuration\r'
+            cmd_configuration = 'get configuration\r'
             self.debug_serial_port.write(cmd_configuration.encode())
             try_times = 20
             for i in range(try_times):
@@ -213,7 +219,7 @@ class Provider(OpenDeviceBase):
                     try:
                         #print('len = {0}'.format(len(data_buffer)))
                         str_data = bytes.decode(data_buffer)
-                        #print('{0}'.format(str_data))
+                        # print('{0}'.format(str_data))
                         json_data = json.loads(data_buffer)
                         for key in json_data.keys():
                             if key == 'openrtk configuration':
@@ -226,9 +232,9 @@ class Provider(OpenDeviceBase):
                             break
                     except Exception as e:
                         #print('DEBUG PORT Thread:json error:', e)
-                        #the json will not be completed
+                        # the json will not be completed
                         pass
-                    
+
         cmd_log = 'log com3 on\r'
         self.debug_serial_port.write(cmd_log.encode())
 
@@ -243,7 +249,7 @@ class Provider(OpenDeviceBase):
                 self.debug_logf.write(data)
             else:
                 time.sleep(0.001)
-    
+
     def thread_rtcm_port_receiver(self, *args, **kwargs):
         if self.rtcm_logf is None:
             return
@@ -271,7 +277,7 @@ class Provider(OpenDeviceBase):
                 else:
                     self.add_output_packet('stream', 'pos', data)
                     self.pS_data = data
-            else: 
+            else:
                 self.add_output_packet('stream', 'pos', data)
                 self.pS_data = data
 
@@ -491,7 +497,7 @@ class Provider(OpenDeviceBase):
         if not self.is_upgrading:
             self.is_upgrading = True
             self._message_center.pause()
-            
+
             if self._logger is not None:
                 self._logger.stop_user_log()
 
