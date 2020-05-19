@@ -76,8 +76,13 @@ class Provider(OpenDeviceBase):
         # print('start to check if it is openrtk')
         device_info_text = self.internal_input_command('pG')
         app_info_text = self.internal_input_command('gV')
-        print('Device Info:', device_info_text)
-        print('Firmware Info:', app_info_text)
+
+        APP_CONTEXT.get_logger().logger.debug('Checking if is OpenRTK device...')
+        APP_CONTEXT.get_logger().logger.debug(
+            'Device: {0}'.format(device_info_text))
+        APP_CONTEXT.get_logger().logger.debug(
+            'Firmware: {0}'.format(app_info_text))
+
         if device_info_text.find('OpenRTK') > -1:
             self.build_device_info(device_info_text)
             self.build_app_info(app_info_text)

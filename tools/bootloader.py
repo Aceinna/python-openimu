@@ -141,7 +141,7 @@ class OpenIMU:
         '''
 
         for port in ports:
-            for baud in [115200, 57600, 38400]:
+            for baud in [230400, 115200, 57600, 38400]:
                 self.open(port, baud)
                 # sync() works for stream mode
                 self.sync()
@@ -154,7 +154,7 @@ class OpenIMU:
 
             # stream mode not found for port, check port by polling
             if self.stream_mode == 0:
-                for baud in [115200, 57600, 38400]:
+                for baud in [230400, 115200, 57600, 38400]:
                     self.open(port, baud)
                     self.device_id = self.get_id_str()
                     if self.device_id:

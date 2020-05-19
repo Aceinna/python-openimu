@@ -13,9 +13,10 @@ def get_app_names():
                  'INS',
                  'Leveler',
                  'OpenIMU',
-                 'VG_AHRS'
+                 'VG',
+                 'VG_AHRS',
                  ]
     return app_names
 
 
-APP_STR = ['INS', 'VG_AHRS', 'IMU', 'Compass', 'Leveler', 'OpenIMU']
+APP_STR = ['INS', 'VG', 'VG_AHRS', 'Compass', 'Leveler', 'IMU', 'OpenIMU']
