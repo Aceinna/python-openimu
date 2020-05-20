@@ -1,7 +1,7 @@
 {
 	"name": "OpenIMU335_VG",
-	"app_version": "OpenIMU335RI VG 1.0.1",
-	"appName": "OpenIMU335RI VG 1.0.1",
+	"app_version": "OpenIMU335RI VG 1.0.2",
+	"appName": "OpenIMU335RI VG 1.0.2",
 	"type": "openimu",
 	"description": "6-axis OpenIMU with VG application",
 	"userConfiguration": [
@@ -586,4 +586,3 @@
 
 	]
 }
-
