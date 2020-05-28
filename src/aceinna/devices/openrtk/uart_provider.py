@@ -128,77 +128,99 @@ class Provider(OpenDeviceBase):
         # TODO: maybe we need a base config file
 
     def after_setup(self):
-        connection = None
-        debug_port = ''
-        rtcm_port = ''
-        try:
-            if not os.path.isfile(self.connection_file):
-                return False
-            with open(self.connection_file) as json_data:
-                connection = json.load(json_data)
-            user_port = connection['port']
-            user_port_num = ''
-            port_name = ''
-            for i in range(len(user_port)-1, -1, -1):
-                if (user_port[i] >= '0' and user_port[i] <= '9'):
-                    user_port_num = user_port[i] + user_port_num
+        set_user_para = self.cli_options and self.cli_options.set_user_para
+        with_raw_log = self.cli_options and self.cli_options.with_raw_log
+
+        if set_user_para:
+            result = self.set_params(self.properties["initial"]["userParameters"])
+            ##print('set user para {0}'.format(result))
+            if (result['packetType'] == 'success'):
+                self.save_config()
+
+        if with_raw_log:
+            connection = None
+            debug_port = ''
+            rtcm_port = ''
+            try:
+                if (self.properties["initial"]["useDefaultUart"]):
+                    if not os.path.isfile(self.connection_file):
+                        return False
+                    with open(self.connection_file) as json_data:
+                        connection = json.load(json_data)
+                    user_port = connection['port']
+                    user_port_num = ''
+                    port_name = ''
+                    for i in range(len(user_port)-1, -1, -1):
+                        if (user_port[i] >= '0' and user_port[i] <= '9'):
+                            user_port_num = user_port[i] + user_port_num
+                        else:
+                            port_name = user_port[:i+1]
+                            break
+                    #print('user_port {0} {1}'.format(user_port_num, port_name))
+                    debug_port = port_name + str(int(user_port_num) + 2)
+                    rtcm_port = port_name + str(int(user_port_num) + 1)
                 else:
-                    port_name = user_port[:i+1]
-                    break
-            #print('user_port {0} {1}'.format(user_port_num, port_name))
-            debug_port = port_name + str(int(user_port_num) + 2)
-            rtcm_port = port_name + str(int(user_port_num) + 1)
+                    for x in self.properties["initial"]["uart"]:
+                        if x['name'] == 'DEBUG':
+                            debug_port = x["value"]
+                        elif x['name'] == 'GNSS':
+                            rtcm_port = x["value"]
 
-            self.debug_serial_port = serial.Serial(
-                debug_port, '460800', timeout=0.005)
-            self.rtcm_serial_port = serial.Serial(
-                rtcm_port, '460800', timeout=0.005)
-            if self.debug_serial_port.isOpen() and self.rtcm_serial_port.isOpen():
-                #print("debug port {0} and rtcm port {1} open success".format(debug_port, rtcm_port))
+                if debug_port != '' and rtcm_port != '':
+                    print('OpenRTK log: GNSS uart {0}, DEBUG uart {1}'.format(rtcm_port, debug_port))
+                    self.debug_serial_port = serial.Serial(
+                        debug_port, '460800', timeout=0.005)
+                    self.rtcm_serial_port = serial.Serial(
+                        rtcm_port, '460800', timeout=0.005)
+                    if self.debug_serial_port.isOpen() and self.rtcm_serial_port.isOpen():
+                        #print("debug port {0} and rtcm port {1} open success".format(debug_port, rtcm_port))
 
-                if self.data_folder is not None:
-                    dir_time = time.strftime("%Y%m%d_%H%M%S", time.localtime())
-                    file_time = time.strftime(
-                        "%Y_%m_%d_%H_%M_%S", time.localtime())
-                    file_name = self.data_folder + '/' + 'openrtk_log_' + dir_time
-                    os.mkdir(file_name)
-                    self.user_logf = open(
-                        file_name + '/' + 'user_' + file_time + '.bin', "wb")
-                    if self.app_info['app_name'] == 'RAWDATA':
-                        self.debug_logf = open(
-                            file_name + '/' + 'rtcm_base_' + file_time + '.bin', "wb")
-                        self.rtcm_logf = open(
-                            file_name + '/' + 'rtcm_rover_' + file_time + '.bin', "wb")
-                    elif self.app_info['app_name'] == 'RTK':
-                        self.debug_logf = open(
-                            file_name + '/' + 'rtcm_base_' + file_time + '.bin', "wb")
-                        self.rtcm_logf = open(
-                            file_name + '/' + 'rtcm_rover_' + file_time + '.bin', "wb")
-                    else:
-                        self.debug_logf = open(
-                            file_name + '/' + 'debug_' + file_time + '.bin', "wb")
-                        self.rtcm_logf = open(
-                            file_name + '/' + 'rtcm_rover_' + file_time + '.bin', "wb")
+                        if self.data_folder is not None:
+                            dir_time = time.strftime("%Y%m%d_%H%M%S", time.localtime())
+                            file_time = time.strftime(
+                                "%Y_%m_%d_%H_%M_%S", time.localtime())
+                            file_name = self.data_folder + '/' + 'openrtk_log_' + dir_time
+                            os.mkdir(file_name)
+                            self.user_logf = open(
+                                file_name + '/' + 'user_' + file_time + '.bin', "wb")
+                            if self.app_info['app_name'] == 'RAWDATA':
+                                self.debug_logf = open(
+                                    file_name + '/' + 'rtcm_base_' + file_time + '.bin', "wb")
+                                self.rtcm_logf = open(
+                                    file_name + '/' + 'rtcm_rover_' + file_time + '.bin', "wb")
+                            elif self.app_info['app_name'] == 'RTK':
+                                self.debug_logf = open(
+                                    file_name + '/' + 'rtcm_base_' + file_time + '.bin', "wb")
+                                self.rtcm_logf = open(
+                                    file_name + '/' + 'rtcm_rover_' + file_time + '.bin', "wb")
+                            else:
+                                self.debug_logf = open(
+                                    file_name + '/' + 'debug_' + file_time + '.bin', "wb")
+                                self.rtcm_logf = open(
+                                    file_name + '/' + 'rtcm_rover_' + file_time + '.bin', "wb")
 
-                    funcs = [self.thread_debug_port_receiver,
-                             self.thread_rtcm_port_receiver]
-                    for func in funcs:
-                        t = threading.Thread(target=func, args=(file_name,))
-                        t.start()
+                            funcs = [self.thread_debug_port_receiver,
+                                    self.thread_rtcm_port_receiver]
+                            for func in funcs:
+                                t = threading.Thread(target=func, args=(file_name,))
+                                t.start()
 
-                    return True
-            return False
-        except Exception as e:
-            if self.debug_serial_port is not None:
-                if self.debug_serial_port.isOpen():
-                    self.debug_serial_port.close()
-            if self.rtcm_serial_port is not None:
-                if self.rtcm_serial_port.isOpen():
-                    self.rtcm_serial_port.close()
-            self.debug_serial_port = None
-            self.rtcm_serial_port = None
-            print(e)
-            return False
+                            return True
+                    return False
+                else:
+                    print('please confirm device\'s uarts and set in openrtk.json ==> initial, "uart": [{"name": "GNSS","value": "GNSS uart name"},{"name": "DEBUG","value": "DEBUG uart name"}]')
+                    return False
+            except Exception as e:
+                if self.debug_serial_port is not None:
+                    if self.debug_serial_port.isOpen():
+                        self.debug_serial_port.close()
+                if self.rtcm_serial_port is not None:
+                    if self.rtcm_serial_port.isOpen():
+                        self.rtcm_serial_port.close()
+                self.debug_serial_port = None
+                self.rtcm_serial_port = None
+                print(e)
+                return False
 
     def on_read_raw(self, data):
         if self.user_logf is not None:

@@ -3,7 +3,67 @@
 	"app_version": "OpenRTK330 INS 0.0.1",
 	"appName": "OpenRTK330 INS 0.0.1",
 	"type": "openrtk",
-	"description": "6-axis OpenRTK with INS application",
+    "description": "6-axis OpenRTK with INS application",
+    "initial":{
+        "useDefaultUart": 1,
+        "uart":[
+            {
+                "name": "GNSS",
+                "value": "com10"
+            },
+            {
+                "name": "DEBUG",
+                "value": "com11"
+            }
+        ],
+        "userParameters": [
+            {
+                "paramId": 4,
+                "name": "lever arm x",
+                "value": 0.0
+            },
+            {
+                "paramId": 5,
+                "name": "lever arm y",
+                "value": 0.0
+            },
+            {
+                "paramId": 6,
+                "name": "lever arm z",
+                "value": 0.0
+            },
+            {
+                "paramId": 7,
+                "name": "point of interest x",
+                "value": 0.0
+            },
+            {
+                "paramId": 8,
+                "name": "point of interest y",
+                "value": 0.0
+            },
+            {
+                "paramId": 9,
+                "name": "point of interest z",
+                "value": 0.0
+            },
+            {
+                "paramId": 10,
+                "name": "rotation x",
+                "value": 0.0
+            },
+            {
+                "paramId": 11,
+                "name": "rotation y",
+                "value": 0.0
+            },
+            {
+                "paramId": 12,
+                "name": "rotation z",
+                "value": 0.0
+            }
+        ]
+    },
 	"userConfiguration": [
 		{
 			"paramId": 0,
@@ -47,7 +107,7 @@
 				5,
 				2,
 				0
-			]
+            ]
 		},
 		{
 			"paramId": 4,
@@ -55,14 +115,14 @@
 			"paramType": "input",
 			"type": "float",
 			"name": "lever arm x",
-			"argument": "lever_arm_x",
+			"argument": "lev_x",
 			"value_range": [
 				-1,
 				1
 			],
 			"value_accuracy": 6,
 			"options": [
-			]
+            ]
 		},
 		{
 			"paramId": 5,
@@ -70,7 +130,7 @@
 			"paramType": "input",
 			"type": "float",
 			"name": "lever arm y",
-			"argument": "lever_arm_y",
+			"argument": "lev_y",
 			"value_range": [
 				-1,
 				1
@@ -85,7 +145,7 @@
 			"paramType": "input",
 			"type": "float",
 			"name": "lever arm z",
-			"argument": "lever_arm_z",
+			"argument": "lev_z",
 			"value_range": [
 				-1,
 				1
@@ -144,8 +204,8 @@
 			"category": "Advanced",
 			"paramType": "input",
 			"type": "float",
-			"name": "rotation of interest x",
-			"argument": "rotationRbvx",
+			"name": "rotation x",
+			"argument": "rot_x",
 			"value_range": [
 				-1,
 				1
@@ -159,8 +219,8 @@
 			"category": "Advanced",
 			"paramType": "input",
 			"type": "float",
-			"name": "rotation of interest y",
-			"argument": "rotationRbvy",
+			"name": "rotation y",
+			"argument": "rot_y",
 			"value_range": [
 				-1,
 				1
@@ -174,8 +234,8 @@
 			"category": "Advanced",
 			"paramType": "input",
 			"type": "float",
-			"name": "rotation of interest z",
-			"argument": "rotationRbvz",
+			"name": "rotation z",
+			"argument": "rot_z",
 			"value_range": [
 				-1,
 				1

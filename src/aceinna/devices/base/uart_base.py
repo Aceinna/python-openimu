@@ -170,8 +170,7 @@ class OpenDeviceBase(EventBase):
         self.cli_options = options
 
         with_data_log = options and options.with_data_log
-        with_raw_log = options and options.with_raw_log
-
+        
         self._setup_message_center()
 
         if with_data_log and not self.is_logging and self.enable_data_log:
@@ -180,8 +179,7 @@ class OpenDeviceBase(EventBase):
                 raise Exception('Cannot start data logger')
             self.is_logging = True
 
-        if with_raw_log:
-            self.after_setup()
+        self.after_setup()
 
         # Backup mode checker
         # if not self.has_backup_checker:

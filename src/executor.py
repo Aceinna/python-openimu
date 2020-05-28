@@ -38,6 +38,9 @@ def receive_args():
                         help="Contains internal data log (OpenIMU only)", default=False)
     parser.add_argument("--with-raw-log", "-r", dest='with_raw_log', action='store_true',
                         help="Contains raw data log (OpenRTK only)", default=False)
+    parser.add_argument("--set-user-para", "-s", dest='set_user_para', action='store_true',
+                        help="set user parameters (OpenRTK only)", default=False)
+                        
     return parser.parse_args()
 
 
@@ -64,7 +67,8 @@ if __name__ == '__main__':
             console_log=ARGS.console_log,
             debug=ARGS.debug,
             with_data_log=ARGS.with_data_log,
-            with_raw_log=ARGS.with_raw_log)
+            with_raw_log=ARGS.with_raw_log,
+            set_user_para=ARGS.set_user_para)
         APP.listen()
     except KeyboardInterrupt:  # response for KeyboardInterrupt such as Ctrl+C
         print('User stop this program by KeyboardInterrupt! File:[{0}], Line:[{1}]'.format(
