@@ -9,7 +9,9 @@ from ...framework.utils import helper
 from ...framework.utils import resource
 from ...framework.context import APP_CONTEXT
 from ..base.uart_base import OpenDeviceBase
-from ..configs.openrtk_predefine import JSON_FILE_NAME
+from ..configs.openrtk_predefine import (
+    APP_STR, get_app_names
+)
 from ..decorator import with_device_message
 # import asyncio
 
@@ -48,26 +50,34 @@ class Provider(OpenDeviceBase):
         '''
         executor_path = resource.get_executor_path()
         setting_folder_name = 'setting'
+        config_file_name = 'openrtk.json'
+
         data_folder_path = os.path.join(executor_path, 'data')
         if not os.path.isdir(data_folder_path):
             os.makedirs(data_folder_path)
+        self.data_folder = data_folder_path
+
+        self.connection_file = os.path.join(
+            executor_path, setting_folder_name, 'connection.json')
 
         # copy contents of app_config under executor path
         self.setting_folder_path = os.path.join(
             executor_path, setting_folder_name, 'openrtk')
-        self.connection_file = os.path.join(
-            executor_path, setting_folder_name, 'connection.json')
-        self.data_folder = data_folder_path
 
-        config_path = os.path.join(self.setting_folder_path, JSON_FILE_NAME)
-        if not os.path.isfile(config_path):
-            if not os.path.isdir(self.setting_folder_path):
-                os.makedirs(self.setting_folder_path)
-            app_config_content = resource.get_content_from_bundle(
-                setting_folder_name, os.path.join('openrtk', JSON_FILE_NAME))
+        for app_name in get_app_names():
+            app_name_path = os.path.join(self.setting_folder_path, app_name)
+            app_name_config_path = os.path.join(
+                app_name_path, config_file_name)
+            if not os.path.isfile(app_name_config_path):
+                if not os.path.isdir(app_name_path):
+                    os.makedirs(app_name_path)
+                app_config_content = resource.get_content_from_bundle(
+                    setting_folder_name, os.path.join('openrtk', app_name, config_file_name))
+                if app_config_content is None:
+                    continue
 
-            with open(config_path, "wb") as code:
-                code.write(app_config_content)
+                with open(app_name_config_path, "wb") as code:
+                    code.write(app_config_content)
 
     def ping(self):
         '''
@@ -122,10 +132,20 @@ class Provider(OpenDeviceBase):
         }
 
     def load_properties(self):
-        with open(os.path.join(self.setting_folder_path, JSON_FILE_NAME)) as json_data:
-            self.properties = json.load(json_data)
+        # Load config from user working path
+        local_config_file_path = os.path.join(os.getcwd(), 'openrtk.json')
+        if os.path.isfile(local_config_file_path):
+            with open(local_config_file_path) as json_data:
+                self.properties = json.load(json_data)
+                return
+        
+        # Load the openimu.json based on its app
+        app_name = self.app_info['app_name']
+        app_file_path = os.path.join(
+            self.setting_folder_path, app_name, 'openrtk.json')
 
-        # TODO: maybe we need a base config file
+        with open(app_file_path) as json_data:
+            self.properties = json.load(json_data)
 
     def after_setup(self):
         set_user_para = self.cli_options and self.cli_options.set_user_para

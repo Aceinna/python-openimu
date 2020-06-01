@@ -1,7 +1,7 @@
 {
-	"name": "OpenRTK330_INS",
-	"app_version": "OpenRTK330 INS 0.0.1",
-	"appName": "OpenRTK330 INS 0.0.1",
+	"name": "OpenRTK330_RAWDATA",
+	"app_version": "OpenRTK330 RAWDATA 1.2.1",
+	"appName": "OpenRTK330 RAWDATA 1.2.1",
 	"type": "openrtk",
     "description": "6-axis OpenRTK with INS application",
     "initial":{
@@ -377,92 +377,6 @@
 			],
 			"value_accuracy": 6,
 			"options": [
-			]
-        },
-        {
-			"paramId": 23,
-			"category": "CAN",
-			"paramType": "input",
-			"type": "uint16",
-			"name": "ECU ADDRESS",
-			"argument": "ECU ADDRESS",
-			"value_range": [
-			],
-			"value_accuracy": 6,
-			"options": [
-			]
-        },
-        {
-            "paramId": 24,
-			"category": "CAN",
-			"paramType": "select",
-			"type": "uint16",
-			"name": "BAUDRATE",
-			"argument": "BAUDRATE",
-			"value_range": [
-			],
-			"value_accuracy": 6,
-            "options": [
-                {"key":"0","value":"500K"},
-                {"key":"1","value":"250K"},
-                {"key":"2","value":"125K"},
-                {"key":"3","value":"1000K"}
-			]
-        },
-        {
-			"paramId": 25,
-			"category": "CAN",
-			"paramType": "input",
-			"type": "uint16",
-			"name": "PACKET TYPE",
-			"argument": "PACKET TYPE",
-			"value_range": [
-                0, 15
-			],
-			"value_accuracy": 0
-        },
-        {
-			"paramId": 26,
-			"category": "CAN",
-			"paramType": "select",
-			"type": "uint16",
-			"name": "PACKET RATE",
-			"argument": "PACKET RATE",
-			"value_range": [
-			],
-			"value_accuracy": 6,
-			"options": [
-                {"key":"10","value":"10Hz"}
-			]
-        },
-        {
-			"paramId": 27,
-			"category": "CAN",
-			"paramType": "select",
-			"type": "uint16",
-			"name": "CAN TERMRESISTOR",
-			"argument": "CAN TERMRESISTOR",
-			"value_range": [
-			],
-			"value_accuracy": 6,
-			"options": [
-                {"key":"0","value":"DISABLE"},
-                {"key":"1","value":"ENABLE"}
-			]
-        },
-        {
-			"paramId": 28,
-			"category": "CAN",
-			"paramType": "select",
-			"type": "uint16",
-			"name": "BAUDRATE DETECT",
-			"argument": "BAUDRATE DETECT",
-			"value_range": [
-			],
-			"value_accuracy": 6,
-			"options": [
-                {"key":"0","value":"DISABLE"},
-                {"key":"1","value":"ENABLE"}
 			]
         }
 	],
