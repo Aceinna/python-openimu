@@ -252,7 +252,7 @@ class Provider(OpenDeviceBase):
                         #print('len = {0}'.format(len(data_buffer)))
                         str_data = bytes.decode(data_buffer)
                         # print('{0}'.format(str_data))
-                        json_data = json.loads(data_buffer)
+                        json_data = json.loads(str_data)
                         for key in json_data.keys():
                             if key == 'openrtk configuration':
                                 print('{0}'.format(json_data))
