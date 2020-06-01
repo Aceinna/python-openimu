@@ -9,11 +9,13 @@
         "uart":[
             {
                 "name": "GNSS",
-                "value": "com10"
+                "value": "com10",
+                "enable": 1 
             },
             {
                 "name": "DEBUG",
-                "value": "com11"
+                "value": "com11",
+                "enable": 1 
             }
         ],
         "userParameters": [

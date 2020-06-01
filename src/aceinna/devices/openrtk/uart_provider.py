@@ -161,55 +161,40 @@ class Provider(OpenDeviceBase):
                     rtcm_port = port_name + str(int(user_port_num) + 1)
                 else:
                     for x in self.properties["initial"]["uart"]:
-                        if x['name'] == 'DEBUG':
-                            debug_port = x["value"]
-                        elif x['name'] == 'GNSS':
-                            rtcm_port = x["value"]
+                        if x['enable'] == 1:
+                            if x['name'] == 'DEBUG':
+                                debug_port = x["value"]
+                            elif x['name'] == 'GNSS':
+                                rtcm_port = x["value"]
+                
+                if self.data_folder is not None:
+                    dir_time = time.strftime("%Y%m%d_%H%M%S", time.localtime())
+                    file_time = time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime())
+                    file_name = self.data_folder + '/' + 'openrtk_log_' + dir_time
+                    os.mkdir(file_name)
+                    self.user_logf = open(file_name + '/' + 'user_' + file_time + '.bin', "wb")
 
-                if debug_port != '' and rtcm_port != '':
-                    print('OpenRTK log: GNSS uart {0}, DEBUG uart {1}'.format(rtcm_port, debug_port))
-                    self.debug_serial_port = serial.Serial(
-                        debug_port, '460800', timeout=0.005)
-                    self.rtcm_serial_port = serial.Serial(
-                        rtcm_port, '460800', timeout=0.005)
-                    if self.debug_serial_port.isOpen() and self.rtcm_serial_port.isOpen():
-                        #print("debug port {0} and rtcm port {1} open success".format(debug_port, rtcm_port))
+                if rtcm_port != '':
+                    print('OpenRTK log GNSS UART {0}'.format(rtcm_port))
+                    self.rtcm_serial_port = serial.Serial(rtcm_port, '460800', timeout=0.005)
+                    if self.rtcm_serial_port.isOpen():
+                        self.rtcm_logf = open(file_name + '/' + 'rtcm_rover_' + file_time + '.bin', "wb")
+                        t = threading.Thread(target=self.thread_rtcm_port_receiver, args=(file_name,))
+                        t.start()
 
-                        if self.data_folder is not None:
-                            dir_time = time.strftime("%Y%m%d_%H%M%S", time.localtime())
-                            file_time = time.strftime(
-                                "%Y_%m_%d_%H_%M_%S", time.localtime())
-                            file_name = self.data_folder + '/' + 'openrtk_log_' + dir_time
-                            os.mkdir(file_name)
-                            self.user_logf = open(
-                                file_name + '/' + 'user_' + file_time + '.bin', "wb")
-                            if self.app_info['app_name'] == 'RAWDATA':
-                                self.debug_logf = open(
-                                    file_name + '/' + 'rtcm_base_' + file_time + '.bin', "wb")
-                                self.rtcm_logf = open(
-                                    file_name + '/' + 'rtcm_rover_' + file_time + '.bin', "wb")
-                            elif self.app_info['app_name'] == 'RTK':
-                                self.debug_logf = open(
-                                    file_name + '/' + 'rtcm_base_' + file_time + '.bin', "wb")
-                                self.rtcm_logf = open(
-                                    file_name + '/' + 'rtcm_rover_' + file_time + '.bin', "wb")
-                            else:
-                                self.debug_logf = open(
-                                    file_name + '/' + 'debug_' + file_time + '.bin', "wb")
-                                self.rtcm_logf = open(
-                                    file_name + '/' + 'rtcm_rover_' + file_time + '.bin', "wb")
+                if debug_port != '':
+                    print('OpenRTK log DEBUG UART {0}'.format(debug_port))
+                    self.debug_serial_port = serial.Serial(debug_port, '460800', timeout=0.005)
+                    if self.debug_serial_port.isOpen():
+                        if self.app_info['app_name'] == 'RAWDATA':
+                            self.debug_logf = open(file_name + '/' + 'rtcm_base_' + file_time + '.bin', "wb")
+                        elif self.app_info['app_name'] == 'RTK':
+                            self.debug_logf = open(file_name + '/' + 'rtcm_base_' + file_time + '.bin', "wb")
+                        else:
+                            self.debug_logf = open(file_name + '/' + 'debug_' + file_time + '.bin', "wb")
+                        t = threading.Thread(target=self.thread_debug_port_receiver, args=(file_name,))
+                        t.start()
 
-                            funcs = [self.thread_debug_port_receiver,
-                                    self.thread_rtcm_port_receiver]
-                            for func in funcs:
-                                t = threading.Thread(target=func, args=(file_name,))
-                                t.start()
-
-                            return True
-                    return False
-                else:
-                    print('please confirm device\'s uarts and set in openrtk.json ==> initial, "uart": [{"name": "GNSS","value": "GNSS uart name"},{"name": "DEBUG","value": "DEBUG uart name"}]')
-                    return False
             except Exception as e:
                 if self.debug_serial_port is not None:
                     if self.debug_serial_port.isOpen():
@@ -237,7 +222,7 @@ class Provider(OpenDeviceBase):
         while True:
             if is_get_configuration:
                 break
-            cmd_configuration = 'get configuration\r'
+            cmd_configuration = 'get configuration\r\n'
             self.debug_serial_port.write(cmd_configuration.encode())
             try_times = 20
             for i in range(try_times):
@@ -262,7 +247,7 @@ class Provider(OpenDeviceBase):
                         # the json will not be completed
                         pass
 
-        cmd_log = 'log com3 on\r'
+        cmd_log = 'log debug on\r\n'
         self.debug_serial_port.write(cmd_log.encode())
 
         # log data
