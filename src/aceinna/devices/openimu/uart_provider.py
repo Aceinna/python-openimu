@@ -124,7 +124,13 @@ class Provider(OpenDeviceBase):
         '''
         Build app info
         '''
-        split_text = text.split(' ')
+        # check if J1939 in text
+        app_version = text
+        can_indicator = '_J1939'
+        if can_indicator in app_version:
+            app_version = app_version.replace(can_indicator, '')
+
+        split_text = app_version.split(' ')
         app_name = next(
             (item for item in APP_STR if item in split_text), None)
 
