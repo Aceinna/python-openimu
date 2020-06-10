@@ -301,17 +301,18 @@ class Provider(OpenDeviceBase):
         Listener for getting output packet
         '''
         if packet_type == 'pS':
-            if self.pS_data:
-                if self.pS_data['GPS_Week'] == data['GPS_Week']:
-                    if data['GPS_TimeofWeek'] - self.pS_data['GPS_TimeofWeek'] >= 0.2:
+            if data['latitude'] != 0.0 and data['longitude'] != 0.0:
+                if self.pS_data:
+                    if self.pS_data['GPS_Week'] == data['GPS_Week']:
+                        if data['GPS_TimeofWeek'] - self.pS_data['GPS_TimeofWeek'] >= 0.2:
+                            self.add_output_packet('stream', 'pos', data)
+                            self.pS_data = data
+                    else:
                         self.add_output_packet('stream', 'pos', data)
                         self.pS_data = data
                 else:
                     self.add_output_packet('stream', 'pos', data)
                     self.pS_data = data
-            else:
-                self.add_output_packet('stream', 'pos', data)
-                self.pS_data = data
 
         elif packet_type == 'sK':
             if self.sky_data:
