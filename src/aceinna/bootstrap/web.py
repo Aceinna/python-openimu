@@ -536,7 +536,7 @@ class Webserver(EventBase):
 
     def detect_device(self, callback):
         '''find if there is a connected device'''
-        print('start to find device')
+        print('Prepare to find device...')
         if self.communicator is None:
             self.communicator = CommunicatorFactory.create(
                 self.communication, self.options)

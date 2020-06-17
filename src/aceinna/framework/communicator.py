@@ -171,7 +171,8 @@ class SerialPort(Communicator):
 
         for port in ports:
             for baud in baudrate_list_from_options:
-                print("try {0}:{1}".format(port, baud))
+                APP_CONTEXT.get_logger().logger.info(
+                    "try {0}:{1}".format(port, baud))
                 self.open(port, baud)
                 if self.serial_port is not None:
                     self.confirm_device(self.filter_device_type)
@@ -243,7 +244,8 @@ class SerialPort(Communicator):
             returns: true when successful
         '''
         try:
-            self.serial_port = serial.Serial(port, baud, timeout=timeout, exclusive=True)
+            self.serial_port = serial.Serial(
+                port, baud, timeout=timeout, exclusive=True)
             return True
         except Exception as ex:
             APP_CONTEXT.get_logger().logger.info(
