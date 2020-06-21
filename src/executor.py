@@ -40,6 +40,8 @@ def receive_args():
                         help="Contains raw data log (OpenRTK only)", default=False)
     parser.add_argument("--set-user-para", "-s", dest='set_user_para', action='store_true',
                         help="set user parameters (OpenRTK only)", default=False)
+    parser.add_argument("--ntrip-client", "-n", dest='ntrip_client', action='store_true',
+                        help="enable ntrip client (OpenRTK only)", default=False)
                         
     return parser.parse_args()
 
@@ -68,7 +70,8 @@ if __name__ == '__main__':
             debug=ARGS.debug,
             with_data_log=ARGS.with_data_log,
             with_raw_log=ARGS.with_raw_log,
-            set_user_para=ARGS.set_user_para)
+            set_user_para=ARGS.set_user_para,
+            ntrip_client=ARGS.ntrip_client)
         APP.listen()
     except KeyboardInterrupt:  # response for KeyboardInterrupt such as Ctrl+C
         print('User stop this program by KeyboardInterrupt! File:[{0}], Line:[{1}]'.format(

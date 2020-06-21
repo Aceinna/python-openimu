@@ -34,6 +34,10 @@ class UserRawParse:
         self.nmea_sync = 0
         self.log_files = {}
 
+        # self.s1_time = 0.0
+        # self.inspva_time = 0.0
+        # self.std1_time = 0.0
+
         with open('openrtk_packets.json') as json_data:
             self.rtk_properties = json.load(json_data)
 
@@ -54,7 +58,7 @@ class UserRawParse:
                         self.packet_buffer = []
                         self.sync_state = 0
                     else:
-                        print('user data crc err!')
+                        #print('user data crc err!')
                         self.sync_state = 0  # CRC did not match
             else:
                 for packet_type in self.userPacketsTypeList:
@@ -115,6 +119,10 @@ class UserRawParse:
             for i in range(len(data)):
                 if i == 1:
                     self.log_files[name].write(format((data[i]), '11.4f'))
+                    # if self.s1_time != 0.0:
+                    #     if float(data[i]) - self.s1_time > 0.015:
+                    #         print('S1 timeout: {0}'.format(float(data[i])))
+                    # self.s1_time = float(data[i])
                 elif i >= 2 and i <= 4:
                     self.log_files[name].write(format(data[i], '14.10f'))
                 elif i >= 5 and i <= 7:
@@ -271,7 +279,7 @@ class DebugRawParse:
                             self.sync_state = 0
                         else:
                             self.err_count = self.err_count + 1
-                            print('debug data crc err. type {0} count{1}'.format(packet_type, self.err_count))
+                            #print('debug data crc err. type {0} count{1}'.format(packet_type, self.err_count))
                             self.sync_state = 0  # CRC did not match
             else:
                 for message_id in self.debugPacketsTypeList:
@@ -314,10 +322,8 @@ class DebugRawParse:
             self.fp_all.write("$ODO,")
             for i in range(len(data)):
                 if payload[i]['need']:
-                    if i == 0:
+                    if i == 1:
                         self.write_data_fm(name, data[i]/1000, payload[i]['format'])
-                        self.write_data(name, ",")
-                        self.write_data_fm(name, float(self.time_tag[1])/1000, '10.4f')
                     else:
                         self.write_data_fm(name, data[i], payload[i]['format'])
                     if payload[i]['need'] == 1:
@@ -479,9 +485,9 @@ class DebugRawParse:
                 if value['need']:
                     file.write(value['name'])
                     file.write(",")
-                if value['name'] == 'GPS_TimeofWeek':
-                    file.write('Time_Stamped')
-                    file.write(",")
+                # if value['name'] == 'GPS_TimeofWeek':
+                #     file.write('Time_Stamped')
+                #     file.write(",")
         else:
             if output['needHeadTime'] == 2:
                 file.write('GPS_Week')

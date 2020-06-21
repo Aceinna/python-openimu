@@ -14,7 +14,7 @@ from ..configs.openrtk_predefine import (
 )
 from ..decorator import with_device_message
 # import asyncio
-
+from aceinna.devices.openrtk.ntrip_client import NTRIPClient
 
 class Provider(OpenDeviceBase):
     '''
@@ -147,85 +147,94 @@ class Provider(OpenDeviceBase):
         with open(app_file_path) as json_data:
             self.properties = json.load(json_data)
 
+    def ntrip_client_thread(self):
+        self.ntripClient = NTRIPClient(self.properties, self.communicator)
+        self.ntripClient.run()
+
     def after_setup(self):
         set_user_para = self.cli_options and self.cli_options.set_user_para
-        with_raw_log = self.cli_options and self.cli_options.with_raw_log
+        self.ntrip_client_enable = self.cli_options and self.cli_options.ntrip_client
+        # with_raw_log = self.cli_options and self.cli_options.with_raw_log
 
         if set_user_para:
             result = self.set_params(self.properties["initial"]["userParameters"])
             ##print('set user para {0}'.format(result))
             if (result['packetType'] == 'success'):
                 self.save_config()
+        
+        if self.ntrip_client_enable:
+            t = threading.Thread(target=self.ntrip_client_thread)
+            t.start()
 
-        if with_raw_log:
-            connection = None
-            debug_port = ''
-            rtcm_port = ''
-            try:
-                if (self.properties["initial"]["useDefaultUart"]):
-                    if not os.path.isfile(self.connection_file):
-                        return False
-                    with open(self.connection_file) as json_data:
-                        connection = json.load(json_data)
-                    user_port = connection['port']
-                    user_port_num = ''
-                    port_name = ''
-                    for i in range(len(user_port)-1, -1, -1):
-                        if (user_port[i] >= '0' and user_port[i] <= '9'):
-                            user_port_num = user_port[i] + user_port_num
-                        else:
-                            port_name = user_port[:i+1]
-                            break
-                    #print('user_port {0} {1}'.format(user_port_num, port_name))
-                    debug_port = port_name + str(int(user_port_num) + 2)
-                    rtcm_port = port_name + str(int(user_port_num) + 1)
-                else:
-                    for x in self.properties["initial"]["uart"]:
-                        if x['enable'] == 1:
-                            if x['name'] == 'DEBUG':
-                                debug_port = x["value"]
-                            elif x['name'] == 'GNSS':
-                                rtcm_port = x["value"]
-                
-                if self.data_folder is not None:
-                    dir_time = time.strftime("%Y%m%d_%H%M%S", time.localtime())
-                    file_time = time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime())
-                    file_name = self.data_folder + '/' + 'openrtk_log_' + dir_time
-                    os.mkdir(file_name)
-                    self.user_logf = open(file_name + '/' + 'user_' + file_time + '.bin', "wb")
+        # if with_raw_log:
+        connection = None
+        debug_port = ''
+        rtcm_port = ''
+        try:
+            if (self.properties["initial"]["useDefaultUart"]):
+                if not os.path.isfile(self.connection_file):
+                    return False
+                with open(self.connection_file) as json_data:
+                    connection = json.load(json_data)
+                user_port = connection['port']
+                user_port_num = ''
+                port_name = ''
+                for i in range(len(user_port)-1, -1, -1):
+                    if (user_port[i] >= '0' and user_port[i] <= '9'):
+                        user_port_num = user_port[i] + user_port_num
+                    else:
+                        port_name = user_port[:i+1]
+                        break
+                #print('user_port {0} {1}'.format(user_port_num, port_name))
+                debug_port = port_name + str(int(user_port_num) + 2)
+                rtcm_port = port_name + str(int(user_port_num) + 1)
+            else:
+                for x in self.properties["initial"]["uart"]:
+                    if x['enable'] == 1:
+                        if x['name'] == 'DEBUG':
+                            debug_port = x["value"]
+                        elif x['name'] == 'GNSS':
+                            rtcm_port = x["value"]
+            
+            if self.data_folder is not None:
+                dir_time = time.strftime("%Y%m%d_%H%M%S", time.localtime())
+                file_time = time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime())
+                file_name = self.data_folder + '/' + 'openrtk_log_' + dir_time
+                os.mkdir(file_name)
+                self.user_logf = open(file_name + '/' + 'user_' + file_time + '.bin', "wb")
 
-                if rtcm_port != '':
-                    print('OpenRTK log GNSS UART {0}'.format(rtcm_port))
-                    self.rtcm_serial_port = serial.Serial(rtcm_port, '460800', timeout=0.005)
-                    if self.rtcm_serial_port.isOpen():
-                        self.rtcm_logf = open(file_name + '/' + 'rtcm_rover_' + file_time + '.bin', "wb")
-                        t = threading.Thread(target=self.thread_rtcm_port_receiver, args=(file_name,))
-                        t.start()
+            if rtcm_port != '':
+                print('OpenRTK log GNSS UART {0}'.format(rtcm_port))
+                self.rtcm_serial_port = serial.Serial(rtcm_port, '460800', timeout=0.005)
+                if self.rtcm_serial_port.isOpen():
+                    self.rtcm_logf = open(file_name + '/' + 'rtcm_rover_' + file_time + '.bin', "wb")
+                    t = threading.Thread(target=self.thread_rtcm_port_receiver, args=(file_name,))
+                    t.start()
 
-                if debug_port != '':
-                    print('OpenRTK log DEBUG UART {0}'.format(debug_port))
-                    self.debug_serial_port = serial.Serial(debug_port, '460800', timeout=0.005)
-                    if self.debug_serial_port.isOpen():
-                        if self.app_info['app_name'] == 'RAWDATA':
-                            self.debug_logf = open(file_name + '/' + 'rtcm_base_' + file_time + '.bin', "wb")
-                        elif self.app_info['app_name'] == 'RTK':
-                            self.debug_logf = open(file_name + '/' + 'rtcm_base_' + file_time + '.bin', "wb")
-                        else:
-                            self.debug_logf = open(file_name + '/' + 'debug_' + file_time + '.bin', "wb")
-                        t = threading.Thread(target=self.thread_debug_port_receiver, args=(file_name,))
-                        t.start()
+            if debug_port != '':
+                print('OpenRTK log DEBUG UART {0}'.format(debug_port))
+                self.debug_serial_port = serial.Serial(debug_port, '460800', timeout=0.005)
+                if self.debug_serial_port.isOpen():
+                    if self.app_info['app_name'] == 'RAWDATA':
+                        self.debug_logf = open(file_name + '/' + 'rtcm_base_' + file_time + '.bin', "wb")
+                    elif self.app_info['app_name'] == 'RTK':
+                        self.debug_logf = open(file_name + '/' + 'rtcm_base_' + file_time + '.bin', "wb")
+                    else:
+                        self.debug_logf = open(file_name + '/' + 'debug_' + file_time + '.bin', "wb")
+                    t = threading.Thread(target=self.thread_debug_port_receiver, args=(file_name,))
+                    t.start()
 
-            except Exception as e:
-                if self.debug_serial_port is not None:
-                    if self.debug_serial_port.isOpen():
-                        self.debug_serial_port.close()
-                if self.rtcm_serial_port is not None:
-                    if self.rtcm_serial_port.isOpen():
-                        self.rtcm_serial_port.close()
-                self.debug_serial_port = None
-                self.rtcm_serial_port = None
-                print(e)
-                return False
+        except Exception as e:
+            if self.debug_serial_port is not None:
+                if self.debug_serial_port.isOpen():
+                    self.debug_serial_port.close()
+            if self.rtcm_serial_port is not None:
+                if self.rtcm_serial_port.isOpen():
+                    self.rtcm_serial_port.close()
+            self.debug_serial_port = None
+            self.rtcm_serial_port = None
+            print(e)
+            return False
 
     def on_read_raw(self, data):
         if self.user_logf is not None:
@@ -300,7 +309,65 @@ class Provider(OpenDeviceBase):
         '''
         Listener for getting output packet
         '''
-        if packet_type == 'pS':
+        # $GPGGA,080319.00,3130.4858508,N,12024.0998832,E,4,25,0.5,12.459,M,0.000,M,2.0,*46
+        if packet_type == 'gN':
+            if self.ntrip_client_enable:
+                # $GPGGA
+                gpgga = '$GPGGA'
+                # time
+                timeOfWeek = float(data['GPS_TimeofWeek'])
+                dsec = int(timeOfWeek)
+                msec = timeOfWeek - dsec
+                sec = dsec % 86400
+                hour = int(sec / 3600)
+                minute = int(sec % 3600 / 60)
+                second = sec % 60
+                gga_time = format(hour*10000 + minute*100 + second + msec - 18, '09.2f')
+                gpgga = gpgga + ',' + gga_time
+                #latitude
+                latitude = float(data['latitude'])
+                if latitude >= 0:
+                    latflag = 'N'
+                else:
+                    latflag = 'S'
+                    latitude = fabs(latitude)
+                lat_d = int(latitude)
+                lat_m = (latitude-lat_d) * 60
+                lat_dm = format(lat_d*100 + lat_m, '012.7f')
+                gpgga = gpgga + ',' + lat_dm + ',' + latflag
+                #longitude
+                longitude = float(data['longitude'])
+                if longitude >= 0:
+                    lonflag = 'E'
+                else:
+                    lonflag = 'W'
+                    longitude = fabs(longitude)
+                lon_d = int(longitude)
+                lon_m = (longitude-lon_d) * 60
+                lon_dm = format(lon_d*100 + lon_m, '013.7f')
+                gpgga = gpgga + ',' + lon_dm + ',' + lonflag
+                #positionMode
+                gpgga = gpgga + ',' + str(data['positionMode'])
+                #svs
+                gpgga = gpgga + ',' + str(data['numberOfSVs'])
+                #hop
+                gpgga = gpgga + ',' + format(float(data['hdop']), '03.1f')
+                #height
+                gpgga = gpgga + ',' + format(float(data['height']), '06.3f') + ',M'
+                #
+                gpgga = gpgga + ',0.000,M'
+                #diffage
+                gpgga = gpgga + ',' + format(float(data['diffage']), '03.1f') + ','
+                #ckm
+                checksum = 0
+                for i in range(1, len(gpgga)):
+                    checksum  = checksum^ord(gpgga[i])
+                gpgga = gpgga + '*' + str(checksum) + '\r\n'
+                # print(gpgga)
+                self.ntripClient.send(gpgga)
+                return
+
+        elif packet_type == 'pS':
             if data['latitude'] != 0.0 and data['longitude'] != 0.0:
                 if self.pS_data:
                     if self.pS_data['GPS_Week'] == data['GPS_Week']:

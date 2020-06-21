@@ -64,7 +64,29 @@
                 "name": "rotation z",
                 "value": 0.0
             }
-        ]
+		],
+		"ntrip":[
+			{
+                "name": "ip",
+                "value": "47.116.1.17"
+            },
+            {
+                "name": "port",
+                "value": 2201
+			},
+			{
+                "name": "mountPoint",
+                "value": "RTK"
+            },
+            {
+                "name": "username",
+                "value": "ymj_123"
+            },
+            {
+                "name": "password",
+                "value": "SIGEMZOOMQ1JDJI3"
+            }
+		]
     },
 	"userConfiguration": [
 		{
@@ -855,6 +877,207 @@
 					}
 				]
             },
+            {
+				"name": "iN",
+				"description": "INSPVA information",
+				"payload": [
+					{
+						"type": "uint32",
+						"name": "GPS_Week",
+						"unit": ""
+					},
+					{
+						"type": "double",
+						"name": "GPS_TimeofWeek",
+						"unit": "sec"
+                    },
+                    {
+						"type": "uint32",
+						"name": "insStatus",
+						"unit": ""
+                    },
+                    {
+						"type": "uint32",
+						"name": "insPositionType",
+						"unit": ""
+                    },
+					{
+						"type": "double",
+						"name": "latitude",
+						"unit": "deg"
+					},
+					{
+						"type": "double",
+						"name": "longitude",
+						"unit": "deg"
+					},
+					{
+						"type": "double",
+						"name": "height",
+						"unit": "m"
+                    },
+                    {
+						"type": "float",
+						"name": "velocityNorth",
+						"unit": "m/s"
+					},
+					{
+						"type": "float",
+						"name": "velocityEast",
+						"unit": "m/s"
+					},
+					{
+						"type": "float",
+						"name": "velocityUp",
+						"unit": "m/s"
+					},
+					{
+						"type": "float",
+						"name": "roll",
+						"unit": "m/s"
+					},
+					{
+						"type": "float",
+						"name": "pitch",
+						"unit": "m/s"
+					},
+					{
+						"type": "float",
+						"name": "heading",
+						"unit": "m/s"
+                    }
+				],
+				"graphs": []
+            },
+            {
+				"name": "d1",
+				"description": "ins std information",
+				"payload": [
+					{
+						"type": "uint32",
+						"name": "GPS_Week",
+						"unit": ""
+					},
+					{
+						"type": "double",
+						"name": "GPS_TimeofWeek",
+						"unit": "sec"
+                    },
+                    {
+						"type": "float",
+						"name": "latitude_std",
+						"unit": ""
+					},
+					{
+						"type": "float",
+						"name": "longitude_std",
+						"unit": ""
+					},
+					{
+						"type": "float",
+						"name": "height_std",
+						"unit": ""
+                    },
+                    {
+						"type": "float",
+						"name": "north_vel_std",
+						"unit": ""
+					},
+					{
+						"type": "float",
+						"name": "east_vel_std",
+						"unit": ""
+					},
+					{
+						"type": "float",
+						"name": "up_vel_std",
+						"unit": ""
+                    },
+                    {
+						"type": "float",
+						"name": "roll_std",
+						"unit": ""
+					},
+					{
+						"type": "float",
+						"name": "pitch_std",
+						"unit": ""
+					},
+					{
+						"type": "float",
+						"name": "heading_std",
+						"unit": ""
+					}
+				],
+				"graphs": []
+            },
+            {
+				"name": "gN",
+				"description": "gnss (RTK) information",
+				"payload": [
+					{
+						"type": "uint32",
+						"name": "GPS_Week",
+						"unit": ""
+					},
+					{
+						"type": "double",
+						"name": "GPS_TimeofWeek",
+						"unit": "sec"
+                    },
+                    {
+						"type": "uint32",
+						"name": "positionMode",
+						"unit": ""
+					},
+					{
+						"type": "double",
+						"name": "latitude",
+						"unit": "deg"
+					},
+					{
+						"type": "double",
+						"name": "longitude",
+						"unit": "deg"
+					},
+					{
+						"type": "double",
+						"name": "height",
+						"unit": "m"
+                    },
+                    {
+                        "type": "uint32",
+						"name": "numberOfSVs",
+						"unit": ""
+                    },
+					{
+						"type": "float",
+						"name": "hdop",
+						"unit": ""
+                    },
+                    {
+						"type": "float",
+						"name": "diffage",
+						"unit": ""
+                    },
+                    {
+						"type": "float",
+						"name": "velocityNorth",
+						"unit": "m/s"
+					},
+					{
+						"type": "float",
+						"name": "velocityEast",
+						"unit": "m/s"
+					},
+					{
+						"type": "float",
+						"name": "velocityUp",
+						"unit": "m/s"
+					}
+				],
+				"graphs": []
+			},
 			{
 				"name": "e1",
 				"description": "VG/AHRS Output Message",
