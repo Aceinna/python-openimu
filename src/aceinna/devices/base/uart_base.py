@@ -14,7 +14,8 @@ from ...framework.utils import (helper, resource)
 from ...framework.file_storage import FileLoger
 from ...framework.configuration import get_config
 from ..message_center import DeviceMessageCenter
-from ..mssage_parser import UartMessageParser
+from ..parser_manager import ParserManager
+
 if sys.version_info[0] > 2:
     from queue import Queue
 else:
@@ -29,6 +30,7 @@ class OpenDeviceBase(EventBase):
 
     def __init__(self, communicator):
         super(OpenDeviceBase, self).__init__()
+        self.type = 'None'
         self.threads = []  # thread of receiver and paser
         self.exception_thread = False  # flag of exit threads
         self.exception_lock = threading.Lock()  # lock of exception_thread
@@ -127,19 +129,16 @@ class OpenDeviceBase(EventBase):
         '''
         Get data from limit times of read
         '''
-        response = False
+        response = None
         trys = 0
 
-        while not response and trys < retry_times:
+        while response is None and trys < retry_times:
             data_buffer = bytearray(self.communicator.read(read_length))
             if data_buffer:
-                # print('data_buffer', data_buffer)
                 response = self._extract_command_response(
                     packet_type, data_buffer)
             trys += 1
-
         # print('read end', time.time(), 'try times', trys, 'response', response)
-
         return response
 
     def _setup_message_center(self):
@@ -147,15 +146,19 @@ class OpenDeviceBase(EventBase):
             self._message_center = DeviceMessageCenter(self.communicator)
 
         if not self._message_center.is_ready():
-            uart_parser = UartMessageParser(self.properties)
+            uart_parser = ParserManager.build(self.type, self.properties)
             self._message_center.set_parser(uart_parser)
             self._message_center.on(
-                'continuous_message', self.on_receive_continuous_messsage)
-            self._message_center.on(
-                'error', self.on_recevie_message_center_error
+                'continuous_message',
+                self.on_receive_continuous_messsage
             )
             self._message_center.on(
-                'read_block', self.on_read_raw
+                'error',
+                self.on_recevie_message_center_error
+            )
+            self._message_center.on(
+                'read_block',
+                self.on_read_raw
             )
             self._message_center.setup()
         else:
@@ -181,12 +184,6 @@ class OpenDeviceBase(EventBase):
 
         self.after_setup()
 
-        # Backup mode checker
-        # if not self.has_backup_checker:
-        #     thread = threading.Thread(
-        #         target=self.thread_backup_checker, args=())
-        #     thread.start()
-        #     self.has_backup_checker = True
 
     def on_recevie_message_center_error(self, error_type, message):
         '''

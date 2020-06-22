@@ -1,9 +1,9 @@
 import collections
 import operator
 import struct
-from .base.event_base import EventBase
-from ..framework.utils import helper
-from ..framework.context import APP_CONTEXT
+from ..base.event_base import EventBase
+from ...framework.utils import helper
+from ...framework.context import APP_CONTEXT
 
 MSG_HEADER = [0x55, 0x55]
 PACKET_TYPE_INDEX = 2
@@ -23,6 +23,9 @@ class UartMessageParser(EventBase):
 
     def set_configuration(self, configuration):
         self.properties = configuration
+
+    def set_run_command(self, command):
+        pass
 
     def analyse(self, data_block):
         if self.find_header:

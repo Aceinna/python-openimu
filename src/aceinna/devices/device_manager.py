@@ -1,5 +1,6 @@
 from .openimu.uart_provider import Provider as OpenIMUProvider
 from .openrtk.uart_provider import Provider as OpenRTKProvider
+from .dmu.uart_provider import Provider as DMUProvider
 
 
 class DeviceManager:
@@ -19,6 +20,7 @@ class DeviceManager:
             if len(DeviceManager.device_list) == 0:
                 DeviceManager.device_list.append(OpenIMUProvider(communicator))
                 DeviceManager.device_list.append(OpenRTKProvider(communicator))
+                DeviceManager.device_list.append(DMUProvider(communicator))
 
         for device in DeviceManager.device_list:
             if filter_device_type and device.type != filter_device_type:

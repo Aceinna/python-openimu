@@ -98,7 +98,6 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         '''
         Listenr for receive output packet
         '''
-
         data_updated = False
         for item in self.latest_packet_collection:
             if item['packet_type'] == packet_type:
