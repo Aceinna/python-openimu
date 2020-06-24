@@ -892,57 +892,57 @@
 						"unit": "sec"
                     },
                     {
-						"type": "uint32",
+						"type": "uint8",
 						"name": "insStatus",
 						"unit": ""
                     },
                     {
-						"type": "uint32",
+						"type": "uint8",
 						"name": "insPositionType",
 						"unit": ""
                     },
 					{
-						"type": "double",
+						"type": "int32",
 						"name": "latitude",
 						"unit": "deg"
 					},
 					{
-						"type": "double",
+						"type": "int32",
 						"name": "longitude",
 						"unit": "deg"
 					},
 					{
-						"type": "double",
+						"type": "float",
 						"name": "height",
 						"unit": "m"
                     },
                     {
-						"type": "float",
+						"type": "int16",
 						"name": "velocityNorth",
 						"unit": "m/s"
 					},
 					{
-						"type": "float",
+						"type": "int16",
 						"name": "velocityEast",
 						"unit": "m/s"
 					},
 					{
-						"type": "float",
+						"type": "int16",
 						"name": "velocityUp",
 						"unit": "m/s"
 					},
 					{
-						"type": "float",
+						"type": "int16",
 						"name": "roll",
 						"unit": "m/s"
 					},
 					{
-						"type": "float",
+						"type": "int16",
 						"name": "pitch",
 						"unit": "m/s"
 					},
 					{
-						"type": "float",
+						"type": "int16",
 						"name": "heading",
 						"unit": "m/s"
                     }
@@ -964,47 +964,47 @@
 						"unit": "sec"
                     },
                     {
-						"type": "float",
+						"type": "int16",
 						"name": "latitude_std",
 						"unit": ""
 					},
 					{
-						"type": "float",
+						"type": "int16",
 						"name": "longitude_std",
 						"unit": ""
 					},
 					{
-						"type": "float",
+						"type": "int16",
 						"name": "height_std",
 						"unit": ""
                     },
                     {
-						"type": "float",
+						"type": "int16",
 						"name": "north_vel_std",
 						"unit": ""
 					},
 					{
-						"type": "float",
+						"type": "int16",
 						"name": "east_vel_std",
 						"unit": ""
 					},
 					{
-						"type": "float",
+						"type": "int16",
 						"name": "up_vel_std",
 						"unit": ""
                     },
                     {
-						"type": "float",
+						"type": "int16",
 						"name": "roll_std",
 						"unit": ""
 					},
 					{
-						"type": "float",
+						"type": "int16",
 						"name": "pitch_std",
 						"unit": ""
 					},
 					{
-						"type": "float",
+						"type": "int16",
 						"name": "heading_std",
 						"unit": ""
 					}
@@ -1026,27 +1026,27 @@
 						"unit": "sec"
                     },
                     {
-						"type": "uint32",
+						"type": "uint8",
 						"name": "positionMode",
 						"unit": ""
 					},
 					{
-						"type": "double",
+						"type": "int32",
 						"name": "latitude",
 						"unit": "deg"
 					},
 					{
-						"type": "double",
+						"type": "int32",
 						"name": "longitude",
 						"unit": "deg"
 					},
 					{
-						"type": "double",
+						"type": "float",
 						"name": "height",
 						"unit": "m"
                     },
                     {
-                        "type": "uint32",
+                        "type": "uint8",
 						"name": "numberOfSVs",
 						"unit": ""
                     },
@@ -1056,22 +1056,22 @@
 						"unit": ""
                     },
                     {
-						"type": "float",
+						"type": "uint16",
 						"name": "diffage",
 						"unit": ""
                     },
                     {
-						"type": "float",
+						"type": "int16",
 						"name": "velocityNorth",
 						"unit": "m/s"
 					},
 					{
-						"type": "float",
+						"type": "int16",
 						"name": "velocityEast",
 						"unit": "m/s"
 					},
 					{
-						"type": "float",
+						"type": "int16",
 						"name": "velocityUp",
 						"unit": "m/s"
 					}

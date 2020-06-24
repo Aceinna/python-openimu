@@ -34,9 +34,9 @@ class UserRawParse:
         self.nmea_sync = 0
         self.log_files = {}
 
-        # self.s1_time = 0.0
-        # self.inspva_time = 0.0
-        # self.std1_time = 0.0
+        self.s1_time = 0.0
+        self.inspva_time = 0.0
+        self.std1_time = 0.0
 
         with open('openrtk_packets.json') as json_data:
             self.rtk_properties = json.load(json_data)
@@ -119,10 +119,10 @@ class UserRawParse:
             for i in range(len(data)):
                 if i == 1:
                     self.log_files[name].write(format((data[i]), '11.4f'))
-                    # if self.s1_time != 0.0:
-                    #     if float(data[i]) - self.s1_time > 0.015:
-                    #         print('S1 timeout: {0}'.format(float(data[i])))
-                    # self.s1_time = float(data[i])
+                    if self.s1_time != 0.0:
+                        if float(data[i]) - self.s1_time > 0.01001:
+                            print('S1 timeout: {0}'.format(float(data[i])))
+                    self.s1_time = float(data[i])
                 elif i >= 2 and i <= 4:
                     self.log_files[name].write(format(data[i], '14.10f'))
                 elif i >= 5 and i <= 7:
@@ -139,6 +139,11 @@ class UserRawParse:
                 self.log_files[name].write(data[i].__str__())
                 self.log_files[name].write(",")
             self.log_files[name].write("\n")
+            if name == 'iN':
+                if self.inspva_time != 0.0:
+                    if float(data[1]) - self.inspva_time > 0.01001:
+                        print('inspva timeout: {0}'.format(float(data[1])))
+                self.inspva_time = float(data[1])
 
     def parse_output_packet_payload(self, packet_type):
         payload_lenth = self.packet_buffer[2]

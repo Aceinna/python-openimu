@@ -15,6 +15,7 @@ from ..configs.openrtk_predefine import (
 from ..decorator import with_device_message
 # import asyncio
 from aceinna.devices.openrtk.ntrip_client import NTRIPClient
+import math
 
 class Provider(OpenDeviceBase):
     '''
@@ -325,23 +326,23 @@ class Provider(OpenDeviceBase):
                 gga_time = format(hour*10000 + minute*100 + second + msec - 18, '09.2f')
                 gpgga = gpgga + ',' + gga_time
                 #latitude
-                latitude = float(data['latitude'])
+                latitude = float(data['latitude']) / 1e+07
                 if latitude >= 0:
                     latflag = 'N'
                 else:
                     latflag = 'S'
-                    latitude = fabs(latitude)
+                    latitude = math.fabs(latitude)
                 lat_d = int(latitude)
                 lat_m = (latitude-lat_d) * 60
                 lat_dm = format(lat_d*100 + lat_m, '012.7f')
                 gpgga = gpgga + ',' + lat_dm + ',' + latflag
                 #longitude
-                longitude = float(data['longitude'])
+                longitude = float(data['longitude']) / 1e+07
                 if longitude >= 0:
                     lonflag = 'E'
                 else:
                     lonflag = 'W'
-                    longitude = fabs(longitude)
+                    longitude = math.fabs(longitude)
                 lon_d = int(longitude)
                 lon_m = (longitude-lon_d) * 60
                 lon_dm = format(lon_d*100 + lon_m, '013.7f')
@@ -363,7 +364,7 @@ class Provider(OpenDeviceBase):
                 for i in range(1, len(gpgga)):
                     checksum  = checksum^ord(gpgga[i])
                 gpgga = gpgga + '*' + str(checksum) + '\r\n'
-                # print(gpgga)
+                print(gpgga)
                 self.ntripClient.send(gpgga)
                 return
 
