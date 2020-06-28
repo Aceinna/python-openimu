@@ -18,7 +18,7 @@ S0 = [0x53, 0x30]
 
 class Provider(OpenDeviceBase):
     '''
-    IMU UART provider
+    DMU UART provider
     '''
 
     def __init__(self, communicator):
@@ -60,14 +60,15 @@ class Provider(OpenDeviceBase):
         config_file_path = os.path.join(
             self.setting_folder_path, config_file_name)
 
-        if not os.path.isdir(self.setting_folder_path):
-            os.makedirs(self.setting_folder_path)
+        if not os.path.isfile(config_file_path):
+            if not os.path.isdir(self.setting_folder_path):
+                os.makedirs(self.setting_folder_path)
 
-        app_config_content = resource.get_content_from_bundle(
-            setting_folder_name, os.path.join('dmu', config_file_name))
+            app_config_content = resource.get_content_from_bundle(
+                setting_folder_name, os.path.join('dmu', config_file_name))
 
-        with open(config_file_path, "wb") as code:
-            code.write(app_config_content)
+            with open(config_file_path, "wb") as code:
+                code.write(app_config_content)
 
     def ping(self):
         '''

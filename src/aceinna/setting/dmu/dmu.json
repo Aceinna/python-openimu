@@ -351,7 +351,7 @@
 				"graphs": [{
 						"name": "Acceleration",
 						"units": "m/s^2",
-						"xAxis": "counter",
+						"xAxis": {"name":"counter","unit":"packets"},
 						"yAxes": ["xAccel", "yAccel", "zAccel"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
 						"yMax": 5
@@ -359,7 +359,7 @@
 					{
 						"name": "Angular-Rate",
 						"units": "deg/s",
-						"xAxis": "counter",
+						"xAxis": {"name":"counter","unit":"packets"},
 						"yAxes": ["xRate", "yRate", "zRate"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
 						"yMax": 200
@@ -367,7 +367,7 @@
 					{
 						"name": "Board-Temperature",
 						"units": "degC",
-						"xAxis": "counter",
+						"xAxis": {"name":"counter","unit":"packets"},
 						"yAxes": ["boardTemp"],
 						"colors": ["#FF0000"],
 						"yMax": 100
