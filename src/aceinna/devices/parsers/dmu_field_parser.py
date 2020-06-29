@@ -1,9 +1,63 @@
 import struct
 
+IIR_50HZ_LPF = 50
+IIR_40HZ_LPF = 40
+IIR_25HZ_LPF = 25
+IIR_20HZ_LPF = 20
+IIR_10HZ_LPF = 10
+IIR_05HZ_LPF = 5
+IIR_02HZ_LPF = 2
+UNFILTERED = 0
+
 
 def bytes_to_byte_instr(b, n=None):
     s = ''.join(f'{x:08b}' for x in b)
     return s if n is None else s[:n + n // 8 + (0 if n % 8 else -1)]
+
+
+def decode_lpf(payload):
+    # print('decode lpf', payload)
+    pack_item = struct.pack('2B', *payload)
+    counts = struct.unpack('>H', pack_item)[0]
+    if counts > 18749:
+        return IIR_02HZ_LPF
+    elif (counts <= 18749) and (counts > 8034):
+        return IIR_05HZ_LPF
+    elif (counts <= 8034) and (counts > 4017):
+        return IIR_10HZ_LPF
+    elif (counts <= 4017) and (counts > 2410):
+        return IIR_20HZ_LPF
+    elif (counts <= 2410) and (counts > 1740):
+        return IIR_25HZ_LPF
+    elif (counts <= 1740) and (counts > 1204):
+        return IIR_40HZ_LPF
+    elif (counts <= 1204) and (counts > 0):
+        return IIR_50HZ_LPF
+    else:
+        return UNFILTERED
+
+
+def encode_lpf(value):
+    # print('encode lpf', value)
+    counts = 0
+    if value == IIR_02HZ_LPF:
+        counts = 26785
+    elif value == IIR_05HZ_LPF:
+        counts = 10713
+    elif value == IIR_10HZ_LPF:
+        counts = 5356
+    elif value == IIR_20HZ_LPF:
+        counts = 2678
+    elif value == IIR_25HZ_LPF:
+        counts = 2142
+    elif value == IIR_40HZ_LPF:
+        counts = 1338
+    elif value == UNFILTERED:
+        counts = 0
+    else:
+        counts = 1070
+
+    return struct.pack('>h', counts)
 
 
 def decode_value(data_type, data):
@@ -123,6 +177,8 @@ def decode_value(data_type, data):
         ret_data += ['Z', 'X', 'Y'][z_asix]
 
         return ret_data  # '+X+Y+Z'
+    elif data_type == 'lpf':
+        return decode_lpf(data)
     else:
         return False
 
@@ -159,5 +215,7 @@ def encode_value(data_type, data):
             value = int(bit_str, 2)
             return struct.pack('>h', value)
         return False
+    elif data_type == 'lpf':
+        return encode_lpf(data)
     else:
         return False

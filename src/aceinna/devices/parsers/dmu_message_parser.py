@@ -8,11 +8,12 @@ from .dum_packet_parser import (
     match_command_handler, match_continuous_handler)
 
 MSG_HEADER = [0x55, 0x55]
+NAK = [0x15, 0x15]
 PACKET_TYPE_INDEX = 2
 PRIVATE_PACKET_TYPE = ['RE', 'WE', 'UE', 'LE', 'SR']
 INPUT_PACKETS = ['PK', 'CH', 'RE', 'WE', 'UE', 'GP',
                  'SF', 'RF', 'WF', 'GF',
-                 'AR', 'SR', 'PR', '  ',
+                 'AR', 'SR', 'PR', '\x15\x15','\x00\x00',
                  'WC', 'CB', 'CC']
 OUTPUT_PACKETS = ['ID', 'VR', 'VA', 'KC', 'KT', 'KS']
 
@@ -44,7 +45,6 @@ class UartMessageParser(EventBase):
             elif 5 + self.payload_len + 2 == len(self.frame):
                 packet_type = ''.join(
                     ["%c" % x for x in self.frame[PACKET_TYPE_INDEX:4]])
-
                 self.find_header = False
                 result = helper.calc_crc(self.frame[2:-2])
                 if result[0] == self.frame[-2] and result[1] == self.frame[-1]:

@@ -25,7 +25,31 @@
 				{"key":"6", "value":"230400"}
             ] 
         },
-        { "paramId": 3, "category": "General","paramType": "select", "type": "char8", "name": "Packet Type", "argument": "type", "options": [], "popular":true },
+		{ "paramId": 3, "category": "General","paramType": "select", "type": "char8", "name": "Packet Type", "argument": "type", "options": [], "popular":true },
+		{ "paramId": 5, "category": "General","paramType": "select", "type": "lpf", "name": "Accel LPF", "argument": "accel_lpf", 
+			"options": [
+				{"key":"0","value":"No filter"},
+				{"key":"50","value":"50Hz"},
+				{"key":"40","value":"40Hz"},
+				{"key":"25","value":"25Hz"},
+				{"key":"20","value":"20Hz"},
+				{"key":"10","value":"10Hz"},
+				{"key":"5","value":"5Hz"},
+				{"key":"2","value":"2Hz"}
+			]
+		},	
+		{ "paramId": 6, "category": "General","paramType": "select", "type": "lpf", "name": "Rate LPF", "argument": "rate_lpf", 
+			"options": [
+				{"key":"0","value":"0Hz"},
+				{"key":"50","value":"50Hz"},
+				{"key":"40","value":"40Hz"},
+				{"key":"25","value":"25Hz"},
+				{"key":"20","value":"20Hz"},
+				{"key":"10","value":"10Hz"},
+				{"key":"5","value":"5Hz"},
+				{"key":"2","value":"2Hz"}
+			]
+		},	
 		{ "paramId": 7, "category": "General","paramType": "select", "type": "orientation", "name": "Orientation", "argument": "orien", "value_range":[-1,1],"value_accuracy":6,"options": ["+X+Y+Z"] }
     ],
     "scaling":{

@@ -169,6 +169,7 @@ def common_continuous_parser(payload, configuration, scaling):
     return format_data
 
 
+# packet handler
 def match_command_handler(packet_type):
     '''
     Find the handler for specified packet
