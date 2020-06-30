@@ -2,7 +2,6 @@ from abc import ABCMeta, abstractmethod
 import os
 import sys
 import threading
-import operator
 import collections
 import time
 import struct
@@ -104,42 +103,121 @@ class OpenDeviceBase(EventBase):
             return format_string
         return ''
 
-    def _extract_command_response(self, command, data_buffer):
-        command_0 = ord(command[0])
-        command_1 = ord(command[1])
-        sync_pattern = collections.deque(4*[0], 4)
-        sync_state = 0
-        packet_buffer = []
-        for new_byte in data_buffer:
-            sync_pattern.append(new_byte)
-            if list(sync_pattern) == [0x55, 0x55, command_0, command_1]:
-                packet_buffer = [command_0, command_1]
-                sync_state = 1
-            elif sync_state == 1:
-                packet_buffer.append(new_byte)
-                if len(packet_buffer) == packet_buffer[2] + 5:
-                    if packet_buffer[-2:] == helper.calc_crc(packet_buffer[:-2]):
-                        data = packet_buffer[3:packet_buffer[2]+3]
-                        return data
+    # def _extract_command_response(self, command, data_buffer):
+    #     command_0 = ord(command[0])
+    #     command_1 = ord(command[1])
+    #     sync_pattern = collections.deque(4*[0], 4)
+    #     sync_state = 0
+    #     packet_buffer = []
+    #     for new_byte in data_buffer:
+    #         sync_pattern.append(new_byte)
+    #         if list(sync_pattern) == [0x55, 0x55, command_0, command_1]:
+    #             packet_buffer = [command_0, command_1]
+    #             sync_state = 1
+    #         elif sync_state == 1:
+    #             packet_buffer.append(new_byte)
+    #             if len(packet_buffer) == packet_buffer[2] + 5:
+    #                 if packet_buffer[-2:] == helper.calc_crc(packet_buffer[:-2]):
+    #                     data = packet_buffer[3:packet_buffer[2]+3]
+    #                     return data
+    #                 else:
+    #                     sync_state = 0  # CRC did not match
+
+    def _parse_buffer(self, data_buffer):
+        response = {
+            'parsed': False,
+            'parsed_end_index': 0,
+            'result': []
+        }
+        data_queue = Queue()
+        data_queue.queue.extend(data_buffer)
+
+        command_start = [0x55, 0x55]
+        parsed_data = []
+        is_header_found = False
+        packet_type = ''
+        data_buffer_len = len(data_buffer)
+
+        while not data_queue.empty():
+            if is_header_found:
+                # if matched packet, is_header_found = False, parsed_data = []
+                if not data_queue.empty():
+                    packet_type_start = data_queue.get()
+                else:
+                    break
+
+                if not data_queue.empty():
+                    packet_type_end = data_queue.get()
+                else:
+                    break
+
+                if not data_queue.empty():
+                    packet_len = data_queue.get()
+                    packet_type = ''.join(
+                        ["%c" % x for x in [packet_type_start, packet_type_end]])
+                    packet_data = []
+
+                    if data_queue.qsize() >= packet_len:
+                        # take packet
+                        for _ in range(packet_len):
+                            packet_data.append(data_queue.get())
                     else:
-                        sync_state = 0  # CRC did not match
+                        break
+                    # update response
+                    response['parsed'] = True
+                    response['result'].append({
+                        'type': packet_type,
+                        'data': packet_data
+                    })
+                    response['parsed_end_index'] += data_buffer_len - \
+                        data_queue.qsize()
+                    data_buffer_len = data_queue.qsize()
+                    parsed_data = []
+                    is_header_found = False
+                else:
+                    break
+            else:
+                byte_item = data_queue.get()
+                parsed_data.append(byte_item)
+
+                if len(parsed_data) > 2:
+                    parsed_data = parsed_data[-2:]
+
+                if parsed_data == command_start:
+                    # find message start
+                    is_header_found = True
+                    parsed_data = []
+
+        return response
 
     # may lost data
     def read_untils_have_data(self, packet_type, read_length=200, retry_times=20):
         '''
         Get data from limit times of read
         '''
-        response = None
+        result = None
         trys = 0
+        data_buffer = []
+        self.data_queue.queue.clear()
 
-        while response is None and trys < retry_times:
-            data_buffer = bytearray(self.communicator.read(read_length))
-            if data_buffer:
-                response = self._extract_command_response(
-                    packet_type, data_buffer)
+        while trys < retry_times:
+            data_buffer_per_time = bytearray(
+                self.communicator.read(read_length))
+            data_buffer.extend(data_buffer_per_time)
+
+            response = self._parse_buffer(data_buffer)
+            if response['parsed']:
+                matched_packet = next(
+                    (packet['data'] for packet in response['result'] if packet['type'] == packet_type), None)
+                if matched_packet is not None:
+                    result = matched_packet
+                    break
+                else:
+                    # clear buffer to parsed index
+                    data_buffer = data_buffer[response['parsed_end_index']:]
             trys += 1
-        # print('read end', time.time(), 'try times', trys, 'response', response)
-        return response
+
+        return result
 
     def _setup_message_center(self):
         if not self._message_center:
@@ -173,7 +251,7 @@ class OpenDeviceBase(EventBase):
         self.cli_options = options
 
         with_data_log = options and options.with_data_log
-        
+
         self._setup_message_center()
 
         if with_data_log and not self.is_logging and self.enable_data_log:
@@ -183,7 +261,6 @@ class OpenDeviceBase(EventBase):
             self.is_logging = True
 
         self.after_setup()
-
 
     def on_recevie_message_center_error(self, error_type, message):
         '''
@@ -257,7 +334,7 @@ class OpenDeviceBase(EventBase):
         self.listeners.clear()
         # self.clients.clear()
         self.exception_thread = False
-        self.data_queue.queue.clear()
+        # self.data_queue.queue.clear()
 
     def close(self):
         '''
@@ -392,7 +469,7 @@ class OpenDeviceBase(EventBase):
         '''
         self.input_result = None
         self.bootloader_result = None
-        self.data_queue.queue.clear()
+        # self.data_queue.queue.clear()
         self.is_upgrading = False
 
         self.load_properties()
