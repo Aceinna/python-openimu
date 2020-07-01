@@ -1,6 +1,6 @@
 {
     "userNMEAList": ["$GPGGA", "$GPRMC", "$GPGSV", "$GLGSV", "$GAGSV", "$BDGSV", "$GPGSA", "$GLGSA", "$GAGSA", "$BDGSA"],
-	"userPacketsTypeList": ["s1", "K1", "pS", "sK"],
+	"userPacketsTypeList": ["s1", "K1", "pS", "sK", "iN", "d1", "gN"],
 	"debugPacketsTypeList": [177, 268, 42, 99, 507],
 	"userOutputPackets": [
         {
@@ -46,6 +46,204 @@
                     "type": "float",
                     "name": "z_rate",
                     "unit": "deg/s"
+                }
+            ]
+        },
+        {
+            "name": "iN",
+            "isList": 0,
+            "payload": [
+                {
+                    "type": "uint32",
+                    "name": "GPS_Week",
+                    "unit": ""
+                },
+                {
+                    "type": "double",
+                    "name": "GPS_TimeofWeek",
+                    "unit": "sec"
+                },
+                {
+                    "type": "uint8",
+                    "name": "insStatus",
+                    "unit": ""
+                },
+                {
+                    "type": "uint8",
+                    "name": "insPositionType",
+                    "unit": ""
+                },
+                {
+                    "type": "int32",
+                    "name": "latitude",
+                    "unit": "deg"
+                },
+                {
+                    "type": "int32",
+                    "name": "longitude",
+                    "unit": "deg"
+                },
+                {
+                    "type": "float",
+                    "name": "height",
+                    "unit": "m"
+                },
+                {
+                    "type": "int16",
+                    "name": "velocityNorth",
+                    "unit": "m/s"
+                },
+                {
+                    "type": "int16",
+                    "name": "velocityEast",
+                    "unit": "m/s"
+                },
+                {
+                    "type": "int16",
+                    "name": "velocityUp",
+                    "unit": "m/s"
+                },
+                {
+                    "type": "int16",
+                    "name": "roll",
+                    "unit": "m/s"
+                },
+                {
+                    "type": "int16",
+                    "name": "pitch",
+                    "unit": "m/s"
+                },
+                {
+                    "type": "int16",
+                    "name": "heading",
+                    "unit": "m/s"
+                }
+            ]
+        },
+        {
+            "name": "d1",
+            "isList": 0,
+            "payload": [
+                {
+                    "type": "uint32",
+                    "name": "GPS_Week",
+                    "unit": ""
+                },
+                {
+                    "type": "double",
+                    "name": "GPS_TimeofWeek",
+                    "unit": "sec"
+                },
+                {
+                    "type": "int16",
+                    "name": "latitude_std",
+                    "unit": ""
+                },
+                {
+                    "type": "int16",
+                    "name": "longitude_std",
+                    "unit": ""
+                },
+                {
+                    "type": "int16",
+                    "name": "height_std",
+                    "unit": ""
+                },
+                {
+                    "type": "int16",
+                    "name": "north_vel_std",
+                    "unit": ""
+                },
+                {
+                    "type": "int16",
+                    "name": "east_vel_std",
+                    "unit": ""
+                },
+                {
+                    "type": "int16",
+                    "name": "up_vel_std",
+                    "unit": ""
+                },
+                {
+                    "type": "int16",
+                    "name": "roll_std",
+                    "unit": ""
+                },
+                {
+                    "type": "int16",
+                    "name": "pitch_std",
+                    "unit": ""
+                },
+                {
+                    "type": "int16",
+                    "name": "heading_std",
+                    "unit": ""
+                }
+            ]
+        },
+        {
+            "name": "gN",
+            "isList": 0,
+            "payload": [
+                {
+                    "type": "uint32",
+                    "name": "GPS_Week",
+                    "unit": ""
+                },
+                {
+                    "type": "double",
+                    "name": "GPS_TimeofWeek",
+                    "unit": "sec"
+                },
+                {
+                    "type": "uint8",
+                    "name": "positionMode",
+                    "unit": ""
+                },
+                {
+                    "type": "int32",
+                    "name": "latitude",
+                    "unit": "deg"
+                },
+                {
+                    "type": "int32",
+                    "name": "longitude",
+                    "unit": "deg"
+                },
+                {
+                    "type": "float",
+                    "name": "height",
+                    "unit": "m"
+                },
+                {
+                    "type": "uint8",
+                    "name": "numberOfSVs",
+                    "unit": ""
+                },
+                {
+                    "type": "float",
+                    "name": "hdop",
+                    "unit": ""
+                },
+                {
+                    "type": "uint16",
+                    "name": "diffage",
+                    "unit": ""
+                },
+                {
+                    "type": "int16",
+                    "name": "velocityNorth",
+                    "unit": "m/s"
+                },
+                {
+                    "type": "int16",
+                    "name": "velocityEast",
+                    "unit": "m/s"
+                },
+                {
+                    "type": "int16",
+                    "name": "velocityUp",
+                    "unit": "m/s"
                 }
             ]
         },
@@ -308,21 +506,49 @@
 		{
 			"name": "odo",
 			"messageId": "177",
-			"needHeadTime": 0,
+			"needHeadTime": 2,
 			"payload": [
+                {
+					"type": "uint32",
+					"name": "GPS_Week",
+                    "unit": "",
+                    "need": 1,
+                    "format": ""
+				},
 				{
 					"type": "double",
 					"name": "GPS_TimeofWeek",
                     "unit": "s",
                     "need": 1,
                     "format": "11.4f"
+                },
+                {
+					"type": "uint8",
+					"name": "mode",
+                    "unit": "",
+                    "need": 1,
+                    "format": ""
 				},
 				{
 					"type": "double",
 					"name": "speed",
                     "unit": "m/s",
-                    "need": 2,
+                    "need": 1,
                     "format": "10.4f"
+				},
+				{
+					"type": "uint8",
+					"name": "fwd",
+                    "unit": "",
+                    "need": 1,
+                    "format": ""
+				},
+				{
+					"type": "uint64",
+					"name": "wheel_tick",
+                    "unit": "",
+                    "need": 2,
+                    "format": ""
 				}
 			]
 		},

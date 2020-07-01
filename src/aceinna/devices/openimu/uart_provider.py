@@ -734,6 +734,22 @@ class Provider(OpenDeviceBase):
         })
 
     @with_device_message
+    def _unlock(self):
+        command_line = helper.build_read_eeprom_input_packet(0x100, 2)
+        result = yield self._message_center.build(command=command_line, timeout=2)
+        if result['error']:
+            self._restore_fail()
+            return
+
+        command_line = helper.build_unlock_eeprom_packet(result['data'])
+        unlock_result = yield self._message_center.build(command=command_line, timeout=2)
+
+        if unlock_result['error']:
+            self._restore_fail()
+            return
+        print('unlock -- successfull', unlock_result['data'])
+
+    @with_device_message
     def thread_do_restore(self):
         '''
         Do Calibration Restore
@@ -977,6 +993,7 @@ class Provider(OpenDeviceBase):
             start += 2
         return data
 
+    @with_device_message
     def _lock(self):
         # lock eeprom
         command_line = helper.build_input_packet('LE')

@@ -43,6 +43,8 @@ def with_device_message(func):
                 device_message.on('finished', on_resolve)
                 device_message.send()
                 return check_result()
+            else:
+                return device_message
         except StopIteration as ex:
             value = {
                 'packetType': 'error',

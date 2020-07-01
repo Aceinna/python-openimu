@@ -53,6 +53,7 @@ def build_read_eeprom_input_packet(start, word_len):
     packet = command + calc_crc(command[2:command[4]+5])
     return packet
 
+
 def build_write_eeprom_input_packet(start, word_len, data):
     '''
     Build RE command
@@ -67,6 +68,7 @@ def build_write_eeprom_input_packet(start, word_len, data):
     packet = command + calc_crc(command[2:command[4]+5])
     return packet
 
+
 def build_unlock_eeprom_packet(sn):
     '''
     Build UE command
@@ -78,6 +80,7 @@ def build_unlock_eeprom_packet(sn):
     packet = command + calc_crc(command[2:command[4]+5])
     return packet
 
+
 def build_lock_eeprom_packet():
     '''
     Build UE command
@@ -86,6 +89,7 @@ def build_lock_eeprom_packet():
     command = COMMAND_START + name_bytes + [0]
     packet = command + calc_crc(command[2:4] + [0x00])
     return packet
+
 
 def unpack_payload(name, properties, param=False, value=False):
     '''

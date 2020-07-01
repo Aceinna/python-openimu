@@ -1,0 +1,491 @@
+{
+	"name": "IMU",
+	"description": "IMU Configuration",
+	"userConfiguration": [
+        { "paramId": 1, "category": "General","paramType": "select", "type": "uint16", "name": "Packet Rate", "argument": "rate",
+            "options": [
+                {"key":"0", "value":"Quiet"},
+                {"key":"1", "value":"100Hz"},
+                {"key":"2", "value":"50Hz"},
+                {"key":"4", "value":"25Hz"},
+                {"key":"5", "value":"20Hz"},
+                {"key":"10", "value":"10Hz"},
+                {"key":"20", "value":"5Hz"},
+                {"key":"25", "value":"4Hz"},
+                {"key":"50", "value":"2Hz"}
+            ], "popular":true },
+        { "paramId": 2, "category": "General","paramType": "select", "type": "uint16", "name": "Baud Rate", "argument": "baud_rate",
+            "options": [
+				{"key":"4", "value":"4800"},
+                {"key":"0", "value":"9600"},
+                {"key":"1", "value":"19200"},
+                {"key":"2", "value":"38400"},
+				{"key":"3", "value":"57600"},
+				{"key":"5", "value":"115200"},
+				{"key":"6", "value":"230400"}
+            ] 
+        },
+		{ "paramId": 3, "category": "General","paramType": "select", "type": "char8", "name": "Packet Type", "argument": "type", "options": [], "popular":true },
+		{ "paramId": 5, "category": "General","paramType": "select", "type": "lpf", "name": "Accel LPF", "argument": "accel_lpf", 
+			"options": [
+				{"key":"0","value":"No filter"},
+				{"key":"50","value":"50Hz"},
+				{"key":"40","value":"40Hz"},
+				{"key":"25","value":"25Hz"},
+				{"key":"20","value":"20Hz"},
+				{"key":"10","value":"10Hz"},
+				{"key":"5","value":"5Hz"},
+				{"key":"2","value":"2Hz"}
+			]
+		},	
+		{ "paramId": 6, "category": "General","paramType": "select", "type": "lpf", "name": "Rate LPF", "argument": "rate_lpf", 
+			"options": [
+				{"key":"0","value":"0Hz"},
+				{"key":"50","value":"50Hz"},
+				{"key":"40","value":"40Hz"},
+				{"key":"25","value":"25Hz"},
+				{"key":"20","value":"20Hz"},
+				{"key":"10","value":"10Hz"},
+				{"key":"5","value":"5Hz"},
+				{"key":"2","value":"2Hz"}
+			]
+		},	
+		{ "paramId": 7, "category": "General","paramType": "select", "type": "orientation", "name": "Orientation", "argument": "orien", "value_range":[-1,1],"value_accuracy":6,"options": ["+X+Y+Z"] }
+    ],
+    "scaling":{
+        "accel":"20*9.80665/65536",
+        "rate":"1260/65536",
+        "mag":"2/65536",
+        "temperature":"200/65536",
+        "time":"1/65535"
+    },
+	"userMessages": {
+		"inputPackets": [
+			{
+				"name": "ma",
+				"description": "Magnetic alignment control commands",
+				"inputPayload": [
+					{
+						"actionID":  0,
+						"actionName": "status"
+					},
+					{
+
+						"actionID":  1,
+						"actionName": "start"
+					},
+					{
+						"actionID":  5,
+						"actionName": "save"
+					},
+					{
+						"actionID":  6,
+						"actionName": "abort"
+					},
+					{
+						"actionID": 7,
+						"actionName": "stored"
+					}
+				],
+				"responsePayload": {
+					"type": "string",
+					"name": "ma action name"
+				}
+			},
+			{
+				"name": "gV",
+				"description": "Get user app version",
+				"inputPayload": {},
+				"responsePayload": {
+					"type": "string",
+					"name": "User Version"
+				}
+			},
+			{
+				"name": "RF",
+				"description": "Get All Configuration Parameters",
+				"inputPayload": {},
+				"responsePayload": {
+					"type": "userConfiguration",
+					"name": "Full Current Configuration"
+				}
+			},
+			{
+				"name": "gP",
+				"description": "Get a Configuration Parameter",
+				"inputPayload": {
+					"type": "paramId",
+					"name": "Request Parameter Id"
+				},
+				"responsePayload": {
+					"type": "userParameter",
+					"name": "User Parameter"
+				}
+			},
+			{
+				"name": "sC",
+				"description": "Save Conifguration Parameters to Flash",
+				"inputPayload": {},
+				"responsePayload": {}
+			},
+			{
+				"name": "SF",
+				"description": "Update Configuration Parameter",
+				"inputPayload": {
+					"type": "userParameter",
+					"name": "Parameter to be Updated"
+				},
+				"responsePayload": {
+					"type": "paramId",
+					"name": "ID of the Updated Parameter"
+				}
+			}
+		],
+		"outputPackets": [
+			{
+				"name": "S0",
+				"description": "Scaled Sensor Data",
+				"payload": [
+					{
+						"type": "int16",
+						"name": "xAccel",
+                        "unit": "m/s^2",
+                        "offset": "0",
+                        "scaling":"accel"
+					},
+					{
+						"type": "int16",
+						"name": "yAccel",
+                        "unit": "m/s^2",
+                        "offset": "2",
+                        "scaling":"accel"
+					},
+					{
+						"type": "int16",
+						"name": "zAccel",
+                        "unit": "m/s^2",
+                        "offset": "4",
+                        "scaling":"accel"
+					},
+					{
+						"type": "int16",
+						"name": "xRate",
+                        "unit": "deg/s",
+                        "offset": "6",
+                        "scaling":"rate"
+					},
+					{
+						"type": "int16",
+						"name": "yRate",
+                        "unit": "deg/s",
+                        "offset": "8",
+                        "scaling":"rate"
+					},
+					{
+						"type": "int16",
+						"name": "zRate",
+                        "unit": "deg/s",
+                        "offset": "10",
+                        "scaling":"rate"
+					},
+					{
+						"type": "int16",
+						"name": "xMag",
+                        "unit": "Gauss",
+                        "offset": "12",
+                        "scaling":"mag"
+					},
+					{
+						"type": "int16",
+						"name": "yMag",
+                        "unit": "Gauss",
+                        "offset": "14",
+                        "scaling":"mag"
+					},
+					{
+						"type": "int16",
+						"name": "zMag",
+                        "unit": "Gauss",
+                        "offset": "16",
+                        "scaling":"mag"
+                    },
+                    {
+						"type": "int16",
+						"name": "xRateTemp",
+                        "unit": "deg",
+                        "offset": "18",
+                        "scaling":"temperature"
+					},
+					{
+						"type": "int16",
+						"name": "yRateTemp",
+                        "unit": "deg",
+                        "offset": "20",
+                        "scaling":"temperature"
+					},
+					{
+						"type": "int16",
+						"name": "zRateTemp",
+                        "unit": "deg",
+                        "offset": "22",
+                        "scaling":"temperature"
+                    },
+                    {
+						"type": "int16",
+						"name": "boardTemp",
+                        "unit": "deg",
+                        "offset": "24",
+                        "scaling":"temperature"
+                    },
+                    {
+						"type": "uint16",
+						"name": "GPSITOW",
+                        "unit": "msec",
+                        "offset": "26",
+                        "scaling":"time"
+                    },
+                    {
+						"type": "uint16",
+						"name": "BITstatus",
+                        "unit": "",
+                        "offset": "28"
+					}
+				],
+				"graphs": [{
+						"name": "Acceleration",
+						"units": "m/s^2",
+						"xAxis": "GPSITOW",
+						"yAxes": ["xAccel", "yAccel", "zAccel"],
+						"colors": ["#FF0000", "#00FF00", "#0000FF"],
+						"yMax": 80
+					},
+					{
+						"name": "Angular Rate",
+						"units": "deg/s",
+						"xAxis": "GPSITOW",
+						"yAxes": ["xRate", "yRate", "zRate"],
+						"colors": ["#FF0000", "#00FF00", "#0000FF"],
+						"yMax": 400
+					},
+					{
+						"name": "Magnetic-Field",
+						"units": "Gauss",
+						"xAxis": "GPSITOW",
+						"yAxes": ["xMag", "yMag", "zMag"],
+						"colors": ["#FF0000", "#00FF00", "#0000FF"],
+						"yMax": 20
+                    },
+                    {
+						"name": "Board-Temperature",
+						"units": "degC",
+						"xAxis": "GPSITOW",
+						"yAxes": ["boardTemp"],
+						"colors": ["#FF0000"],
+						"yMax": 100
+					}
+				]
+			},
+			{
+				"name": "S1",
+				"description": "IMU Scaled-Sensor Output Message",
+				"payload": [
+                    {
+						"type": "int16",
+						"name": "xAccel",
+                        "unit": "m/s^2",
+                        "offset": "0",
+                        "scaling":"accel"
+					},
+					{
+						"type": "int16",
+						"name": "yAccel",
+                        "unit": "m/s^2",
+                        "offset": "2",
+                        "scaling":"accel"
+					},
+					{
+						"type": "int16",
+						"name": "zAccel",
+                        "unit": "m/s^2",
+                        "offset": "4",
+                        "scaling":"accel"
+					},
+					{
+						"type": "int16",
+						"name": "xRate",
+                        "unit": "deg/s",
+                        "offset": "6",
+                        "scaling":"rate"
+					},
+					{
+						"type": "int16",
+						"name": "yRate",
+                        "unit": "deg/s",
+                        "offset": "8",
+                        "scaling":"rate"
+					},
+					{
+						"type": "int16",
+						"name": "zRate",
+                        "unit": "deg/s",
+                        "offset": "10",
+                        "scaling":"rate"
+					},
+                    {
+						"type": "int16",
+						"name": "xRateTemp",
+                        "unit": "deg",
+                        "offset": "12",
+                        "scaling":"temperature"
+					},
+					{
+						"type": "int16",
+						"name": "yRateTemp",
+                        "unit": "deg",
+                        "offset": "14",
+                        "scaling":"temperature"
+					},
+					{
+						"type": "int16",
+						"name": "zRateTemp",
+                        "unit": "deg",
+                        "offset": "16",
+                        "scaling":"temperature"
+                    },
+                    {
+						"type": "int16",
+						"name": "boardTemp",
+                        "unit": "deg",
+                        "offset": "18",
+                        "scaling":"temperature"
+                    },
+                    {
+						"type": "uint16",
+						"name": "counter",
+                        "unit": "packets",
+                        "offset": "20"
+                    },
+                    {
+						"type": "uint16",
+						"name": "BITstatus",
+                        "unit": "",
+                        "offset": "22"
+					}
+				],
+				"graphs": [{
+						"name": "Acceleration",
+						"units": "m/s^2",
+						"xAxis": {"name":"counter","unit":"packets"},
+						"yAxes": ["xAccel", "yAccel", "zAccel"],
+						"colors": ["#FF0000", "#00FF00", "#0000FF"],
+						"yMax": 5
+					},
+					{
+						"name": "Angular-Rate",
+						"units": "deg/s",
+						"xAxis": {"name":"counter","unit":"packets"},
+						"yAxes": ["xRate", "yRate", "zRate"],
+						"colors": ["#FF0000", "#00FF00", "#0000FF"],
+						"yMax": 200
+					},
+					{
+						"name": "Board-Temperature",
+						"units": "degC",
+						"xAxis": {"name":"counter","unit":"packets"},
+						"yAxes": ["boardTemp"],
+						"colors": ["#FF0000"],
+						"yMax": 100
+					}
+				]
+			}					
+		]
+	},
+	"bootloaderMessages": [{
+			"name": "JI",
+			"description": "Jump to Bootloader",
+			"inputPayload": {},
+			"responsePayload": {
+				"type": "ack",
+				"response": "Acknowledgement"
+			}
+		},
+		{
+			"name": "JA",
+			"description": "Jump to App",
+			"inputPayload": {},
+			"responsePayload": {
+				"type": "none",
+				"response": "Empty"
+			}
+		},
+		{
+			"name": "WA",
+			"description": "Write App Block",
+			"inputPayload": {
+				"type": "block",
+				"name": "4 byte block address followed by up to 240 bytes data"
+			},
+			"responsePayload": {
+				"type": "ack",
+				"response": "Acknowledgement"
+			}
+		}
+	],
+	"CLICommands": [{
+			"name": "help",
+			"description": "CLI help menu",
+			"function": "help_handler"
+		},
+		{
+			"name": "exit",
+			"description": "exit CLI",
+			"function": ""
+		},
+		{
+			"name": "run",
+			"description": "Operations defined by users",
+			"function": "run_handler"
+		},
+		{
+			"name": "save",
+			"description": "Save the configuration into EEPROM",
+			"function": "save_handler"
+		},
+		{
+			"name": "connect",
+			"description": "Find OpenIMU device",
+			"function": "connect_handler"
+		},
+		{
+			"name": "upgrade",
+			"description": "Upgrade firmware",
+			"function": "upgrade_handler"
+		},
+		{
+			"name": "record",
+			"description": "Record output data of OpenIMU on local machine",
+			"function": "record_handler"
+		},
+		{
+			"name": "stop",
+			"description": "stop recording outputs on local machine",
+			"function": "stop_handler"
+		},
+		{
+			"name": "server_start",
+			"description": "start server thread and must use exit command to quit",
+			"function": "server_start_handler"
+		},
+		{
+			"name": "get",
+			"description": "Read the current configuration and output data",
+			"function": "get_handler"
+		},
+		{
+			"name": "set",
+			"description": "Write parameters to OpenIMU",
+			"function": "set_handler"
+		}
+	]
+}
+

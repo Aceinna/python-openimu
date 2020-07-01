@@ -1,9 +1,9 @@
 import collections
 import operator
 import struct
-from .base.event_base import EventBase
-from ..framework.utils import helper
-from ..framework.context import APP_CONTEXT
+from ..base.event_base import EventBase
+from ...framework.utils import helper
+from ...framework.context import APP_CONTEXT
 
 MSG_HEADER = [0x55, 0x55]
 PACKET_TYPE_INDEX = 2
@@ -23,6 +23,9 @@ class UartMessageParser(EventBase):
 
     def set_configuration(self, configuration):
         self.properties = configuration
+
+    def set_run_command(self, command):
+        pass
 
     def analyse(self, data_block):
         if self.find_header:
@@ -360,8 +363,11 @@ class UartMessageParser(EventBase):
             return struct.unpack('<b', pack_item)[0]
         elif 'char' in data_type:
             try:
-                ctype_n = data_type.replace('char', '')
-                pack_item = struct.pack(ctype_n + 'B', *data)
+                trim_data = [elem for elem in data if elem != 0]
+                max_len = int(data_type.replace('char', ''))
+                trim_len = len(trim_data)
+                data_len = trim_len if trim_len < max_len else max_len
+                pack_item = struct.pack('{0}B'.format(data_len), *trim_data)
                 return pack_item.decode()
             except:  # pylint: disable=bare-except
                 return False

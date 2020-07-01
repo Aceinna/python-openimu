@@ -19,6 +19,7 @@ class FileLoger():
         start_time = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
         self.device_properties = device_properties
         if not self.device_properties:
+            print('No properties found')
             os._exit(1)
 
         self.root_folder = os.path.join(resource.get_executor_path(), r'data')
@@ -282,25 +283,28 @@ class FileLoger():
         for i, (k, v) in enumerate(data.items()):
             output_packet_type = output_packet['payload'][i]['type']
 
-            if output_packet_type == 'uint32' or output_packet_type == 'int32' or \
-               output_packet_type == 'uint16' or output_packet_type == 'int16' or \
-               output_packet_type == 'uint64' or output_packet_type == 'int64':
-                # integers and unsigned integers
-                str += '{0:d},'.format(v)
-            elif output_packet_type == 'double':
-                # double
-                str += '{0:0.8f},'.format(v)  # 15.12
-            elif output_packet_type == 'float':
-                str += '{0:0.4f},'.format(v)  # 12.8
-            elif output_packet_type == 'uint8':
-                # byte
-                str += '{0:d},'.format(v)
-            elif output_packet_type == 'uchar' or output_packet_type == 'char' or output_packet_type == 'string':
-                # character
-                str += '{:},'.format(v)
+            if output_packet['payload'][i].__contains__('scaling'):
+                str +='{0},'.format(v)
             else:
-                # unknown
-                str += '{0:3.5f},'.format(v)
+                if output_packet_type == 'uint32' or output_packet_type == 'int32' or \
+                output_packet_type == 'uint16' or output_packet_type == 'int16' or \
+                output_packet_type == 'uint64' or output_packet_type == 'int64':
+                    # integers and unsigned integers
+                    str += '{0:d},'.format(v)
+                elif output_packet_type == 'double':
+                    # double
+                    str += '{0:0.8f},'.format(v)  # 15.12
+                elif output_packet_type == 'float':
+                    str += '{0:0.4f},'.format(v)  # 12.8
+                elif output_packet_type == 'uint8':
+                    # byte
+                    str += '{0:d},'.format(v)
+                elif output_packet_type == 'uchar' or output_packet_type == 'char' or output_packet_type == 'string':
+                    # character
+                    str += '{:},'.format(v)
+                else:
+                    # unknown
+                    str += '{0:3.5f},'.format(v)
         #
         str = header + str[:-1] + '\n'
 

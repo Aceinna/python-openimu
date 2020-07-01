@@ -115,6 +115,8 @@ class DeviceMessageCenter(EventBase):
         self._is_running = True
         self._running_message = message
         message.set_start_time(datetime.datetime.now())
+        
+        self._parser.set_run_command(message.get_command())
         self._communicator.write(message.get_command())
         #print('run command', message.get_command())
 
@@ -162,6 +164,7 @@ class DeviceMessageCenter(EventBase):
             span = current_time - start_time
             if span.total_seconds() > timeout and not \
                     self._running_message.get_finished():
+                self.run_post()
                 print('command timeout',
                       self._running_message.get_command(),
                       timeout, start_time, current_time)
