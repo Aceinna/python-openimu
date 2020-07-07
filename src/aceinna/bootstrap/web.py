@@ -83,7 +83,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         connected_device = self.get_device()
         if connected_device:
             connected_device.remove_client(self)
-            print('close client count:', len(connected_device.clients))
+            # print('close client count:', len(connected_device.clients))
 
     def check_origin(self, origin):
         return True
