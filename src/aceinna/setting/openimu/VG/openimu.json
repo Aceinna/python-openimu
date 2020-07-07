@@ -281,10 +281,13 @@
 					{
 						"name": "Operational Flags",
 						"units": "N/A",
+						"renderType":"flag",
 						"xAxis": "Time (s)",
-						"yAxes": ["opMode", "linAccSw", "turnSw"],
-						"colors": ["#FF0000", "#00FF00", "#0000FF"],
-						"yMax": 5
+						"yAxes": [
+							{"field":"opMode","colors":{"1":"#FF0000", "2":"#00FF00","3":"#0000FF","4":"#FFFF00"}},
+							{"field":"linAccSw","colors":{"0":"#FF0000", "1":"#00FF00"}},
+							{"field":"turnSw","colors":{"0":"#FF0000", "1":"#00FF00"}}
+						]
 					}
 				]
 			},

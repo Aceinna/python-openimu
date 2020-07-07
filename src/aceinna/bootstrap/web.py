@@ -154,7 +154,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             return
 
         device.append_client(self)
-        print('open client count:', len(device.clients))
+        # print('open client count:', len(device.clients))
 
         self.file_logger = FileLoger(device.properties)
         self.response_server_info()
