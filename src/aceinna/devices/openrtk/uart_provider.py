@@ -480,16 +480,16 @@ class Provider(OpenDeviceBase):
         step = 10
         parameter_values = []
         has_error = False
-        for i in range(1, conf_parameters_len, step):
+        for i in range(2, conf_parameters_len, step):
             start_byte = i
-            end_type = i+step-1 if i+step < conf_parameters_len else conf_parameters_len
-
+            end_type = i+step-1 if i+step < conf_parameters_len-1 else conf_parameters_len-1
+            # print('get params',start_byte, end_type)
             command_line = helper.build_packet('gB', [start_byte, end_type])
             result = yield self._message_center.build(command=command_line, timeout=2)
             if result['error']:
                 has_error = True
                 break
-
+            # print('return count', len(result['data']))
             parameter_values.extend(result['data'])
 
         # command_line = helper.build_input_packet('gA')
