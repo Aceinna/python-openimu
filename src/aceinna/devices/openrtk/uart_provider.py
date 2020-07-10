@@ -475,27 +475,33 @@ class Provider(OpenDeviceBase):
         '''
         Get all parameters
         '''
-        conf_parameters = self.properties['userConfiguration']
-        conf_parameters_len = len(conf_parameters)
-        step = 10
-        parameter_values = []
         has_error = False
-        for i in range(2, conf_parameters_len, step):
-            start_byte = i
-            end_type = i+step-1 if i+step < conf_parameters_len-1 else conf_parameters_len-1
-            # print('get params',start_byte, end_type)
-            command_line = helper.build_packet('gB', [start_byte, end_type])
-            result = yield self._message_center.build(command=command_line, timeout=2)
+        parameter_values = []
+
+        if self.app_info['app_name'] == 'INS':
+            conf_parameters = self.properties['userConfiguration']
+            conf_parameters_len = len(conf_parameters)-1
+            step = 10
+
+            for i in range(2, conf_parameters_len, step):
+                start_byte = i
+                end_byte = i+step-1 if i+step < conf_parameters_len else conf_parameters_len
+
+                command_line = helper.build_packet(
+                    'gB', [start_byte, end_byte])
+                result = yield self._message_center.build(command=command_line, timeout=2)
+                if result['error']:
+                    has_error = True
+                    break
+
+                parameter_values.extend(result['data'])
+        else:
+            command_line = helper.build_input_packet('gA')
+            result = yield self._message_center.build(command=command_line, timeout=3)
             if result['error']:
                 has_error = True
-                break
-            # print('return count', len(result['data']))
-            parameter_values.extend(result['data'])
 
-        # command_line = helper.build_input_packet('gA')
-        # self.communicator.write(command_line)
-        # result = self.get_input_result('gA', timeout=2)
-        # result = yield self._message_center.build(command=command_line, timeout=3)
+            parameter_values = result['data']
 
         if not has_error:
             self.parameters = parameter_values
