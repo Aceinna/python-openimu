@@ -67,10 +67,10 @@ def get_parameters_by_block_parser(payload, user_configuration):
 
     start_param_id = payload[0]
     end_param_id = payload[1]
-    data_len=2
+    data_len = 2
 
     for i in range(start_param_id, end_param_id+1, 1):
-        print('param count:',end_param_id,i)
+        print('param count:', end_param_id, i)
         exist_param_conf = next((param_conf for param_conf in user_configuration
                                  if param_conf['paramId'] == i), None)
         if exist_param_conf:
@@ -124,9 +124,12 @@ def get_parameter_parser(payload, user_configuration):
     '''
     gP Parser
     '''
+    data = None
+    error = False
     param_id = decode_value('uint32', payload[0:4])
     param = filter(lambda item: item['paramId'] ==
                    param_id, user_configuration)
+
     try:
         first_item = next(iter(param), None)
         param_value = decode_value(
