@@ -134,16 +134,12 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         if device and device.connected and hasattr(device, converted_method):
             device_command = getattr(
                 device, converted_method, None)(parameters)
-
-            # if isinstance(device_command, EventMessage):
-            #     device_command.then(
-            #         lambda result: self.response_message(method, result)
-            #     )
-            # else:
             self.response_message(method, device_command)
 
         elif hasattr(self, converted_method):
             getattr(self, converted_method, None)(parameters)
+        else:
+            self.response_unkonwn_method()
 
     def handle_device_found(self, device):
         '''

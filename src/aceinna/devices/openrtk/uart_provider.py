@@ -17,6 +17,7 @@ from ..decorator import with_device_message
 from aceinna.devices.openrtk.ntrip_client import NTRIPClient
 import math
 
+
 class Provider(OpenDeviceBase):
     '''
     OpenRTK UART provider
@@ -139,7 +140,7 @@ class Provider(OpenDeviceBase):
             with open(local_config_file_path) as json_data:
                 self.properties = json.load(json_data)
                 return
-        
+
         # Load the openimu.json based on its app
         app_name = self.app_info['app_name']
         app_file_path = os.path.join(
@@ -158,11 +159,12 @@ class Provider(OpenDeviceBase):
         # with_raw_log = self.cli_options and self.cli_options.with_raw_log
 
         if set_user_para:
-            result = self.set_params(self.properties["initial"]["userParameters"])
+            result = self.set_params(
+                self.properties["initial"]["userParameters"])
             ##print('set user para {0}'.format(result))
             if (result['packetType'] == 'success'):
                 self.save_config()
-        
+
         if self.ntrip_client_enable:
             t = threading.Thread(target=self.ntrip_client_thread)
             t.start()
@@ -196,33 +198,43 @@ class Provider(OpenDeviceBase):
                             debug_port = x["value"]
                         elif x['name'] == 'GNSS':
                             rtcm_port = x["value"]
-            
+
             if self.data_folder is not None:
                 dir_time = time.strftime("%Y%m%d_%H%M%S", time.localtime())
-                file_time = time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime())
+                file_time = time.strftime(
+                    "%Y_%m_%d_%H_%M_%S", time.localtime())
                 file_name = self.data_folder + '/' + 'openrtk_log_' + dir_time
                 os.mkdir(file_name)
-                self.user_logf = open(file_name + '/' + 'user_' + file_time + '.bin', "wb")
+                self.user_logf = open(
+                    file_name + '/' + 'user_' + file_time + '.bin', "wb")
 
             if rtcm_port != '':
                 print('OpenRTK log GNSS UART {0}'.format(rtcm_port))
-                self.rtcm_serial_port = serial.Serial(rtcm_port, '460800', timeout=0.005)
+                self.rtcm_serial_port = serial.Serial(
+                    rtcm_port, '460800', timeout=0.005)
                 if self.rtcm_serial_port.isOpen():
-                    self.rtcm_logf = open(file_name + '/' + 'rtcm_rover_' + file_time + '.bin', "wb")
-                    t = threading.Thread(target=self.thread_rtcm_port_receiver, args=(file_name,))
+                    self.rtcm_logf = open(
+                        file_name + '/' + 'rtcm_rover_' + file_time + '.bin', "wb")
+                    t = threading.Thread(
+                        target=self.thread_rtcm_port_receiver, args=(file_name,))
                     t.start()
 
             if debug_port != '':
                 print('OpenRTK log DEBUG UART {0}'.format(debug_port))
-                self.debug_serial_port = serial.Serial(debug_port, '460800', timeout=0.005)
+                self.debug_serial_port = serial.Serial(
+                    debug_port, '460800', timeout=0.005)
                 if self.debug_serial_port.isOpen():
                     if self.app_info['app_name'] == 'RAWDATA':
-                        self.debug_logf = open(file_name + '/' + 'rtcm_base_' + file_time + '.bin', "wb")
+                        self.debug_logf = open(
+                            file_name + '/' + 'rtcm_base_' + file_time + '.bin', "wb")
                     elif self.app_info['app_name'] == 'RTK':
-                        self.debug_logf = open(file_name + '/' + 'rtcm_base_' + file_time + '.bin', "wb")
+                        self.debug_logf = open(
+                            file_name + '/' + 'rtcm_base_' + file_time + '.bin', "wb")
                     else:
-                        self.debug_logf = open(file_name + '/' + 'debug_' + file_time + '.bin', "wb")
-                    t = threading.Thread(target=self.thread_debug_port_receiver, args=(file_name,))
+                        self.debug_logf = open(
+                            file_name + '/' + 'debug_' + file_time + '.bin', "wb")
+                    t = threading.Thread(
+                        target=self.thread_debug_port_receiver, args=(file_name,))
                     t.start()
 
         except Exception as e:
@@ -323,9 +335,10 @@ class Provider(OpenDeviceBase):
                 hour = int(sec / 3600)
                 minute = int(sec % 3600 / 60)
                 second = sec % 60
-                gga_time = format(hour*10000 + minute*100 + second + msec - 18, '09.2f')
+                gga_time = format(hour*10000 + minute*100 +
+                                  second + msec - 18, '09.2f')
                 gpgga = gpgga + ',' + gga_time
-                #latitude
+                # latitude
                 latitude = float(data['latitude']) / 1e+07
                 if latitude >= 0:
                     latflag = 'N'
@@ -336,7 +349,7 @@ class Provider(OpenDeviceBase):
                 lat_m = (latitude-lat_d) * 60
                 lat_dm = format(lat_d*100 + lat_m, '012.7f')
                 gpgga = gpgga + ',' + lat_dm + ',' + latflag
-                #longitude
+                # longitude
                 longitude = float(data['longitude']) / 1e+07
                 if longitude >= 0:
                     lonflag = 'E'
@@ -347,22 +360,24 @@ class Provider(OpenDeviceBase):
                 lon_m = (longitude-lon_d) * 60
                 lon_dm = format(lon_d*100 + lon_m, '013.7f')
                 gpgga = gpgga + ',' + lon_dm + ',' + lonflag
-                #positionMode
+                # positionMode
                 gpgga = gpgga + ',' + str(data['positionMode'])
-                #svs
+                # svs
                 gpgga = gpgga + ',' + str(data['numberOfSVs'])
-                #hop
+                # hop
                 gpgga = gpgga + ',' + format(float(data['hdop']), '03.1f')
-                #height
-                gpgga = gpgga + ',' + format(float(data['height']), '06.3f') + ',M'
+                # height
+                gpgga = gpgga + ',' + \
+                    format(float(data['height']), '06.3f') + ',M'
                 #
                 gpgga = gpgga + ',0.000,M'
-                #diffage
-                gpgga = gpgga + ',' + format(float(data['diffage']), '03.1f') + ','
-                #ckm
+                # diffage
+                gpgga = gpgga + ',' + \
+                    format(float(data['diffage']), '03.1f') + ','
+                # ckm
                 checksum = 0
                 for i in range(1, len(gpgga)):
-                    checksum  = checksum^ord(gpgga[i])
+                    checksum = checksum ^ ord(gpgga[i])
                 gpgga = gpgga + '*' + str(checksum) + '\r\n'
                 print(gpgga)
                 self.ntripClient.send(gpgga)
@@ -460,16 +475,33 @@ class Provider(OpenDeviceBase):
         '''
         Get all parameters
         '''
-        command_line = helper.build_input_packet('gA')
+        conf_parameters = self.properties['userConfiguration']
+        conf_parameters_len = len(conf_parameters)
+        step = 10
+        parameter_values = []
+        has_error = False
+        for i in range(1, conf_parameters_len, step):
+            start_byte = i
+            end_type = i+step-1 if i+step < conf_parameters_len else conf_parameters_len
+
+            command_line = helper.build_packet('gB', [start_byte, end_type])
+            result = yield self._message_center.build(command=command_line, timeout=2)
+            if result['error']:
+                has_error = True
+                break
+
+            parameter_values.extend(result['data'])
+
+        # command_line = helper.build_input_packet('gA')
         # self.communicator.write(command_line)
         # result = self.get_input_result('gA', timeout=2)
-        result = yield self._message_center.build(command=command_line, timeout=3)
+        # result = yield self._message_center.build(command=command_line, timeout=3)
 
-        if result['data']:
-            self.parameters = result['data']
+        if not has_error:
+            self.parameters = parameter_values
             yield {
                 'packetType': 'inputParams',
-                'data': result['data']
+                'data': parameter_values
             }
 
         yield {
@@ -588,6 +620,29 @@ class Provider(OpenDeviceBase):
         yield {
             'packetType': 'success',
             'data': error
+        }
+
+    @with_device_message
+    def reset_params(self, params, *args):  # pylint: disable=unused-argument
+        '''
+        Reset params to default
+        '''
+        command_line = helper.build_input_packet('rD')
+        result = yield self._message_center.build(command=command_line, timeout=2)
+
+        error = result['error']
+        data = result['data']
+        if error:
+            yield {
+                'packetType': 'error',
+                'data': {
+                    'error': error
+                }
+            }
+
+        yield {
+            'packetType': 'success',
+            'data': data
         }
 
     def upgrade_framework(self, file, *args):  # pylint: disable=unused-argument

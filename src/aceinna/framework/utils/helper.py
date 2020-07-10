@@ -8,19 +8,31 @@ from .dict_extend import Dict
 COMMAND_START = [0x55, 0x55]
 
 
+def build_packet(message_type, message_bytes=[]):
+    '''
+    Build final packet
+    '''
+    packet = []
+    packet.extend(bytearray(message_type, 'utf-8'))
+
+    msg_len = len(message_bytes)
+    packet.append(msg_len)
+    final_packet = packet + message_bytes
+    # print(message_type, final_packet)
+    return COMMAND_START + final_packet + calc_crc(final_packet)
+
+
 def build_input_packet(name, properties=None, param=False, value=False):
     '''
     Build input packet
     '''
-    name_bytes = list(struct.unpack('BB', bytearray(name, 'utf-8')))
+    packet = []
 
     if not param and not value:
-        command = COMMAND_START + name_bytes + [0]
-        packet = command + calc_crc(command[2:4] + [0x00])
+        packet = build_packet(name)
     else:
         payload = unpack_payload(name, properties, param, value)
-        command = COMMAND_START + name_bytes + [len(payload)] + payload
-        packet = command + calc_crc(command[2:command[4]+5])
+        packet = build_packet(name, payload)
     return packet
 
 
@@ -28,15 +40,11 @@ def build_bootloader_input_packet(name, data_len=False, addr=False, data=False):
     '''
     Build bootloader input packet
     '''
-    name_bytes = list(struct.unpack('BB', bytearray(name, 'utf-8')))
-
     if not data_len and not addr and not data:
-        command = COMMAND_START + name_bytes + [0]
-        packet = command + calc_crc(command[2:4] + [0x00])
+        packet = build_packet(name)
     else:
         payload = block_payload(data_len, addr, data)
-        command = COMMAND_START + name_bytes + [len(payload)] + payload
-        packet = command + calc_crc(command[2:command[4]+5])
+        packet = build_packet(name, payload)
     return packet
 
 
@@ -44,19 +52,17 @@ def build_read_eeprom_input_packet(start, word_len):
     '''
     Build RE command
     '''
-    name_bytes = list(struct.unpack('BB', bytearray('RE', 'utf-8')))
     payload = []
     payload.append((start & 0xFF00) >> 8)
     payload.append(start & 0x00FF)
     payload.append(word_len)
-    command = COMMAND_START + name_bytes + [0x03] + payload
-    packet = command + calc_crc(command[2:command[4]+5])
+    packet = build_packet('RE', payload)
     return packet
 
 
 def build_write_eeprom_input_packet(start, word_len, data):
     '''
-    Build RE command
+    Build WE command
     '''
     name_bytes = list(struct.unpack('BB', bytearray('WE', 'utf-8')))
     payload = []
@@ -73,11 +79,9 @@ def build_unlock_eeprom_packet(sn):
     '''
     Build UE command
     '''
-    name_bytes = list(struct.unpack('BB', bytearray('UE', 'utf-8')))
     sn_crc = calc_crc(sn)
     payload = sn_crc
-    command = COMMAND_START + name_bytes + [0x02] + payload
-    packet = command + calc_crc(command[2:command[4]+5])
+    packet = build_packet('UE', payload)
     return packet
 
 
@@ -85,9 +89,7 @@ def build_lock_eeprom_packet():
     '''
     Build UE command
     '''
-    name_bytes = list(struct.unpack('BB', bytearray('LE', 'utf-8')))
-    command = COMMAND_START + name_bytes + [0]
-    packet = command + calc_crc(command[2:4] + [0x00])
+    packet = build_packet('LE')
     return packet
 
 

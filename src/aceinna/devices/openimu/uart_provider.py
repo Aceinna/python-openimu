@@ -338,6 +338,29 @@ class Provider(OpenDeviceBase):
         }
 
     @with_device_message
+    def reset_params(self, params, *args):  # pylint: disable=unused-argument
+        '''
+        Reset params to default
+        '''
+        command_line = helper.build_input_packet('rD')
+        result = yield self._message_center.build(command=command_line, timeout=2)
+
+        error = result['error']
+        data = result['data']
+        if error:
+            yield {
+                'packetType': 'error',
+                'data': {
+                    'error': error
+                }
+            }
+
+        yield {
+            'packetType': 'success',
+            'data': data
+        }
+
+    @with_device_message
     def save_config(self, *args):  # pylint: disable=unused-argument
         '''
         Save configuration

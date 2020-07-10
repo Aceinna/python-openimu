@@ -1,9 +1,7 @@
 import collections
 import operator
-import struct
 from ..base.event_base import EventBase
 from ...framework.utils import helper
-from ...framework.context import APP_CONTEXT
 from .dum_packet_parser import (
     match_command_handler, match_continuous_handler)
 
@@ -13,7 +11,7 @@ PACKET_TYPE_INDEX = 2
 PRIVATE_PACKET_TYPE = ['RE', 'WE', 'UE', 'LE', 'SR']
 INPUT_PACKETS = ['PK', 'CH', 'RE', 'WE', 'UE', 'GP',
                  'SF', 'RF', 'WF', 'GF',
-                 'AR', 'SR', 'PR', '\x15\x15','\x00\x00',
+                 'AR', 'SR', 'PR', '\x15\x15', '\x00\x00',
                  'WC', 'CB', 'CC']
 OUTPUT_PACKETS = ['ID', 'VR', 'VA', 'KC', 'KT', 'KS']
 

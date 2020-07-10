@@ -4,10 +4,16 @@ import struct
 from ..base.event_base import EventBase
 from ...framework.utils import helper
 from ...framework.context import APP_CONTEXT
+from .open_packet_parser import (
+    match_command_handler, common_continuous_parser)
 
 MSG_HEADER = [0x55, 0x55]
 PACKET_TYPE_INDEX = 2
 PRIVATE_PACKET_TYPE = ['RE', 'WE', 'UE', 'LE', 'SR']
+INPUT_PACKETS = ['gA', 'gB', 'gP', 'sC', 'uP',
+                 'rD', '\x15\x15', '\x00\x00',
+                 'JI', 'JA', 'WA',
+                 'RE', 'WE', 'UE', 'LE', 'SR']
 
 
 class UartMessageParser(EventBase):
@@ -40,7 +46,9 @@ class UartMessageParser(EventBase):
                 result = helper.calc_crc(self.frame[2:-2])
                 if result[0] == self.frame[-2] and result[1] == self.frame[-1]:
                     # find a whole frame
-                    self._parse_frame(self.frame, self.payload_len)
+                    # self._parse_frame(self.frame, self.payload_len)
+                    self._parse_message(
+                        packet_type, self.payload_len, self.frame[5:self.payload_len+5])
 
                     self.find_header = False
                     self.payload_len = 0
@@ -53,15 +61,51 @@ class UartMessageParser(EventBase):
                     if input_packet_config:
                         self.emit('command', packet_type=packet_type,
                                   data=[], error=True)
-
-            # if payload_len > MAX_FRAME_LIMIT or len(frame) > MAX_FRAME_LIMIT:
-            #     find_header = False
-            #     payload_len = 0
         else:
             self.sync_pattern.append(data_block)
             if operator.eq(list(self.sync_pattern), MSG_HEADER):
                 self.frame = MSG_HEADER[:]  # header_tp.copy()
                 self.find_header = True
+
+    def _parse_message(self, packet_type, payload_len, payload):
+        # parse interactive commands
+        is_interactive_cmd = INPUT_PACKETS.__contains__(packet_type)
+        if is_interactive_cmd:
+            self._parse_input_packet(packet_type, payload_len, payload)
+        else:
+            # consider as output packet, parse output Messages
+            self._parse_output_packet(packet_type, payload_len, payload)
+
+    def _parse_input_packet(self, packet_type, payload_len, payload):
+        # print(packet_type, payload, payload_len)
+        payload_parser = match_command_handler(packet_type)
+
+        if payload_parser:
+            data, error = payload_parser(
+                payload, self.properties['userConfiguration'])
+
+            self.emit('command',
+                      packet_type=packet_type,
+                      data=data,
+                      error=error)
+        else:
+            print('[Warning] Unsupported command {0}'.format(packet_type))
+
+    def _parse_output_packet(self, packet_type, payload_len, payload):
+        # check if it is the valid out packet
+        payload_parser = common_continuous_parser
+        output_packet_config = next(
+            (x for x in self.properties['userMessages']['outputPackets']
+             if x['name'] == packet_type), None)
+        data = payload_parser(payload, output_packet_config)
+
+        if not data:
+            print('Cannot parse packet type {0}'.format(packet_type))
+            return
+
+        self.emit('continuous_message',
+                  packet_type=packet_type,
+                  data=data)
 
     def _parse_frame(self, frame, payload_len):
         packet_type_index = 2
@@ -192,11 +236,11 @@ class UartMessageParser(EventBase):
 
         data = None
         error = False
-        response_playload_type_config = packet_config['responsePayload']['type'] \
+        response_payload_type_config = packet_config['responsePayload']['type'] \
             if packet_config['responsePayload'].__contains__('type') else ''
         user_configuration = self.properties['userConfiguration']
 
-        if response_playload_type_config == 'userConfiguration':
+        if response_payload_type_config == 'userConfiguration':
             data = []
             data_len = 0
             for parameter in user_configuration:
@@ -241,7 +285,7 @@ class UartMessageParser(EventBase):
 
                 data.append(
                     {"paramId": param_id, "name": name, "value": value})
-        elif response_playload_type_config == 'userParameter':
+        elif response_payload_type_config == 'userParameter':
             param_id = self._unpack_one('uint32', payload[0:4])
             param = filter(lambda item: item['paramId'] ==
                            param_id, user_configuration)
@@ -253,13 +297,13 @@ class UartMessageParser(EventBase):
                         "name": first_item['name'], "value": param_value}
             except StopIteration:
                 error = True
-        elif response_playload_type_config == 'paramId':
+        elif response_payload_type_config == 'paramId':
             data = self._unpack_one('uint32', payload[0:4])
             if data:
                 error = True
-        elif response_playload_type_config == 'string':
+        elif response_payload_type_config == 'string':
             data = self._unpack_one('string', payload)
-        elif response_playload_type_config == 'bytes':
+        elif response_payload_type_config == 'bytes':
             options = packet_config['responsePayload']['options']
             offset = options['offset']
             data = payload[offset:]
