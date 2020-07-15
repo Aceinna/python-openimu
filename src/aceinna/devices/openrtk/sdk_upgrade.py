@@ -958,7 +958,8 @@ class SDKUpgrade(EventBase):
     def _raise_error(self, message):
         if self._uart.isOpen():
             self._uart.close()
-
+        # wait a time, output data to client
+        time.sleep(.5)
         self.emit('error', message)
         return False
 
@@ -1009,4 +1010,6 @@ class SDKUpgrade(EventBase):
             return self._raise_error('CRC check fail')
         else:
             self._uart.close()
+            # wait a time, output data to client
+            time.sleep(.5)
             self.emit('finish', 'Upgrade success')
