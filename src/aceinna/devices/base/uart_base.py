@@ -103,26 +103,6 @@ class OpenDeviceBase(EventBase):
             return format_string
         return ''
 
-    # def _extract_command_response(self, command, data_buffer):
-    #     command_0 = ord(command[0])
-    #     command_1 = ord(command[1])
-    #     sync_pattern = collections.deque(4*[0], 4)
-    #     sync_state = 0
-    #     packet_buffer = []
-    #     for new_byte in data_buffer:
-    #         sync_pattern.append(new_byte)
-    #         if list(sync_pattern) == [0x55, 0x55, command_0, command_1]:
-    #             packet_buffer = [command_0, command_1]
-    #             sync_state = 1
-    #         elif sync_state == 1:
-    #             packet_buffer.append(new_byte)
-    #             if len(packet_buffer) == packet_buffer[2] + 5:
-    #                 if packet_buffer[-2:] == helper.calc_crc(packet_buffer[:-2]):
-    #                     data = packet_buffer[3:packet_buffer[2]+3]
-    #                     return data
-    #                 else:
-    #                     sync_state = 0  # CRC did not match
-
     def _parse_buffer(self, data_buffer):
         response = {
             'parsed': False,
@@ -367,7 +347,7 @@ class OpenDeviceBase(EventBase):
                 self.on_upgarde_failed('cannot find firmware file')
                 return
             # step.2 jump to bootloader
-            if not self.start_bootloader():
+            if not self.switch_to_bootloader():
                 self.on_upgarde_failed('Bootloader Start Failed')
                 return
             # step.3 write to block
@@ -379,11 +359,9 @@ class OpenDeviceBase(EventBase):
             self.on_upgarde_failed('Upgrade Failed')
             traceback.print_exc()
 
-    def download_firmware(self, file):
-        '''
-        Downlaod firmware from Azure storage
-        '''
+    def _do_download_firmware(self, file):
         upgarde_root = os.path.join(resource.get_executor_path(), 'upgrade')
+        firmware_content = None
 
         if not os.path.exists(upgarde_root):
             os.makedirs(upgarde_root)
@@ -394,21 +372,34 @@ class OpenDeviceBase(EventBase):
         config = get_config()
 
         if firmware_file.is_file():
-            self.firmware_content = open(firmware_file_path, 'rb').read()
+            firmware_content = open(firmware_file_path, 'rb').read()
         else:
             self.block_blob_service = BlockBlobService(
                 account_name=config.AZURE_STORAGE_ACCOUNT, protocol='https')
             self.block_blob_service.get_blob_to_path(
                 config.AZURE_STORAGE_APPS_CONTAINER, file, firmware_file_path)
-            self.firmware_content = open(firmware_file_path, 'rb').read()
+            firmware_content = open(firmware_file_path, 'rb').read()
 
-        self.addr = 0
-        self.fs_len = len(self.firmware_content)
-        return True
+        return firmware_content
 
-    def start_bootloader(self):
+    def download_firmware(self, file):
         '''
-        Start bootloader
+        Downlaod firmware from Azure storage
+        '''
+        can_download = False
+        try:
+            self.firmware_content = self._do_download_firmware(file)
+            self.addr = 0
+            self.fs_len = len(self.firmware_content)
+            can_download = True
+        except Exception as e:
+            can_download = False
+
+        return can_download
+
+    def switch_to_bootloader(self):
+        '''
+        Switch to bootloader
         '''
         try:
             # TODO: should send set quiet command before go to bootloader mode

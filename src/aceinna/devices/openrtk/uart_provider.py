@@ -3,8 +3,11 @@ import time
 import json
 import datetime
 import threading
+import math
 import serial
 import serial.tools.list_ports
+from .ntrip_client import NTRIPClient
+from .sdk_upgrade import SDKUpgrade
 from ...framework.utils import helper
 from ...framework.utils import resource
 from ...framework.context import APP_CONTEXT
@@ -14,8 +17,6 @@ from ..configs.openrtk_predefine import (
 )
 from ..decorator import with_device_message
 # import asyncio
-from aceinna.devices.openrtk.ntrip_client import NTRIPClient
-import math
 
 
 class Provider(OpenDeviceBase):
@@ -44,6 +45,7 @@ class Provider(OpenDeviceBase):
         self.rtcm_logf = None
         self.debug_c_f = None
         self.enable_data_log = False
+        self.is_app_matched = False
         self.prepare_folders()
 
     def prepare_folders(self):
@@ -124,10 +126,18 @@ class Provider(OpenDeviceBase):
         '''
         Build app info
         '''
-        split_text = text.split(' ')
-        app_name = ''
-        if len(split_text) > 2:
-            app_name = split_text[1]
+        app_version = text
+
+        split_text = app_version.split(' ')
+        app_name = next(
+            (item for item in APP_STR if item in split_text), None)
+
+        if not app_name:
+            app_name = 'INS'
+            self.is_app_matched = False
+        else:
+            self.is_app_matched = True
+
         self.app_info = {
             'app_name': app_name,
             'version': text
@@ -153,6 +163,24 @@ class Provider(OpenDeviceBase):
         self.ntripClient = NTRIPClient(self.properties, self.communicator)
         self.ntripClient.run()
 
+    def build_connected_serial_port_info(self):
+        if not os.path.isfile(self.connection_file):
+            return None, None
+
+        with open(self.connection_file) as json_data:
+            connection = json.load(json_data)
+
+        user_port = connection['port']
+        user_port_num = ''
+        port_name = ''
+        for i in range(len(user_port)-1, -1, -1):
+            if (user_port[i] >= '0' and user_port[i] <= '9'):
+                user_port_num = user_port[i] + user_port_num
+            else:
+                port_name = user_port[:i+1]
+                break
+        return user_port_num, port_name
+
     def after_setup(self):
         set_user_para = self.cli_options and self.cli_options.set_user_para
         self.ntrip_client_enable = self.cli_options and self.cli_options.ntrip_client
@@ -175,19 +203,9 @@ class Provider(OpenDeviceBase):
         rtcm_port = ''
         try:
             if (self.properties["initial"]["useDefaultUart"]):
-                if not os.path.isfile(self.connection_file):
+                user_port_num, port_name = self.build_connected_serial_port_info()
+                if not user_port_num or not port_name:
                     return False
-                with open(self.connection_file) as json_data:
-                    connection = json.load(json_data)
-                user_port = connection['port']
-                user_port_num = ''
-                port_name = ''
-                for i in range(len(user_port)-1, -1, -1):
-                    if (user_port[i] >= '0' and user_port[i] <= '9'):
-                        user_port_num = user_port[i] + user_port_num
-                    else:
-                        port_name = user_port[:i+1]
-                        break
                 #print('user_port {0} {1}'.format(user_port_num, port_name))
                 debug_port = port_name + str(int(user_port_num) + 2)
                 rtcm_port = port_name + str(int(user_port_num) + 1)
@@ -651,10 +669,20 @@ class Provider(OpenDeviceBase):
             'data': data
         }
 
-    def upgrade_framework(self, file, *args):  # pylint: disable=unused-argument
+    def upgrade_framework(self, params, *args):  # pylint: disable=unused-argument
         '''
         Upgrade framework
         '''
+        app_name = ''
+        file = ''
+        if isinstance(params, str):
+            file = params
+
+        if isinstance(params, dict):
+            app_name = params['name']
+            file = params['file']
+
+        # app_name='GNSS_RTK_SDK'
         # start a thread to do upgrade
         if not self.is_upgrading:
             self.is_upgrading = True
@@ -663,11 +691,59 @@ class Provider(OpenDeviceBase):
             if self._logger is not None:
                 self._logger.stop_user_log()
 
-            thread = threading.Thread(
-                target=self.thread_do_upgrade_framework, args=(file,))
-            thread.start()
-            print("Thread upgarde framework OpenRTK start at:[{0}].".format(
-                datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+            if app_name.__contains__('SDK'):
+                thread = threading.Thread(
+                    target=self.thread_do_sdk_framework, args=(file,))
+                thread.start()
+                print("Thread upgarde sdk of OpenRTK start at:[{0}].".format(
+                    datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+            else:
+                thread = threading.Thread(
+                    target=self.thread_do_upgrade_framework, args=(file,))
+                thread.start()
+                print("Thread upgarde framework of OpenRTK start at:[{0}].".format(
+                    datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
         return {
             'packetType': 'success'
         }
+
+    def thread_do_sdk_framework(self, file):
+        '''
+        Do upgrade firmware
+        '''
+        try:
+            file_content = self._do_download_firmware(file)
+            user_port_num, port_name = self.build_connected_serial_port_info()
+            sdk_port = port_name + str(int(user_port_num) + 3)
+            sdk_upgrade = SDKUpgrade(sdk_port, file_content)
+            sdk_upgrade.on('error', self.on_sdk_upgarde_error)
+            # sdk_upgrade.on('start', self.on_sdk_upgrade_start)
+            sdk_upgrade.on('progress', self.on_sdk_upgarde_progress)
+            sdk_upgrade.on('finish', self.on_sdk_upgarde_finish)
+            sdk_upgrade.start()
+        except Exception as ex:  # pylint:disable=broad-except
+            self.on_upgarde_failed('Upgrade Failed')
+            APP_CONTEXT.get_logger().logger.error(
+                'Upgrade Error: {0}'.format(ex))
+
+    def on_sdk_upgarde_error(self, message):
+        print('upgrade error', message)
+        self.is_upgrading = False
+        self._message_center.resume()
+        self.add_output_packet(
+            'stream', 'upgrade_complete', {'success': False, 'message': message})
+
+    def on_sdk_upgrade_start(self, addr, fs_len):
+        pass
+
+    def on_sdk_upgarde_progress(self, addr, fs_len):
+        self.add_output_packet('stream', 'upgrade_progress', {
+            'addr': addr,
+            'fs_len': fs_len
+        })
+
+    def on_sdk_upgarde_finish(self, message):
+        self.is_upgrading = False
+        self._message_center.resume()
+        self.add_output_packet(
+            'stream', 'upgrade_complete', {'success': True})

@@ -153,7 +153,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         # print('open client count:', len(device.clients))
 
         self.file_logger = FileLoger(device.properties)
-        self.response_server_info()
+        self.response_server_info(device)
 
     def response_message(self, method, data):
         '''
@@ -183,7 +183,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             })
         )
 
-    def response_server_info(self):
+    def response_server_info(self, device):
         '''
         Send webserver info
         '''
@@ -193,7 +193,8 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                 'version': VERSION,
                 'serverUpdateRate': 50,
                 'deviceConnected': True,
-                'clientCount': 0
+                'clientCount': 0,
+                'deviceType': device.type
             }})
 
     def response_output_packet(self):
