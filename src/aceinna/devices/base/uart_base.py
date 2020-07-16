@@ -320,8 +320,10 @@ class OpenDeviceBase(EventBase):
         '''
         Close and disconnect
         '''
+        helper.clear_elements(self.clients)
         self.reset()
         self._message_center.stop()
+        self._message_center = None
         self.exit_thread = True
 
     def restart(self):

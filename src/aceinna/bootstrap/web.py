@@ -141,7 +141,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         else:
             self.response_unkonwn_method()
 
-    def handle_device_found(self, device):
+    def handle_device_found(self, device, force_response=True):
         '''
         If detect device, setup output and logger
         '''
@@ -153,7 +153,8 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         # print('open client count:', len(device.clients))
 
         self.file_logger = FileLoger(device.properties)
-        self.response_server_info(device)
+        if force_response:
+            self.response_server_info(device)
 
     def response_message(self, method, data):
         '''
@@ -431,13 +432,15 @@ class Webserver(EventBase):
             if self.ws_handler:
                 self.ws_handler.on_receive_output_packet(
                     'stream', 'ping', {'status': 3})
+            self.load_device_provider(device_provider)
         else:
+            self.device_provider.close()
+            self.load_device_provider(device_provider)
             if self.ws_handler:
                 self.ws_handler.on_receive_output_packet(
                     'stream', 'ping', {'status': 1})
-            self.device_provider.close()
+                self.ws_handler.handle_device_found(device_provider, False)
 
-        self.load_device_provider(device_provider)
 
     def device_complete_upgrade_handler(self, device_provider):
         '''
