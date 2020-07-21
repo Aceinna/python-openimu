@@ -133,9 +133,276 @@
 				0
             ]
 		},
-		
-        {
+		{
 			"paramId": 4,
+			"category": "Advanced",
+			"paramType": "input",
+			"type": "float",
+			"name": "lever arm x",
+			"argument": "lev_x",
+			"value_range": [
+				-1,
+				1
+			],
+			"value_accuracy": 6,
+			"options": [
+            ]
+		},
+		{
+			"paramId": 5,
+			"category": "Advanced",
+			"paramType": "input",
+			"type": "float",
+			"name": "lever arm y",
+			"argument": "lev_y",
+			"value_range": [
+				-1,
+				1
+			],
+			"value_accuracy": 6,
+			"options": [
+			]
+		},
+		{
+			"paramId": 6,
+			"category": "Advanced",
+			"paramType": "input",
+			"type": "float",
+			"name": "lever arm z",
+			"argument": "lev_z",
+			"value_range": [
+				-1,
+				1
+			],
+			"value_accuracy": 6,
+			"options": [
+			]
+		},
+		{
+			"paramId": 7,
+			"category": "Advanced",
+			"paramType": "input",
+			"type": "float",
+			"name": "point of interest x",
+			"argument": "poi_x",
+			"value_range": [
+				-1,
+				1
+			],
+			"value_accuracy": 6,
+			"options": [
+			]
+		},
+		{
+			"paramId": 8,
+			"category": "Advanced",
+			"paramType": "input",
+			"type": "float",
+			"name": "point of interest y",
+			"argument": "poi_y",
+			"value_range": [
+				-1,
+				1
+			],
+			"value_accuracy": 6,
+			"options": [
+			]
+		},
+		{
+			"paramId": 9,
+			"category": "Advanced",
+			"paramType": "input",
+			"type": "float",
+			"name": "point of interest z",
+			"argument": "poi_z",
+			"value_range": [
+				-1,
+				1
+			],
+			"value_accuracy": 6,
+			"options": [
+			]
+        },
+        {
+			"paramId": 10,
+			"category": "Advanced",
+			"paramType": "input",
+			"type": "float",
+			"name": "rotation x",
+			"argument": "rot_x",
+			"value_range": [
+				-1,
+				1
+			],
+			"value_accuracy": 6,
+			"options": [
+			]
+		},
+		{
+			"paramId": 11,
+			"category": "Advanced",
+			"paramType": "input",
+			"type": "float",
+			"name": "rotation y",
+			"argument": "rot_y",
+			"value_range": [
+				-1,
+				1
+			],
+			"value_accuracy": 6,
+			"options": [
+			]
+		},
+		{
+			"paramId": 12,
+			"category": "Advanced",
+			"paramType": "input",
+			"type": "float",
+			"name": "rotation z",
+			"argument": "rot_z",
+			"value_range": [
+				-1,
+				1
+			],
+			"value_accuracy": 6,
+			"options": [
+			]
+        },
+        {
+			"paramId": 13,
+			"category": "Ethnet",
+			"paramType": "select",
+			"type": "uint8",
+			"name": "MODE",
+			"argument": "MODE",
+			"value_range": [
+			],
+			"value_accuracy": 6,
+			"options": [
+                {"key":"0","value":"DHCP"},
+                {"key":"1","value":"STATIC"}
+			]
+        },
+        {
+			"paramId": 14,
+			"category": "Ethnet",
+			"paramType": "input",
+			"type": "ip4",
+			"name": "STATIC IP",
+			"argument": "STATIC IP",
+			"value_range": [
+			],
+			"value_accuracy": 6,
+			"options": [
+			]
+        },
+		{
+			"paramId": 15,
+			"category": "Ethnet",
+			"paramType": "input",
+			"type": "ip4",
+			"name": "NETMASK",
+			"argument": "NETMASK",
+			"value_range": [
+			],
+			"value_accuracy": 6,
+			"options": [
+			]
+        },
+        {
+			"paramId": 16,
+			"category": "Ethnet",
+			"paramType": "input",
+			"type": "ip4",
+			"name": "GATEWAY",
+			"argument": "GATEWAY",
+			"value_range": [
+			],
+			"value_accuracy": 6,
+			"options": [
+			]
+        },
+        {
+			"paramId": 17,
+			"category": "Ethnet",
+			"paramType": "input",
+			"type": "ip6",
+			"name": "MAC",
+            "argument": "MAC",
+            "disabled":true,
+			"value_range": [
+			],
+			"value_accuracy": 6,
+			"options": [
+			]
+        },
+        {
+			"paramId": 18,
+			"category": "Ntrip",
+			"paramType": "input",
+			"type": "char23",
+			"name": "IP",
+			"argument": "IP",
+			"value_range": [
+			],
+			"value_accuracy": 6,
+			"options": [
+			]
+        },
+        {
+			"paramId": 19,
+			"category": "Ntrip",
+			"paramType": "input",
+			"type": "uint16",
+			"name": "PORT",
+			"argument": "PORT",
+			"value_range": [
+			],
+			"value_accuracy": 0,
+			"options": [
+			]
+        },
+        {
+			"paramId": 20,
+			"category": "Ntrip",
+			"paramType": "input",
+			"type": "char20",
+			"name": "MOUNT POINT",
+			"argument": "MOUNT POINT",
+			"value_range": [
+			],
+			"value_accuracy": 6,
+			"options": [
+			]
+        },
+        {
+			"paramId": 21,
+			"category": "Ntrip",
+			"paramType": "input",
+			"type": "char16",
+			"name": "USER NAME",
+			"argument": "USER NAME",
+			"value_range": [
+			],
+			"value_accuracy": 6,
+			"options": [
+			]
+        },
+        {
+			"paramId": 22,
+			"category": "Ntrip",
+			"paramType": "input",
+			"type": "char24",
+			"name": "PASSWORD",
+			"argument": "PASSWORD",
+			"value_range": [
+			],
+			"value_accuracy": 6,
+			"options": [
+			]
+        },
+        {
+			"paramId": 23,
 			"category": "CAN",
 			"paramType": "input",
 			"type": "uint16",
@@ -148,7 +415,7 @@
 			]
         },
         {
-            "paramId": 5,
+            "paramId": 24,
 			"category": "CAN",
 			"paramType": "select",
 			"type": "uint16",
@@ -165,7 +432,7 @@
 			]
         },
         {
-			"paramId": 6,
+			"paramId": 25,
 			"category": "CAN",
 			"paramType": "input",
 			"type": "uint16",
@@ -177,7 +444,7 @@
 			"value_accuracy": 0
         },
         {
-			"paramId": 7,
+			"paramId": 26,
 			"category": "CAN",
 			"paramType": "select",
 			"type": "uint16",
@@ -191,7 +458,7 @@
 			]
         },
         {
-			"paramId": 8,
+			"paramId": 27,
 			"category": "CAN",
 			"paramType": "select",
 			"type": "uint16",
@@ -206,7 +473,7 @@
 			]
         },
         {
-			"paramId": 9,
+			"paramId": 28,
 			"category": "CAN",
 			"paramType": "select",
 			"type": "uint16",
@@ -219,462 +486,11 @@
                 {"key":"0","value":"DISABLE"},
                 {"key":"1","value":"ENABLE"}
 			]
-        },
-
-        {
-			"paramId": 10,
-			"category": "Ethnet",
-			"paramType": "select",
-			"type": "uint16",
-			"name": "MODE",
-			"argument": "MODE",
-			"value_range": [
-			],
-			"value_accuracy": 6,
-			"options": [
-                {"key":"0","value":"DHCP"},
-                {"key":"1","value":"STATIC"}
-			]
-        },
-        {
-			"paramId": 11,
-			"category": "Ethnet",
-			"paramType": "input",
-			"type": "ip4",
-			"name": "STATIC IP",
-			"argument": "STATIC IP",
-			"value_range": [
-			],
-			"value_accuracy": 6,
-			"options": [
-			]
-        },
-		{
-			"paramId": 12,
-			"category": "Ethnet",
-			"paramType": "input",
-			"type": "ip4",
-			"name": "NETMASK",
-			"argument": "NETMASK",
-			"value_range": [
-			],
-			"value_accuracy": 6,
-			"options": [
-			]
-        },
-        {
-			"paramId": 13,
-			"category": "Ethnet",
-			"paramType": "input",
-			"type": "ip4",
-			"name": "GATEWAY",
-			"argument": "GATEWAY",
-			"value_range": [
-			],
-			"value_accuracy": 6,
-			"options": [
-			]
-        },
-        {
-			"paramId": 14,
-			"category": "Ethnet",
-			"paramType": "input",
-			"type": "ip6",
-			"name": "MAC",
-            "argument": "MAC",
-            "disabled":true,
-			"value_range": [
-			],
-			"value_accuracy": 6,
-			"options": [
-			]
-        },
-
-        {
-			"paramId": 15,
-			"category": "RTCM",
-			"paramType": "input",
-			"type": "uint32",
-			"name": "USER TCP MODE",
-            "argument": "USER TCP MODE",
-            "disabled":true,
-			"value_range": [
-			],
-			"value_accuracy": 6,
-			"options": [
-			]
-        },
-        {
-			"paramId": 16,
-			"category": "RTCM",
-			"paramType": "input",
-			"type": "char26",
-			"name": "NTRIP CLIENT IP",
-            "argument": "NTRIP CLIENT IP",
-            "disabled":true,
-			"value_range": [
-			],
-			"value_accuracy": 6,
-			"options": [
-			]
-        },
-        {
-			"paramId": 17,
-			"category": "RTCM",
-			"paramType": "input",
-			"type": "uint16",
-			"name": "NTRIP CLIENT PORT",
-            "argument": "NTRIP CLIENT PORT",
-            "disabled":true,
-			"value_range": [
-			],
-			"value_accuracy": 6,
-			"options": [
-			]
-        },
-        {
-			"paramId": 18,
-			"category": "RTCM",
-			"paramType": "input",
-			"type": "char20",
-			"name": "NTRIP MOUNT POINT",
-            "argument": "NTRIP MOUNT POINT",
-            "disabled":true,
-			"value_range": [
-			],
-			"value_accuracy": 6,
-			"options": [
-			]
-        },
-        {
-			"paramId": 19,
-			"category": "RTCM",
-			"paramType": "input",
-			"type": "char20",
-			"name": "NTRIP CLIENT USERNAME",
-            "argument": "NTRIP CLIENT USERNAME",
-            "disabled":true,
-			"value_range": [
-			],
-			"value_accuracy": 6,
-			"options": [
-			]
-        },
-        {
-			"paramId": 20,
-			"category": "RTCM",
-			"paramType": "input",
-			"type": "char20",
-			"name": "NTRIP CLIENT PASSWORD",
-            "argument": "NTRIP CLIENT PASSWORD",
-            "disabled":true,
-			"value_range": [
-			],
-			"value_accuracy": 6,
-			"options": [
-			]
-        },
-        {
-			"paramId": 21,
-			"category": "RTCM",
-			"paramType": "input",
-			"type": "char36",
-			"name": "pointone_authorization_code",
-            "argument": "pointone_authorization_code",
-            "disabled":true,
-			"value_range": [
-			],
-			"value_accuracy": 6,
-			"options": [
-			]
-        },
-        {
-			"paramId": 22,
-			"category": "RTCM",
-			"paramType": "input",
-			"type": "char24",
-			"name": "pointone_unique_id",
-            "argument": "pointone_unique_id",
-            "disabled":true,
-			"value_range": [
-			],
-			"value_accuracy": 6,
-			"options": [
-			]
-        },
-        {
-			"paramId": 23,
-			"category": "RTCM",
-			"paramType": "input",
-			"type": "char26",
-			"name": "ntrip_server_ip",
-            "argument": "ntrip_server_ip",
-            "disabled":true,
-			"value_range": [
-			],
-			"value_accuracy": 6,
-			"options": [
-			]
-        },
-        {
-			"paramId": 24,
-			"category": "RTCM",
-			"paramType": "input",
-			"type": "uint16",
-			"name": "ntrip_server_port",
-            "argument": "ntrip_server_port",
-            "disabled":true,
-			"value_range": [
-			],
-			"value_accuracy": 6,
-			"options": [
-			]
-        },
-        {
-			"paramId": 25,
-			"category": "RTCM",
-			"paramType": "input",
-			"type": "char20",
-			"name": "ntrip_server_mount_point",
-            "argument": "ntrip_server_mount_point",
-            "disabled":true,
-			"value_range": [
-			],
-			"value_accuracy": 6,
-			"options": [
-			]
-        },
-        {
-			"paramId": 26,
-			"category": "RTCM",
-			"paramType": "input",
-			"type": "char20",
-			"name": "ntrip_server_password",
-            "argument": "ntrip_server_password",
-            "disabled":true,
-			"value_range": [
-			],
-			"value_accuracy": 6,
-			"options": [
-			]
-        },
-        {
-			"paramId": 27,
-			"category": "RTCM",
-			"paramType": "input",
-			"type": "uint16",
-			"name": "base_position_type",
-            "argument": "base_position_type",
-            "disabled":true,
-			"value_range": [
-			],
-			"value_accuracy": 6,
-			"options": [
-			]
-        },
-        {
-			"paramId": 28,
-			"category": "RTCM",
-			"paramType": "input",
-			"type": "uint16",
-			"name": "cmr_id",
-            "argument": "cmr_id",
-            "disabled":true,
-			"value_range": [
-			],
-			"value_accuracy": 6,
-			"options": [
-			]
-        },
-        {
-			"paramId": 29,
-			"category": "RTCM",
-			"paramType": "input",
-			"type": "uint16",
-			"name": "rtcm3_id",
-            "argument": "rtcm3_id",
-            "disabled":true,
-			"value_range": [
-			],
-			"value_accuracy": 6,
-			"options": [
-			]
-        },
-        {
-			"paramId": 30,
-			"category": "RTCM",
-			"paramType": "input",
-			"type": "char20",
-			"name": "antenna_name"
-        },
-        {
-			"paramId": 31,
-			"category": "RTCM",
-			"paramType": "input",
-			"type": "uint16",
-			"name": "antenna_serial"
-        },
-        {
-			"paramId": 32,
-			"category": "RTCM",
-			"paramType": "input",
-			"type": "double",
-			"name": "reference_latitude"
-        },
-        {
-			"paramId": 33,
-			"category": "RTCM",
-			"paramType": "input",
-			"type": "double",
-			"name": "reference_longitude"
-        },
-        {
-			"paramId": 34,
-			"category": "RTCM",
-			"paramType": "input",
-			"type": "double",
-			"name": "reference_height"
-        },
-
-        {
-			"paramId": 35,
-			"category": "Advanced",
-			"paramType": "input",
-			"type": "float",
-			"name": "lever arm x",
-			"argument": "lev_x",
-			"value_range": [
-				-1,
-				1
-			],
-			"value_accuracy": 6,
-			"options": [
-            ]
-		},
-		{
-			"paramId": 36,
-			"category": "Advanced",
-			"paramType": "input",
-			"type": "float",
-			"name": "lever arm y",
-			"argument": "lev_y",
-			"value_range": [
-				-1,
-				1
-			],
-			"value_accuracy": 6,
-			"options": [
-			]
-		},
-		{
-			"paramId": 37,
-			"category": "Advanced",
-			"paramType": "input",
-			"type": "float",
-			"name": "lever arm z",
-			"argument": "lev_z",
-			"value_range": [
-				-1,
-				1
-			],
-			"value_accuracy": 6,
-			"options": [
-			]
-		},
-		{
-			"paramId": 38,
-			"category": "Advanced",
-			"paramType": "input",
-			"type": "float",
-			"name": "point of interest x",
-			"argument": "poi_x",
-			"value_range": [
-				-1,
-				1
-			],
-			"value_accuracy": 6,
-			"options": [
-			]
-		},
-		{
-			"paramId": 39,
-			"category": "Advanced",
-			"paramType": "input",
-			"type": "float",
-			"name": "point of interest y",
-			"argument": "poi_y",
-			"value_range": [
-				-1,
-				1
-			],
-			"value_accuracy": 6,
-			"options": [
-			]
-		},
-		{
-			"paramId": 40,
-			"category": "Advanced",
-			"paramType": "input",
-			"type": "float",
-			"name": "point of interest z",
-			"argument": "poi_z",
-			"value_range": [
-				-1,
-				1
-			],
-			"value_accuracy": 6,
-			"options": [
-			]
-        },
-        {
-			"paramId": 41,
-			"category": "Advanced",
-			"paramType": "input",
-			"type": "float",
-			"name": "rotation x",
-			"argument": "rot_x",
-			"value_range": [
-				-1,
-				1
-			],
-			"value_accuracy": 6,
-			"options": [
-			]
-		},
-		{
-			"paramId": 42,
-			"category": "Advanced",
-			"paramType": "input",
-			"type": "float",
-			"name": "rotation y",
-			"argument": "rot_y",
-			"value_range": [
-				-1,
-				1
-			],
-			"value_accuracy": 6,
-			"options": [
-			]
-		},
-		{
-			"paramId": 43,
-			"category": "Advanced",
-			"paramType": "input",
-			"type": "float",
-			"name": "rotation z",
-			"argument": "rot_z",
-			"value_range": [
-				-1,
-				1
-			],
-			"value_accuracy": 6,
-			"options": [
-			]
         }
 	],
 	"userMessages": {
 		"inputPackets": [
-						{
+			{
 				"name": "pG",
 				"description": "Get device serial number & factory ID",
 				"inputPayload": {},
@@ -700,8 +516,8 @@
 					"type": "userConfiguration",
 					"name": "Full Current Configuration"
 				}
-			},
-			{
+            },
+            {
 				"name": "gB",
 				"description": "Get Configuration Parameters by Block",
 				"inputPayload": {
@@ -731,7 +547,7 @@
 					"name": "ID of the Updated Parameter"
 				}
 			},
-			{
+            {
 				"name": "rD",
 				"description": "Restore Defaults Command",
 				"inputPayload": {},
