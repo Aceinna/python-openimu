@@ -121,7 +121,8 @@ class UserRawParse:
                     self.log_files[name].write(format((data[i]), '11.4f'))
                     if self.s1_time != 0.0:
                         if float(data[i]) - self.s1_time > 0.01001:
-                            print('S1 timeout: {0}'.format(float(data[i])))
+                            #print('S1 timeout: {0}'.format(float(data[i])))
+                            pass
                     self.s1_time = float(data[i])
                 elif i >= 2 and i <= 4:
                     self.log_files[name].write(format(data[i], '14.10f'))
@@ -142,7 +143,8 @@ class UserRawParse:
             if name == 'iN':
                 if self.inspva_time != 0.0:
                     if float(data[1]) - self.inspva_time > 0.01001:
-                        print('inspva timeout: {0}'.format(float(data[1])))
+                        #print('inspva timeout: {0}'.format(float(data[1])))
+                        pass
                 self.inspva_time = float(data[1])
 
     def parse_output_packet_payload(self, packet_type):
