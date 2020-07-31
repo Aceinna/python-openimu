@@ -5,21 +5,25 @@ import datetime
 import threading
 import math
 import re
-import collections
 import serial
 import serial.tools.list_ports
 from .ntrip_client import NTRIPClient
-from .sdk_upgrade import SDKUpgrade
-from ...framework.utils import helper
-from ...framework.utils import resource
+from ...framework.utils import (
+    helper, resource
+)
 from ...framework.context import APP_CONTEXT
 from ..base.uart_base import OpenDeviceBase
 from ..configs.openrtk_predefine import (
     APP_STR, get_app_names
 )
 from ..decorator import with_device_message
-# import asyncio
-
+from .firmware_parser import parser as firmware_content_parser
+from ...models import InternalCombineAppParseRule
+from ..upgrade_workers import (
+    FirmwareUpgradeWorker,
+    SDKUpgradeWorker
+)
+from ..upgrade_center import UpgradeCenter
 
 class Provider(OpenDeviceBase):
     '''
@@ -274,7 +278,7 @@ class Provider(OpenDeviceBase):
 
     def nmea_checksum(self, data):
         data = data.replace("\r", "").replace("\n", "").replace("$", "")
-        nmeadata,cksum = re.split('\*', data)
+        nmeadata, cksum = re.split('\*', data)
         calc_cksum = 0
         for s in nmeadata:
             calc_cksum ^= ord(s)
@@ -295,9 +299,10 @@ class Provider(OpenDeviceBase):
                     elif self.nmea_sync == 1:
                         if bytedata == 0x0A:
                             try:
-                                str_nmea =''.join(self.nmea_buffer)
+                                str_nmea = ''.join(self.nmea_buffer)
                                 if str_nmea.find("$GPGGA") != -1:
-                                    cksum, calc_cksum = self.nmea_checksum(str_nmea)
+                                    cksum, calc_cksum = self.nmea_checksum(
+                                        str_nmea)
                                     if cksum == calc_cksum:
                                         print(str_nmea)
                                         self.ntripClient.send(str_nmea)
@@ -308,7 +313,7 @@ class Provider(OpenDeviceBase):
                                 # pass
                         self.nmea_buffer = []
                         self.nmea_sync = 0
-                    
+
         if self.user_logf is not None:
             self.user_logf.write(data)
 
@@ -478,6 +483,34 @@ class Provider(OpenDeviceBase):
             if output_packet_config and output_packet_config.__contains__('from') \
                     and output_packet_config['from'] == 'imu':
                 self.add_output_packet('stream', 'imu', data)
+
+    def do_write_firmware(self, firmware_content):
+        rules = [
+            InternalCombineAppParseRule('rtk', 'rtk_start:', 4),
+            InternalCombineAppParseRule('sdk', 'sdk_start:', 4),
+        ]
+
+        parsed_content = firmware_content_parser(firmware_content, rules)
+
+        user_port_num, port_name = self.build_connected_serial_port_info()
+        sdk_port = port_name + str(int(user_port_num) + 3)
+
+        sdk_uart = serial.Serial(sdk_port, 115200, timeout=0.1)
+        if not sdk_uart.isOpen():
+            raise Exception('Cannot open SDK upgrade port')
+
+        upgrade_center = UpgradeCenter()
+
+        upgrade_center.register(
+            FirmwareUpgradeWorker(self.communicator, parsed_content['rtk']))
+
+        upgrade_center.register(
+            SDKUpgradeWorker(sdk_uart, parsed_content['sdk']))
+
+        upgrade_center.on('progress', self.handle_upgrade_process)
+        upgrade_center.on('error', self.handle_upgrade_error)
+        upgrade_center.on('finish', self.handle_upgrade_complete)
+        upgrade_center.start()
 
     # command list
     def server_status(self, *args):  # pylint: disable=invalid-name
@@ -717,16 +750,13 @@ class Provider(OpenDeviceBase):
         '''
         Upgrade framework
         '''
-        app_name = ''
         file = ''
         if isinstance(params, str):
             file = params
 
         if isinstance(params, dict):
-            app_name = params['name']
             file = params['file']
 
-        # app_name='GNSS_RTK_SDK'
         # start a thread to do upgrade
         if not self.is_upgrading:
             self.is_upgrading = True
@@ -735,59 +765,12 @@ class Provider(OpenDeviceBase):
             if self._logger is not None:
                 self._logger.stop_user_log()
 
-            if app_name.__contains__('SDK'):
-                thread = threading.Thread(
-                    target=self.thread_do_sdk_framework, args=(file,))
-                thread.start()
-                print("Thread upgarde sdk of OpenRTK start at:[{0}].".format(
-                    datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
-            else:
-                thread = threading.Thread(
-                    target=self.thread_do_upgrade_framework, args=(file,))
-                thread.start()
-                print("Thread upgarde framework of OpenRTK start at:[{0}].".format(
-                    datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+            thread = threading.Thread(
+                target=self.thread_do_upgrade_framework, args=(file,))
+            thread.start()
+            print("Thread upgarde framework of OpenRTK start at:[{0}].".format(
+                datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+
         return {
             'packetType': 'success'
         }
-
-    def thread_do_sdk_framework(self, file):
-        '''
-        Do upgrade firmware
-        '''
-        try:
-            file_content = self._do_download_firmware(file)
-            user_port_num, port_name = self.build_connected_serial_port_info()
-            sdk_port = port_name + str(int(user_port_num) + 3)
-            sdk_upgrade = SDKUpgrade(sdk_port, file_content)
-            sdk_upgrade.on('error', self.on_sdk_upgarde_error)
-            # sdk_upgrade.on('start', self.on_sdk_upgrade_start)
-            sdk_upgrade.on('progress', self.on_sdk_upgarde_progress)
-            sdk_upgrade.on('finish', self.on_sdk_upgarde_finish)
-            sdk_upgrade.start()
-        except Exception as ex:  # pylint:disable=broad-except
-            self.on_upgarde_failed('Upgrade Failed')
-            APP_CONTEXT.get_logger().logger.error(
-                'Upgrade Error: {0}'.format(ex))
-
-    def on_sdk_upgarde_error(self, message):
-        print('upgrade error', message)
-        self.is_upgrading = False
-        self._message_center.resume()
-        self.add_output_packet(
-            'stream', 'upgrade_complete', {'success': False, 'message': message})
-
-    def on_sdk_upgrade_start(self, addr, fs_len):
-        pass
-
-    def on_sdk_upgarde_progress(self, addr, fs_len):
-        self.add_output_packet('stream', 'upgrade_progress', {
-            'addr': addr,
-            'fs_len': fs_len
-        })
-
-    def on_sdk_upgarde_finish(self, message):
-        self.is_upgrading = False
-        self._message_center.resume()
-        self.add_output_packet(
-            'stream', 'upgrade_complete', {'success': True})
