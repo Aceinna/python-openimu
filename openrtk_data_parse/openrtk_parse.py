@@ -13,6 +13,388 @@ is_windows = sys.platform.__contains__(
 is_later_py_38 = sys.version_info > (3, 8)
 is_later_py_3 = sys.version_info > (3, 0)
 
+
+
+class ZouParse:
+	def __init__(self, data_file, path):
+		self.zoudata = []
+		if is_later_py_3:
+			self.zoudata = data_file.read()
+		else:
+			self.filedata = data_file.read()
+			for c in self.filedata:
+				self.zoudata.append(ord(c))
+		self.path = path
+
+		self.packet_buffer = []   
+		self.sync_state = 0
+		self.sync_pattern = collections.deque(4*[0], 4)  
+		self.zouPacketsTypeList = []
+
+		self.log_files = {}
+		self.fp_all = None
+
+		self.time_tag = None # in packet's head
+
+		self.err_count = 0
+
+		with open('openrtk_packets.json') as json_data:
+			self.rtk_properties = json.load(json_data)
+
+	def start_pasre(self):
+		self.zouPacketsTypeList = self.rtk_properties['zouPacketsTypeList']
+		for i,new_byte in enumerate(self.zoudata):
+			self.sync_pattern.append(new_byte)
+			if self.sync_state == 1:
+				self.packet_buffer.append(new_byte)
+				if (self.cur_message_id == 'fmim' and len(self.packet_buffer) == 52) or\
+				(self.cur_message_id == 'fmig' and len(self.packet_buffer) == 95) or\
+				(self.cur_message_id == 'fmin' and len(self.packet_buffer) == 100):
+					if (self.packet_buffer[-1]) == ord('d') and self.packet_buffer[-2] == ord('e'):
+						head_time = self.packet_buffer[5:13]
+						len_fmt = '{0}B'.format(8)
+						pack_fmt = 'd'
+						b = struct.pack(len_fmt, *head_time)
+						self.time_tag = struct.unpack(pack_fmt, b)
+						self.parse_output_packet_payload(packet_type)
+						
+						self.packet_buffer = []
+						self.sync_state = 0
+					else:
+						self.err_count = self.err_count + 1
+						#print('debug data crc err. type {0} count{1}'.format(packet_type, self.err_count))
+						self.sync_state = 0  # CRC did not match
+			else:
+				for message_id in self.zouPacketsTypeList:
+					message_id_list = []				
+					message_id_list = list(message_id)
+					self.cur_message_id = message_id
+					message_id_list_int = []
+					for ele in message_id_list:
+						message_id_list_int.append(ord(ele))
+					if list(self.sync_pattern) == message_id_list_int: # packet type
+						packet_type = message_id
+						self.packet_buffer = message_id_list_int
+						self.sync_state = 1
+						break
+					#test = input()
+		for i, (k, v) in enumerate(self.log_files.items()):
+			v.close()
+		self.log_files.clear()
+		if self.fp_all is not None:
+			self.fp_all.close()
+
+	def start_log(self, output):
+		if self.fp_all is None:
+			self.fp_all = open(self.path + "all.txt", 'w')
+		if output['name'] not in self.log_files.keys():
+			self.log_files[output['name']] = open(self.path + output['name'] + '.csv', 'w')
+			self.write_titlebar(self.log_files[output['name']], output)
+
+	def write_data(self, name, data):
+		self.log_files[name].write(data.__str__())
+		self.fp_all.write(data.__str__())
+
+	def write_data_fm(self, name, data, fm):
+		self.log_files[name].write(format(data, fm))
+		self.fp_all.write(format(data, fm))
+
+	def write_data_output(self, name, data):
+		pass
+
+	def log(self, output, data):
+		name = output['name']
+		payload = output['payload']
+
+		if name == 'imu':
+			self.fp_all.write("$imu,")
+			for i in range(len(data)):
+				if payload[i]['need']:
+					if i == 1:
+						self.write_data_fm(name, data[i], payload[i]['format'])
+					elif payload[i]['name'] == 'time':
+						time_ms = data[i] - int(data[i])
+						time_h = int(int(data[i]) / 10000)
+						time_m = int((int(data[i]) - time_h*10000) / 100)
+						time_s = (int(data[i]) - time_h*10000 - time_m*100)
+						time_useful = time_h*3600 + time_m*60 + time_s + time_ms
+						self.write_data_fm(name, time_useful, payload[i]['format'])
+					else:
+						self.write_data_fm(name, data[i], payload[i]['format'])
+					if payload[i]['need'] == 1:
+						self.write_data(name, ",")
+		elif name == 'gnss':
+			self.fp_all.write("$gnss,")
+			for i in range(len(data)):
+				if payload[i]['need']:
+					if (payload[i]['name'] == 'latitude') or (payload[i]['name'] == 'longitude'):
+						value_int = int(data[i])
+						value_float = data[i] - value_int
+						value_two_float = int(value_float*100)
+						value_rest_float = (data[i] - value_int - value_two_float/100) * 10000
+						value_useful = value_int + value_two_float/60 + value_rest_float/3600
+
+						self.write_data_fm(name, value_useful, payload[i]['format'])
+					elif payload[i]['name'] == 'time':
+						time_ms = data[i] - int(data[i])
+						time_h = int(int(data[i]) / 10000)
+						time_m = int((int(data[i]) - time_h*10000) / 100)
+						time_s = (int(data[i]) - time_h*10000 - time_m*100)
+						time_useful = time_h*3600 + time_m*60 + time_s + time_ms
+						self.write_data_fm(name, time_useful, payload[i]['format'])
+					else:
+						self.write_data_fm(name, data[i], payload[i]['format'])
+					if payload[i]['need'] == 1:
+						self.write_data(name, ",")
+		elif name == 'navi':
+			self.fp_all.write("$gnss,")
+			for i in range(len(data)):
+				if payload[i]['need']:
+					if (payload[i]['name'] == 'latitude') or (payload[i]['name'] == 'longitude'):
+						value_int = int(data[i])
+						value_float = data[i] - value_int
+						value_two_float = int(value_float*100)
+						value_rest_float = (data[i] - value_int - value_two_float/100) * 10000
+						value_useful = value_int + value_two_float/60 + value_rest_float/3600
+						
+						self.write_data_fm(name, value_useful, payload[i]['format'])
+					elif payload[i]['name'] == 'time':
+						time_ms = data[i] - int(data[i])
+						time_h = int(int(data[i]) / 10000)
+						time_m = int((int(data[i]) - time_h*10000) / 100)
+						time_s = (int(data[i]) - time_h*10000 - time_m*100)
+						time_useful = time_h*3600 + time_m*60 + time_s + time_ms
+						self.write_data_fm(name, time_useful, payload[i]['format'])
+					else:
+						self.write_data_fm(name, data[i], payload[i]['format'])
+					if payload[i]['need'] == 1:
+						self.write_data(name, ",")
+			pass
+
+		self.write_data(name, "\n")
+
+	def parse_output_packet_payload(self, message_id):
+		'''zou packet'''
+		if message_id == 'fmim':
+			payload = self.packet_buffer[len(message_id):48]
+		elif message_id == 'fmig':
+			#print('het fmig')
+			payload = self.packet_buffer[len(message_id):91]
+		elif message_id == "fmin":
+			#print('get fmin')
+			payload = self.packet_buffer[len(message_id):96]			
+		output = next((x for x in self.rtk_properties['zouOutputPackets'] if x['messageId'] == str(message_id)), None)
+		if output != None:
+			self.start_log(output)
+			data = self.openrtk_unpack_output_packet(output, payload)
+
+			if data != None:
+				self.log(output, data)
+		else:
+			print('no packet type {0} in json'.format(str(message_id)))
+
+	def openrtk_unpack_output_packet(self, output, payload):
+		length = 0
+		pack_fmt = '<'
+		if self.cur_message_id == "fmim":
+			for value in output['payload']:
+				if value['type'] == 'double':
+					pack_fmt += 'd'
+					length += 8
+				elif value['type'] == 'float':
+					pack_fmt += 'f'
+					length += 4
+				elif value['type'] == 'float':
+					pack_fmt += 'f'
+					length += 4
+				elif value['type'] == 'float':
+					pack_fmt += 'f'
+					length += 4
+				elif value['type'] == 'float':
+					pack_fmt += 'f'
+					length += 4
+				elif value['type'] == 'float':
+					pack_fmt += 'f'
+					length += 4
+				elif value['type'] == 'float':
+					pack_fmt += 'f'
+					length += 4
+				elif value['type'] == 'float':
+					pack_fmt += 'f'
+					length += 4
+				elif value['type'] == 'float':
+					pack_fmt += 'f'
+					length += 4
+				elif value['type'] == 'float':
+					pack_fmt += 'f'
+					length += 4
+		elif self.cur_message_id == "fmig":
+			for value in output['payload']:
+				if value['type'] == 'double':
+					pack_fmt += 'd'
+					length += 8
+				elif value['type'] == 'double':
+					pack_fmt += 'd'
+					length += 8
+				elif value['type'] == 'double':
+					pack_fmt += 'd'
+					length += 8
+				elif value['type'] == 'double':
+					pack_fmt += 'd'
+					length += 8
+				elif value['type'] == 'float':
+					pack_fmt += 'f'
+					length += 4
+				elif value['type'] == 'float':
+					pack_fmt += 'f'
+					length += 4
+				elif value['type'] == 'float':
+					pack_fmt += 'f'
+					length += 4
+				elif value['type'] == 'float':
+					pack_fmt += 'f'
+					length += 4
+				elif value['type'] == 'float':
+					pack_fmt += 'f'
+					length += 4
+				elif value['type'] == 'float':
+					pack_fmt += 'f'
+					length += 4		
+				elif value['type'] == 'float':
+					pack_fmt += 'f'
+					length += 4		
+				elif value['type'] == 'float':
+					pack_fmt += 'f'
+					length += 4		
+				elif value['type'] == 'float':
+					pack_fmt += 'f'
+					length += 4		
+				elif value['type'] == 'float':
+					pack_fmt += 'f'
+					length += 4		
+				elif value['type'] == 'float':
+					pack_fmt += 'f'
+					length += 4		
+				elif value['type'] == 'float':
+					pack_fmt += 'f'
+					length += 4		
+				elif value['type'] == 'float':
+					pack_fmt += 'f'
+					length += 4		
+				elif value['type'] == 'uint8':
+					pack_fmt += 'B'
+					length += 1	
+				elif value['type'] == 'uint8':
+					pack_fmt += 'B'
+					length += 1		
+				elif value['type'] == 'uint8':
+					pack_fmt += 'B'
+					length += 1
+		elif self.cur_message_id == "fmin":
+			for value in output['payload']:
+				if value['type'] == 'double':
+					pack_fmt += 'd'
+					length += 8
+				elif value['type'] == 'double':
+					pack_fmt += 'd'
+					length += 8
+				elif value['type'] == 'double':
+					pack_fmt += 'd'
+					length += 8
+				elif value['type'] == 'double':
+					pack_fmt += 'd'
+					length += 8
+				elif value['type'] == 'float':
+					pack_fmt += 'f'
+					length += 4
+				elif value['type'] == 'float':
+					pack_fmt += 'f'
+					length += 4
+				elif value['type'] == 'float':
+					pack_fmt += 'f'
+					length += 4
+				elif value['type'] == 'float':
+					pack_fmt += 'f'
+					length += 4
+				elif value['type'] == 'float':
+					pack_fmt += 'f'
+					length += 4
+				elif value['type'] == 'float':
+					pack_fmt += 'f'
+					length += 4		
+				elif value['type'] == 'float':
+					pack_fmt += 'f'
+					length += 4		
+				elif value['type'] == 'float':
+					pack_fmt += 'f'
+					length += 4		
+				elif value['type'] == 'float':
+					pack_fmt += 'f'
+					length += 4		
+				elif value['type'] == 'float':
+					pack_fmt += 'f'
+					length += 4		
+				elif value['type'] == 'float':
+					pack_fmt += 'f'
+					length += 4		
+				elif value['type'] == 'float':
+					pack_fmt += 'f'
+					length += 4		
+				elif value['type'] == 'float':
+					pack_fmt += 'f'
+					length += 4		
+				elif value['type'] == 'float':
+					pack_fmt += 'f'
+					length += 4		
+				elif value['type'] == 'uint32':
+					pack_fmt += 'I'
+					length += 4	
+		len_fmt = '{0}B'.format(length)
+
+		try:
+			b = struct.pack(len_fmt, *payload)
+			data = struct.unpack(pack_fmt, b)
+			return data
+		except Exception as e:
+			print("error happened when decode the payload, pls restart IMU firmware: {0}".format(e))    
+
+	def write_titlebar(self, file, output):
+		if output['name'] == 'gnss':
+			for value in output['payload']:
+				if value['need'] and value['name'] != 'position_type':
+					file.write(value['name'])
+					file.write(",")
+			file.write(",")
+		elif output['name'] == 'imu':
+			for value in output['payload']:
+				if value['need']:
+					file.write(value['name'])
+					file.write(",")
+		elif output['name'] == 'navi':
+			for value in output['payload']:
+				if value['need']:
+					file.write(value['name'])
+					file.write(",")
+		file.write("\n")
+
+	def calc_32value(self, value):
+		ulCRC = value
+		for j in range(0,8):
+			if (ulCRC & 1):
+				ulCRC = (ulCRC >> 1) ^ 0xEDB88320
+			else:
+				ulCRC = ulCRC >> 1
+		return ulCRC
+
+	def calc_block_crc32(self, payload):
+		ulCRC = 0
+		for bytedata in payload:
+			ulTemp1 = (ulCRC >> 8) & 0x00FFFFFF
+			ulTemp2 = self.calc_32value((ulCRC ^ bytedata) & 0xff)
+			ulCRC = ulTemp1 ^ ulTemp2
+		return ulCRC
+
+
 class UserRawParse:
     def __init__(self, data_file, path):
         self.rawdata = []
@@ -119,10 +501,9 @@ class UserRawParse:
             for i in range(len(data)):
                 if i == 1:
                     self.log_files[name].write(format((data[i]), '11.4f'))
-                    if self.s1_time != 0.0:
-                        if float(data[i]) - self.s1_time > 0.01001:
-                            #print('S1 timeout: {0}'.format(float(data[i])))
-                            pass
+                    # if self.s1_time != 0.0:
+                    #     if float(data[i]) - self.s1_time > 0.01001:
+                    #         print('S1 timeout: {0}'.format(float(data[i])))
                     self.s1_time = float(data[i])
                 elif i >= 2 and i <= 4:
                     self.log_files[name].write(format(data[i], '14.10f'))
@@ -141,10 +522,9 @@ class UserRawParse:
                 self.log_files[name].write(",")
             self.log_files[name].write("\n")
             if name == 'iN':
-                if self.inspva_time != 0.0:
-                    if float(data[1]) - self.inspva_time > 0.01001:
-                        #print('inspva timeout: {0}'.format(float(data[1])))
-                        pass
+                # if self.inspva_time != 0.0:
+                #     if float(data[1]) - self.inspva_time > 0.01001:
+                #         print('inspva timeout: {0}'.format(float(data[1])))
                 self.inspva_time = float(data[1])
 
     def parse_output_packet_payload(self, packet_type):
@@ -559,7 +939,7 @@ if __name__ == '__main__':
 
     for root, dirs, file_name in os.walk(args.p):
         for fname in file_name:
-            if (fname.startswith('user') or fname.startswith('debug')) and fname.endswith('.bin'):
+            if (fname.startswith('user') or fname.startswith('debug')) and fname.endswith('.bin') or (fname.startswith('IMU')) or (fname.endswith('.log')):
                 file_path = os.path.join(root, fname)
                 print('processing {0}'.format(file_path))
                 path = mkdir(file_path)
@@ -569,6 +949,8 @@ if __name__ == '__main__':
                             parse = UserRawParse(fp_rawdata, path + '/' + fname.rstrip(".bin") + '_')
                         elif fname.startswith('debug'):
                             parse = DebugRawParse(fp_rawdata, path + '/' + fname.rstrip(".bin") + '_')
+                        elif fname.endswith('.log'):
+                            parse = ZouParse(fp_rawdata, path + '/' + fname.rstrip(".log") + '_')
                         parse.start_pasre()
                         fp_rawdata.close
                 except Exception as e:
