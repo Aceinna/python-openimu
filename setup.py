@@ -40,7 +40,7 @@ setup(
     packages=find_packages("src", exclude=['test', 'tests']),
     package_dir={"": "src"},
     package_data={
-        'aceinna': ['setting/openrtk/*.json', 'setting/openimu/*/*.json']
+        'aceinna': ['setting/openrtk/*/*.json', 'setting/openimu/*/*.json', 'setting/dmu/*.json']
     },
     classifiers=[
         "Environment :: Console",
