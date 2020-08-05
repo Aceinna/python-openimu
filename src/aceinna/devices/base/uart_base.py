@@ -280,6 +280,13 @@ class OpenDeviceBase(EventBase):
 
     def _do_download_firmware(self, file):
         upgarde_root = os.path.join(resource.get_executor_path(), 'upgrade')
+        
+        del_list = os.listdir(upgarde_root)
+        for f in del_list:
+            file_path = os.path.join(upgarde_root, f)
+            if os.path.isfile(file_path):
+                os.remove(file_path)
+
         firmware_content = None
 
         if not os.path.exists(upgarde_root):
