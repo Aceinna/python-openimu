@@ -153,6 +153,17 @@ def update_parameter_parser(payload, user_configuration):
     return data, error
 
 
+def update_parameters_parser(payload, user_configuration):
+    '''
+    uB parser
+    '''
+    error = False
+    data = decode_value('uint32', payload[0:4])
+    if data:
+        error = True
+    return data, error
+
+
 def common_input_parser(payload, user_configuration):
     '''
     General input packet parser
@@ -259,6 +270,7 @@ def match_command_handler(packet_type):
         'gP': get_parameter_parser,
         'sC': common_input_parser,
         'uP': update_parameter_parser,
+        'uB': update_parameters_parser,
         'rD': common_input_parser,
         'RE': read_eeprom_parser,
         'WE': common_input_parser,

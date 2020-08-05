@@ -24,6 +24,8 @@ from ..upgrade_workers import (
     SDKUpgradeWorker
 )
 from ..upgrade_center import UpgradeCenter
+from ..parsers.open_field_parser import encode_value
+
 
 class Provider(OpenDeviceBase):
     '''
@@ -638,12 +640,35 @@ class Provider(OpenDeviceBase):
         '''
         Update paramters value
         '''
+        input_parameters = self.properties['userConfiguration']
+        grouped_parameters = {}
+
         for parameter in params:
+            exist_parameter = next(
+                (x for x in input_parameters if x['paramId'] == parameter['paramId']), None)
+
+            if exist_parameter:
+                has_group = grouped_parameters.__contains__(
+                    exist_parameter['category'])
+                if not has_group:
+                    grouped_parameters[exist_parameter['category']] = []
+
+                current_group = grouped_parameters[exist_parameter['category']]
+
+                current_group.append({'paramId':parameter['paramId'], 'value':parameter['value'], 'type': exist_parameter['type']})
+
+        for group in current_group.values():
+            message_bytes = []
+            for parameter in group:
+                message_bytes.extend(
+                    encode_value('int8',parameter['paramId'])
+                )
+                message_bytes.extend(
+                    encode_value(parameter['type'],parameter['value'])
+                )
             # result = self.set_param(parameter)
-            command_line = helper.build_input_packet(
-                'uP', properties=self.properties,
-                param=parameter['paramId'],
-                value=parameter['value'])
+            command_line = helper.build_packet(
+                'uB', message_bytes)
 
             result = yield self._message_center.build(command=command_line)
 
@@ -657,6 +682,8 @@ class Provider(OpenDeviceBase):
                         'error': data
                     }
                 }
+                break
+
             if data > 0:
                 yield {
                     'packetType': 'error',
@@ -664,6 +691,7 @@ class Provider(OpenDeviceBase):
                         'error': data
                     }
                 }
+                break
 
         yield {
             'packetType': 'success',
