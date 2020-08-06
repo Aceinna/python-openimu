@@ -657,7 +657,7 @@ class Provider(OpenDeviceBase):
 
                 current_group.append({'paramId':parameter['paramId'], 'value':parameter['value'], 'type': exist_parameter['type']})
 
-        for group in current_group.values():
+        for group in grouped_parameters.values():
             message_bytes = []
             for parameter in group:
                 message_bytes.extend(
@@ -666,9 +666,12 @@ class Provider(OpenDeviceBase):
                 message_bytes.extend(
                     encode_value(parameter['type'],parameter['value'])
                 )
+                print('parameter type {0}, value {1}'.format(parameter['type'],parameter['value']))
             # result = self.set_param(parameter)
             command_line = helper.build_packet(
                 'uB', message_bytes)
+            for s in command_line:
+                print(hex(s))
 
             result = yield self._message_center.build(command=command_line)
 
