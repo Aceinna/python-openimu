@@ -238,7 +238,7 @@ class Provider(OpenDeviceBase):
             if rtcm_port != '':
                 print('OpenRTK log GNSS UART {0}'.format(rtcm_port))
                 self.rtcm_serial_port = serial.Serial(
-                    rtcm_port, '460800', timeout=0.005)
+                    rtcm_port, '460800', timeout=0.1)
                 if self.rtcm_serial_port.isOpen():
                     self.rtcm_logf = open(
                         file_name + '/' + 'rtcm_rover_' + file_time + '.bin', "wb")
@@ -249,7 +249,7 @@ class Provider(OpenDeviceBase):
             if debug_port != '':
                 print('OpenRTK log DEBUG UART {0}'.format(debug_port))
                 self.debug_serial_port = serial.Serial(
-                    debug_port, '460800', timeout=0.005)
+                    debug_port, '460800', timeout=0.1)
                 if self.debug_serial_port.isOpen():
                     if self.app_info['app_name'] == 'RAWDATA':
                         self.debug_logf = open(

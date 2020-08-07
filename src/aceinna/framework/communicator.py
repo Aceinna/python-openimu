@@ -204,7 +204,7 @@ class SerialPort(Communicator):
                 connection['port'], connection['baud']))
             if connection:
                 self.open_serial_port(
-                    port=connection['port'], baud=connection['baud'], timeout=0.005)
+                    port=connection['port'], baud=connection['baud'], timeout=0.1)
                 if self.serial_port is not None:
                     self.confirm_device(self.filter_device_type)
                     if self.device is None:
@@ -299,7 +299,7 @@ class SerialPort(Communicator):
             raise
 
     def open(self, port=False, baud=57600):
-        return self.open_serial_port(port, baud, timeout=0.005)
+        return self.open_serial_port(port, baud, timeout=0.1)
 
     def close(self):
         return self.close_serial_port()
