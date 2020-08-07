@@ -5,6 +5,11 @@ import struct
 import sys
 from .dict_extend import Dict
 
+if sys.version_info[0] > 2:
+    from queue import Queue
+else:
+    from Queue import Queue
+
 COMMAND_START = [0x55, 0x55]
 
 
@@ -243,3 +248,103 @@ def name_convert_camel_to_snake(camel_name):
             chars.append(lower_char)
 
     return ''.join(chars)
+
+
+def _parse_buffer(data_buffer):
+    response = {
+        'parsed': False,
+        'parsed_end_index': 0,
+        'result': []
+    }
+    data_queue = Queue()
+    data_queue.queue.extend(data_buffer)
+
+    command_start = [0x55, 0x55]
+    parsed_data = []
+    is_header_found = False
+    packet_type = ''
+    data_buffer_len = len(data_buffer)
+
+    while not data_queue.empty():
+        if is_header_found:
+            # if matched packet, is_header_found = False, parsed_data = []
+            if not data_queue.empty():
+                packet_type_start = data_queue.get()
+            else:
+                break
+
+            if not data_queue.empty():
+                packet_type_end = data_queue.get()
+            else:
+                break
+
+            if not data_queue.empty():
+                packet_len = data_queue.get()
+                packet_type = ''.join(
+                    ["%c" % x for x in [packet_type_start, packet_type_end]])
+                packet_data = []
+
+                if data_queue.qsize() >= packet_len:
+                    # take packet
+                    for _ in range(packet_len):
+                        packet_data.append(data_queue.get())
+                else:
+                    break
+                # update response
+                response['parsed'] = True
+                response['result'].append({
+                    'type': packet_type,
+                    'data': packet_data
+                })
+                response['parsed_end_index'] += data_buffer_len - \
+                    data_queue.qsize()
+                data_buffer_len = data_queue.qsize()
+                parsed_data = []
+                is_header_found = False
+            else:
+                break
+        else:
+            byte_item = data_queue.get()
+            parsed_data.append(byte_item)
+
+            if len(parsed_data) > 2:
+                parsed_data = parsed_data[-2:]
+
+            if parsed_data == command_start:
+                # find message start
+                is_header_found = True
+                parsed_data = []
+
+    return response
+
+
+def read_untils_have_data_through_serial_port(communicator, packet_type, read_length=200, retry_times=20):
+    '''
+    Get data from limit times of read
+    '''
+    result = None
+    trys = 0
+    data_buffer = []
+
+    while trys < retry_times:
+        data_buffer_per_time = bytearray(
+            communicator.read(read_length))
+        data_buffer.extend(data_buffer_per_time)
+
+        response = _parse_buffer(data_buffer)
+        if response['parsed']:
+            matched_packet = next(
+                (packet['data'] for packet in response['result']
+                 if packet['type'] == packet_type), None)
+            if matched_packet is not None:
+                result = matched_packet
+            else:
+                # clear buffer to parsed index
+                data_buffer = data_buffer[response['parsed_end_index']:]
+
+        if result is not None:
+            break
+
+        trys += 1
+
+    return result

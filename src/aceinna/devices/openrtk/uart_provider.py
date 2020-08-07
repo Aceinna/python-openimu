@@ -4,20 +4,26 @@ import json
 import datetime
 import threading
 import math
+import re
 import serial
 import serial.tools.list_ports
 from .ntrip_client import NTRIPClient
-from .sdk_upgrade import SDKUpgrade
-from ...framework.utils import helper
-from ...framework.utils import resource
+from ...framework.utils import (
+    helper, resource
+)
 from ...framework.context import APP_CONTEXT
 from ..base.uart_base import OpenDeviceBase
 from ..configs.openrtk_predefine import (
     APP_STR, get_app_names
 )
 from ..decorator import with_device_message
-# import asyncio
-
+from .firmware_parser import parser as firmware_content_parser
+from ...models import InternalCombineAppParseRule
+from ..upgrade_workers import (
+    FirmwareUpgradeWorker,
+    SDKUpgradeWorker
+)
+from ..upgrade_center import UpgradeCenter
 
 class Provider(OpenDeviceBase):
     '''
@@ -46,6 +52,9 @@ class Provider(OpenDeviceBase):
         self.debug_c_f = None
         self.enable_data_log = False
         self.is_app_matched = False
+        self.ntrip_client_enable = False
+        self.nmea_buffer = []
+        self.nmea_sync = 0
         self.prepare_folders()
 
     def prepare_folders(self):
@@ -267,7 +276,44 @@ class Provider(OpenDeviceBase):
             print(e)
             return False
 
+    def nmea_checksum(self, data):
+        data = data.replace("\r", "").replace("\n", "").replace("$", "")
+        nmeadata, cksum = re.split('\*', data)
+        calc_cksum = 0
+        for s in nmeadata:
+            calc_cksum ^= ord(s)
+        return int(cksum, 16), calc_cksum
+
     def on_read_raw(self, data):
+        if self.ntrip_client_enable:
+            for bytedata in data:
+                if bytedata == 0x24:
+                    self.nmea_buffer = []
+                    self.nmea_sync = 0
+                    self.nmea_buffer.append(chr(bytedata))
+                else:
+                    self.nmea_buffer.append(chr(bytedata))
+                    if self.nmea_sync == 0:
+                        if bytedata == 0x0D:
+                            self.nmea_sync = 1
+                    elif self.nmea_sync == 1:
+                        if bytedata == 0x0A:
+                            try:
+                                str_nmea = ''.join(self.nmea_buffer)
+                                if str_nmea.find("$GPGGA") != -1:
+                                    cksum, calc_cksum = self.nmea_checksum(
+                                        str_nmea)
+                                    if cksum == calc_cksum:
+                                        print(str_nmea)
+                                        self.ntripClient.send(str_nmea)
+                                    # else:
+                                    #     print("nmea checksum wrong {0} {1}".format(cksum, calc_cksum))
+                            except Exception as e:
+                                print(e)
+                                # pass
+                        self.nmea_buffer = []
+                        self.nmea_sync = 0
+
         if self.user_logf is not None:
             self.user_logf.write(data)
 
@@ -357,7 +403,7 @@ class Provider(OpenDeviceBase):
                                   second + msec - 18, '09.2f')
                 gpgga = gpgga + ',' + gga_time
                 # latitude
-                latitude = float(data['latitude']) / 1e+07
+                latitude = float(data['latitude']) * 180 / 2147483648.0
                 if latitude >= 0:
                     latflag = 'N'
                 else:
@@ -368,7 +414,7 @@ class Provider(OpenDeviceBase):
                 lat_dm = format(lat_d*100 + lat_m, '012.7f')
                 gpgga = gpgga + ',' + lat_dm + ',' + latflag
                 # longitude
-                longitude = float(data['longitude']) / 1e+07
+                longitude = float(data['longitude']) * 180 / 2147483648.0
                 if longitude >= 0:
                     lonflag = 'E'
                 else:
@@ -396,7 +442,10 @@ class Provider(OpenDeviceBase):
                 checksum = 0
                 for i in range(1, len(gpgga)):
                     checksum = checksum ^ ord(gpgga[i])
-                gpgga = gpgga + '*' + str(checksum) + '\r\n'
+                str_checksum = hex(checksum)
+                if str_checksum.startswith("0x"):
+                    str_checksum = str_checksum[2:]
+                gpgga = gpgga + '*' + str_checksum + '\r\n'
                 print(gpgga)
                 self.ntripClient.send(gpgga)
                 return
@@ -434,6 +483,34 @@ class Provider(OpenDeviceBase):
             if output_packet_config and output_packet_config.__contains__('from') \
                     and output_packet_config['from'] == 'imu':
                 self.add_output_packet('stream', 'imu', data)
+
+    def do_write_firmware(self, firmware_content):
+        rules = [
+            InternalCombineAppParseRule('rtk', 'rtk_start:', 4),
+            InternalCombineAppParseRule('sdk', 'sdk_start:', 4),
+        ]
+
+        parsed_content = firmware_content_parser(firmware_content, rules)
+
+        user_port_num, port_name = self.build_connected_serial_port_info()
+        sdk_port = port_name + str(int(user_port_num) + 3)
+
+        sdk_uart = serial.Serial(sdk_port, 115200, timeout=0.1)
+        if not sdk_uart.isOpen():
+            raise Exception('Cannot open SDK upgrade port')
+
+        upgrade_center = UpgradeCenter()
+
+        upgrade_center.register(
+            FirmwareUpgradeWorker(self.communicator, parsed_content['rtk']))
+
+        upgrade_center.register(
+            SDKUpgradeWorker(sdk_uart, parsed_content['sdk']))
+
+        upgrade_center.on('progress', self.handle_upgrade_process)
+        upgrade_center.on('error', self.handle_upgrade_error)
+        upgrade_center.on('finish', self.handle_upgrade_complete)
+        upgrade_center.start()
 
     # command list
     def server_status(self, *args):  # pylint: disable=invalid-name
@@ -673,16 +750,13 @@ class Provider(OpenDeviceBase):
         '''
         Upgrade framework
         '''
-        app_name = ''
         file = ''
         if isinstance(params, str):
             file = params
 
         if isinstance(params, dict):
-            app_name = params['name']
             file = params['file']
 
-        # app_name='GNSS_RTK_SDK'
         # start a thread to do upgrade
         if not self.is_upgrading:
             self.is_upgrading = True
@@ -691,59 +765,12 @@ class Provider(OpenDeviceBase):
             if self._logger is not None:
                 self._logger.stop_user_log()
 
-            if app_name.__contains__('SDK'):
-                thread = threading.Thread(
-                    target=self.thread_do_sdk_framework, args=(file,))
-                thread.start()
-                print("Thread upgarde sdk of OpenRTK start at:[{0}].".format(
-                    datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
-            else:
-                thread = threading.Thread(
-                    target=self.thread_do_upgrade_framework, args=(file,))
-                thread.start()
-                print("Thread upgarde framework of OpenRTK start at:[{0}].".format(
-                    datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+            thread = threading.Thread(
+                target=self.thread_do_upgrade_framework, args=(file,))
+            thread.start()
+            print("Thread upgarde framework of OpenRTK start at:[{0}].".format(
+                datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+
         return {
             'packetType': 'success'
         }
-
-    def thread_do_sdk_framework(self, file):
-        '''
-        Do upgrade firmware
-        '''
-        try:
-            file_content = self._do_download_firmware(file)
-            user_port_num, port_name = self.build_connected_serial_port_info()
-            sdk_port = port_name + str(int(user_port_num) + 3)
-            sdk_upgrade = SDKUpgrade(sdk_port, file_content)
-            sdk_upgrade.on('error', self.on_sdk_upgarde_error)
-            # sdk_upgrade.on('start', self.on_sdk_upgrade_start)
-            sdk_upgrade.on('progress', self.on_sdk_upgarde_progress)
-            sdk_upgrade.on('finish', self.on_sdk_upgarde_finish)
-            sdk_upgrade.start()
-        except Exception as ex:  # pylint:disable=broad-except
-            self.on_upgarde_failed('Upgrade Failed')
-            APP_CONTEXT.get_logger().logger.error(
-                'Upgrade Error: {0}'.format(ex))
-
-    def on_sdk_upgarde_error(self, message):
-        print('upgrade error', message)
-        self.is_upgrading = False
-        self._message_center.resume()
-        self.add_output_packet(
-            'stream', 'upgrade_complete', {'success': False, 'message': message})
-
-    def on_sdk_upgrade_start(self, addr, fs_len):
-        pass
-
-    def on_sdk_upgarde_progress(self, addr, fs_len):
-        self.add_output_packet('stream', 'upgrade_progress', {
-            'addr': addr,
-            'fs_len': fs_len
-        })
-
-    def on_sdk_upgarde_finish(self, message):
-        self.is_upgrading = False
-        self._message_center.resume()
-        self.add_output_packet(
-            'stream', 'upgrade_complete', {'success': True})

@@ -1,8 +1,8 @@
 import time
-import serial
 from ..base.event_base import EventBase
 
-xldr_teseo5_bootloader_cut2 = \
+
+XLDR_TESEO5_BOOTLOADER_CUT2 = \
     [
         0x01, 0xf0, 0x3c, 0xbc, 0x3d, 0x00, 0x00, 0x00, 0x3d, 0x00, 0x00, 0x00,
         0x3d, 0x00, 0x00, 0x00, 0x3d, 0x00, 0x00, 0x00, 0x3d, 0x00, 0x00, 0x00,
@@ -646,7 +646,7 @@ xldr_teseo5_bootloader_cut2 = \
         0x01, 0xff, 0x01, 0xff, 0x01, 0xff, 0x01, 0xff, 0x01, 0xff, 0x01, 0xff,
         0x01, 0xff, 0x01, 0xff, 0x01, 0x29, 0x00, 0x00]
 
-crc32_tab = \
+CRC32_TAB = \
     [
         0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419,
         0x706af48f, 0xe963a535, 0x9e6495a3, 0x0edb8832, 0x79dcb8a4,
@@ -703,16 +703,18 @@ crc32_tab = \
     ]
 
 
-class SDKUpgrade(EventBase):
+class SDKUpgradeWorker(EventBase):
     '''
     Upgrade tool for SDK of OpenRTK
     '''
 
-    def __init__(self, port, file_content):
-        super(SDKUpgrade, self).__init__()
-        self._port = port
+    def __init__(self, uart, file_content):
+        super(SDKUpgradeWorker, self).__init__()
+        self._uart = uart
         self._file_content = file_content
-        self._uart = None
+        self._key = None
+        self._is_stopped = False
+        # self._uart = None
 
     def _match(self, result, check_data):
         if isinstance(check_data, list):
@@ -744,7 +746,7 @@ class SDKUpgrade(EventBase):
                 print(crc32val ^ bytes[j])
                 '''
                 #print((crc32val ^ bytes[j]) & 0xff)
-                crc32val = crc32_tab[(crc32val ^ bytes_hex[j+4*i])
+                crc32val = CRC32_TAB[(crc32val ^ bytes_hex[j+4*i])
                                      & 0xff] ^ (crc32val >> 8)
                 #print("byte[%d] = %d ,crc32val = %d" % (j,bytes[j],crc32val))
 
@@ -778,6 +780,9 @@ class SDKUpgrade(EventBase):
         return is_match
 
     def send_sync(self):
+        if self._is_stopped:
+            return False
+
         sync = [0xfd, 0xc6, 0x49, 0x28]
         self._uart.write(sync)
         time.sleep(0.2)
@@ -785,6 +790,9 @@ class SDKUpgrade(EventBase):
         return self.read_until([0x3A, 0x54, 0x2C, 0xA6], 100)
 
     def send_change_baud_cmd(self):
+        if self._is_stopped:
+            return False
+
         change_baud_cmd = [0x71]
 
         self._uart.write(change_baud_cmd)
@@ -793,6 +801,9 @@ class SDKUpgrade(EventBase):
         return self.read_until(0xCC, 10, 1)
 
     def send_baud(self, baud_int):
+        if self._is_stopped:
+            return False
+
         baud_list = []
         baud_list = self.get_list_from_int(baud_int)
         # print('baud_int = %d' % baud_int)
@@ -808,6 +819,9 @@ class SDKUpgrade(EventBase):
         return has_read
 
     def baud_check(self):
+        if self._is_stopped:
+            return False
+
         check_baud = [0x38]
         time.sleep(0.01)
         self._uart.write(check_baud)
@@ -815,6 +829,9 @@ class SDKUpgrade(EventBase):
         return self.read_until(0xCC, 10, 1)
 
     def is_host_ready(self):
+        if self._is_stopped:
+            return False
+
         host = [0x5a]
         # fs.write(bytes(host))
         self._uart.write(host)
@@ -822,8 +839,10 @@ class SDKUpgrade(EventBase):
         return self.read_until(0xCC, 10)
 
     def send_boot(self):
-        # 4064835977
-        boot_size = len(xldr_teseo5_bootloader_cut2)
+        if self._is_stopped:
+            return False
+
+        boot_size = len(XLDR_TESEO5_BOOTLOADER_CUT2)
         boot_size_hex = []
         boot_size_hex = self.get_list_from_int(boot_size)
 
@@ -832,14 +851,14 @@ class SDKUpgrade(EventBase):
         entry_hex = [0, 0, 0, 0]
         crc_val_boot = self.sdk_crc(crc_val_boot, entry_hex, 4)
         crc_val_boot = self.sdk_crc(
-            crc_val_boot, xldr_teseo5_bootloader_cut2, boot_size)
+            crc_val_boot, XLDR_TESEO5_BOOTLOADER_CUT2, boot_size)
         #crc_val_boot_hex=[0 for x in range(0,4)]
         crc_val_boot_hex = []
         crc_val_boot_hex = self.get_list_from_int(crc_val_boot)
 
-        boot_part1 = xldr_teseo5_bootloader_cut2[0:5120]
-        boot_part2 = xldr_teseo5_bootloader_cut2[5120:]
-        
+        boot_part1 = XLDR_TESEO5_BOOTLOADER_CUT2[0:5120]
+        boot_part2 = XLDR_TESEO5_BOOTLOADER_CUT2[5120:]
+
         preamble = [0xf4, 0x01, 0xd5, 0xbc, 0x73, 0x40, 0x98,
                     0x83, 0x04, 0x01, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00]
         self._uart.write(preamble)
@@ -860,6 +879,8 @@ class SDKUpgrade(EventBase):
         return self.read_until(0xCC, 100)
 
     def send_write_flash_cmd(self):
+        if self._is_stopped:
+            return False
         write_cmd = [0x4A]
 
         self._uart.write(write_cmd)
@@ -867,6 +888,8 @@ class SDKUpgrade(EventBase):
         return self.read_until(0xCC, 10, 1)
 
     def send_bin_info(self, bin_info_list):
+        if self._is_stopped:
+            return False
         self._uart.write(bin_info_list)
 
         return self.read_until(0xCC, 10)
@@ -922,26 +945,37 @@ class SDKUpgrade(EventBase):
         return bin_info_list
 
     def devinit_wait(self):
+        if self._is_stopped:
+            return False
+
         return self.read_until(0xCC, 500, 1)
 
     def erase_wait(self):
+        if self._is_stopped:
+            return False
+
         return self.read_until(0xCC, 500, 1)
 
     def flash_write(self, fs_len, bin_data):
         write_result = True
         packet_num = int(fs_len / 5120)
+        current = 0
         for i in range(packet_num+1):
+            if self._is_stopped:
+                return False
+
             if i == packet_num:
                 data_to_sdk = bin_data[packet_num*5120:]
             else:
                 data_to_sdk = bin_data[i*5120:(i+1)*5120]
             # fs.write(bytes(data_to_sdk))
+            current += len(data_to_sdk)
             self._uart.write(data_to_sdk)
 
             has_read = self.read_until(0xCC, 100)
 
             if has_read:
-                self.emit('progress', i, packet_num)
+                self.emit('progress', self._key, current, packet_num)
             else:
                 write_result = False
                 break
@@ -949,29 +983,44 @@ class SDKUpgrade(EventBase):
         return write_result
 
     def flash_crc(self):
-        return self.read_until(0xCC, 200)
+        if self._is_stopped:
+            return False
 
-    def connect_serail_port(self):
-        self._uart = serial.Serial(self._port, 115200, timeout=0.1)
-        return self._uart.isOpen()
+        return self.read_until(0xCC, 200)
 
     def _raise_error(self, message):
         if self._uart.isOpen():
             self._uart.close()
+
+        # if the worker is mark as stopped, don't raise any error
+        if self._is_stopped:
+            return False
         # wait a time, output data to client
         time.sleep(.5)
-        self.emit('error', message)
+        self.emit('error', self._key, message)
         return False
 
-    def start(self):
+    def set_key(self, key):
+        self._key = key
+
+    def get_key(self):
+        return self._key
+
+    def stop(self):
+        self._is_stopped = True
+
+    def get_upgrade_content_size(self):
+        return len(self._file_content)
+
+    def work(self):
         '''
         Start to do upgrade
         '''
         fs_len = len(self._file_content)
         bin_info_list = self.get_bin_info_list(fs_len, self._file_content)
 
-        if not self.connect_serail_port():
-            return self._raise_error('Connect serial Port failed')
+        # if not self.connect_serail_port():
+        #     return self._raise_error('Connect serial Port failed')
 
         if not self.send_sync():
             return self._raise_error('Sync failed')
@@ -1010,6 +1059,4 @@ class SDKUpgrade(EventBase):
             return self._raise_error('CRC check fail')
         else:
             self._uart.close()
-            # wait a time, output data to client
-            time.sleep(.5)
-            self.emit('finish', 'Upgrade success')
+            self.emit('finish', self._key)

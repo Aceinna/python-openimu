@@ -18,7 +18,8 @@ from ...framework.context import APP_CONTEXT
 from ..decorator import with_device_message
 from ...framework.ans_platform_api import AnsPlatformAPI
 from ...framework.configuration import get_config
-
+from ..upgrade_workers import FirmwareUpgradeWorker
+from ..upgrade_center import UpgradeCenter
 
 class Provider(OpenDeviceBase):
     '''
@@ -198,6 +199,17 @@ class Provider(OpenDeviceBase):
                 "imuProperties": json.dumps(self.properties)
             }
         }
+
+    def do_write_firmware(self, firmware_content):
+        upgrade_center = UpgradeCenter()
+
+        upgrade_center.register(
+            FirmwareUpgradeWorker(self.communicator, firmware_content))
+
+        upgrade_center.on('progress', self.handle_upgrade_process)
+        upgrade_center.on('error', self.handle_upgrade_error)
+        upgrade_center.on('finish', self.handle_upgrade_complete)
+        upgrade_center.start()
 
     # command list
     def get_device_info(self, *args):  # pylint: disable=invalid-name

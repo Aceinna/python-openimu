@@ -441,7 +441,6 @@ class Webserver(EventBase):
                     'stream', 'ping', {'status': 1})
                 self.ws_handler.handle_device_found(device_provider, False)
 
-
     def device_complete_upgrade_handler(self, device_provider):
         '''
         Handler after device upgrade complete
@@ -516,6 +515,8 @@ class Webserver(EventBase):
         '''
         Handle device exception
         '''
+        APP_CONTEXT.get_logger().logger.error(message)
+
         if self.ws_handler:
             self.ws_handler.reset()
             self.ws_handler.on_receive_output_packet(

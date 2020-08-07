@@ -34,7 +34,6 @@ class OpenDeviceBase(EventBase):
         self.exception_thread = False  # flag of exit threads
         self.exception_lock = threading.Lock()  # lock of exception_thread
         self.exit_thread = False
-        self.data_queue = Queue()  # data container
         self.data_lock = threading.Lock()
         self.clients = []
         self.input_result = None
@@ -48,10 +47,6 @@ class OpenDeviceBase(EventBase):
         self.communicator = communicator
         self.bootloader_baudrate = 57600
         self.properties = None
-        self.firmware_content = []
-        self.fs_len = 0
-        self.addr = 0
-        self.max_data_len = 240
         self.block_blob_service = None
         self._logger = None
         self.is_logging = False
@@ -73,7 +68,15 @@ class OpenDeviceBase(EventBase):
 
     @abstractmethod
     def after_setup(self):
-        pass
+        '''
+        Do some operations after setup
+        '''
+
+    @abstractmethod
+    def do_write_firmware(self, firmware_content):
+        '''
+        Do firmware upgrade
+        '''
 
     def internal_input_command(self, command, read_length=500):
         '''
@@ -103,101 +106,11 @@ class OpenDeviceBase(EventBase):
             return format_string
         return ''
 
-    def _parse_buffer(self, data_buffer):
-        response = {
-            'parsed': False,
-            'parsed_end_index': 0,
-            'result': []
-        }
-        data_queue = Queue()
-        data_queue.queue.extend(data_buffer)
-
-        command_start = [0x55, 0x55]
-        parsed_data = []
-        is_header_found = False
-        packet_type = ''
-        data_buffer_len = len(data_buffer)
-
-        while not data_queue.empty():
-            if is_header_found:
-                # if matched packet, is_header_found = False, parsed_data = []
-                if not data_queue.empty():
-                    packet_type_start = data_queue.get()
-                else:
-                    break
-
-                if not data_queue.empty():
-                    packet_type_end = data_queue.get()
-                else:
-                    break
-
-                if not data_queue.empty():
-                    packet_len = data_queue.get()
-                    packet_type = ''.join(
-                        ["%c" % x for x in [packet_type_start, packet_type_end]])
-                    packet_data = []
-
-                    if data_queue.qsize() >= packet_len:
-                        # take packet
-                        for _ in range(packet_len):
-                            packet_data.append(data_queue.get())
-                    else:
-                        break
-                    # update response
-                    response['parsed'] = True
-                    response['result'].append({
-                        'type': packet_type,
-                        'data': packet_data
-                    })
-                    response['parsed_end_index'] += data_buffer_len - \
-                        data_queue.qsize()
-                    data_buffer_len = data_queue.qsize()
-                    parsed_data = []
-                    is_header_found = False
-                else:
-                    break
-            else:
-                byte_item = data_queue.get()
-                parsed_data.append(byte_item)
-
-                if len(parsed_data) > 2:
-                    parsed_data = parsed_data[-2:]
-
-                if parsed_data == command_start:
-                    # find message start
-                    is_header_found = True
-                    parsed_data = []
-
-        return response
-
-    # may lost data
     def read_untils_have_data(self, packet_type, read_length=200, retry_times=20):
         '''
         Get data from limit times of read
         '''
-        result = None
-        trys = 0
-        data_buffer = []
-        self.data_queue.queue.clear()
-
-        while trys < retry_times:
-            data_buffer_per_time = bytearray(
-                self.communicator.read(read_length))
-            data_buffer.extend(data_buffer_per_time)
-
-            response = self._parse_buffer(data_buffer)
-            if response['parsed']:
-                matched_packet = next(
-                    (packet['data'] for packet in response['result'] if packet['type'] == packet_type), None)
-                if matched_packet is not None:
-                    result = matched_packet
-                    break
-                else:
-                    # clear buffer to parsed index
-                    data_buffer = data_buffer[response['parsed_end_index']:]
-            trys += 1
-
-        return result
+        return helper.read_untils_have_data_through_serial_port(self.communicator, packet_type, read_length, retry_times)
 
     def _setup_message_center(self):
         if not self._message_center:
@@ -262,7 +175,9 @@ class OpenDeviceBase(EventBase):
 
     @abstractmethod
     def on_read_raw(self, data):
-        pass
+        '''
+        Trigger when read raw data
+        '''
 
     def get_command_lines(self):
         '''
@@ -345,24 +260,33 @@ class OpenDeviceBase(EventBase):
         '''
         try:
             # step.1 download firmware
-            if not self.download_firmware(file):
-                self.on_upgarde_failed('cannot find firmware file')
+            can_download, firmware_content = self.download_firmware(file)
+            if not can_download:
+                self.handle_upgrade_error('cannot find firmware file')
                 return
             # step.2 jump to bootloader
             if not self.switch_to_bootloader():
-                self.on_upgarde_failed('Bootloader Start Failed')
+                self.handle_upgrade_error('Bootloader Start Failed')
                 return
-            # step.3 write to block
+            # step.3 write to block, use self write from specified device
             print('Firmware upgrading...')
-            self.write_firmware()
+            self.do_write_firmware(firmware_content)
+            # self.write_firmware()
             # step.4 restart app
-            self.restart()
+            # self.restart()
         except Exception:  # pylint:disable=broad-except
-            self.on_upgarde_failed('Upgrade Failed')
+            self.handle_upgrade_error('Upgrade Failed')
             traceback.print_exc()
 
     def _do_download_firmware(self, file):
         upgarde_root = os.path.join(resource.get_executor_path(), 'upgrade')
+        
+        del_list = os.listdir(upgarde_root)
+        for f in del_list:
+            file_path = os.path.join(upgarde_root, f)
+            if os.path.isfile(file_path):
+                os.remove(file_path)
+
         firmware_content = None
 
         if not os.path.exists(upgarde_root):
@@ -390,14 +314,12 @@ class OpenDeviceBase(EventBase):
         '''
         can_download = False
         try:
-            self.firmware_content = self._do_download_firmware(file)
-            self.addr = 0
-            self.fs_len = len(self.firmware_content)
+            firmware_content = self._do_download_firmware(file)
             can_download = True
-        except Exception as e:
+        except Exception:  # pylint:disable=broad-except
             can_download = False
 
-        return can_download
+        return can_download, firmware_content
 
     def switch_to_bootloader(self):
         '''
@@ -416,45 +338,6 @@ class OpenDeviceBase(EventBase):
         except Exception as ex:  # pylint:disable=broad-except
             print('bootloader exception', ex)
             return False
-
-    def write_firmware(self):
-        '''Upgrades firmware of connected device to file provided in argument
-        '''
-        while self.addr < self.fs_len:
-            packet_data_len = self.max_data_len if (
-                self.fs_len - self.addr) > self.max_data_len else (self.fs_len - self.addr)
-            data = self.firmware_content[self.addr: (
-                self.addr + packet_data_len)]
-            self.write_block(packet_data_len, self.addr, data)
-            self.addr += packet_data_len
-            self.add_output_packet('stream', 'upgrade_progress', {
-                'addr': self.addr,
-                'fs_len': self.fs_len
-            })
-            # output firmware upgrading
-
-    def write_block(self, data_len, addr, data):
-        '''
-        Send block to bootloader
-        '''
-        # print(data_len, addr, time.time())
-        command_line = helper.build_bootloader_input_packet(
-            'WA', data_len, addr, data)
-        try:
-            self.communicator.write(command_line, True)
-        except Exception:  # pylint: disable=broad-except
-            self.exception_lock.acquire()
-            self.exception_thread = True
-            self.exception_lock.release()
-            return
-
-        if addr == 0:
-            time.sleep(8)
-
-        response = self.read_untils_have_data('WA', 50, 50)
-        # wait WA end if cannot read response in defined retry times
-        if response is None:
-            time.sleep(0.1)
 
     def upgrade_completed(self, options):
         '''
@@ -501,11 +384,21 @@ class OpenDeviceBase(EventBase):
             self._logger.stop_user_log()
             self.is_logging = False
 
-    def on_upgarde_failed(self, message):
+    def handle_upgrade_error(self, message):
         '''
         Linstener for upgrade failure
         '''
+        print('Upgrade failed')
         self.is_upgrading = False
         self._message_center.resume()
         self.add_output_packet(
             'stream', 'upgrade_complete', {'success': False, 'message': message})
+
+    def handle_upgrade_process(self, current, total):
+        self.add_output_packet('stream', 'upgrade_progress', {
+            'addr': current,
+            'fs_len': total
+        })
+
+    def handle_upgrade_complete(self):
+        self.restart()

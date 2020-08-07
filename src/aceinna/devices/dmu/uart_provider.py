@@ -179,6 +179,9 @@ class Provider(OpenDeviceBase):
         '''
         self.add_output_packet('stream', packet_type, data)
 
+    def do_write_firmware(self, firmware_content):
+        raise Exception('Unimplement write firmware.')
+
     def get_device_info(self, *args):  # pylint: disable=unused-argument
         '''
         Get device information
