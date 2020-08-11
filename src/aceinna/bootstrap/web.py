@@ -380,6 +380,7 @@ class Webserver(EventBase):
         '''
         Start to find device
         '''
+        print("Python driver version: {0}".format(VERSION))
         # start websocket server
         webserver_thread = threading.Thread(target=self.start_webserver)
         webserver_thread.start()
