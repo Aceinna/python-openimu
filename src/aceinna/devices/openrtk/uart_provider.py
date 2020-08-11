@@ -125,12 +125,17 @@ class Provider(OpenDeviceBase):
         Build device info
         '''
         split_text = text.split(' ')
+        sn = split_text[4]
+        # remove the prefix of SN
+        if sn.find('SN:') == 0:
+            sn = sn[3:]
+
         self.device_info = {
             'name': split_text[0],
             'imu': split_text[1],
             'pn': split_text[2],
             'firmware_version': split_text[3],
-            'sn': split_text[4]
+            'sn': sn
         }
 
     def build_app_info(self, text):
@@ -514,6 +519,15 @@ class Provider(OpenDeviceBase):
         upgrade_center.on('finish', self.handle_upgrade_complete)
         upgrade_center.start()
 
+    def get_device_connection_info(self):
+        return {
+            'modelName': self.device_info['name'],
+            'deviceType': self.type,
+            'serialNumber': self.device_info['sn'],
+            'partNumber': self.device_info['pn'],
+            'firmware': self.device_info['firmware_version']
+        }
+
     # command list
     def server_status(self, *args):  # pylint: disable=invalid-name
         '''
@@ -655,18 +669,20 @@ class Provider(OpenDeviceBase):
 
                 current_group = grouped_parameters[exist_parameter['category']]
 
-                current_group.append({'paramId':parameter['paramId'], 'value':parameter['value'], 'type': exist_parameter['type']})
+                current_group.append(
+                    {'paramId': parameter['paramId'], 'value': parameter['value'], 'type': exist_parameter['type']})
 
         for group in grouped_parameters.values():
             message_bytes = []
             for parameter in group:
                 message_bytes.extend(
-                    encode_value('int8',parameter['paramId'])
+                    encode_value('int8', parameter['paramId'])
                 )
                 message_bytes.extend(
-                    encode_value(parameter['type'],parameter['value'])
+                    encode_value(parameter['type'], parameter['value'])
                 )
-                print('parameter type {0}, value {1}'.format(parameter['type'],parameter['value']))
+                print('parameter type {0}, value {1}'.format(
+                    parameter['type'], parameter['value']))
             # result = self.set_param(parameter)
             command_line = helper.build_packet(
                 'uB', message_bytes)

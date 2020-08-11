@@ -4,6 +4,7 @@ from ..base.event_base import EventBase
 from ...framework.utils import helper
 from .dum_packet_parser import (
     match_command_handler, match_continuous_handler)
+from ...framework.context import APP_CONTEXT
 
 MSG_HEADER = [0x55, 0x55]
 NAK = [0x15, 0x15]
@@ -55,7 +56,9 @@ class UartMessageParser(EventBase):
                     self.payload_len = 0
                     self.sync_pattern = collections.deque(2*[0], 2)
                 else:
-                    print("crc check error! packet_type:", packet_type)
+                    print()
+                    APP_CONTEXT.get_logger().logger.info(
+                        "crc check error! packet_type:{0}".format(packet_type))
                     input_packet_config = next(
                         (x for x in self.properties['userMessages']['inputPackets']
                          if x['name'] == packet_type), None)

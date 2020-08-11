@@ -44,4 +44,24 @@ class AnsPlatformAPI:
             response = requests.post(url, data=data_json, headers=headers)
             return response.json()
         except Exception as ex:
+            # TODO: use logger
             print('Exception when update db:', ex)
+
+    def log_device_connection(self, sessionId, device_info):
+        ''' log device connection to db
+        '''
+        body = {
+            'data':{
+                'sessionId': sessionId,
+                'device': device_info
+            }
+        }
+        try:
+            url = self.host_url + "api/deviceConnections/log"
+            data_json = json.dumps(body)
+            headers = {'Content-type': 'application/json',
+                       'Authorization': self.access_token}
+            response = requests.post(url, data=data_json, headers=headers)
+        except Exception as ex:
+            # TODO: use logger
+            print('Exception when log device connection to db:', ex)

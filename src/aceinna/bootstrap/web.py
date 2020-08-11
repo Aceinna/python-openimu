@@ -49,7 +49,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
 
     def open(self):
         connected_device = self.get_device()
-        if connected_device:
+        if connected_device and connected_device.connected:
             self.handle_device_found(connected_device)
         else:
             self.response_device_isnot_connected()
@@ -320,8 +320,8 @@ class LoggerServerSentEvent(tornado.web.RequestHandler):
 
     def __init__(self, *args, **kwargs):
         super(LoggerServerSentEvent, self).__init__(*args, **kwargs)
-        self.set_header('Content-Type', 'text/event-stream')
-        self.set_header('Access-Control-Allow-Origin', '*')
+        #self.set_header('Content-Type', 'text/event-stream')
+        #self.set_header('Access-Control-Allow-Origin', '*')
 
     def initialize(self, store):
         '''
@@ -329,6 +329,12 @@ class LoggerServerSentEvent(tornado.web.RequestHandler):
         '''
         self.store = store
         self._auto_finish = False
+
+        self.set_header('Content-Type', 'text/event-stream')
+        self.set_header('Access-Control-Allow-Origin', '*')
+        self.set_header('Access-Control-Allow-Headers', '*')
+        self.set_header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS')
+ 
 
     def get(self):
         self._loop = tornado.ioloop.PeriodicCallback(
@@ -430,17 +436,22 @@ class Webserver(EventBase):
         Handler after device rediscovered
         '''
         if self.device_provider.device_info['sn'] == device_provider.device_info['sn']:
-            if self.ws_handler:
-                self.ws_handler.on_receive_output_packet(
-                    'stream', 'ping', {'status': 3})
+            # if self.ws_handler:
+            #     self.ws_handler.on_receive_output_packet(
+            #         'stream', 'ping', {'status': 3})
+            self.device_provider.close()
             self.load_device_provider(device_provider)
         else:
             self.device_provider.close()
             self.load_device_provider(device_provider)
-            if self.ws_handler:
-                self.ws_handler.on_receive_output_packet(
-                    'stream', 'ping', {'status': 1})
-                self.ws_handler.handle_device_found(device_provider, False)
+            # if self.ws_handler:
+            #     self.ws_handler.on_receive_output_packet(
+            #         'stream', 'ping', {'status': 1})
+                #self.ws_handler.handle_device_found(device_provider)
+
+        if self.ws_handler:
+            self.ws_handler.handle_device_found(device_provider)
+
 
     def device_complete_upgrade_handler(self, device_provider):
         '''

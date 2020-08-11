@@ -2,6 +2,7 @@ from abc import ABCMeta, abstractmethod
 import os
 import sys
 import threading
+import uuid
 import collections
 import time
 import struct
@@ -12,6 +13,7 @@ from .event_base import EventBase
 from ...framework.utils import (helper, resource)
 from ...framework.file_storage import FileLoger
 from ...framework.configuration import get_config
+from ...framework.ans_platform_api import AnsPlatformAPI
 from ..message_center import DeviceMessageCenter
 from ..parser_manager import ParserManager
 
@@ -41,7 +43,7 @@ class OpenDeviceBase(EventBase):
         self.is_streaming = False
         self.has_running_checker = False
         self.has_backup_checker = False
-        self.connected = False
+        self.connected = False  # set True in ping, set False in read exception
         self.is_upgrading = False
         self.complete_upgrade = False
         self.communicator = communicator
@@ -53,6 +55,8 @@ class OpenDeviceBase(EventBase):
         self.enable_data_log = True
         self.cli_options = None
         self._message_center = None
+        self.sessionId = None
+        self.ans_platform = AnsPlatformAPI()
 
     @abstractmethod
     def load_properties(self):
@@ -76,6 +80,18 @@ class OpenDeviceBase(EventBase):
     def do_write_firmware(self, firmware_content):
         '''
         Do firmware upgrade
+        '''
+
+    @abstractmethod
+    def get_device_info(self, *args):
+        '''
+        Get device info for connection log
+        '''
+
+    @abstractmethod
+    def get_device_connection_info(self):
+        '''
+        Get device connection info, used to store to db
         '''
 
     def internal_input_command(self, command, read_length=500):
@@ -155,10 +171,13 @@ class OpenDeviceBase(EventBase):
 
         self.after_setup()
 
+        self.sessionId = str(uuid.uuid1())
+
     def on_recevie_message_center_error(self, error_type, message):
         '''
         event handler after got message center error
         '''
+        self.connected = False
         self.emit('exception', error_type, message)
 
     def on_receive_continuous_messsage(self, packet_type, data):
@@ -401,3 +420,16 @@ class OpenDeviceBase(EventBase):
 
     def handle_upgrade_complete(self):
         self.restart()
+
+    def connect_log(self, params):
+        access_token = params['token']
+        device_info = self.get_device_connection_info()
+
+        self.ans_platform.set_access_token(access_token)
+        self.ans_platform.log_device_connection(
+            sessionId=self.sessionId,
+            device_info=device_info)
+        
+        return {
+            'packetType': 'success'
+        }

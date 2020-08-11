@@ -122,7 +122,10 @@ class SerialPort(Communicator):
             self.autobaud([self.com_port])
             if self.device is None:
                 raise Exception(
-                    'Cannot open serial port: {0}'.format(self.com_port))
+                    '\nCannot connect the device with serial port: {0}. \
+                    \nProbable reason: \
+                    \n1. The serial port is invalid. \
+                    \n2. The device response incorrect format of device info and app info.'.format(self.com_port))
         else:
             while self.device is None:
                 if self.try_last_port():
