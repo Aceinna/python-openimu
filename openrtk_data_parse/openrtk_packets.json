@@ -1,6 +1,6 @@
 {
     "userNMEAList": ["$GPGGA", "$GPRMC", "$GPGSV", "$GLGSV", "$GAGSV", "$BDGSV", "$GPGSA", "$GLGSA", "$GAGSA", "$BDGSA"],
-	"userPacketsTypeList": ["s1", "K1", "pS", "sK", "iN", "d1", "gN"],
+	"userPacketsTypeList": ["s1", "K1", "pS", "sK", "iN", "d1", "gN", "sT"],
 	"zouPacketsTypeList": ["fmim", "fmig","fmin"],
 	"debugPacketsTypeList": [177, 268, 42, 99, 507],
 	"zouOutputPackets": [
@@ -370,6 +370,27 @@
 		}
 	],
 	"userOutputPackets": [
+        {
+            "name": "sT",
+            "isList": 0,
+            "payload": [
+                {
+                    "type": "uint32",
+                    "name": "imu_status",
+                    "unit": ""
+                },
+                {
+                    "type": "float",
+                    "name": "imu_temperature",
+                    "unit": "sec"
+                },
+                {
+                    "type": "float",
+                    "name": "mcu_temperature",
+                    "unit": "sec"
+                }
+            ]
+        },
         {
             "name": "s1",
             "isList": 0,

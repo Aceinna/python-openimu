@@ -58,6 +58,7 @@ class Provider(OpenDeviceBase):
         self.nmea_buffer = []
         self.nmea_sync = 0
         self.prepare_folders()
+        self.ntripClient = None
 
     def prepare_folders(self):
         '''
@@ -312,7 +313,8 @@ class Provider(OpenDeviceBase):
                                         str_nmea)
                                     if cksum == calc_cksum:
                                         print(str_nmea)
-                                        self.ntripClient.send(str_nmea)
+                                        if self.ntripClient != None:
+                                            self.ntripClient.send(str_nmea)
                                     # else:
                                     #     print("nmea checksum wrong {0} {1}".format(cksum, calc_cksum))
                             except Exception as e:
@@ -454,7 +456,8 @@ class Provider(OpenDeviceBase):
                     str_checksum = str_checksum[2:]
                 gpgga = gpgga + '*' + str_checksum + '\r\n'
                 print(gpgga)
-                self.ntripClient.send(gpgga)
+                if self.ntripClient != None:
+                    self.ntripClient.send(gpgga)
                 return
 
         elif packet_type == 'pS':
