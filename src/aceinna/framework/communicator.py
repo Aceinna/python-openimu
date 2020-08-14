@@ -5,6 +5,7 @@ import sys
 import os
 import time
 import json
+import socket
 import serial
 import serial.tools.list_ports
 import threading
@@ -14,10 +15,6 @@ from .context import APP_CONTEXT
 from .utils.resource import (
     get_executor_path
 )
-if sys.version_info[0] > 2:
-    from queue import Queue
-else:
-    from Queue import Queue
 
 import inspect
 import ctypes
@@ -34,8 +31,8 @@ class CommunicatorFactory:
         '''
         if method == 'uart':
             return SerialPort(options)
-        elif method == 'spi':
-            return SPI(options)
+        elif method == 'lan':
+            return LAN(options)
         else:
             raise Exception('no matched communicator')
 
@@ -393,9 +390,64 @@ class SerialPort(Communicator):
         self.serial_port.flushOutput()
 
 
-class SPI(Communicator):
-    '''SPI'''
+class LAN(Communicator):
+    '''LAN'''
 
     def __init__(self, options=None):
         super().__init__()
-        self.type = 'spi'
+        self.type = 'lan'
+        self.sock = None
+        self.filter_device_type = None
+        self.filter_device_type_assigned = False
+
+        if options and options.device_type != 'auto':
+            self.filter_device_type = options.device_type
+            self.filter_device_type_assigned = True
+
+    def find_device(self, callback):
+        # establish a TCP server
+        # confirm device
+        self.device = None
+
+        while self.device is None:
+            self.open()
+
+        callback(self.device)
+
+    def open(self):
+        '''
+        open
+        '''
+        if self.sock:
+            return True
+
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            self.sock.connect((self.host, self.port))
+            return True
+        except socket.error:
+            self.sock = None
+            raise
+        except socket.timeout as e:
+            print(e)
+        except Exception as e:
+            self.sock = None
+            raise
+
+    def close(self):
+        '''
+        close
+        '''
+        if self.sock:
+            self.sock.close()
+            self.sock = None
+
+    def write(self, data, is_flush=False):
+        '''
+        write
+        '''
+
+    def read(self, size):
+        '''
+        read
+        '''
