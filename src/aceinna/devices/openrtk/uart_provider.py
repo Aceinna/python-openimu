@@ -114,8 +114,9 @@ class Provider(OpenDeviceBase):
             self.build_app_info(app_info_text)
             self.connected = True
             print('# Connected Information #')
-            print('Device:', device_info_text)
-            print('Firmware:', app_info_text)
+            split_device_info = device_info_text.split(' ')
+            print('Device: {0} {1} {2} {3}'.format(split_device_info[0], split_device_info[2], split_device_info[3], split_device_info[4]))
+            print('APP version:', app_info_text)
             APP_CONTEXT.get_logger().logger.info(
                 'Connected {0}, {1}'.format(device_info_text, app_info_text))
             return True
@@ -684,13 +685,13 @@ class Provider(OpenDeviceBase):
                 message_bytes.extend(
                     encode_value(parameter['type'], parameter['value'])
                 )
-                print('parameter type {0}, value {1}'.format(
-                    parameter['type'], parameter['value']))
+                # print('parameter type {0}, value {1}'.format(
+                #     parameter['type'], parameter['value']))
             # result = self.set_param(parameter)
             command_line = helper.build_packet(
                 'uB', message_bytes)
-            for s in command_line:
-                print(hex(s))
+            # for s in command_line:
+            #     print(hex(s))
 
             result = yield self._message_center.build(command=command_line)
 
