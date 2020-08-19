@@ -78,8 +78,9 @@ if __name__ == '__main__':
             __file__, sys._getframe().f_lineno))
         APP.stop()
         sys.exit()
-    except:  # pylint: disable=bare-except
-        traceback.print_exc()  # For development
+    except Exception as ex:  # pylint: disable=bare-except
+        #traceback.print_exc()  # For development
+        print('\033[1;31;40mApplication Exit Exception:\033[0m \033[0;31;40m{0}\033[0m'.format(ex))
         os._exit(1)
 
     while True:

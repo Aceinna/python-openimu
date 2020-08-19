@@ -1,7 +1,7 @@
 {
 	"name": "OpenRTK330_INS",
-	"app_version": "OpenRTK330 INS 1.0.7",
-	"appName": "OpenRTK330 INS 1.0.7",
+	"app_version": "1.3.5",
+	"appName": "OpenRTK330 INS",
 	"type": "openrtk",
     "description": "6-axis OpenRTK with INS application",
     "initial":{
@@ -272,7 +272,7 @@
 			"paramId": 13,
 			"category": "Ethnet",
 			"paramType": "select",
-			"type": "uint8",
+			"type": "uint16",
 			"name": "MODE",
 			"argument": "MODE",
 			"value_range": [
@@ -340,7 +340,7 @@
 			"paramId": 18,
 			"category": "Ntrip",
 			"paramType": "input",
-			"type": "char23",
+			"type": "char26",
 			"name": "IP",
 			"argument": "IP",
 			"value_range": [
@@ -379,7 +379,7 @@
 			"paramId": 21,
 			"category": "Ntrip",
 			"paramType": "input",
-			"type": "char16",
+			"type": "char20",
 			"name": "USER NAME",
 			"argument": "USER NAME",
 			"value_range": [
@@ -392,7 +392,7 @@
 			"paramId": 22,
 			"category": "Ntrip",
 			"paramType": "input",
-			"type": "char24",
+			"type": "char20",
 			"name": "PASSWORD",
 			"argument": "PASSWORD",
 			"value_range": [

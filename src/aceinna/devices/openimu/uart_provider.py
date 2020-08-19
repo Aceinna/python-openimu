@@ -16,10 +16,10 @@ from ..configs.openimu_predefine import (
 )
 from ...framework.context import APP_CONTEXT
 from ..decorator import with_device_message
-from ...framework.ans_platform_api import AnsPlatformAPI
 from ...framework.configuration import get_config
 from ..upgrade_workers import FirmwareUpgradeWorker
 from ..upgrade_center import UpgradeCenter
+
 
 class Provider(OpenDeviceBase):
     '''
@@ -42,7 +42,6 @@ class Provider(OpenDeviceBase):
         self.is_backup = False
         self.is_restore = False
         self.is_app_matched = False
-        self.ans_platform = AnsPlatformAPI()
 
     def prepare_folders(self):
         '''
@@ -211,7 +210,16 @@ class Provider(OpenDeviceBase):
         upgrade_center.on('finish', self.handle_upgrade_complete)
         upgrade_center.start()
 
+    def get_device_connection_info(self):
+        return {
+            'modelName': self.device_info['name'],
+            'deviceType': self.type,
+            'serialNumber': self.device_info['sn'],
+            'partNumber': self.device_info['pn'],
+            'firmware': self.device_info['firmware_version']
+        }
     # command list
+
     def get_device_info(self, *args):  # pylint: disable=invalid-name
         '''
         Get device information

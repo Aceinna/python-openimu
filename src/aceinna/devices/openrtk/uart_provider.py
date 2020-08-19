@@ -24,6 +24,8 @@ from ..upgrade_workers import (
     SDKUpgradeWorker
 )
 from ..upgrade_center import UpgradeCenter
+from ..parsers.open_field_parser import encode_value
+
 
 class Provider(OpenDeviceBase):
     '''
@@ -56,6 +58,7 @@ class Provider(OpenDeviceBase):
         self.nmea_buffer = []
         self.nmea_sync = 0
         self.prepare_folders()
+        self.ntripClient = None
 
     def prepare_folders(self):
         '''
@@ -111,8 +114,9 @@ class Provider(OpenDeviceBase):
             self.build_app_info(app_info_text)
             self.connected = True
             print('# Connected Information #')
-            print('Device:', device_info_text)
-            print('Firmware:', app_info_text)
+            split_device_info = device_info_text.split(' ')
+            print('Device: {0} {1} {2} {3}'.format(split_device_info[0], split_device_info[2], split_device_info[3], split_device_info[4]))
+            print('APP version:', app_info_text)
             APP_CONTEXT.get_logger().logger.info(
                 'Connected {0}, {1}'.format(device_info_text, app_info_text))
             return True
@@ -123,12 +127,17 @@ class Provider(OpenDeviceBase):
         Build device info
         '''
         split_text = text.split(' ')
+        sn = split_text[4]
+        # remove the prefix of SN
+        if sn.find('SN:') == 0:
+            sn = sn[3:]
+
         self.device_info = {
             'name': split_text[0],
             'imu': split_text[1],
             'pn': split_text[2],
             'firmware_version': split_text[3],
-            'sn': split_text[4]
+            'sn': sn
         }
 
     def build_app_info(self, text):
@@ -305,7 +314,8 @@ class Provider(OpenDeviceBase):
                                         str_nmea)
                                     if cksum == calc_cksum:
                                         print(str_nmea)
-                                        self.ntripClient.send(str_nmea)
+                                        if self.ntripClient != None:
+                                            self.ntripClient.send(str_nmea)
                                     # else:
                                     #     print("nmea checksum wrong {0} {1}".format(cksum, calc_cksum))
                             except Exception as e:
@@ -447,7 +457,8 @@ class Provider(OpenDeviceBase):
                     str_checksum = str_checksum[2:]
                 gpgga = gpgga + '*' + str_checksum + '\r\n'
                 print(gpgga)
-                self.ntripClient.send(gpgga)
+                if self.ntripClient != None:
+                    self.ntripClient.send(gpgga)
                 return
 
         elif packet_type == 'pS':
@@ -511,6 +522,15 @@ class Provider(OpenDeviceBase):
         upgrade_center.on('error', self.handle_upgrade_error)
         upgrade_center.on('finish', self.handle_upgrade_complete)
         upgrade_center.start()
+
+    def get_device_connection_info(self):
+        return {
+            'modelName': self.device_info['name'],
+            'deviceType': self.type,
+            'serialNumber': self.device_info['sn'],
+            'partNumber': self.device_info['pn'],
+            'firmware': self.device_info['firmware_version']
+        }
 
     # command list
     def server_status(self, *args):  # pylint: disable=invalid-name
@@ -638,12 +658,40 @@ class Provider(OpenDeviceBase):
         '''
         Update paramters value
         '''
+        input_parameters = self.properties['userConfiguration']
+        grouped_parameters = {}
+
         for parameter in params:
+            exist_parameter = next(
+                (x for x in input_parameters if x['paramId'] == parameter['paramId']), None)
+
+            if exist_parameter:
+                has_group = grouped_parameters.__contains__(
+                    exist_parameter['category'])
+                if not has_group:
+                    grouped_parameters[exist_parameter['category']] = []
+
+                current_group = grouped_parameters[exist_parameter['category']]
+
+                current_group.append(
+                    {'paramId': parameter['paramId'], 'value': parameter['value'], 'type': exist_parameter['type']})
+
+        for group in grouped_parameters.values():
+            message_bytes = []
+            for parameter in group:
+                message_bytes.extend(
+                    encode_value('int8', parameter['paramId'])
+                )
+                message_bytes.extend(
+                    encode_value(parameter['type'], parameter['value'])
+                )
+                # print('parameter type {0}, value {1}'.format(
+                #     parameter['type'], parameter['value']))
             # result = self.set_param(parameter)
-            command_line = helper.build_input_packet(
-                'uP', properties=self.properties,
-                param=parameter['paramId'],
-                value=parameter['value'])
+            command_line = helper.build_packet(
+                'uB', message_bytes)
+            # for s in command_line:
+            #     print(hex(s))
 
             result = yield self._message_center.build(command=command_line)
 
@@ -657,6 +705,8 @@ class Provider(OpenDeviceBase):
                         'error': data
                     }
                 }
+                break
+
             if data > 0:
                 yield {
                     'packetType': 'error',
@@ -664,6 +714,7 @@ class Provider(OpenDeviceBase):
                         'error': data
                     }
                 }
+                break
 
         yield {
             'packetType': 'success',

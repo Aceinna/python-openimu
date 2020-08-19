@@ -101,3 +101,53 @@ def decode_value(data_type, data):
             return False
     else:
         return False
+
+
+def encode_value(data_type, data):
+    payload = []
+
+    if data_type == 'uint64':
+        payload += list(struct.unpack("8B", struct.pack("<Q", data)))
+    elif data_type == 'int64':
+        payload += list(struct.unpack("8B", struct.pack("<q", data)))
+    elif data_type == 'double':
+        payload += list(struct.unpack("8B",
+                                      struct.pack("<d", float(data))))
+    elif data_type == 'uint32':
+        payload += list(struct.unpack("4B", struct.pack("<I", data)))
+    elif data_type == 'int32':
+        payload += list(struct.unpack("4B", struct.pack("<i", data)))
+    elif data_type == 'float':
+        payload += list(struct.unpack("4B", struct.pack("<f", data)))
+    elif data_type == 'uint16':
+        payload += list(struct.unpack("2B", struct.pack("<H", data)))
+    elif data_type == 'int16':
+        payload += list(struct.unpack("2B", struct.pack("<h", data)))
+    elif data_type == 'uint8':
+        payload += list(struct.unpack("1B", struct.pack("<B", data)))
+    elif data_type == 'int8':
+        payload += list(struct.unpack("1B", struct.pack("<b", data)))
+    elif 'char' in data_type:
+        c_len = int(data_type.replace('char', ''))
+        if isinstance(data, int):
+            length = len(str(data))
+            payload += list(struct.unpack('{0}B'.format(length),
+                                          bytearray(str(data), 'utf-8')))
+        else:
+            length = len(data)
+            payload += list(struct.unpack('{0}B'.format(length),
+                                          bytearray(data, 'utf-8')))
+        for i in range(c_len-length):
+            payload += [0x00]
+    elif data_type == 'ip4':
+        ip_address = data.split('.')
+        ip_address_v4 = list(map(int, ip_address))
+        for i in range(4):
+            payload += list(struct.unpack("1B",
+                                          struct.pack("<B", ip_address_v4[i])))
+    elif data_type == 'ip6':
+        ip_address = data.split('.')
+        payload += list(struct.unpack('6B',
+                                      bytearray(ip_address, 'utf-8')))
+
+    return payload

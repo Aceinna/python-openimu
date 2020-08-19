@@ -5,11 +5,9 @@ import struct
 from ..base.uart_base import OpenDeviceBase
 from ..decorator import with_device_message
 from ...framework.utils import (helper, resource)
-from ...framework.ans_platform_api import AnsPlatformAPI
 from . import dmu_helper
 from .configuration_field import CONFIGURATION_FIELD_DEFINES_SINGLETON
-from .eeprom_field import (EEPROM_ADDRESS_DEFINES,
-                           EEPROM_FIELD_DEFINES_SINGLETON)
+from .eeprom_field import EEPROM_FIELD_DEFINES_SINGLETON
 
 ID = [0x49, 0x44]
 VR = [0x56, 0x52]
@@ -37,7 +35,6 @@ class Provider(OpenDeviceBase):
         self.is_restore = False
         self.is_app_matched = False
         self.is_conf_loaded = False
-        self.ans_platform = AnsPlatformAPI()
         self.prepare_folders()
 
     def prepare_folders(self):
@@ -181,6 +178,15 @@ class Provider(OpenDeviceBase):
 
     def do_write_firmware(self, firmware_content):
         raise Exception('Unimplement write firmware.')
+
+    def get_device_connection_info(self):
+        return {
+            'modelName': self.device_info['name'],
+            'deviceType': self.type,
+            'serialNumber': self.device_info['sn'],
+            'partNumber': self.device_info['pn'],
+            'firmware': self.app_info['version']
+        }
 
     def get_device_info(self, *args):  # pylint: disable=unused-argument
         '''
