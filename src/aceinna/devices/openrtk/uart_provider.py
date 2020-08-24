@@ -819,7 +819,7 @@ class Provider(OpenDeviceBase):
             thread = threading.Thread(
                 target=self.thread_do_upgrade_framework, args=(file,))
             thread.start()
-            print("Thread upgarde framework of OpenRTK start at:[{0}].".format(
+            print("Upgrade OpenRTK firmware started at:[{0}].".format(
                 datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 
         return {
