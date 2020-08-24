@@ -598,7 +598,7 @@ class Provider(OpenDeviceBase):
             thead = threading.Thread(
                 target=self.thread_do_upgrade_framework, args=(file,))
             thead.start()
-            print("Thread upgarde framework OpenIMU start at:[{0}].".format(
+            print("Upgrade OpenIMU firmware started at:[{0}].".format(
                 datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
         return {
             'packetType': 'success'
