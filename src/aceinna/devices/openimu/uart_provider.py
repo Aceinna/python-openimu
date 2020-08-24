@@ -26,7 +26,7 @@ class Provider(OpenDeviceBase):
     OpenIMU UART provider
     '''
 
-    def __init__(self, communicator):
+    def __init__(self, communicator, *args):
         super(Provider, self).__init__(communicator)
         self.type = 'IMU'
         self.server_update_rate = 50
@@ -42,6 +42,9 @@ class Provider(OpenDeviceBase):
         self.is_backup = False
         self.is_restore = False
         self.is_app_matched = False
+        self.connected = True
+        self.build_device_info(args[0])
+        self.build_app_info(args[1])
 
     def prepare_folders(self):
         '''

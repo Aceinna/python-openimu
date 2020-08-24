@@ -32,7 +32,7 @@ class Provider(OpenDeviceBase):
     OpenRTK UART provider
     '''
 
-    def __init__(self, communicator):
+    def __init__(self, communicator, *args):
         super(Provider, self).__init__(communicator)
         self.type = 'RTK'
         self.server_update_rate = 100
@@ -59,6 +59,9 @@ class Provider(OpenDeviceBase):
         self.nmea_sync = 0
         self.prepare_folders()
         self.ntripClient = None
+        self.connected = True
+        self.build_device_info(args[0])
+        self.build_app_info(args[1])
 
     def prepare_folders(self):
         '''
