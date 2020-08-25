@@ -297,35 +297,36 @@ class Provider(OpenDeviceBase):
         return int(cksum, 16), calc_cksum
 
     def on_read_raw(self, data):
-        if self.ntrip_client_enable:
-            for bytedata in data:
-                if bytedata == 0x24:
+        for bytedata in data:
+            if bytedata == 0x24:
+                self.nmea_buffer = []
+                self.nmea_sync = 0
+                self.nmea_buffer.append(chr(bytedata))
+            else:
+                self.nmea_buffer.append(chr(bytedata))
+                if self.nmea_sync == 0:
+                    if bytedata == 0x0D:
+                        self.nmea_sync = 1
+                elif self.nmea_sync == 1:
+                    if bytedata == 0x0A:
+                        try:
+                            str_nmea = ''.join(self.nmea_buffer)
+                            cksum, calc_cksum = self.nmea_checksum(
+                                str_nmea)
+                            if cksum == calc_cksum:
+                                if str_nmea.find("$GPGGA") != -1:
+                                    print()
+                                    if self.ntrip_client_enable and self.ntripClient != None:
+                                        self.ntripClient.send(str_nmea)
+                                print(str_nmea, end = '')
+                                
+                                # else:
+                                #     print("nmea checksum wrong {0} {1}".format(cksum, calc_cksum))
+                        except Exception as e:
+                            print(e)
+                            # pass
                     self.nmea_buffer = []
                     self.nmea_sync = 0
-                    self.nmea_buffer.append(chr(bytedata))
-                else:
-                    self.nmea_buffer.append(chr(bytedata))
-                    if self.nmea_sync == 0:
-                        if bytedata == 0x0D:
-                            self.nmea_sync = 1
-                    elif self.nmea_sync == 1:
-                        if bytedata == 0x0A:
-                            try:
-                                str_nmea = ''.join(self.nmea_buffer)
-                                if str_nmea.find("$GPGGA") != -1:
-                                    cksum, calc_cksum = self.nmea_checksum(
-                                        str_nmea)
-                                    if cksum == calc_cksum:
-                                        print(str_nmea)
-                                        if self.ntripClient != None:
-                                            self.ntripClient.send(str_nmea)
-                                    # else:
-                                    #     print("nmea checksum wrong {0} {1}".format(cksum, calc_cksum))
-                            except Exception as e:
-                                print(e)
-                                # pass
-                        self.nmea_buffer = []
-                        self.nmea_sync = 0
 
         if self.user_logf is not None:
             self.user_logf.write(data)
