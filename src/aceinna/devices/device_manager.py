@@ -13,6 +13,7 @@ from ..framework.context import APP_CONTEXT
 ID = [0x49, 0x44]
 VR = [0x56, 0x52]
 
+
 class DeviceManager:
     '''
     Manage devices
@@ -47,15 +48,16 @@ class DeviceManager:
     @staticmethod
     def reset_ping():
         DeviceManager.can_ping = False
-    
+
     @staticmethod
     def imu_ping(serial, command, read_length=500, retry=20):
         if not DeviceManager.can_ping:
             command_line = helper.build_input_packet(command)
             serial.write(command_line)
             time.sleep(0.1)
-            
-            data_buffer = helper.read_untils_have_data_through_serial_port(serial, command, read_length, retry)
+
+            data_buffer = helper.read_untils_have_data_through_serial_port(
+                serial, command, read_length, retry)
             parsed = bytearray(data_buffer) if data_buffer and len(
                 data_buffer) > 0 else None
 
@@ -83,15 +85,17 @@ class DeviceManager:
                 command_line = dmu_helper.build_packet('PK')
                 serial.write(command_line)
                 time.sleep(0.1)
-                data_buffer = helper.read_untils_have_data_through_serial_port(serial, 'PK')
+                data_buffer = helper.read_untils_have_data_through_serial_port(
+                    serial, 'PK')
                 if data_buffer == []:
                     return True
-                
+
             elif command == 'GP' and message_bytes == ID:
                 command_line = dmu_helper.build_packet('GP', ID)
                 serial.write(command_line)
                 time.sleep(0.1)
-                data_buffer = helper.read_untils_have_data_through_serial_port(serial, 'ID')
+                data_buffer = helper.read_untils_have_data_through_serial_port(
+                    serial, 'ID')
 
                 if data_buffer is None:
                     return False
@@ -120,7 +124,8 @@ class DeviceManager:
                 command_line = dmu_helper.build_packet('GP', VR)
                 serial.write(command_line)
                 time.sleep(0.1)
-                data_buffer = helper.read_untils_have_data_through_serial_port(serial, 'VR')
+                data_buffer = helper.read_untils_have_data_through_serial_port(
+                    serial, 'VR')
 
                 if data_buffer is None:
                     return False
@@ -138,7 +143,7 @@ class DeviceManager:
 
     @staticmethod
     def ping_with_port(communicator, *args):
-        
+
         if communicator.type == 'uart':
             port = args[0]
             serial = args[1]
@@ -165,13 +170,18 @@ class DeviceManager:
                         DeviceManager.can_ping = True
                         split_device_info = device_info_text.split(' ')
                         print('# Connected OpenRTK [{0}] #'.format(port))
-                        print('Device: {0} {1} {2} {3}'.format(split_device_info[0], split_device_info[2], split_device_info[3], split_device_info[4]))
+                        print('Device: {0} {1} {2} {3}'.format(
+                            split_device_info[0], split_device_info[2], split_device_info[3], split_device_info[4]))
                         print('APP version:', app_info_text)
                         APP_CONTEXT.get_logger().logger.info(
                             'Connected {0}, {1}'.format(device_info_text, app_info_text))
 
                         if DeviceManager.device == None or DeviceManager.device.type != 'RTK':
-                            DeviceManager.device = OpenRTKProvider(communicator, device_info_text, app_info_text)
+                            DeviceManager.device = OpenRTKProvider(
+                                communicator)
+
+                        DeviceManager.device.build_device_info(
+                            device_info_text, app_info_text)
                         return DeviceManager.device
 
                     elif device_info_text.find('OpenIMU') > -1 and \
@@ -184,7 +194,11 @@ class DeviceManager:
                             'Connected {0}, {1}'.format(device_info_text, app_info_text))
 
                         if DeviceManager.device == None or DeviceManager.device.type != 'IMU':
-                            DeviceManager.device = OpenIMUProvider(communicator, device_info_text, app_info_text)
+                            DeviceManager.device = OpenIMUProvider(
+                                communicator)
+
+                        DeviceManager.device.build_device_info(
+                            device_info_text, app_info_text)
                         return DeviceManager.device
 
             if filter_device_type == None or filter_device_type == 'DMU':
@@ -200,11 +214,15 @@ class DeviceManager:
                             #print('The device work as DMU')
                             print('# Connected DMU #')
                             print('Device SN: {0}'.format(device_info['sn']))
-                            print('Device Model: {0} {1}'.format(device_info['name'], device_info['pn']))
+                            print('Device Model: {0} {1}'.format(
+                                device_info['name'], device_info['pn']))
                             print('Firmware Version:', app_info['version'])
-                            
+
                             if DeviceManager.device == None or DeviceManager.device.type != 'DMU':
-                                DeviceManager.device = DMUProvider(communicator, device_info, app_info)
+                                DeviceManager.device = DMUProvider(
+                                    communicator)
+
+                                DeviceManager.device.build_device_info(
+                                    device_info, app_info)
                             return DeviceManager.device
         return None
-

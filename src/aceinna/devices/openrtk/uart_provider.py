@@ -60,8 +60,6 @@ class Provider(OpenDeviceBase):
         self.prepare_folders()
         self.ntripClient = None
         self.connected = True
-        self.build_device_info(args[0])
-        self.build_app_info(args[1])
 
     def prepare_folders(self):
         '''
@@ -113,8 +111,8 @@ class Provider(OpenDeviceBase):
             'Firmware: {0}'.format(app_info_text))
 
         if device_info_text.find('OpenRTK') > -1:
-            self.build_device_info(device_info_text)
-            self.build_app_info(app_info_text)
+            self._build_device_info(device_info_text)
+            self._build_app_info(app_info_text)
             self.connected = True
             print('# Connected Information #')
             split_device_info = device_info_text.split(' ')
@@ -125,7 +123,11 @@ class Provider(OpenDeviceBase):
             return True
         return False
 
-    def build_device_info(self, text):
+    def build_device_info(self, device_info, app_info):
+        self._build_device_info(device_info)
+        self._build_app_info(app_info)
+
+    def _build_device_info(self, text):
         '''
         Build device info
         '''
@@ -143,7 +145,7 @@ class Provider(OpenDeviceBase):
             'sn': sn
         }
 
-    def build_app_info(self, text):
+    def _build_app_info(self, text):
         '''
         Build app info
         '''

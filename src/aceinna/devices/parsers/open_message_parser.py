@@ -101,7 +101,8 @@ class UartMessageParser(EventBase):
         data = payload_parser(payload, output_packet_config)
 
         if not data:
-            print('Cannot parse packet type {0}'.format(packet_type))
+            APP_CONTEXT.get_logger().logger.info(
+                'Cannot parse packet type {0}. It may caused by firmware upgrade'.format(packet_type))
             return
 
         self.emit('continuous_message',
