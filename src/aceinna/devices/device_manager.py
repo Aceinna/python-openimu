@@ -222,7 +222,7 @@ class DeviceManager:
                                 DeviceManager.device = DMUProvider(
                                     communicator)
 
-                                DeviceManager.device.build_device_info(
-                                    device_info, app_info)
+                            DeviceManager.device.build_device_info(
+                                device_info, app_info)
                             return DeviceManager.device
         return None
