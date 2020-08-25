@@ -189,7 +189,7 @@ class SerialPort(Communicator):
         serial_port = None
         for port in ports:
             for baud in self.baudrate_list:
-                print("try {0}:{1}".format(port, baud))
+                # print("try {0}:{1}".format(port, baud))
                 APP_CONTEXT.get_logger().logger.info(
                     "try {0}:{1}".format(port, baud))
                 try:
@@ -239,6 +239,7 @@ class SerialPort(Communicator):
         APP_CONTEXT.get_logger().logger.info('start to connect serial port')
 
         # print('find ports: {0}'.format(ports))
+        DeviceManager.reset_ping()
         thread_num = (len(ports) if (len(ports) < 4) else 4)
         ports_list = [[] for i in range(thread_num)]
         for i, port in enumerate(ports):
@@ -263,8 +264,7 @@ class SerialPort(Communicator):
 
         for td in self.threadList:
             td.join()
-
-        return False
+        self.threadList.clear()
 
     def try_last_port(self):
         '''try to open serial port based on the port and baud read from connection.json.

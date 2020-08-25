@@ -42,6 +42,11 @@ class DeviceManager:
     #     return None
 
     can_ping = False
+    device = None
+
+    @staticmethod
+    def reset_ping():
+        DeviceManager.can_ping = False
     
     @staticmethod
     def imu_ping(serial, command, read_length=500, retry=20):
@@ -165,7 +170,10 @@ class DeviceManager:
                         APP_CONTEXT.get_logger().logger.info(
                             'Connected {0}, {1}'.format(device_info_text, app_info_text))
 
-                        return OpenRTKProvider(communicator, device_info_text, app_info_text)
+                        if DeviceManager.device == None or DeviceManager.device.type != 'RTK':
+                            DeviceManager.device = OpenRTKProvider(communicator, device_info_text, app_info_text)
+                        return DeviceManager.device
+
                     elif device_info_text.find('OpenIMU') > -1 and \
                             device_info_text.find('OpenRTK') == -1:
                         DeviceManager.can_ping = True
@@ -175,8 +183,10 @@ class DeviceManager:
                         APP_CONTEXT.get_logger().logger.info(
                             'Connected {0}, {1}'.format(device_info_text, app_info_text))
 
-                        return OpenIMUProvider(communicator, device_info_text, app_info_text)
-            
+                        if DeviceManager.device == None or DeviceManager.device.type != 'IMU':
+                            DeviceManager.device = OpenIMUProvider(communicator, device_info_text, app_info_text)
+                        return DeviceManager.device
+
             if filter_device_type == None or filter_device_type == 'DMU':
                 APP_CONTEXT.get_logger().logger.debug('Checking if is DMU device...')
                 ret = DeviceManager.dmu_ping(serial, 'PK')
@@ -193,6 +203,8 @@ class DeviceManager:
                             print('Device Model: {0} {1}'.format(device_info['name'], device_info['pn']))
                             print('Firmware Version:', app_info['version'])
                             
-                            return DMUProvider(communicator, device_info, app_info)
+                            if DeviceManager.device == None or DeviceManager.device.type != 'DMU':
+                                DeviceManager.device = DMUProvider(communicator, device_info, app_info)
+                            return DeviceManager.device
         return None
 
