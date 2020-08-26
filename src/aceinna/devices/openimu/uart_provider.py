@@ -26,7 +26,7 @@ class Provider(OpenDeviceBase):
     OpenIMU UART provider
     '''
 
-    def __init__(self, communicator):
+    def __init__(self, communicator, *args):
         super(Provider, self).__init__(communicator)
         self.type = 'IMU'
         self.server_update_rate = 50
@@ -42,6 +42,7 @@ class Provider(OpenDeviceBase):
         self.is_backup = False
         self.is_restore = False
         self.is_app_matched = False
+        self.connected = True
 
     def prepare_folders(self):
         '''
@@ -94,8 +95,8 @@ class Provider(OpenDeviceBase):
 
         if device_info_text.find('OpenIMU') > -1 and \
                 device_info_text.find('OpenRTK') == -1:
-            self.build_device_info(device_info_text)
-            self.build_app_info(app_info_text)
+            self._build_device_info(device_info_text)
+            self._build_app_info(app_info_text)
             self.connected = True
             print('# Connected Information #')
             print('Device:', device_info_text)
@@ -105,7 +106,11 @@ class Provider(OpenDeviceBase):
             return True
         return False
 
-    def build_device_info(self, text):
+    def build_device_info(self, device_info, app_info):
+        self._build_device_info(device_info)
+        self._build_app_info(app_info)
+
+    def _build_device_info(self, text):
         '''
         Build device info
         '''
@@ -120,7 +125,7 @@ class Provider(OpenDeviceBase):
             'sn': serial_num
         }
 
-    def build_app_info(self, text):
+    def _build_app_info(self, text):
         '''
         Build app info
         '''
@@ -595,7 +600,7 @@ class Provider(OpenDeviceBase):
             thead = threading.Thread(
                 target=self.thread_do_upgrade_framework, args=(file,))
             thead.start()
-            print("Thread upgarde framework OpenIMU start at:[{0}].".format(
+            print("Upgrade OpenIMU firmware started at:[{0}].".format(
                 datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
         return {
             'packetType': 'success'

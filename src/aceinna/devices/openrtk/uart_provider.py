@@ -32,7 +32,7 @@ class Provider(OpenDeviceBase):
     OpenRTK UART provider
     '''
 
-    def __init__(self, communicator):
+    def __init__(self, communicator, *args):
         super(Provider, self).__init__(communicator)
         self.type = 'RTK'
         self.server_update_rate = 100
@@ -59,6 +59,7 @@ class Provider(OpenDeviceBase):
         self.nmea_sync = 0
         self.prepare_folders()
         self.ntripClient = None
+        self.connected = True
 
     def prepare_folders(self):
         '''
@@ -110,8 +111,8 @@ class Provider(OpenDeviceBase):
             'Firmware: {0}'.format(app_info_text))
 
         if device_info_text.find('OpenRTK') > -1:
-            self.build_device_info(device_info_text)
-            self.build_app_info(app_info_text)
+            self._build_device_info(device_info_text)
+            self._build_app_info(app_info_text)
             self.connected = True
             print('# Connected Information #')
             split_device_info = device_info_text.split(' ')
@@ -122,7 +123,11 @@ class Provider(OpenDeviceBase):
             return True
         return False
 
-    def build_device_info(self, text):
+    def build_device_info(self, device_info, app_info):
+        self._build_device_info(device_info)
+        self._build_app_info(app_info)
+
+    def _build_device_info(self, text):
         '''
         Build device info
         '''
@@ -140,7 +145,7 @@ class Provider(OpenDeviceBase):
             'sn': sn
         }
 
-    def build_app_info(self, text):
+    def _build_app_info(self, text):
         '''
         Build app info
         '''
@@ -294,35 +299,36 @@ class Provider(OpenDeviceBase):
         return int(cksum, 16), calc_cksum
 
     def on_read_raw(self, data):
-        if self.ntrip_client_enable:
-            for bytedata in data:
-                if bytedata == 0x24:
+        for bytedata in data:
+            if bytedata == 0x24:
+                self.nmea_buffer = []
+                self.nmea_sync = 0
+                self.nmea_buffer.append(chr(bytedata))
+            else:
+                self.nmea_buffer.append(chr(bytedata))
+                if self.nmea_sync == 0:
+                    if bytedata == 0x0D:
+                        self.nmea_sync = 1
+                elif self.nmea_sync == 1:
+                    if bytedata == 0x0A:
+                        try:
+                            str_nmea = ''.join(self.nmea_buffer)
+                            cksum, calc_cksum = self.nmea_checksum(
+                                str_nmea)
+                            if cksum == calc_cksum:
+                                if str_nmea.find("$GPGGA") != -1:
+                                    print()
+                                    if self.ntrip_client_enable and self.ntripClient != None:
+                                        self.ntripClient.send(str_nmea)
+                                print(str_nmea, end = '')
+                                
+                                # else:
+                                #     print("nmea checksum wrong {0} {1}".format(cksum, calc_cksum))
+                        except Exception as e:
+                            # print('NMEA fault:{0}'.format(e))
+                            pass
                     self.nmea_buffer = []
                     self.nmea_sync = 0
-                    self.nmea_buffer.append(chr(bytedata))
-                else:
-                    self.nmea_buffer.append(chr(bytedata))
-                    if self.nmea_sync == 0:
-                        if bytedata == 0x0D:
-                            self.nmea_sync = 1
-                    elif self.nmea_sync == 1:
-                        if bytedata == 0x0A:
-                            try:
-                                str_nmea = ''.join(self.nmea_buffer)
-                                if str_nmea.find("$GPGGA") != -1:
-                                    cksum, calc_cksum = self.nmea_checksum(
-                                        str_nmea)
-                                    if cksum == calc_cksum:
-                                        print(str_nmea)
-                                        if self.ntripClient != None:
-                                            self.ntripClient.send(str_nmea)
-                                    # else:
-                                    #     print("nmea checksum wrong {0} {1}".format(cksum, calc_cksum))
-                            except Exception as e:
-                                print(e)
-                                # pass
-                        self.nmea_buffer = []
-                        self.nmea_sync = 0
 
         if self.user_logf is not None:
             self.user_logf.write(data)
@@ -462,18 +468,46 @@ class Provider(OpenDeviceBase):
                 return
 
         elif packet_type == 'pS':
-            if data['latitude'] != 0.0 and data['longitude'] != 0.0:
-                if self.pS_data:
-                    if self.pS_data['GPS_Week'] == data['GPS_Week']:
-                        if data['GPS_TimeofWeek'] - self.pS_data['GPS_TimeofWeek'] >= 0.2:
+            try:
+                if data['latitude'] != 0.0 and data['longitude'] != 0.0:
+                    if self.pS_data:
+                        if self.pS_data['GPS_Week'] == data['GPS_Week']:
+                            if data['GPS_TimeofWeek'] - self.pS_data['GPS_TimeofWeek'] >= 0.2:
+                                self.add_output_packet('stream', 'pos', data)
+                                self.pS_data = data
+                                
+                                if data['insStatus'] >= 3 and data['insStatus'] <= 5:
+                                    ins_status = 'INS_INACTIVE'
+                                    if data['insStatus'] == 3:
+                                        ins_status = 'INS_SOLUTION_GOOD'
+                                    elif data['insStatus'] == 4:
+                                        ins_status = 'INS_SOLUTION_FREE'
+                                    elif data['insStatus'] == 5:
+                                        ins_status = 'INS_ALIGNMENT_COMPLETE'
+
+                                    ins_pos_type = 'INS_INVALID'
+                                    if data['insPositionType'] == 1:
+                                        ins_pos_type = 'INS_SPP'
+                                    elif data['insPositionType'] == 4:
+                                        ins_pos_type = 'INS_RTKFIXED'
+                                    elif data['insPositionType'] == 5:
+                                        ins_pos_type = 'INS_RTKFLOAT'
+
+                                    inspva = '#INSPVA,%s,%10.2f, %s, %s,%12.8f,%13.8f,%8.3f,%9.3f,%9.3f,%9.3f,%9.3f,%9.3f,%9.3f' %\
+                                        (data['GPS_Week'], data['GPS_TimeofWeek'], ins_status, ins_pos_type,
+                                        data['latitude'], data['longitude'], data['height'],
+                                        data['velocityNorth'], data['velocityEast'], data['velocityUp'],
+                                        data['roll'], data['pitch'], data['heading'])
+                                    print(inspva)
+                        else:
                             self.add_output_packet('stream', 'pos', data)
                             self.pS_data = data
                     else:
                         self.add_output_packet('stream', 'pos', data)
                         self.pS_data = data
-                else:
-                    self.add_output_packet('stream', 'pos', data)
-                    self.pS_data = data
+            except Exception as e:
+                # print(e)
+                pass
 
         elif packet_type == 'sK':
             if self.sky_data:
@@ -819,7 +853,7 @@ class Provider(OpenDeviceBase):
             thread = threading.Thread(
                 target=self.thread_do_upgrade_framework, args=(file,))
             thread.start()
-            print("Thread upgarde framework of OpenRTK start at:[{0}].".format(
+            print("Upgrade OpenRTK firmware started at:[{0}].".format(
                 datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 
         return {

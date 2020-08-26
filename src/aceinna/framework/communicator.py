@@ -7,6 +7,7 @@ import time
 import json
 import serial
 import serial.tools.list_ports
+import threading
 from ..devices import DeviceManager
 from .constants import BAUDRATE_LIST
 from .context import APP_CONTEXT
@@ -17,6 +18,9 @@ if sys.version_info[0] > 2:
     from queue import Queue
 else:
     from Queue import Queue
+
+import inspect
+import ctypes
 
 
 class CommunicatorFactory:
@@ -49,6 +53,7 @@ class Communicator(object):
             self.setting_folder_path, 'connection.json')
         self.read_size = 0
         self.device = None
+        self.threadList = []
 
     def find_device(self, callback):
         '''
@@ -80,7 +85,23 @@ class Communicator(object):
         '''
         validate the connected device
         '''
-        self.device = DeviceManager.ping(self, *args)
+        device = DeviceManager.ping_with_port(self, *args)
+        if device != None and self.device == None:
+            self.device = device
+            return True
+        return False
+
+class StoppableThread(threading.Thread):
+
+    def __init__(self, *args, **kwargs):
+        super(StoppableThread, self).__init__(*args, **kwargs)
+        self._stop_event = threading.Event()
+
+    def stop(self):
+        self._stop_event.set()
+
+    def stopped(self):
+        return self._stop_event.is_set()
 
 
 class SerialPort(Communicator):
@@ -163,6 +184,52 @@ class SerialPort(Communicator):
                         'port:%s is in use', port)
         return result
 
+    def thread_for_ping(self, ports):
+        # for port in ports:
+        serial_port = None
+        for port in ports:
+            for baud in self.baudrate_list:
+                # print("try {0}:{1}".format(port, baud))
+                APP_CONTEXT.get_logger().logger.info(
+                    "try {0}:{1}".format(port, baud))
+                try:
+                    serial_port = serial.Serial(
+                        port, baud, timeout=0.1)
+                except Exception as ex:
+                    APP_CONTEXT.get_logger().logger.info(
+                        '{0} : {1} open failed'.format(port, baud))
+                    if serial_port is not None:
+                        if serial_port.isOpen():
+                            serial_port.close()
+                    for td in self.threadList:
+                        if td.name == ports[0]:
+                            td.stop()
+                    return False
+
+                if serial_port is not None and serial_port.isOpen():
+                    ret = self.confirm_device(port, serial_port, self.filter_device_type)
+
+                    if not ret:
+                        serial_port.close()
+                        time.sleep(0.1)
+                        for td in self.threadList:
+                            if td.name == ports[0]:
+                                if td.stopped():
+                                    return False
+                                break
+                        continue
+                    else:
+                        self.serial_port = serial_port
+                        self.save_last_port()
+                        # Assume max_len of a frame is less than 300 bytes.
+                        for td in self.threadList:
+                            td.stop()
+                        return True
+        for td in self.threadList:
+            if td.name == ports[0]:
+                td.stop()
+        return False
+
     def autobaud(self, ports):
         '''Autobauds unit - first check for stream_mode/continuous data, then check by polling unit
            Converts resets polled unit (temporarily) to 100Hz ODR
@@ -170,23 +237,34 @@ class SerialPort(Communicator):
                 true when successful
         '''
         APP_CONTEXT.get_logger().logger.info('start to connect serial port')
-        baudrate_list_from_options = self.baudrate_list
 
-        for port in ports:
-            for baud in baudrate_list_from_options:
-                APP_CONTEXT.get_logger().logger.info(
-                    "try {0}:{1}".format(port, baud))
-                self.open(port, baud)
-                if self.serial_port is not None:
-                    self.confirm_device(self.filter_device_type)
+        # print('find ports: {0}'.format(ports))
+        DeviceManager.reset_ping()
+        thread_num = (len(ports) if (len(ports) < 4) else 4)
+        ports_list = [[] for i in range(thread_num)]
+        for i, port in enumerate(ports):
+            ports_list[i%thread_num].append(port)
 
-                    if self.device is None:
-                        self.close()
-                        continue
-                    else:
-                        self.save_last_port()
-                        return True
-        return False
+        for i in range(thread_num):
+            # print('{0} {1}'.format(i, ports_list[i]))
+            t = StoppableThread(
+                target=self.thread_for_ping, name=ports_list[i][0], args=(ports_list[i],))
+            t.start()
+
+            self.threadList.append(t)
+
+        while self.device is None:
+            is_threads_stop = True
+            for td in self.threadList:
+                if not td.stopped():
+                    is_threads_stop = False
+                    break
+            if is_threads_stop:
+                break
+
+        for td in self.threadList:
+            td.join()
+        self.threadList.clear()
 
     def try_last_port(self):
         '''try to open serial port based on the port and baud read from connection.json.
@@ -209,8 +287,8 @@ class SerialPort(Communicator):
                 self.open_serial_port(
                     port=connection['port'], baud=connection['baud'], timeout=0.1)
                 if self.serial_port is not None:
-                    self.confirm_device(self.filter_device_type)
-                    if self.device is None:
+                    ret = self.confirm_device(connection['port'], self.serial_port, self.filter_device_type)
+                    if not ret:
                         self.close()
                         return False
                     else:

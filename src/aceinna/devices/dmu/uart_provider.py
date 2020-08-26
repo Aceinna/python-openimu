@@ -19,15 +19,15 @@ class Provider(OpenDeviceBase):
     DMU UART provider
     '''
 
-    def __init__(self, communicator):
+    def __init__(self, communicator, *args):
         super(Provider, self).__init__(communicator)
         self.type = 'DMU'
         self.server_update_rate = 50
         self.is_logging = False
         self.is_mag_align = False
         self.bootloader_baudrate = 57600
-        self.device_info = None
-        self.app_info = None
+        # self.device_info = None
+        # self.app_info = None
         self.app_config_folder = ''
         self.parameters = None
         self.enable_data_log = True
@@ -35,7 +35,11 @@ class Provider(OpenDeviceBase):
         self.is_restore = False
         self.is_app_matched = False
         self.is_conf_loaded = False
+        self.connected = True
+        self.device_info = None
+        self.app_info = None
         self.prepare_folders()
+
 
     def prepare_folders(self):
         '''
@@ -94,6 +98,10 @@ class Provider(OpenDeviceBase):
             self.is_conf_loaded = False
             return True
         return False
+
+    def build_device_info(self, device_info, app_info):
+        self.device_info = device_info
+        self.app_info = app_info
 
     def _build_device_info(self):
         '''
