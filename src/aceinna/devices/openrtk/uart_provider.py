@@ -476,7 +476,7 @@ class Provider(OpenDeviceBase):
                                 self.add_output_packet('stream', 'pos', data)
                                 self.pS_data = data
                                 
-                                if data['insStatus'] >= 3 or data['insStatus'] <= 5:
+                                if data['insStatus'] >= 3 and data['insStatus'] <= 5:
                                     ins_status = 'INS_INACTIVE'
                                     if data['insStatus'] == 3:
                                         ins_status = 'INS_SOLUTION_GOOD'
