@@ -323,8 +323,8 @@ class Provider(OpenDeviceBase):
                                 # else:
                                 #     print("nmea checksum wrong {0} {1}".format(cksum, calc_cksum))
                         except Exception as e:
-                            print(e)
-                            # pass
+                            # print('NMEA fault:{0}'.format(e))
+                            pass
                     self.nmea_buffer = []
                     self.nmea_sync = 0
 
@@ -466,18 +466,46 @@ class Provider(OpenDeviceBase):
                 return
 
         elif packet_type == 'pS':
-            if data['latitude'] != 0.0 and data['longitude'] != 0.0:
-                if self.pS_data:
-                    if self.pS_data['GPS_Week'] == data['GPS_Week']:
-                        if data['GPS_TimeofWeek'] - self.pS_data['GPS_TimeofWeek'] >= 0.2:
+            try:
+                if data['latitude'] != 0.0 and data['longitude'] != 0.0:
+                    if self.pS_data:
+                        if self.pS_data['GPS_Week'] == data['GPS_Week']:
+                            if data['GPS_TimeofWeek'] - self.pS_data['GPS_TimeofWeek'] >= 0.2:
+                                self.add_output_packet('stream', 'pos', data)
+                                self.pS_data = data
+                                
+                                if data['insStatus'] >= 3 or data['insStatus'] <= 5:
+                                    ins_status = 'INS_INACTIVE'
+                                    if data['insStatus'] == 3:
+                                        ins_status = 'INS_SOLUTION_GOOD'
+                                    elif data['insStatus'] == 4:
+                                        ins_status = 'INS_SOLUTION_FREE'
+                                    elif data['insStatus'] == 5:
+                                        ins_status = 'INS_ALIGNMENT_COMPLETE'
+
+                                    ins_pos_type = 'INS_INVALID'
+                                    if data['insPositionType'] == 1:
+                                        ins_pos_type = 'INS_SPP'
+                                    elif data['insPositionType'] == 4:
+                                        ins_pos_type = 'INS_RTKFIXED'
+                                    elif data['insPositionType'] == 5:
+                                        ins_pos_type = 'INS_RTKFLOAT'
+
+                                    inspva = '#INSPVA,%s,%10.2f, %s, %s,%12.8f,%13.8f,%8.3f,%9.3f,%9.3f,%9.3f,%9.3f,%9.3f,%9.3f' %\
+                                        (data['GPS_Week'], data['GPS_TimeofWeek'], ins_status, ins_pos_type,
+                                        data['latitude'], data['longitude'], data['height'],
+                                        data['velocityNorth'], data['velocityEast'], data['velocityUp'],
+                                        data['roll'], data['pitch'], data['heading'])
+                                    print(inspva)
+                        else:
                             self.add_output_packet('stream', 'pos', data)
                             self.pS_data = data
                     else:
                         self.add_output_packet('stream', 'pos', data)
                         self.pS_data = data
-                else:
-                    self.add_output_packet('stream', 'pos', data)
-                    self.pS_data = data
+            except Exception as e:
+                # print(e)
+                pass
 
         elif packet_type == 'sK':
             if self.sky_data:
