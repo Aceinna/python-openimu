@@ -36,8 +36,8 @@ class Provider(OpenDeviceBase):
         self.is_app_matched = False
         self.is_conf_loaded = False
         self.connected = True
-        self.device_info = args[0]
-        self.app_info = args[1]
+        self.device_info = None
+        self.app_info = None
         self.prepare_folders()
 
 
@@ -98,6 +98,10 @@ class Provider(OpenDeviceBase):
             self.is_conf_loaded = False
             return True
         return False
+
+    def build_device_info(self, device_info, app_info):
+        self.device_info = device_info
+        self.app_info = app_info
 
     def _build_device_info(self):
         '''
