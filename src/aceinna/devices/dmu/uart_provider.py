@@ -40,7 +40,6 @@ class Provider(OpenDeviceBase):
         self.app_info = None
         self.prepare_folders()
 
-
     def prepare_folders(self):
         '''
         Prepare folder
@@ -83,10 +82,17 @@ class Provider(OpenDeviceBase):
 
         if data_buffer == []:
             # consider as dmu
-            has_device_info = self._build_device_info()
-            has_app_info = self._build_app_info()
-            if not has_app_info or not has_device_info:
-                return False
+            command_line = dmu_helper.build_packet('GP', ID)
+            self.communicator.write(command_line)
+            time.sleep(0.1)
+            data_buffer = self.read_untils_have_data('ID')
+            self._build_device_info(data_buffer)
+
+            command_line = dmu_helper.build_packet('GP', VR)
+            self.communicator.write(command_line)
+            time.sleep(0.1)
+            data_buffer = self.read_untils_have_data('VR')
+            self._build_device_info(data_buffer)
 
             #print('The device work as DMU')
             print('# Connected Information #')
@@ -99,19 +105,22 @@ class Provider(OpenDeviceBase):
             return True
         return False
 
-    def build_device_info(self, device_info, app_info):
-        self.device_info = device_info
-        self.app_info = app_info
+    def update_device_info(self, device_info, app_info):
+        # self.device_info = device_info
+        # self.app_info = app_info
+        self._build_device_info(device_info)
+        self._build_app_info(app_info)
+        self.connected = True
 
-    def _build_device_info(self):
+        device_string = '{0} {1} {2}'.format(
+            self.device_info['name'], self.device_info['pn'], self.device_info['sn'])
+        return '\033[1;32;40m# Connected {0} #\033[0m \033[0;32;40m\n\rDevice:{1} \n\rFirmware:{2}\033[0m'\
+            .format('DMU', device_string, self.app_info['version'])
+
+    def _build_device_info(self, data_buffer):
         '''
         Build device info
         '''
-        command_line = dmu_helper.build_packet('GP', ID)
-        self.communicator.write(command_line)
-        time.sleep(0.1)
-        data_buffer = self.read_untils_have_data('ID')
-
         if data_buffer is None:
             return False
 
@@ -123,9 +132,6 @@ class Provider(OpenDeviceBase):
             mode_string_len), *data_buffer[4:]).decode()
 
         split_text = model_string.split(' ')
-        if model_string.find('OpenIMU') > -1 or \
-                model_string.find('OpenRTK') > -1:
-            return False
 
         self.device_info = {
             'name': split_text[0],
@@ -133,17 +139,11 @@ class Provider(OpenDeviceBase):
             # 'firmware_version': split_text[2],
             'sn': serial_num
         }
-        return True
 
-    def _build_app_info(self):
+    def _build_app_info(self, data_buffer):
         '''
         Build app info
         '''
-        command_line = dmu_helper.build_packet('GP', VR)
-        self.communicator.write(command_line)
-        time.sleep(0.1)
-        data_buffer = self.read_untils_have_data('VR')
-
         if data_buffer is None:
             return False
 

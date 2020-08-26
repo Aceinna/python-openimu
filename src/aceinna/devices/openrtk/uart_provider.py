@@ -116,16 +116,21 @@ class Provider(OpenDeviceBase):
             self.connected = True
             print('# Connected Information #')
             split_device_info = device_info_text.split(' ')
-            print('Device: {0} {1} {2} {3}'.format(split_device_info[0], split_device_info[2], split_device_info[3], split_device_info[4]))
+            print('Device: {0} {1} {2} {3}'.format(
+                split_device_info[0], split_device_info[2], split_device_info[3], split_device_info[4]))
             print('APP version:', app_info_text)
             APP_CONTEXT.get_logger().logger.info(
                 'Connected {0}, {1}'.format(device_info_text, app_info_text))
             return True
         return False
 
-    def build_device_info(self, device_info, app_info):
+    def update_device_info(self, device_info, app_info):
         self._build_device_info(device_info)
         self._build_app_info(app_info)
+        self.connected = True
+
+        return '\033[1;32;40m# Connected {0} #\033[0m \033[0;32;40m\n\rDevice:{1} \n\rFirmware:{2}\033[0m'\
+            .format('OpenRTK', device_info, app_info)
 
     def _build_device_info(self, text):
         '''
@@ -320,8 +325,8 @@ class Provider(OpenDeviceBase):
                                     print()
                                     if self.ntrip_client_enable and self.ntripClient != None:
                                         self.ntripClient.send(str_nmea)
-                                print(str_nmea, end = '')
-                                
+                                print(str_nmea, end='')
+
                                 # else:
                                 #     print("nmea checksum wrong {0} {1}".format(cksum, calc_cksum))
                         except Exception as e:
@@ -475,7 +480,7 @@ class Provider(OpenDeviceBase):
                             if data['GPS_TimeofWeek'] - self.pS_data['GPS_TimeofWeek'] >= 0.2:
                                 self.add_output_packet('stream', 'pos', data)
                                 self.pS_data = data
-                                
+
                                 if data['insStatus'] >= 3 and data['insStatus'] <= 5:
                                     ins_status = 'INS_INACTIVE'
                                     if data['insStatus'] == 3:
@@ -495,9 +500,9 @@ class Provider(OpenDeviceBase):
 
                                     inspva = '#INSPVA,%s,%10.2f, %s, %s,%12.8f,%13.8f,%8.3f,%9.3f,%9.3f,%9.3f,%9.3f,%9.3f,%9.3f' %\
                                         (data['GPS_Week'], data['GPS_TimeofWeek'], ins_status, ins_pos_type,
-                                        data['latitude'], data['longitude'], data['height'],
-                                        data['velocityNorth'], data['velocityEast'], data['velocityUp'],
-                                        data['roll'], data['pitch'], data['heading'])
+                                         data['latitude'], data['longitude'], data['height'],
+                                         data['velocityNorth'], data['velocityEast'], data['velocityUp'],
+                                         data['roll'], data['pitch'], data['heading'])
                                     print(inspva)
                         else:
                             self.add_output_packet('stream', 'pos', data)

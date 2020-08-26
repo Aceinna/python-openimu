@@ -22,6 +22,8 @@ def receive_args():
         description='Aceinna python driver input args command:')
     # parser.add_argument("-host", type=str, help="host type", default='web')
     # for host as web
+    parser.add_argument("--protocol", type=str,
+                        help="Protocol(uart or lan)", default='uart')
     parser.add_argument("-p", "--port", type=int,
                         help="Webserver port")
     parser.add_argument("--device-type", type=str,
@@ -62,6 +64,7 @@ if __name__ == '__main__':
     ARGS = receive_args()
     try:
         APP = Webserver(
+            protocol=ARGS.protocol,
             device_type=ARGS.device_type,
             com_port=ARGS.com_port,
             port=ARGS.port,
@@ -79,7 +82,7 @@ if __name__ == '__main__':
         APP.stop()
         sys.exit()
     except Exception as ex:  # pylint: disable=bare-except
-        #traceback.print_exc()  # For development
+        traceback.print_exc()  # For development
         print('\033[1;31;40mApplication Exit Exception:\033[0m \033[0;31;40m{0}\033[0m'.format(ex))
         os._exit(1)
 

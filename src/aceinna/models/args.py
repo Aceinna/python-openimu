@@ -30,6 +30,7 @@ class WebserverArgs(KeyValuesArgumentBase):
     Argument define for start webserver
     '''
     default_values = {
+        'protocol': 'uart',
         'device_type': 'auto',
         'port': 'auto',
         'baudrate': 'auto',

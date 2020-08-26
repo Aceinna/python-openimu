@@ -333,8 +333,8 @@ class LoggerServerSentEvent(tornado.web.RequestHandler):
         self.set_header('Content-Type', 'text/event-stream')
         self.set_header('Access-Control-Allow-Origin', '*')
         self.set_header('Access-Control-Allow-Headers', '*')
-        self.set_header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS')
- 
+        self.set_header('Access-Control-Allow-Methods',
+                        'GET, POST, PUT, DELETE, PATCH, OPTIONS')
 
     def get(self):
         self._loop = tornado.ioloop.PeriodicCallback(
@@ -447,11 +447,10 @@ class Webserver(EventBase):
             # if self.ws_handler:
             #     self.ws_handler.on_receive_output_packet(
             #         'stream', 'ping', {'status': 1})
-                #self.ws_handler.handle_device_found(device_provider)
+            # self.ws_handler.handle_device_found(device_provider)
 
         if self.ws_handler:
             self.ws_handler.handle_device_found(device_provider)
-
 
     def device_complete_upgrade_handler(self, device_provider):
         '''
@@ -565,3 +564,4 @@ class Webserver(EventBase):
 
     def _build_options(self, **kwargs):
         self.options = WebserverArgs(**kwargs)
+        self.communication = self.options.protocol if self.options.protocol is not None else 'uart'

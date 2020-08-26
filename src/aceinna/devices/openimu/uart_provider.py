@@ -106,9 +106,13 @@ class Provider(OpenDeviceBase):
             return True
         return False
 
-    def build_device_info(self, device_info, app_info):
+    def update_device_info(self, device_info, app_info):
         self._build_device_info(device_info)
         self._build_app_info(app_info)
+        self.connected = True
+
+        return '\033[1;32;40m# Connected {0} #\033[0m \033[0;32;40m\n\rDevice:{1} \n\rFirmware:{2}\033[0m'\
+            .format('OpenIMU', device_info, app_info)
 
     def _build_device_info(self, text):
         '''

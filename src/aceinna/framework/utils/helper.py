@@ -318,7 +318,7 @@ def _parse_buffer(data_buffer):
     return response
 
 
-def read_untils_have_data_through_serial_port(communicator, packet_type, read_length=200, retry_times=20):
+def read_untils_have_data(communicator, packet_type, read_length=200, retry_times=20):
     '''
     Get data from limit times of read
     '''

@@ -44,7 +44,7 @@ class FirmwareUpgradeWorker(EventBase):
         if current == 0:
             time.sleep(8)
 
-        response = helper.read_untils_have_data_through_serial_port(
+        response = helper.read_untils_have_data(
             self._communicator, 'WA', 50, 50)
         # wait WA end if cannot read response in defined retry times
         if response is None:

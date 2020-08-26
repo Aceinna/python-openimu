@@ -82,11 +82,12 @@ class Communicator(object):
         '''
         validate the connected device
         '''
-        device = DeviceManager.ping_with_port(self, *args)
+        device = DeviceManager.ping(self, *args)
         if device != None and self.device == None:
             self.device = device
             return True
         return False
+
 
 class StoppableThread(threading.Thread):
 
@@ -204,8 +205,7 @@ class SerialPort(Communicator):
                     return False
 
                 if serial_port is not None and serial_port.isOpen():
-                    ret = self.confirm_device(port, serial_port, self.filter_device_type)
-
+                    ret = self.confirm_device(serial_port, self.filter_device_type)
                     if not ret:
                         serial_port.close()
                         time.sleep(0.1)
@@ -236,11 +236,10 @@ class SerialPort(Communicator):
         APP_CONTEXT.get_logger().logger.info('start to connect serial port')
 
         # print('find ports: {0}'.format(ports))
-        DeviceManager.reset_ping()
         thread_num = (len(ports) if (len(ports) < 4) else 4)
         ports_list = [[] for i in range(thread_num)]
         for i, port in enumerate(ports):
-            ports_list[i%thread_num].append(port)
+            ports_list[i % thread_num].append(port)
 
         for i in range(thread_num):
             # print('{0} {1}'.format(i, ports_list[i]))
@@ -284,7 +283,7 @@ class SerialPort(Communicator):
                 self.open_serial_port(
                     port=connection['port'], baud=connection['baud'], timeout=0.1)
                 if self.serial_port is not None:
-                    ret = self.confirm_device(connection['port'], self.serial_port, self.filter_device_type)
+                    ret = self.confirm_device(self.serial_port, self.filter_device_type)
                     if not ret:
                         self.close()
                         return False
@@ -396,7 +395,11 @@ class LAN(Communicator):
     def __init__(self, options=None):
         super().__init__()
         self.type = 'lan'
+        self.host = '127.0.0.1'  # TODO: predefined or configured?
+        self.port = 2202  # TODO: predefined or configured?
+
         self.sock = None
+        self.device_conn = None
         self.filter_device_type = None
         self.filter_device_type_assigned = False
 
@@ -409,10 +412,17 @@ class LAN(Communicator):
         # confirm device
         self.device = None
 
-        while self.device is None:
-            self.open()
+        # establish TCP Server
+        self.open()
 
-        callback(self.device)
+        # wait for client
+        conn, addr = self.sock.accept()
+        self.device_conn = conn
+        # confirm device
+        self.confirm_device(conn, addr)
+
+        if self.device:
+            callback(self.device)
 
     def open(self):
         '''
@@ -423,7 +433,8 @@ class LAN(Communicator):
 
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
-            self.sock.connect((self.host, self.port))
+            self.sock.bind((self.host, self.port))
+            self.sock.listen(5)
             return True
         except socket.error:
             self.sock = None
@@ -446,8 +457,32 @@ class LAN(Communicator):
         '''
         write
         '''
+        try:
+            if self.device_conn:
+                return self.device_conn.send(data)
+        except socket.error:
+            print("socket error,do reconnect.")
+            raise
+        except Exception as e:
+            raise
 
     def read(self, size):
         '''
         read
         '''
+        try:
+            if self.device_conn is None:
+                raise Exception('Device is not connected.')
+            data = self.device_conn.recv(size)
+
+            if not data:
+                raise socket.error('Device is connected.')
+            else:
+                return data
+        except socket.error as e:
+            print("socket error,do reconnect.")
+            raise
+        except Exception as e:
+            raise
+        except:
+            raise

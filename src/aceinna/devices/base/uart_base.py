@@ -126,7 +126,7 @@ class OpenDeviceBase(EventBase):
         '''
         Get data from limit times of read
         '''
-        return helper.read_untils_have_data_through_serial_port(self.communicator, packet_type, read_length, retry_times)
+        return helper.read_untils_have_data(self.communicator, packet_type, read_length, retry_times)
 
     def _setup_message_center(self):
         if not self._message_center:
