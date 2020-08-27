@@ -327,8 +327,13 @@ def read_untils_have_data(communicator, packet_type, read_length=200, retry_time
     data_buffer = []
 
     while trys < retry_times:
-        data_buffer_per_time = bytearray(
-            communicator.read(read_length))
+        read_data = communicator.read(read_length)
+
+        if read_data is None:
+            trys += 1
+            continue
+
+        data_buffer_per_time = bytearray(read_data)
         data_buffer.extend(data_buffer_per_time)
 
         response = _parse_buffer(data_buffer)

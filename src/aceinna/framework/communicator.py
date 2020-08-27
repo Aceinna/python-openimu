@@ -205,7 +205,8 @@ class SerialPort(Communicator):
                     return False
 
                 if serial_port is not None and serial_port.isOpen():
-                    ret = self.confirm_device(serial_port, self.filter_device_type)
+                    ret = self.confirm_device(
+                        serial_port, self.filter_device_type)
                     if not ret:
                         serial_port.close()
                         time.sleep(0.1)
@@ -283,7 +284,8 @@ class SerialPort(Communicator):
                 self.open_serial_port(
                     port=connection['port'], baud=connection['baud'], timeout=0.1)
                 if self.serial_port is not None:
-                    ret = self.confirm_device(self.serial_port, self.filter_device_type)
+                    ret = self.confirm_device(
+                        self.serial_port, self.filter_device_type)
                     if not ret:
                         self.close()
                         return False
@@ -389,6 +391,19 @@ class SerialPort(Communicator):
         self.serial_port.flushOutput()
 
 
+class SocketConnWrapper:
+    def __init__(self, socket_conn):
+        self.socket_conn = socket_conn
+        # self.timeout = 0.01
+
+    def write(self, data):
+        self.socket_conn.send(bytes(data))
+
+    def read(self, size):
+        # TODO: should have a timeout policy
+        return self.socket_conn.recv(size)
+
+
 class LAN(Communicator):
     '''LAN'''
 
@@ -417,9 +432,9 @@ class LAN(Communicator):
 
         # wait for client
         conn, addr = self.sock.accept()
-        self.device_conn = conn
+        self.device_conn = SocketConnWrapper(conn)
         # confirm device
-        self.confirm_device(conn, addr)
+        self.confirm_device(self.device_conn)
 
         if self.device:
             callback(self.device)
@@ -459,21 +474,21 @@ class LAN(Communicator):
         '''
         try:
             if self.device_conn:
-                return self.device_conn.send(data)
+                return self.device_conn.write(data)
         except socket.error:
             print("socket error,do reconnect.")
             raise
         except Exception as e:
             raise
 
-    def read(self, size):
+    def read(self, size=100):
         '''
         read
         '''
         try:
             if self.device_conn is None:
                 raise Exception('Device is not connected.')
-            data = self.device_conn.recv(size)
+            data = self.device_conn.read(size)
 
             if not data:
                 raise socket.error('Device is connected.')

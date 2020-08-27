@@ -2,6 +2,7 @@ from .ping.dmu import ping as ping_dmu
 from .ping.open import ping as ping_opendevice
 from .openimu.uart_provider import Provider as OpenIMUUartProvider
 from .openrtk.uart_provider import Provider as OpenRTKUartProvider
+from .openrtk.lan_provider import Provider as OpenRTKLANProvider
 from .dmu.uart_provider import Provider as DMUUartProvider
 from ..framework.context import APP_CONTEXT
 
@@ -58,7 +59,7 @@ class DeviceManager:
                 'provider': provider
             })
 
-        format_device_info = provider.update_device_info(device_info, app_info)
+        format_device_info = provider.bind_device_info(device_info, app_info)
         
         print(format_device_info)
 

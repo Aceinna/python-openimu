@@ -67,7 +67,8 @@ def ping(communicator, *args):
         model_string = struct.pack('{0}B'.format(
             mode_string_len), *id_packet_data[4:]).decode()
 
-        if model_string.find('OpenIMU') > -1 or \
+        if filter_device_type is None \
+            and model_string.find('OpenIMU') > -1 or \
                 model_string.find('OpenRTK') > -1:
             return None
 

@@ -12,7 +12,7 @@ from ...framework.utils import (
     helper, resource
 )
 from ...framework.context import APP_CONTEXT
-from ..base.uart_base import OpenDeviceBase
+from ..base.lan_base import OpenDeviceBase
 from ..configs.openrtk_predefine import (
     APP_STR, get_app_names
 )
@@ -29,7 +29,7 @@ from ..parsers.open_field_parser import encode_value
 
 class Provider(OpenDeviceBase):
     '''
-    OpenRTK UART provider
+    OpenRTK LAN provider
     '''
 
     def __init__(self, communicator, *args):
