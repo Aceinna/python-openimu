@@ -63,22 +63,27 @@ def ping(communicator, *args):
         id_packet_data = _run_command(communicator, 'GP', 'ID', ID)
         vr_packet_data = _run_command(communicator, 'GP', 'VR', VR)
 
+        if id_packet_data is None or vr_packet_data is None:
+            return None
+
         mode_string_len = len(id_packet_data[4:])
         model_string = struct.pack('{0}B'.format(
             mode_string_len), *id_packet_data[4:]).decode()
 
-        if filter_device_type is None \
-            and model_string.find('OpenIMU') > -1 or \
-                model_string.find('OpenRTK') > -1:
-            return None
-
-        if vr_packet_data is None:
-            return None
-
-        return {
+        ping_info = {
             'device_type': 'DMU',
             'device_info': id_packet_data,
             'app_info': vr_packet_data
         }
+
+        # return ping info if specified the device type
+        if filter_device_type == 'DMU':
+            return ping_info
+
+        if model_string.find('OpenIMU') > -1 and \
+                model_string.find('OpenRTK') > -1:
+            return None
+
+        return ping_info
 
     return None

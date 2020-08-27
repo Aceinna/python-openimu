@@ -16,9 +16,6 @@ from .utils.resource import (
     get_executor_path
 )
 
-import inspect
-import ctypes
-
 
 class CommunicatorFactory:
     '''
@@ -410,7 +407,7 @@ class LAN(Communicator):
     def __init__(self, options=None):
         super().__init__()
         self.type = 'lan'
-        self.host = '127.0.0.1'  # TODO: predefined or configured?
+        self.host = '192.168.137.1'  # TODO: predefined or configured?
         self.port = 2202  # TODO: predefined or configured?
 
         self.sock = None
@@ -423,9 +420,10 @@ class LAN(Communicator):
             self.filter_device_type_assigned = True
 
     def find_device(self, callback):
-        # establish a TCP server
-        # confirm device
         self.device = None
+
+        # find client by hostname
+        self.find_client_by_hostname('OPENRTK')
 
         # establish TCP Server
         self.open()
@@ -501,3 +499,16 @@ class LAN(Communicator):
             raise
         except:
             raise
+
+    def find_client_by_hostname(self, name):
+        is_find = False
+        try:
+            socket.gethostbyname(name)
+            is_find = True
+        except Exception:
+            is_find = False
+
+        # continue to find the client
+        if not is_find:
+            time.sleep(1)
+            self.find_client_by_hostname(name)
