@@ -112,7 +112,7 @@ class Provider(OpenDeviceBase):
 
         device_string = '{0} {1} {2}'.format(
             self.device_info['name'], self.device_info['pn'], self.device_info['sn'])
-        return '\033[1;32;40m# Connected {0} #\033[0m \033[0;32;40m\n\rDevice:{1} \n\rFirmware:{2}\033[0m'\
+        return '# Connected {0} #\n\rDevice:{1} \n\rFirmware:{2}'\
             .format('DMU', device_string, self.app_info['version'])
 
     def _build_device_info(self, data_buffer):

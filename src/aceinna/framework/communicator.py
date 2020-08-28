@@ -408,7 +408,7 @@ class LAN(Communicator):
         super().__init__()
         self.type = 'lan'
         self.host = '192.168.137.1'  # TODO: predefined or configured?
-        self.port = 2202  # TODO: predefined or configured?
+        self.port = 2203  # TODO: predefined or configured?
 
         self.sock = None
         self.device_conn = None
@@ -431,6 +431,11 @@ class LAN(Communicator):
         # wait for client
         conn, addr = self.sock.accept()
         self.device_conn = SocketConnWrapper(conn)
+
+        # read the greeting message, and send feedback
+        conn.recv(1024)
+        conn.send('i am pc'.encode())
+
         # confirm device
         self.confirm_device(self.device_conn)
 

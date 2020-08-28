@@ -9,6 +9,7 @@ import signal
 import time
 from aceinna.bootstrap import Webserver
 from aceinna.framework.constants import BAUDRATE_LIST
+from aceinna.framework.utils.print import printRed
 
 IS_WINDOWS = sys.platform.__contains__(
     'win32') or sys.platform.__contains__('win64')
@@ -44,7 +45,7 @@ def receive_args():
                         help="set user parameters (OpenRTK only)", default=False)
     parser.add_argument("--ntrip-client", "-n", dest='ntrip_client', action='store_true',
                         help="enable ntrip client (OpenRTK only)", default=False)
-                        
+
     return parser.parse_args()
 
 
@@ -82,8 +83,8 @@ if __name__ == '__main__':
         APP.stop()
         sys.exit()
     except Exception as ex:  # pylint: disable=bare-except
-        #traceback.print_exc()  # For development
-        print('\033[1;31;40mApplication Exit Exception:\033[0m \033[0;31;40m{0}\033[0m'.format(ex))
+        # traceback.print_exc()  # For development
+        printRed('Application Exit Exception: {0}'.format(ex))
         os._exit(1)
 
     while True:
