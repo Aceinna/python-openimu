@@ -47,7 +47,8 @@ class LanDataLogger:
                     break
                 except Exception as e:
                     pass
-
+        
+        self.log_conn.write('log debug on\r\n'.encode())
         while True:
             try:
                 read_data = self.log_conn.read(1024)
