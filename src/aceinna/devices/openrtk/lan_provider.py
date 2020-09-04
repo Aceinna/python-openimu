@@ -5,9 +5,11 @@ import datetime
 import threading
 import math
 import re
+import socket
 import serial
 import serial.tools.list_ports
 from .ntrip_client import NTRIPClient
+from .lan_data_logger import LanDataLogger
 from ...framework.utils import (
     helper, resource
 )
@@ -218,33 +220,14 @@ class Provider(OpenDeviceBase):
             result = self.set_params(
                 self.properties["initial"]["userParameters"])
             ##print('set user para {0}'.format(result))
-            if (result['packetType'] == 'success'):
+            if result['packetType'] == 'success':
                 self.save_config()
 
         if self.ntrip_client_enable:
             t = threading.Thread(target=self.ntrip_client_thread)
             t.start()
 
-        # if with_raw_log:
-        connection = None
-        debug_port = ''
-        rtcm_port = ''
         try:
-            if (self.properties["initial"]["useDefaultUart"]):
-                user_port_num, port_name = self.build_connected_serial_port_info()
-                if not user_port_num or not port_name:
-                    return False
-                #print('user_port {0} {1}'.format(user_port_num, port_name))
-                debug_port = port_name + str(int(user_port_num) + 2)
-                rtcm_port = port_name + str(int(user_port_num) + 1)
-            else:
-                for x in self.properties["initial"]["uart"]:
-                    if x['enable'] == 1:
-                        if x['name'] == 'DEBUG':
-                            debug_port = x["value"]
-                        elif x['name'] == 'GNSS':
-                            rtcm_port = x["value"]
-
             if self.data_folder is not None:
                 dir_time = time.strftime("%Y%m%d_%H%M%S", time.localtime())
                 file_time = time.strftime(
@@ -254,44 +237,12 @@ class Provider(OpenDeviceBase):
                 self.user_logf = open(
                     file_name + '/' + 'user_' + file_time + '.bin', "wb")
 
-            if rtcm_port != '':
-                print('OpenRTK log GNSS UART {0}'.format(rtcm_port))
-                self.rtcm_serial_port = serial.Serial(
-                    rtcm_port, '460800', timeout=0.1)
-                if self.rtcm_serial_port.isOpen():
-                    self.rtcm_logf = open(
-                        file_name + '/' + 'rtcm_rover_' + file_time + '.bin', "wb")
-                    t = threading.Thread(
-                        target=self.thread_rtcm_port_receiver, args=(file_name,))
-                    t.start()
-
-            if debug_port != '':
-                print('OpenRTK log DEBUG UART {0}'.format(debug_port))
-                self.debug_serial_port = serial.Serial(
-                    debug_port, '460800', timeout=0.1)
-                if self.debug_serial_port.isOpen():
-                    if self.app_info['app_name'] == 'RAWDATA':
-                        self.debug_logf = open(
-                            file_name + '/' + 'rtcm_base_' + file_time + '.bin', "wb")
-                    elif self.app_info['app_name'] == 'RTK':
-                        self.debug_logf = open(
-                            file_name + '/' + 'rtcm_base_' + file_time + '.bin', "wb")
-                    else:
-                        self.debug_logf = open(
-                            file_name + '/' + 'debug_' + file_time + '.bin', "wb")
-                    t = threading.Thread(
-                        target=self.thread_debug_port_receiver, args=(file_name,))
-                    t.start()
+            # start a thread to log data
+            data_log_thread = threading.Thread(
+                target=self.thread_data_log)
+            data_log_thread.start()
 
         except Exception as e:
-            if self.debug_serial_port is not None:
-                if self.debug_serial_port.isOpen():
-                    self.debug_serial_port.close()
-            if self.rtcm_serial_port is not None:
-                if self.rtcm_serial_port.isOpen():
-                    self.rtcm_serial_port.close()
-            self.debug_serial_port = None
-            self.rtcm_serial_port = None
             print(e)
             return False
 
@@ -335,14 +286,14 @@ class Provider(OpenDeviceBase):
                     self.nmea_buffer = []
                     self.nmea_sync = 0
 
-        if self.user_logf is not None:
-            self.user_logf.write(data)
+        # if self.user_logf is not None:
+        #     self.user_logf.write(data)
 
     def thread_debug_port_receiver(self, *args, **kwargs):
         if self.debug_logf is None:
             return
 
-        is_get_configuration = 0
+        is_get_configuration = False
         file_name = args[0]
         self.debug_c_f = open(file_name + '/' + 'configuration.txt', "w")
 
@@ -366,7 +317,7 @@ class Provider(OpenDeviceBase):
                                 if self.debug_c_f:
                                     self.debug_c_f.write(str_data)
                                     self.debug_c_f.close()
-                                is_get_configuration = 1
+                                is_get_configuration = True
                         if is_get_configuration:
                             break
                     except Exception as e:
@@ -402,6 +353,11 @@ class Provider(OpenDeviceBase):
                 self.rtcm_logf.write(data)
             else:
                 time.sleep(0.001)
+
+    def thread_data_log(self, *args, **kwargs):
+        self.lan_data_logger = LanDataLogger(
+            self.properties, self.communicator, self.user_logf)
+        self.lan_data_logger.run()
 
     def on_receive_output_packet(self, packet_type, data, error=None):
         '''

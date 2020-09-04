@@ -15,7 +15,7 @@ from .context import APP_CONTEXT
 from .utils.resource import (
     get_executor_path
 )
-
+from .wrapper import SocketConnWrapper
 
 class CommunicatorFactory:
     '''
@@ -386,19 +386,6 @@ class SerialPort(Communicator):
         '''
         self.serial_port.flushInput()
         self.serial_port.flushOutput()
-
-
-class SocketConnWrapper:
-    def __init__(self, socket_conn):
-        self.socket_conn = socket_conn
-        # self.timeout = 0.01
-
-    def write(self, data):
-        self.socket_conn.send(bytes(data))
-
-    def read(self, size):
-        # TODO: should have a timeout policy
-        return self.socket_conn.recv(size)
 
 
 class LAN(Communicator):
