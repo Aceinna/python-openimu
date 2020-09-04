@@ -49,5 +49,8 @@ class LanDataLogger:
                     pass
 
         while True:
-            read_data = self.log_conn.read(1024)
-            self.log_writer.write(read_data)
+            try:
+                read_data = self.log_conn.read(1024)
+                self.log_writer.write(read_data)
+            except Exception as e:
+                print('Data Log Failed, exit')
