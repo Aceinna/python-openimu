@@ -129,7 +129,7 @@ class Provider(OpenDeviceBase):
         self._build_app_info(app_info)
         self.connected = True
 
-        return '# Connected {0} #\n\rDevice:{1} \n\rFirmware:{2}'\
+        return '# Connected {0} with UART #\n\rDevice:{1} \n\rFirmware:{2}'\
             .format('OpenRTK', device_info, app_info)
 
     def _build_device_info(self, text):

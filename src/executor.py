@@ -8,7 +8,7 @@ import traceback
 import signal
 import time
 from aceinna.bootstrap import Webserver
-from aceinna.framework.constants import BAUDRATE_LIST
+from aceinna.framework.constants import (DEVICE_TYPES,BAUDRATE_LIST)
 from aceinna.framework.utils.print import printRed
 
 IS_WINDOWS = sys.platform.__contains__(
@@ -20,18 +20,18 @@ def receive_args():
     """parse input arguments
     """
     parser = argparse.ArgumentParser(
-        description='Aceinna python driver input args command:')
+        description='Aceinna python driver input args command:', allow_abbrev=False)
     # parser.add_argument("-host", type=str, help="host type", default='web')
     # for host as web
-    parser.add_argument("--protocol", type=str,
-                        help="Protocol(uart or lan)", default='uart')
-    parser.add_argument("-p", "--port", type=int,
+    parser.add_argument("-l", "--protocol", dest="protocol",
+                        help="Protocol(uart or lan)", default='uart', choices=['uart', 'lan'])
+    parser.add_argument("-p", "--port", dest='port',  metavar='', type=int,
                         help="Webserver port")
-    parser.add_argument("--device-type", type=str,
-                        help="Open Device Type")
-    parser.add_argument("-b", "--baudrate", type=int,
+    parser.add_argument("--device-type", dest="device_type", type=str,
+                        help="Open Device Type", choices=DEVICE_TYPES)
+    parser.add_argument("-b", "--baudrate", dest="baudrate", type=int,
                         help="Baudrate for uart", choices=BAUDRATE_LIST)
-    parser.add_argument("-c", "--com-port", type=str,
+    parser.add_argument("-c", "--com-port", dest="com_port", metavar='', type=str,
                         help="COM Port")
     parser.add_argument("--console-log", dest='console_log', action='store_true',
                         help="Output log on console", default=False)
@@ -39,11 +39,11 @@ def receive_args():
                         help="Log debug information", default=False)
     parser.add_argument("--with-data-log", dest='with_data_log', action='store_true',
                         help="Contains internal data log (OpenIMU only)", default=False)
-    parser.add_argument("--with-raw-log", "-r", dest='with_raw_log', action='store_true',
+    parser.add_argument("-r", "--with-raw-log", dest='with_raw_log', action='store_true',
                         help="Contains raw data log (OpenRTK only)", default=False)
-    parser.add_argument("--set-user-para", "-s", dest='set_user_para', action='store_true',
+    parser.add_argument("-s", "--set-user-para", dest='set_user_para', action='store_true',
                         help="set user parameters (OpenRTK only)", default=False)
-    parser.add_argument("--ntrip-client", "-n", dest='ntrip_client', action='store_true',
+    parser.add_argument("-n", "--ntrip-client", dest='ntrip_client', action='store_true',
                         help="enable ntrip client (OpenRTK only)", default=False)
 
     return parser.parse_args()

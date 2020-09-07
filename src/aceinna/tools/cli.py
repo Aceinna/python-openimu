@@ -4,12 +4,12 @@ import argparse
 
 try:
     from aceinna.bootstrap.cli import CommandLine
-    from aceinna.framework.constants import BAUDRATE_LIST
+    from aceinna.framework.constants import (DEVICE_TYPES, BAUDRATE_LIST)
 except:  # pylint: disable=bare-except
     print('load package from local')
     sys.path.append('./src')
     from aceinna.bootstrap.cli import CommandLine
-    from aceinna.framework.constants import BAUDRATE_LIST
+    from aceinna.framework.constants import (DEVICE_TYPES, BAUDRATE_LIST)
 
 
 def receive_args():
@@ -19,13 +19,13 @@ def receive_args():
         description='Aceinna python driver input args command:')
     # parser.add_argument("-host", type=str, help="host type", default='web')
     # for host as web
-    parser.add_argument("-p", "--port", type=int,
+    parser.add_argument("-p", "--port", dest='port',  metavar='', type=int,
                         help="Webserver port")
-    parser.add_argument("--device-type", type=str,
-                        help="Open Device Type")
-    parser.add_argument("-b", "--baudrate", type=int,
+    parser.add_argument("--device-type", dest="device_type", type=str,
+                        help="Open Device Type", choices=DEVICE_TYPES)
+    parser.add_argument("-b", "--baudrate", dest="baudrate", type=int,
                         help="Baudrate for uart", choices=BAUDRATE_LIST)
-    parser.add_argument("-c", "--com-port", type=str,
+    parser.add_argument("-c", "--com-port", dest="com_port", metavar='', type=str,
                         help="COM Port")
     parser.add_argument("--console-log", dest='console_log', action='store_true',
                         help="Output log on console", default=False)
@@ -33,7 +33,7 @@ def receive_args():
                         help="Log debug information", default=False)
     parser.add_argument("--with-data-log", dest='with_data_log', action='store_true',
                         help="Contains internal data log (OpenIMU only)", default=False)
-    parser.add_argument("--with-raw-log", dest='with_raw_log', action='store_true',
+    parser.add_argument("-r", "--with-raw-log", dest='with_raw_log', action='store_true',
                         help="Contains raw data log (OpenRTK only)", default=False)
     return parser.parse_args()
 
