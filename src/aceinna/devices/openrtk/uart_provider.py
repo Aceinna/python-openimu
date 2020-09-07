@@ -12,7 +12,7 @@ from ...framework.utils import (
     helper, resource
 )
 from ...framework.context import APP_CONTEXT
-from ..base.uart_base import OpenDeviceBase
+from ..base.provider_base import OpenDeviceBase
 from ..configs.openrtk_predefine import (
     APP_STR, get_app_names
 )
@@ -294,6 +294,9 @@ class Provider(OpenDeviceBase):
             self.rtcm_serial_port = None
             print(e)
             return False
+
+    def after_bootloader_switch(self):
+        self.communicator.serial_port.baudrate = self.bootloader_baudrate
 
     def nmea_checksum(self, data):
         data = data.replace("\r", "").replace("\n", "").replace("$", "")

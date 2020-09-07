@@ -5,7 +5,6 @@ import datetime
 import threading
 import math
 import re
-import socket
 import serial
 import serial.tools.list_ports
 from .ntrip_client import NTRIPClient
@@ -14,7 +13,7 @@ from ...framework.utils import (
     helper, resource
 )
 from ...framework.context import APP_CONTEXT
-from ..base.lan_base import OpenDeviceBase
+from ..base.provider_base import OpenDeviceBase
 from ..configs.openrtk_predefine import (
     APP_STR, get_app_names
 )
@@ -40,7 +39,6 @@ class Provider(OpenDeviceBase):
         self.server_update_rate = 100
         self.sky_data = []
         self.pS_data = []
-        self.bootloader_baudrate = 115200
         self.app_config_folder = ''
         self.device_info = None
         self.app_info = None
@@ -246,6 +244,9 @@ class Provider(OpenDeviceBase):
             print(e)
             return False
 
+    def after_bootloader_switch(self):
+        pass
+
     def nmea_checksum(self, data):
         data = data.replace("\r", "").replace("\n", "").replace("$", "")
         nmeadata, cksum = re.split('\*', data)
@@ -273,7 +274,6 @@ class Provider(OpenDeviceBase):
                                 str_nmea)
                             if cksum == calc_cksum:
                                 if str_nmea.find("$GPGGA") != -1:
-                                    print()
                                     if self.ntrip_client_enable and self.ntripClient != None:
                                         self.ntripClient.send(str_nmea)
                                 print(str_nmea, end='')
@@ -426,32 +426,34 @@ class Provider(OpenDeviceBase):
                 self.add_output_packet('stream', 'imu', data)
 
     def do_write_firmware(self, firmware_content):
-        rules = [
-            InternalCombineAppParseRule('rtk', 'rtk_start:', 4),
-            InternalCombineAppParseRule('sdk', 'sdk_start:', 4),
-        ]
+        raise Exception('It is not supported by connecting device with LAN')
 
-        parsed_content = firmware_content_parser(firmware_content, rules)
+        # rules = [
+        #     InternalCombineAppParseRule('rtk', 'rtk_start:', 4),
+        #     InternalCombineAppParseRule('sdk', 'sdk_start:', 4),
+        # ]
 
-        user_port_num, port_name = self.build_connected_serial_port_info()
-        sdk_port = port_name + str(int(user_port_num) + 3)
+        # parsed_content = firmware_content_parser(firmware_content, rules)
 
-        sdk_uart = serial.Serial(sdk_port, 115200, timeout=0.1)
-        if not sdk_uart.isOpen():
-            raise Exception('Cannot open SDK upgrade port')
+        # user_port_num, port_name = self.build_connected_serial_port_info()
+        # sdk_port = port_name + str(int(user_port_num) + 3)
 
-        upgrade_center = UpgradeCenter()
+        # sdk_uart = serial.Serial(sdk_port, 115200, timeout=0.1)
+        # if not sdk_uart.isOpen():
+        #     raise Exception('Cannot open SDK upgrade port')
 
-        upgrade_center.register(
-            FirmwareUpgradeWorker(self.communicator, parsed_content['rtk']))
+        # upgrade_center = UpgradeCenter()
 
-        upgrade_center.register(
-            SDKUpgradeWorker(sdk_uart, parsed_content['sdk']))
+        # upgrade_center.register(
+        #     FirmwareUpgradeWorker(self.communicator, parsed_content['rtk']))
 
-        upgrade_center.on('progress', self.handle_upgrade_process)
-        upgrade_center.on('error', self.handle_upgrade_error)
-        upgrade_center.on('finish', self.handle_upgrade_complete)
-        upgrade_center.start()
+        # upgrade_center.register(
+        #     SDKUpgradeWorker(sdk_uart, parsed_content['sdk']))
+
+        # upgrade_center.on('progress', self.handle_upgrade_process)
+        # upgrade_center.on('error', self.handle_upgrade_error)
+        # upgrade_center.on('finish', self.handle_upgrade_complete)
+        # upgrade_center.start()
 
     def get_device_connection_info(self):
         return {

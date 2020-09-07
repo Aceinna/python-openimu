@@ -2,7 +2,7 @@ import os
 import time
 import json
 import struct
-from ..base.uart_base import OpenDeviceBase
+from ..base.provider_base import OpenDeviceBase
 from ..decorator import with_device_message
 from ...framework.utils import (helper, resource)
 from . import dmu_helper
@@ -172,6 +172,9 @@ class Provider(OpenDeviceBase):
 
     def after_setup(self):
         pass
+
+    def after_bootloader_switch(self):
+        self.communicator.serial_port.baudrate = self.bootloader_baudrate
 
     def on_read_raw(self, data):
         pass

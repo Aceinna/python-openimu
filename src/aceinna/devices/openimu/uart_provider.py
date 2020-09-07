@@ -10,7 +10,7 @@ import struct
 from azure.storage.blob import BlockBlobService
 from ...framework.utils import helper
 from ...framework.utils import resource
-from ..base.uart_base import OpenDeviceBase
+from ..base.provider_base import OpenDeviceBase
 from ..configs.openimu_predefine import (
     APP_STR, get_app_names
 )
@@ -180,6 +180,9 @@ class Provider(OpenDeviceBase):
 
     def after_setup(self):
         pass
+
+    def after_bootloader_switch(self):
+        self.communicator.serial_port.baudrate = self.bootloader_baudrate
 
     def on_read_raw(self, data):
         pass

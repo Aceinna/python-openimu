@@ -564,4 +564,4 @@ class Webserver(EventBase):
 
     def _build_options(self, **kwargs):
         self.options = WebserverArgs(**kwargs)
-        self.communication = self.options.protocol if self.options.protocol is not None else 'uart'
+        self.communication = self.options.protocol.lower() if self.options.protocol is not None else 'uart'

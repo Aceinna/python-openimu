@@ -3,7 +3,6 @@ import os
 import sys
 import threading
 import uuid
-import collections
 import time
 import struct
 import traceback
@@ -38,8 +37,6 @@ class OpenDeviceBase(EventBase):
         self.exit_thread = False
         self.data_lock = threading.Lock()
         self.clients = []
-        self.input_result = None
-        self.bootloader_result = None
         self.is_streaming = False
         self.has_running_checker = False
         self.has_backup_checker = False
@@ -74,6 +71,12 @@ class OpenDeviceBase(EventBase):
     def after_setup(self):
         '''
         Do some operations after setup
+        '''
+
+    @abstractmethod
+    def after_bootloader_switch(self):
+        '''
+        Do some opertions after bootloader is switched
         '''
 
     @abstractmethod
@@ -227,8 +230,6 @@ class OpenDeviceBase(EventBase):
         self.clients.remove(client)
 
     def _reset_client(self):
-        self.input_result = None
-        self.bootloader_result = None
         self.is_streaming = False
         self.is_upgrading = False
 
@@ -351,7 +352,8 @@ class OpenDeviceBase(EventBase):
             time.sleep(3)
             # It is used to skip streaming data with size 1000 per read
             self.read_untils_have_data('JI', 1000, 50)
-            self.communicator.serial_port.baudrate = self.bootloader_baudrate
+            # A hook after bootloader is switched
+            self.after_bootloader_switch()
             return True
         except Exception as ex:  # pylint:disable=broad-except
             print('bootloader exception', ex)
@@ -361,8 +363,6 @@ class OpenDeviceBase(EventBase):
         '''
         Actions after upgrade complete
         '''
-        self.input_result = None
-        self.bootloader_result = None
         # self.data_queue.queue.clear()
         self.is_upgrading = False
 

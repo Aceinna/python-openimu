@@ -504,3 +504,9 @@ class LAN(Communicator):
         if not is_find:
             time.sleep(1)
             self.find_client_by_hostname(name)
+    
+    def reset_buffer(self):
+        '''
+        reset buffer
+        '''
+        pass
