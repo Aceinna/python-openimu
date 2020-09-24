@@ -10,7 +10,7 @@ import struct
 from azure.storage.blob import BlockBlobService
 from ...framework.utils import helper
 from ...framework.utils import resource
-from ..base.provider_base import OpenDeviceBase
+from ..base import OpenDeviceBase
 from ..configs.openimu_predefine import (
     APP_STR, get_app_names
 )

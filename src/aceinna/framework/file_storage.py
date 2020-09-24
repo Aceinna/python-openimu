@@ -10,6 +10,7 @@ from azure.storage.blob import AppendBlobService
 from azure.storage.blob import ContentSettings
 from .utils import resource
 from .configuration import get_config
+from .ans_platform_api import AnsPlatformAPI
 
 
 class FileLoger():
@@ -49,6 +50,7 @@ class FileLoger():
         self.data_lock = threading.Lock()  # lock of data_queue
 
         self.device_log_info = None
+        self.ans_platform = AnsPlatformAPI()
 
     def start_user_log(self, file_name='', ws=False):
         '''
@@ -146,15 +148,15 @@ class FileLoger():
             '%Y_%m_%d_%H_%M_%S:'), log_file_name, ' start.')
 
         config = get_config()
-        accountName = config.AZURE_STORAGE_ACCOUNT
-        countainerName = config.AZURE_STORAGE_DATA_CONTAINER
+        account_name = config.AZURE_STORAGE_ACCOUNT
+        container_name = config.AZURE_STORAGE_DATA_CONTAINER
         url_name = datetime.datetime.now().strftime(
             '%Y_%m_%d_%H_%M_%S') + '-' + self.user_id + '-' + log_file_name
         bcreate_blob_ok = False
 
         error_connection = 'ConnectionError'
         error_authorization = 'AuthenticationFailed'
-        ii = 0
+
         while True:
             # get data from data_dict.
             self.data_lock.acquire()
@@ -181,10 +183,10 @@ class FileLoger():
             # create blob on azure
             if not bcreate_blob_ok:
                 try:
-                    self.append_blob_service = AppendBlobService(account_name=accountName,
+                    self.append_blob_service = AppendBlobService(account_name=account_name,
                                                                  sas_token=self.sas_token,
                                                                  protocol='http')
-                    self.append_blob_service.create_blob(container_name=countainerName, blob_name=url_name,
+                    self.append_blob_service.create_blob(container_name=container_name, blob_name=url_name,
                                                          content_settings=ContentSettings(content_type='text/plain'))
                     bcreate_blob_ok = True
                     threading.Thread(target=self.save_to_db_task, args=(
@@ -195,7 +197,7 @@ class FileLoger():
                         pass
                     elif error_authorization in str(e):
                         self.get_sas_token()
-                        self.append_blob_service = AppendBlobService(account_name=accountName,
+                        self.append_blob_service = AppendBlobService(account_name=account_name,
                                                                      sas_token=self.sas_token,
                                                                      protocol='http')
                     print('Retry to create_blob again...')
@@ -205,14 +207,14 @@ class FileLoger():
             try:
                 # self.append_blob_service.append_blob_from_text(countainerName, fileName, text, progress_callback=self.upload_callback)
                 self.append_blob_service.append_blob_from_text(
-                    countainerName, url_name, text)
+                    container_name, url_name, text)
             except Exception as e:
                 # print('Exception when append_blob:', type(e), e)
                 if error_connection in str(e):
                     pass
                 elif error_authorization in str(e):
                     self.get_sas_token()
-                    self.append_blob_service = AppendBlobService(account_name=accountName,
+                    self.append_blob_service = AppendBlobService(account_name=account_name,
                                                                  sas_token=self.sas_token,
                                                                  protocol='http')
                     # if append blob failed, do not drop 'text', but push 'text' to data_dict and re-append next time.
@@ -331,18 +333,10 @@ class FileLoger():
 
     def get_sas_token(self):
         try:
-            url = self.host_url + "token/storagesas"
-            headers = {'Content-type': 'application/json',
-                       'Authorization': self.db_user_access_token}
-            response = requests.post(url, headers=headers)
-            rev = response.json()
-            if 'token' in rev:
-                self.sas_token = rev['token']
-            else:
-                self.sas_token = ''
-                print('Error: Get sas token failed!')
-            print('sas_token', self.sas_token)
+            self.ans_platform.set_access_token(self.db_user_access_token)
+            self.sas_token = self.ans_platform.get_sas_token()
         except Exception as e:
+            self.sas_token = ''
             print('Exception when get_sas_token:', e)
 
     def save_to_ans_platform(self, packet_type, file_name, url_name):
@@ -372,12 +366,8 @@ class FileLoger():
             #     }
             # }
 
-            url = self.host_url + "api/recordLogs/post"
-            data_json = json.dumps(data)
-            headers = {'Content-type': 'application/json',
-                       'Authorization': self.db_user_access_token}
-            response = requests.post(url, data=data_json, headers=headers)
-            return True if 'success' in response.json() else False
+            self.ans_platform.set_access_token(self.db_user_access_token)
+            return self.ans_platform.save_record_log(data)
         except Exception as e:
             print('Exception when update db:', e)
 
