@@ -118,7 +118,7 @@ class Provider(OpenDeviceBase):
         '''
         Build device info
         '''
-        split_text = text.split(' ')
+        split_text = [x for x in text.split(' ') if x != '']
         split_len = len(split_text)
         pre_sn = split_text[3].split(':') if split_len == 4 else ''
         serial_num = pre_sn[1] if len(pre_sn) == 2 else ''

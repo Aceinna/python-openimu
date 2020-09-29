@@ -136,7 +136,7 @@ class Provider(OpenDeviceBase):
         '''
         Build device info
         '''
-        split_text = text.split(' ')
+        split_text = [x for x in text.split(' ') if x != '']
         sn = split_text[4]
         # remove the prefix of SN
         if sn.find('SN:') == 0:
