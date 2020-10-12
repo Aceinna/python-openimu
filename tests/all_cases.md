@@ -1,12 +1,9 @@
 # Test Cases Definition
 
 ## Bootstrap
-1. Client communication
+Client communication
 - Websocket
 - MQTT (TODO)
-2. Device connection protocol
-- UART
-- LAN
 
 ### Default Run
 A executable with WebSocket(Client) and UART(Device)
@@ -15,6 +12,19 @@ A executable with WebSocket(Client) and UART(Device)
 A command line tool with WebSocket(Client) and UART(Device)
 
 ## Test Tools
+TODO
+
+## Test Framework
+- Platform API
+- Application Logger
+- File Logger
+- UART Communicator
+- LAN Communicator
+- Decorator
+- Resource
+- Helper
+
+## Test Devices
 
 ### Test Detector
 Device connection test
@@ -22,14 +32,11 @@ Device connection test
 - Device connect with LAN
 - Device disconnect 
 
-## Test Function
-Firmware
-- Check if the device info matches the json info after firmware upgrade
+### Test Parser
+- UART Message Parser
+- LAN Message Parser
 
-User Parameter
-
-Command
-
-## Test Framework
-
-## Test Devices
+## Mocker
+- OpenIMU
+- OpenRTK
+- DMU 

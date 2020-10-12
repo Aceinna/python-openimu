@@ -11,14 +11,14 @@ class Loader:
     '''Bootstrap Factory
     '''
     @staticmethod
-    def create(platform, **kwargs):
+    def create(platform, options):
         '''Initial bootstrap instance
         '''
         if platform == 'web':
-            active_app = Webserver(**kwargs)
+            active_app = Webserver(**options)
 
         if platform == 'cli':
-            active_app = CommandLine(**kwargs)
+            active_app = CommandLine(**options)
 
         if active_app is None:
             raise Exception('no matched bootstrap')

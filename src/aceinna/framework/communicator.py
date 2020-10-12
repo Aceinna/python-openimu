@@ -6,9 +6,9 @@ import os
 import time
 import json
 import socket
+import threading
 import serial
 import serial.tools.list_ports
-import threading
 from ..devices import DeviceManager
 from .constants import BAUDRATE_LIST
 from .context import APP_CONTEXT
@@ -16,6 +16,7 @@ from .utils.resource import (
     get_executor_path
 )
 from .wrapper import SocketConnWrapper
+
 
 class CommunicatorFactory:
     '''
@@ -118,6 +119,7 @@ class SerialPort(Communicator):
         self.com_port_assigned = False
         self.filter_device_type = None
         self.filter_device_type_assigned = False
+        self._is_close = False
 
         if options and options.baudrate != 'auto':
             self.baudrate_list = [options.baudrate]
@@ -133,6 +135,7 @@ class SerialPort(Communicator):
         ''' Finds active ports and then autobauds units
         '''
         self.device = None
+        self._is_close = False
         if self.com_port_assigned:
             # find device by assigned port
             self.autobaud([self.com_port])
@@ -144,6 +147,9 @@ class SerialPort(Communicator):
                     \n2. The device response incorrect format of device info and app info.'.format(self.com_port))
         else:
             while self.device is None:
+                if self._is_close == True:
+                    return
+
                 if self.try_last_port():
                     break
 
@@ -248,6 +254,9 @@ class SerialPort(Communicator):
             self.threadList.append(t)
 
         while self.device is None:
+            if self._is_close == True:
+                return
+
             is_threads_stop = True
             for td in self.threadList:
                 if not td.stopped():
@@ -284,7 +293,7 @@ class SerialPort(Communicator):
                     ret = self.confirm_device(
                         self.serial_port, self.filter_device_type)
                     if not ret:
-                        self.close()
+                        self.serial_port.close()
                         return False
                     else:
                         self.save_last_port()
@@ -378,6 +387,7 @@ class SerialPort(Communicator):
         return self.open_serial_port(port, baud, timeout=0.1)
 
     def close(self):
+        self._is_close = True
         return self.close_serial_port()
 
     def reset_buffer(self):
@@ -504,7 +514,7 @@ class LAN(Communicator):
         if not is_find:
             time.sleep(1)
             self.find_client_by_hostname(name)
-    
+
     def reset_buffer(self):
         '''
         reset buffer

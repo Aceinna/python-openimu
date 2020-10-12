@@ -3,8 +3,9 @@ Websocket server entry
 """
 import os
 import sys
-
+import asyncio
 import json
+import time
 import traceback
 import threading
 import tornado.websocket
@@ -369,7 +370,7 @@ class Webserver(EventBase):
     Websocket server
     '''
 
-    def __init__(self, **kwargs):
+    def __init__(self, **options):
         super(Webserver, self).__init__()
         self.communication = 'uart'
         self.device_provider = None
@@ -377,7 +378,8 @@ class Webserver(EventBase):
         self.ws_handler = None
         self.sse_handler = None
         self.http_server = None
-        self._build_options(**kwargs)
+        self.non_main_ioloop = None
+        self._build_options(**options)
         APP_CONTEXT.set_app(self)
 
         self.prepare_logger()
@@ -387,11 +389,16 @@ class Webserver(EventBase):
         Start to find device
         '''
         print("Python driver version: {0}".format(VERSION))
-        # start websocket server
-        webserver_thread = threading.Thread(target=self.start_webserver)
-        webserver_thread.start()
+        loop = asyncio.get_event_loop()
+        thread = threading.Thread(target=self.start_webserver, args=(loop,))
+        thread.start()
 
-        self.detect_device(self.device_discover_handler)
+        thread = threading.Thread(
+            target=self.detect_device_wrapper, args=(loop,))
+        thread.start()
+
+        self.non_main_ioloop = tornado.ioloop.IOLoop.current()
+        loop.run_forever()
 
     def prepare_logger(self):
         '''
@@ -476,13 +483,16 @@ class Webserver(EventBase):
         self.device_provider.setup(self.options)
         self.device_provider.on('exception', self.handle_device_exception)
         self.device_provider.on(
-            'complete_upgrade', self.handle_device_complete_upgrade)
+           'complete_upgrade', self.handle_device_complete_upgrade)
 
-    def start_webserver(self):
+    def start_webserver(self, current_loop):
         # self.webserver_io_loop = asyncio.new_event_loop()
         if sys.version_info[0] > 2:
             import asyncio
-            asyncio.set_event_loop(asyncio.new_event_loop())
+            # asyncio.set_event_loop(asyncio.new_event_loop())
+            asyncio.set_event_loop(current_loop)
+
+        #self.non_main_ioloop = tornado.ioloop.IOLoop.current()
         self.start_websocket_server()
 
     def start_websocket_server(self):
@@ -506,7 +516,8 @@ class Webserver(EventBase):
                         self.http_server.listen(webserver_port)
                         activated_port = webserver_port
                         break
-                    except:
+                    except Exception as ex:
+                        print(ex)
                         continue
                 if activated_port == 0:
                     raise Exception('Port in used')
@@ -516,7 +527,8 @@ class Webserver(EventBase):
             print('Websocket server is started on port', activated_port)
 
             APP_CONTEXT.get_logger().enable_msg_store_handler(store)
-            tornado.ioloop.IOLoop.instance().start()
+            # self.non_main_ioloop.start()
+            # tornado.ioloop.IOLoop.current().start()
         except Exception as ex:
             print(ex)
             # print('Cannot start a websocket server, please check if the port is in use')
@@ -545,6 +557,16 @@ class Webserver(EventBase):
         # self.device_provider.reset()
         self.detect_device(self.device_complete_upgrade_handler)
 
+    def detect_device_wrapper(self, current_loop):
+        # self.webserver_io_loop = asyncio.new_event_loop()
+        if sys.version_info[0] > 2:
+            import asyncio
+            # asyncio.set_event_loop(asyncio.new_event_loop())
+            asyncio.set_event_loop(current_loop)
+
+        #self.non_main_ioloop = tornado.ioloop.IOLoop.current()
+        self.detect_device(self.device_discover_handler)
+
     def detect_device(self, callback):
         '''find if there is a connected device'''
         print('Prepare to find device...')
@@ -562,6 +584,20 @@ class Webserver(EventBase):
         if self.http_server is not None:
             self.http_server.stop()
 
-    def _build_options(self, **kwargs):
-        self.options = WebserverArgs(**kwargs)
-        self.communication = self.options.protocol.lower() if self.options.protocol is not None else 'uart'
+        if self.device_provider is not None:
+            self.device_provider.close()
+
+        time.sleep(1)
+
+        if self.communicator is not None:
+            self.communicator.close()
+
+        if self.non_main_ioloop is not None:
+            self.non_main_ioloop.add_callback_from_signal(
+                self.non_main_ioloop.stop)
+            self.non_main_ioloop.stop()
+
+    def _build_options(self, **options):
+        self.options = WebserverArgs(**options)
+        self.communication = self.options.protocol.lower() \
+            if self.options.protocol is not None else 'uart'

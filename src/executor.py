@@ -26,7 +26,7 @@ def from_command_line(**kwargs):
     '''
     Work as command line, with WebSocket and UART
     '''
-    application = Loader.create('cli', **kwargs)
+    application = Loader.create('cli', vars(kwargs['options']))
     application.listen()
 
 
@@ -36,7 +36,7 @@ def from_default(**kwargs):
     '''
     Work as a executor, with WebSocket and UART
     '''
-    application = Loader.create('web', **kwargs)
+    application = Loader.create('web', vars(kwargs['options']))
     application.listen()
 
 
