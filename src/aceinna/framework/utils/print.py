@@ -3,40 +3,40 @@ import platform
 if 'Windows' in platform.system():
     import sys
     import ctypes
-    __stdInputHandle = -10
-    __stdOutputHandle = -11
-    __stdErrorHandle = -12
-    __foreGroundBLUE = 0x09
-    __foreGroundGREEN = 0x0a
-    __foreGroundRED = 0x0c
-    __foreGroundYELLOW = 0x0e
-    stdOutHandle = ctypes.windll.kernel32.GetStdHandle(__stdOutputHandle)
+    __std_input_handle = -10
+    __std_output_handle = -11
+    __std_error_handle = -12
+    __fore_ground_BLUE = 0x09
+    __fore_ground_GREEN = 0x0a
+    __fore_ground_RED = 0x0c
+    __fore_ground_YELLOW = 0x0e
+    std_out_handle = ctypes.windll.kernel32.GetStdHandle(__std_output_handle)
 
-    def setCmdColor(color, handle=stdOutHandle):
+    def set_cmd_color(color, handle=std_out_handle):
         return ctypes.windll.kernel32.SetConsoleTextAttribute(handle, color)
 
-    def resetCmdColor():
-        setCmdColor(__foreGroundRED | __foreGroundGREEN | __foreGroundBLUE)
+    def reset_cmd_color():
+        set_cmd_color(__fore_ground_RED | __fore_ground_GREEN | __fore_ground_BLUE)
 
-    def printBlue(msg):
-        setCmdColor(__foreGroundBLUE)
+    def print_blue(msg):
+        set_cmd_color(__fore_ground_BLUE)
         sys.stdout.write(msg + '\n')
-        resetCmdColor()
+        reset_cmd_color()
 
-    def printGreen(msg):
-        setCmdColor(__foreGroundGREEN)
+    def print_green(msg):
+        set_cmd_color(__fore_ground_GREEN)
         sys.stdout.write(msg + '\n')
-        resetCmdColor()
+        reset_cmd_color()
 
-    def printRed(msg):
-        setCmdColor(__foreGroundRED)
+    def print_red(msg):
+        set_cmd_color(__fore_ground_RED)
         sys.stdout.write(msg + '\n')
-        resetCmdColor()
+        reset_cmd_color()
 
-    def printYellow(msg):
-        setCmdColor(__foreGroundYELLOW)
+    def print_yellow(msg):
+        set_cmd_color(__fore_ground_YELLOW)
         sys.stdout.write(msg + '\n')
-        resetCmdColor()
+        reset_cmd_color()
 else:
     STYLE = {
         'fore': {
@@ -47,7 +47,7 @@ else:
         }
     }
 
-    def UseStyle(msg, mode='', fore='', back='40'):
+    def use_style(msg, mode='', fore='', back='40'):
         fore = '%s' % STYLE['fore'][fore] if STYLE['fore'].__contains__(
             fore) else ''
         style = ';'.join([s for s in [mode, fore, back] if s])
@@ -55,14 +55,14 @@ else:
         end = '\033[%sm' % 0 if style else ''
         return '%s%s%s' % (style, msg, end)
 
-    def printRed(msg):
-        print(UseStyle(msg, fore='red'))
+    def print_red(msg):
+        print(use_style(msg, fore='red'))
 
-    def printGreen(msg):
-        print(UseStyle(msg, fore='green'))
+    def print_green(msg):
+        print(use_style(msg, fore='green'))
 
-    def printYellow(msg):
-        print(UseStyle(msg, fore='yellow'))
+    def print_yellow(msg):
+        print(use_style(msg, fore='yellow'))
 
-    def printBlue(msg):
-        print(UseStyle(msg, fore='blue'))
+    def print_blue(msg):
+        print(use_style(msg, fore='blue'))

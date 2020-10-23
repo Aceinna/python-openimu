@@ -1,3 +1,4 @@
+import sys
 import struct
 import collections
 from .open_field_parser import decode_value
@@ -5,6 +6,21 @@ from .open_field_parser import decode_value
 
 # input packet
 
+
+def string_parser(payload, user_configuration):
+    error = False
+    data = ''
+    try:
+        if sys.version_info < (3, 0):
+            data = str(struct.pack(
+                '{0}B'.format(len(payload)), *payload))
+        else:
+            data = str(struct.pack(
+                '{0}B'.format(len(payload)), *payload), 'utf-8')
+    except UnicodeDecodeError:
+        data = ''
+
+    return data, error
 
 def get_all_parameters_parser(payload, user_configuration):
     '''
@@ -264,6 +280,8 @@ def match_command_handler(packet_type):
     Find the handler for specified packet
     '''
     parser_dict = {
+        'pG': string_parser,
+        'gV': string_parser,
         'gA': get_all_parameters_parser,
         'gB': get_parameters_by_block_parser,
         'gP': get_parameter_parser,

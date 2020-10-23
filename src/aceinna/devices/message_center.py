@@ -11,15 +11,13 @@ else:
     from Queue import Queue
 
 
-class EventMessage(EventBase):
-    def __init__(self):
-        super(EventMessage, self).__init__()
-
-    def set_result(self, result):
-        self.emit('finished', result)
-
-    def then(self, callback):
-        self.on('finished', callback)
+class EVENT_TYPE:
+    '''
+    Event type of Device Message Center
+    '''
+    ERROR = 'error'
+    READ_BLOCK = 'read_block'
+    CONTINUOUS_MESSAGE = 'continuous_message'
 
 
 class DeviceMessage(EventBase):
@@ -36,7 +34,7 @@ class DeviceMessage(EventBase):
         self._is_finished = False
 
     def send(self):
-        self._message_center.append_and_run(self)
+        self._message_center.request_run(self)
 
     def finish(self, **kwargs):
         if not self._is_finished:
@@ -101,10 +99,6 @@ class DeviceMessageCenter(EventBase):
     def build(self, command, timeout=1):
         return DeviceMessage(self, command, timeout)
 
-    def append_and_run(self, message):
-        # self._msg_list.append(message)
-        self.request_run(message)
-
     def request_run(self, message):
         if self._is_running:
             self.prerun_queue.put(message)
@@ -115,7 +109,7 @@ class DeviceMessageCenter(EventBase):
         self._is_running = True
         self._running_message = message
         message.set_start_time(datetime.datetime.now())
-        
+
         self._parser.set_run_command(message.get_command())
         self._communicator.write(message.get_command())
         #print('run command', message.get_command())
@@ -130,15 +124,14 @@ class DeviceMessageCenter(EventBase):
 
     def setup(self):
         if not self._has_running_checker:
-            thread = threading.Thread(
-                target=self.thread_running_checker, args=())
+            thread = threading.Thread(target=self.thread_running_checker)
             thread.start()
             self._has_running_checker = True
 
         # setup receiver, parser
         funcs = [self.thread_receiver, self.thread_parser]
         for func in funcs:
-            thread = threading.Thread(target=func, args=())
+            thread = threading.Thread(target=func)
             thread.start()
             self.threads.append(thread)
 
@@ -164,29 +157,29 @@ class DeviceMessageCenter(EventBase):
             span = current_time - start_time
             if span.total_seconds() > timeout and not \
                     self._running_message.get_finished():
-                self.run_post()
                 print('command timeout',
                       self._running_message.get_command(),
                       timeout, start_time, current_time)
                 self._running_message.finish(
                     error='Timeout', packet_type=None, data=None)
+                self.run_post()
 
     def thread_running_checker(self):
         '''
         Check running status
         '''
-        if sys.version_info[0] > 2:
-            import asyncio
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
+        # if sys.version_info[0] > 2:
+        #     import asyncio
+        #     loop = asyncio.new_event_loop()
+        #     asyncio.set_event_loop(loop)
 
         while True:
             self.exception_lock.acquire()
             if self._has_exception:
-                # self.connected = False
-                self.emit('error', 'app', 'communicator read error')
+                self.emit(EVENT_TYPE.ERROR, 'app', 'communicator read error')
             self.exception_lock.release()
 
+            # Exit running checker
             if self._is_stop:
                 return
 
@@ -198,8 +191,8 @@ class DeviceMessageCenter(EventBase):
                 return True
 
     def thread_receiver(self, *args, **kwargs):
-        ''' receive rover data and push data into data_queue.
-            return when occur Exception
+        ''' receive data and push data into data_queue.
+            return when occur Exception or set as stop
         '''
         while True:
             if self._has_exception or self._is_stop:
@@ -220,7 +213,7 @@ class DeviceMessageCenter(EventBase):
                 return  # exit thread receiver
 
             if data and len(data) > 0:
-                self.emit('read_block', data)
+                self.emit(EVENT_TYPE.READ_BLOCK, data)
                 self.data_lock.acquire()
                 for data_byte in data:
                     self.data_queue.put(data_byte)
@@ -229,13 +222,13 @@ class DeviceMessageCenter(EventBase):
                 time.sleep(0.001)
 
     def thread_parser(self, *args, **kwargs):
-        ''' get rover data from data_queue and parse data into one whole frame.
-            return when occur Exception in thread receiver.
+        ''' get data from data_queue and parse data into one whole frame.
+            return when occur Exception or set as stop.
         '''
-        if sys.version_info[0] > 2:
-            import asyncio
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
+        # if sys.version_info[0] > 2:
+        #     import asyncio
+        #     loop = asyncio.new_event_loop()
+        #     asyncio.set_event_loop(loop)
 
         while True:
             if self._has_exception or self._is_stop:
@@ -266,9 +259,9 @@ class DeviceMessageCenter(EventBase):
                 self._parser.analyse(data)
 
     def on_command_receive(self, *args, **kwargs):
-        self.run_post()
         if self._running_message:
             self._running_message.finish(**kwargs)
+        self.run_post()
 
     def on_continuous_messageReceive(self, *args, **kwargs):
-        self.emit('continuous_message', **kwargs)
+        self.emit(EVENT_TYPE.CONTINUOUS_MESSAGE, **kwargs)

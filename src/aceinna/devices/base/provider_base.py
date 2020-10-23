@@ -136,20 +136,15 @@ class OpenDeviceBase(EventBase):
             self._message_center = DeviceMessageCenter(self.communicator)
 
         if not self._message_center.is_ready():
-            uart_parser = ParserManager.build(self.type, self.properties)
-            self._message_center.set_parser(uart_parser)
-            self._message_center.on(
-                'continuous_message',
-                self.on_receive_continuous_messsage
-            )
-            self._message_center.on(
-                'error',
-                self.on_recevie_message_center_error
-            )
-            self._message_center.on(
-                'read_block',
-                self.on_read_raw
-            )
+            parser = ParserManager.build(
+                self.type, self.communicator.type, self.properties)
+            self._message_center.set_parser(parser)
+            self._message_center.on('continuous_message',
+                                    self.on_receive_continuous_messsage)
+            self._message_center.on('error',
+                                    self.on_recevie_message_center_error)
+            self._message_center.on('read_block',
+                                    self.on_read_raw)
             self._message_center.setup()
         else:
             self._message_center.get_parser().set_configuration(self.properties)
@@ -304,7 +299,7 @@ class OpenDeviceBase(EventBase):
         firmware_content = None
         if not os.path.exists(upgarde_root):
             os.makedirs(upgarde_root)
-        
+
         del_list = os.listdir(upgarde_root)
         for f in del_list:
             file_path = os.path.join(upgarde_root, f)
@@ -429,7 +424,7 @@ class OpenDeviceBase(EventBase):
         self.ans_platform.log_device_connection(
             sessionId=self.sessionId,
             device_info=device_info)
-        
+
         return {
             'packetType': 'success'
         }

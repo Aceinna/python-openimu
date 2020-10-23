@@ -5,7 +5,7 @@ from .openrtk.uart_provider import Provider as OpenRTKUartProvider
 from .openrtk.lan_provider import Provider as OpenRTKLANProvider
 from .dmu.uart_provider import Provider as DMUUartProvider
 from ..framework.context import APP_CONTEXT
-from ..framework.utils.print import printGreen
+from ..framework.utils.print import print_green
 
 
 def create_provider(device_type, communicator):
@@ -63,7 +63,7 @@ class DeviceManager:
         format_device_info = provider.bind_device_info(device_info, app_info)
 
         # print(format_device_info)
-        printGreen(format_device_info)
+        print_green(format_device_info)
 
         APP_CONTEXT.get_logger().logger.info(
             'Connected Device info {0}'.format(format_device_info))

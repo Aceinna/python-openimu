@@ -4,7 +4,9 @@ import argparse
 import traceback
 from functools import wraps
 from .constants import (DEVICE_TYPES, BAUDRATE_LIST)
-from .utils.print import printRed
+from .utils.print import print_red
+from .utils.resource import is_dev_mode
+
 
 def _build_args():
     """parse input arguments
@@ -65,7 +67,8 @@ def handle_application_exception(func):
             # APP.stop()
             sys.exit()
         except Exception as ex:  # pylint: disable=bare-except
-            # traceback.print_exc()  # For development
-            printRed('Application Exit Exception: {0}'.format(ex))
+            if is_dev_mode():
+                traceback.print_exc()  # For development
+            print_red('Application Exit Exception: {0}'.format(ex))
             os._exit(1)
     return decorated
