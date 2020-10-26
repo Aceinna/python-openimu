@@ -64,6 +64,11 @@ def ping(communicator, *args):
     device_info_text = run_command_as_string(communicator, pG)
     app_info_text = run_command_as_string(communicator, gV)
 
+    # Prevent action. Get app info again,
+    # if cannot retrieve any info at the first time of ping. Should find the root cause.
+    if app_info_text == '':
+        app_info_text = run_command_as_string(communicator, gV)
+
     if _need_check(filter_device_type, 'RTK') and device_info_text.find('OpenRTK') > -1:
         return {
             'device_type': 'OpenRTK',

@@ -1,9 +1,9 @@
 import time
-from ..base.event_base import EventBase
+from ..base.upgrade_worker_base import UpgradeWorkerBase
 from ...framework.utils import helper
 
 
-class FirmwareUpgradeWorker(EventBase):
+class FirmwareUpgradeWorker(UpgradeWorkerBase):
     '''Firmware upgrade worker
     '''
 
@@ -14,14 +14,8 @@ class FirmwareUpgradeWorker(EventBase):
         self.current = 0
         self.total = len(file_content)
         self.max_data_len = 240
-        self._key = None
-        self._is_stopped = False
-
-    def set_key(self, key):
-        self._key = key
-
-    def get_key(self):
-        return self._key
+        # self._key = None
+        # self._is_stopped = False
 
     def stop(self):
         self._is_stopped = True

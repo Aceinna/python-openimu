@@ -62,7 +62,6 @@ def ping(communicator, *args):
     if pk_result == []:
         id_packet_data = _run_command(communicator, 'GP', 'ID', ID)
         vr_packet_data = _run_command(communicator, 'GP', 'VR', VR)
-
         if id_packet_data is None or vr_packet_data is None:
             return None
 

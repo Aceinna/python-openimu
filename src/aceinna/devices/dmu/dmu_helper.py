@@ -7,8 +7,8 @@ from ...framework.utils import helper
 COMMAND_START = [0x55, 0x55]
 
 
-def build_read_field_packets(field: ConfigurationField, write_to_eeprom=False) -> bytearray:
-    message_type = 'GF' if not write_to_eeprom else 'RF'
+def build_read_field_packets(field: ConfigurationField, from_eeprom=False) -> bytearray:
+    message_type = 'GF' if not from_eeprom else 'RF'
 
     fields_bytes = []
     field_id_bytes = struct.pack('>h', field.field_id)
@@ -17,8 +17,8 @@ def build_read_field_packets(field: ConfigurationField, write_to_eeprom=False) -
     return build_packet(message_type, fields_bytes)
 
 
-def build_read_fields_packets(fields: List[ConfigurationField], write_to_eeprom=False) -> bytearray:
-    message_type = 'GF' if not write_to_eeprom else 'RF'
+def build_read_fields_packets(fields: List[ConfigurationField], from_eeprom=False) -> bytearray:
+    message_type = 'GF' if not from_eeprom else 'RF'
 
     fields_bytes = []
     for field in fields:

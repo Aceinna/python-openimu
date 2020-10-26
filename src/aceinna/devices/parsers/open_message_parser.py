@@ -68,6 +68,13 @@ class UartMessageParser(EventBase):
                 self.frame = MSG_HEADER[:]  # header_tp.copy()
                 self.find_header = True
 
+    def get_packet_info(self, raw_command):
+        packet_type, _, payload = helper.parse_command_packet(raw_command)
+        return {
+            'packet_type': packet_type,
+            'data': payload
+        }
+
     def _parse_message(self, packet_type, payload_len, payload):
         # parse interactive commands
         is_interactive_cmd = INPUT_PACKETS.__contains__(packet_type)
@@ -78,9 +85,7 @@ class UartMessageParser(EventBase):
             self._parse_output_packet(packet_type, payload_len, payload)
 
     def _parse_input_packet(self, packet_type, payload_len, payload):
-        # print(packet_type, payload, payload_len)
         payload_parser = match_command_handler(packet_type)
-
         if payload_parser:
             data, error = payload_parser(
                 payload, self.properties['userConfiguration'])
@@ -90,7 +95,8 @@ class UartMessageParser(EventBase):
                       data=data,
                       error=error)
         else:
-            print('[Warning] Unsupported command {0}'.format(packet_type))
+            print('[Warning] Unsupported command {0}'.format(
+                packet_type.encode()))
 
     def _parse_output_packet(self, packet_type, payload_len, payload):
         # check if it is the valid out packet

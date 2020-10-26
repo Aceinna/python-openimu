@@ -1,4 +1,4 @@
-#import asyncio
+# import asyncio
 import sys
 import threading
 import datetime
@@ -81,6 +81,7 @@ class DeviceMessageCenter(EventBase):
         self._running_message = None
         self._is_ready = False
         self._has_running_checker = False
+        self._last_timeout_command = None
 
     def is_ready(self):
         '''Check if message center is setuped
@@ -112,7 +113,7 @@ class DeviceMessageCenter(EventBase):
 
         self._parser.set_run_command(message.get_command())
         self._communicator.write(message.get_command())
-        #print('run command', message.get_command())
+        # print('run command', message.get_command())
 
     def run_post(self):
         if self.prerun_queue.empty():
@@ -157,21 +158,26 @@ class DeviceMessageCenter(EventBase):
             span = current_time - start_time
             if span.total_seconds() > timeout and not \
                     self._running_message.get_finished():
+                timeout_command = self._running_message.get_command()
                 print('command timeout',
-                      self._running_message.get_command(),
+                      timeout_command,
                       timeout, start_time, current_time)
+                packet_info = self._parser.get_packet_info(
+                    timeout_command)
+                self._last_timeout_command = packet_info
                 self._running_message.finish(
-                    error='Timeout', packet_type=None, data=None)
+                    error='Timeout', **packet_info)
+                # print('timeout')
                 self.run_post()
 
     def thread_running_checker(self):
         '''
         Check running status
         '''
-        # if sys.version_info[0] > 2:
-        #     import asyncio
-        #     loop = asyncio.new_event_loop()
-        #     asyncio.set_event_loop(loop)
+        if sys.version_info[0] > 2:
+            import asyncio
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
 
         while True:
             self.exception_lock.acquire()
@@ -259,6 +265,11 @@ class DeviceMessageCenter(EventBase):
                 self._parser.analyse(data)
 
     def on_command_receive(self, *args, **kwargs):
+        if self._last_timeout_command and \
+                kwargs.get('packet_type') == self._last_timeout_command['packet_type']:
+            # current response is for timeout, should ignore
+            self._last_timeout_command = None
+            return
         if self._running_message:
             self._running_message.finish(**kwargs)
         self.run_post()

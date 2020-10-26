@@ -12,6 +12,7 @@ except:  # pylint: disable=bare-except
 
 
 # pylint: disable=missing-class-docstring
+@unittest.skip
 class TestUARTCommunicator(unittest.TestCase):
     def setUp(self):
         pass
@@ -32,12 +33,6 @@ class TestUARTCommunicator(unittest.TestCase):
         time.sleep(1)
         communicator.close()
         self.assertTrue(True, 'Find device')
-
-    # def test_cancel_while_find(self):
-    #     self.assertTrue(True, 'Cancel find')
-
-    # def test_create_with_params(self):
-    #     self.assertTrue(True, 'Create with parameters')
 
 
 if __name__ == '__main__':

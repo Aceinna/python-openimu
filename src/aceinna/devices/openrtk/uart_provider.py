@@ -96,34 +96,6 @@ class Provider(OpenDeviceBase):
                 with open(app_name_config_path, "wb") as code:
                     code.write(app_config_content)
 
-    def ping(self):
-        '''
-        Check if the connected device is OpenRTK
-        '''
-        # print('start to check if it is openrtk')
-        device_info_text = self.internal_input_command('pG')
-        app_info_text = self.internal_input_command('gV')
-
-        APP_CONTEXT.get_logger().logger.debug('Checking if is OpenRTK device...')
-        APP_CONTEXT.get_logger().logger.debug(
-            'Device: {0}'.format(device_info_text))
-        APP_CONTEXT.get_logger().logger.debug(
-            'Firmware: {0}'.format(app_info_text))
-
-        if device_info_text.find('OpenRTK') > -1:
-            self._build_device_info(device_info_text)
-            self._build_app_info(app_info_text)
-            self.connected = True
-            print('# Connected Information #')
-            split_device_info = device_info_text.split(' ')
-            print('Device: {0} {1} {2} {3}'.format(
-                split_device_info[0], split_device_info[2], split_device_info[3], split_device_info[4]))
-            print('APP version:', app_info_text)
-            APP_CONTEXT.get_logger().logger.info(
-                'Connected {0}, {1}'.format(device_info_text, app_info_text))
-            return True
-        return False
-
     def bind_device_info(self, device_info, app_info):
         self._build_device_info(device_info)
         self._build_app_info(app_info)

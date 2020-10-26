@@ -46,6 +46,7 @@ class DeviceManager:
             if exist_device['device_type'] == device_type and \
                     exist_device['communicator_type'] == communicator.type:
                 provider = exist_device['provider']
+                provider.communicator = communicator
                 break
 
         if provider is None:
@@ -72,18 +73,23 @@ class DeviceManager:
 
     @staticmethod
     def ping(communicator, *args):
+        '''
+            Find device with ping command
+            uart: communicator, device_type
+            lan: communicator
+        '''
         if communicator.type == 'uart':
             actual_communicator = args[0]
             filter_device_type = args[1]
 
-            if filter_device_type == None or filter_device_type == 'IMU' or filter_device_type == 'RTK':
+            if filter_device_type is None or filter_device_type == 'IMU' or filter_device_type == 'RTK':
                 APP_CONTEXT.get_logger().logger.debug('Checking if is OpenRTK/OpenIMU device...')
                 ping_result = ping_opendevice(
                     actual_communicator, filter_device_type)
                 if ping_result is not None:
                     return DeviceManager.build_provider(communicator, ping_result)
 
-            if filter_device_type == None or filter_device_type == 'DMU':
+            if filter_device_type is None or filter_device_type == 'DMU':
                 APP_CONTEXT.get_logger().logger.debug('Checking if is DMU device...')
                 ping_result = ping_dmu(actual_communicator, filter_device_type)
                 if ping_result is not None:

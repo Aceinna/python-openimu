@@ -1,7 +1,16 @@
 class Parameter(object):
-    def __init__(self, data_type, value):
+    def __init__(self, name, data_type, value):
+        self._name = name
         self._data_type = data_type
         self._value = value
+
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, value):
+        self._name = value
 
     @property
     def data_type(self):

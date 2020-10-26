@@ -22,6 +22,7 @@ def string_parser(payload, user_configuration):
 
     return data, error
 
+
 def get_all_parameters_parser(payload, user_configuration):
     '''
     gA parser
@@ -142,16 +143,20 @@ def get_parameter_parser(payload, user_configuration):
     data = None
     error = False
     param_id = decode_value('uint32', payload[0:4])
-    param = filter(lambda item: item['paramId'] ==
-                   param_id, user_configuration)
 
-    try:
-        first_item = next(iter(param), None)
-        param_value = decode_value(
-            first_item['type'], payload[4:12])
-        data = {"paramId": param_id,
-                "name": first_item['name'], "value": param_value}
-    except StopIteration:
+    if param_id:
+        param = filter(lambda item: item['paramId'] ==
+                       param_id, user_configuration)
+
+        try:
+            first_item = next(iter(param), None)
+            param_value = decode_value(
+                first_item['type'], payload[4:12])
+            data = {"paramId": param_id,
+                    "name": first_item['name'], "value": param_value}
+        except StopIteration:
+            error = True
+    else:
         error = True
 
     return data, error

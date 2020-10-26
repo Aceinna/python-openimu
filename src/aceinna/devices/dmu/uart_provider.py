@@ -70,41 +70,6 @@ class Provider(OpenDeviceBase):
             with open(config_file_path, "wb") as code:
                 code.write(app_config_content)
 
-    def ping(self):
-        '''
-        ping
-        '''
-        command = 'PK'
-        command_line = dmu_helper.build_packet(command)
-        self.communicator.write(command_line)
-        time.sleep(0.1)
-        data_buffer = self.read_untils_have_data(command)
-
-        if data_buffer == []:
-            # consider as dmu
-            command_line = dmu_helper.build_packet('GP', ID)
-            self.communicator.write(command_line)
-            time.sleep(0.1)
-            data_buffer = self.read_untils_have_data('ID')
-            self._build_device_info(data_buffer)
-
-            command_line = dmu_helper.build_packet('GP', VR)
-            self.communicator.write(command_line)
-            time.sleep(0.1)
-            data_buffer = self.read_untils_have_data('VR')
-            self._build_device_info(data_buffer)
-
-            #print('The device work as DMU')
-            print('# Connected Information #')
-            print('Device SN: {0}'.format(self.device_info['sn']))
-            print('Device Model: {0} {1}'.format(
-                self.device_info['name'], self.device_info['pn']))
-            print('Firmware Version:', self.app_info['version'])
-            self.connected = True
-            self.is_conf_loaded = False
-            return True
-        return False
-
     def bind_device_info(self, device_info, app_info):
         self._build_device_info(device_info)
         self._build_app_info(app_info)
@@ -171,7 +136,7 @@ class Provider(OpenDeviceBase):
             EEPROM_FIELD_DEFINES_SINGLETON.load()
 
     def after_setup(self):
-        pass
+        self.is_conf_loaded = False
 
     def after_bootloader_switch(self):
         self.communicator.serial_port.baudrate = self.bootloader_baudrate
@@ -186,7 +151,7 @@ class Provider(OpenDeviceBase):
         self.add_output_packet('stream', packet_type, data)
 
     def do_write_firmware(self, firmware_content):
-        raise Exception('Unimplement write firmware.')
+        raise Exception('Not implement write firmware.')
 
     def get_device_connection_info(self):
         return {
@@ -229,7 +194,6 @@ class Provider(OpenDeviceBase):
                     'inputParams': input_params
                 }
             }
-
         # read product configuration
         eeprom_field = EEPROM_FIELD_DEFINES_SINGLETON.find(0x71C)
         command_line = dmu_helper.build_read_eeprom_cli(eeprom_field)
@@ -285,6 +249,11 @@ class Provider(OpenDeviceBase):
         Update paramter value
         '''
         field = CONFIGURATION_FIELD_DEFINES_SINGLETON.find(params['paramId'])
+        if field is None:
+            yield {
+                'packetType': 'error',
+                'data': 'Invalid Parameter'
+            }
 
         command_line = dmu_helper.build_read_fields_packets([field])
 
@@ -294,50 +263,15 @@ class Provider(OpenDeviceBase):
         if data:
             yield {
                 'packetType': 'inputParam',
-                'data': data
+                'data': data[0]
             }
         yield {
             'packetType': 'error',
             'data': 'No Response'
         }
 
-    @with_device_message
     def set_params(self, params, *args):  # pylint: disable=unused-argument
-        '''
-        Update paramters value
-        '''
-        for parameter in params:
-            command_line = helper.build_input_packet(
-                'uP', properties=self.properties,
-                param=parameter['paramId'],
-                value=parameter['value'])
-
-            result = yield self._message_center.build(command=command_line)
-
-            packet_type = result['packet_type']
-            data = result['data']
-
-            if packet_type == 'error':
-                yield {
-                    'packetType': 'error',
-                    'data': {
-                        'error': data
-                    }
-                }
-            if data > 0:
-                yield {
-                    'packetType': 'error',
-                    'data': {
-                        'error': data
-                    }
-                }
-
-        yield {
-            'packetType': 'success',
-            'data': {
-                'error': 0
-            }
-        }
+        raise Exception('Not implement set params.')
 
     @with_device_message
     def set_param(self, params, *args):  # pylint: disable=unused-argument
@@ -346,6 +280,12 @@ class Provider(OpenDeviceBase):
         '''
         configuration_field = CONFIGURATION_FIELD_DEFINES_SINGLETON.find(
             params['paramId'])
+
+        if configuration_field is None:
+            yield {
+                'packetType': 'error'
+            }
+
         command_line = dmu_helper.build_write_filed_cli(
             configuration_field, params['value'])
 
@@ -380,7 +320,7 @@ class Provider(OpenDeviceBase):
 
         data = result['data']
         values = [item['value'] for item in data]
-        print('saved values', values)
+        # print('saved values', values)
 
         command_line = dmu_helper.build_write_fileds_cli(fields, values, True)
         result = yield self._message_center.build(command=command_line, timeout=3)

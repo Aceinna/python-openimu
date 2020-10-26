@@ -65,13 +65,13 @@ def build_sensor_data_array(path):
     return array_data
 
 
-class OpenIMUMocker(DeviceBase):
+class OpenRTKMocker(DeviceBase):
     '''A mocker runing IMU Application'''
 
     def __init__(self, **kwargs):
-        super(OpenIMUMocker, self).__init__()
-        self._ping_str = 'OpenIMU300ZA 5020-3885-02 1.1.2 SN:1808400528'
-        self._version_str = 'OpenIMU300ZI IMU 1.1.3'
+        super(OpenRTKMocker, self).__init__()
+        self._ping_str = 'OpenRTK330L OpenIMU330BI 5020-3021-01 1.1.8 SN:1975000034'
+        self._version_str = 'RTK_INS App v2.0.0, BootLoader v1.1.1'
         self._data_index = 0
         self._total_data_len = 0
         # setup device configuration
@@ -99,7 +99,6 @@ class OpenIMUMocker(DeviceBase):
 
     def handle_command(self, cli):
         packet_type, payload, error, delay = parse_command_packet(cli)
-
         output_packet = []
         if delay and delay > 0:
             time.sleep(delay)
@@ -121,18 +120,14 @@ class OpenIMUMocker(DeviceBase):
             output_packet = bytes(output_packet)
         if packet_type == 'gP':
             param_id = struct.unpack('<L', payload[0:4])[0]
-            define_parameter = self._params.get(str(param_id))
 
-            if define_parameter:
-                data_type = define_parameter.data_type
-                value = define_parameter.value
-                output_packet.extend(payload[0:4])
-                output_packet.extend(encode_value(data_type, value))
-                output_packet = bytes(output_packet)
-            else:
-                output_packet = bytes([])
-                return build_output_packet('\x00\x00', output_packet)
+            define_parameter = self._params[str(param_id)]
 
+            data_type = define_parameter.data_type
+            value = define_parameter.value
+            output_packet.extend(payload[0:4])
+            output_packet.extend(encode_value(data_type, value))
+            output_packet = bytes(output_packet)
         if packet_type == 'sC':
             output_packet = bytes([])
         if packet_type == 'uP':
@@ -146,10 +141,6 @@ class OpenIMUMocker(DeviceBase):
             output_packet = struct.pack('i', 0)
         if packet_type == 'rD':
             output_packet = bytes([])
-
-        if packet_type == 'NA':
-            output_packet = bytes([])
-            return build_output_packet('\x00\x00', output_packet)
 
         return build_output_packet(packet_type, output_packet)
 

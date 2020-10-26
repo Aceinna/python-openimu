@@ -1,32 +1,48 @@
 import struct
 
-VALID_PACKET_TYPES = ['pG', 'gA', 'gV', 'gP', 'sC', 'uP']
+VALID_OPEN_PACKET_TYPES = ['pG', 'gA', 'gV', 'gP', 'sC', 'uP', 'NA','rD']
+
+VALID_CLOSURE_PACKET_TYPES = ['PK', 'GP', 'SF', 'WF', 'GF', 'RF', 'RE', 'NA']
 
 
 def is_command_start(command_start):
     return struct.unpack('2B', command_start) == (0x55, 0x55)
 
 
-def is_valid_packet_type(packet_type):
+def is_valid_packet_type(packet_type, is_open):
     packet_type = packet_type.decode()
-    return VALID_PACKET_TYPES.__contains__(packet_type)
+    if is_open:
+        return VALID_OPEN_PACKET_TYPES.__contains__(packet_type)
+    else:
+        return VALID_CLOSURE_PACKET_TYPES.__contains__(packet_type)
 
 
-def parse_packet(data):
+def parse_command_packet(data, is_open=True):
     packet_type = ''
     payload = []
     error = False
+    delay = 0
 
     raw_command_start = data[0:2]
     raw_packet_type = data[2:4]
 
     if is_command_start(raw_command_start) and \
-       is_valid_packet_type(raw_packet_type):
+       is_valid_packet_type(raw_packet_type, is_open):
         packet_type = raw_packet_type.decode()
         payload_len = data[4]  # struct.unpack('b', data[4])[0]
-        payload = data[4:payload_len+4]
+        payload = data[5:payload_len+5]
+        crc = data[payload_len+5:payload_len+7]
+        if payload_len+7 < len(data):
+            try:
+                delay_raw = data[payload_len+7:]
+                delay = struct.unpack('<i', delay_raw)[0]
+            except Exception as ex:
+                print(ex)
+                delay = 0
+    else:
+        error = True
 
-    return packet_type, payload, error
+    return packet_type, payload, error, delay
 
 
 def build_output_packet(packet_type, payload):
@@ -61,3 +77,8 @@ def calc_crc(payload):
     crc_msb = (crc & 0xFF00) >> 8
     crc_lsb = (crc & 0x00FF)
     return [crc_msb, crc_lsb]
+
+
+def wrap_delay_response_command(cli, delay):
+    cli.extend(struct.pack("<i", delay))
+    return cli

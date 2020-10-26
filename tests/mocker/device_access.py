@@ -26,10 +26,12 @@ class DeviceAccess(object):
         self._generator = None
         self._app = None
         self._app_name = app_name
+        self._is_stop = False
 
         self._load(app_name)
 
     def start(self):
+        self._is_stop = False
         self._pipe_sensor_data_read, self._pipe_sensor_data_write = os.pipe()
         self._pipe_command_read, self._pipe_command_write = os.pipe()
 
@@ -39,25 +41,42 @@ class DeviceAccess(object):
         thread = threading.Thread(target=self._run)
         thread.start()
 
+    def stop(self):
+        self._is_stop = True
+
+    def _close_pipe(self):
+        os.close(self._pipe_sensor_data_read)
+        os.close(self._pipe_sensor_data_write)
+        os.close(self._pipe_command_read)
+        os.close(self._pipe_command_write)
+
     def _run(self):
         print('device is running')
         try:
             while True:
+                if self._is_stop:
+                    self._close_pipe()
+                    return
                 # prepare output data
                 self._prepare_data()
                 # receive command, send to handler
                 self._handle_command()
+                # run a loop per 10ms, to simulate 100hz output
+                time.sleep(0.01)
         except:
-            os.close(self._pipe_sensor_data_read)
-            os.close(self._pipe_sensor_data_write)
-            os.close(self._pipe_command_read)
-            os.close(self._pipe_command_write)
+            self._close_pipe()
 
     def _load(self, app_name):
         # set application
         if app_name == 'IMU':
             from mocker.devices.openimu import OpenIMUMocker
             cls = OpenIMUMocker
+        elif app_name == 'RTK':
+            from mocker.devices.openrtk import OpenRTKMocker
+            cls = OpenRTKMocker
+        elif app_name == 'DMU':
+            from mocker.devices.dmu import DMUMocker
+            cls = DMUMocker
         else:
             raise NotImplementedError("No matched device")
         self._app = cls()
@@ -66,14 +85,13 @@ class DeviceAccess(object):
     @property
     def in_waiting(self):
         """Return the number of bytes currently in the input buffer."""
-        # ~ s = fcntl.ioctl(self.fd, termios.FIONREAD, TIOCM_zero_str)
         s = fcntl.ioctl(self._pipe_command_read, TIOCINQ, TIOCM_zero_str)
         return struct.unpack('I', s)[0]
 
     def _prepare_data(self):
         # read motion data, then send to _output_buffer
         sensor_data = next(self._generator)
-        os.write(self._pipe_sensor_data_write, sensor_data)
+        #os.write(self._pipe_sensor_data_write, sensor_data)
 
     def _handle_command(self):
         command = None
@@ -81,12 +99,18 @@ class DeviceAccess(object):
             command = os.read(self._pipe_command_read, self.in_waiting)
         except:
             command = None
-
+        #print('stop',self._is_stop)
         if command:
-            # do handle command
-            response = self._app.handle_command(command)
-            # write to response
-            os.write(self._pipe_sensor_data_write, response)
+            response = None
+            try:
+                # do handle command
+                response = self._app.handle_command(command)
+            except Exception as ex:
+                print(ex)
+                response = None
+            if response:
+                # write to response
+                os.write(self._pipe_sensor_data_write, response)
 
     def write(self, data):
         if isinstance(data, str):

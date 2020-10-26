@@ -14,6 +14,7 @@ class Loader:
     def create(platform, options):
         '''Initial bootstrap instance
         '''
+        active_app = None
         if platform == 'web':
             active_app = Webserver(**options)
 
@@ -21,8 +22,8 @@ class Loader:
             active_app = CommandLine(**options)
 
         if active_app is None:
-            raise Exception('no matched bootstrap')
+            raise ValueError('no matched bootstrap')
 
-        #APP_CONTEXT.set_app(active_app)
+        # APP_CONTEXT.set_app(active_app)
 
         return active_app

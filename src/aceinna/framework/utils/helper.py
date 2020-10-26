@@ -184,6 +184,24 @@ def block_payload(data_len, addr, data):
     return data_bytes
 
 
+def parse_command_packet(raw_command):
+    packet_type = ''
+    payload = []
+    error = False
+
+    raw_command_start = raw_command[0:2]
+    raw_packet_type = raw_command[2:4]
+
+    if COMMAND_START == raw_command_start:
+        packet_type = bytes(raw_packet_type).decode()
+        payload_len = raw_command[4]  # struct.unpack('b', data[4])[0]
+        payload = raw_command[5:payload_len+5]
+    else:
+        error = True
+
+    return packet_type, payload, error
+
+
 def calc_crc(payload):
     '''
     Calculates 16-bit CRC-CCITT
