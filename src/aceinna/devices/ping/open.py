@@ -45,7 +45,7 @@ def _need_check(limit_type, device_type):
     return limit_type == device_type
 
 
-def run_command_as_string(communicator, command, size=500, retry=20):
+def run_command_as_string(communicator, command, size=100, retry=5):
     ''' Run command and parse result as string
     '''
     data_buffer = _run_command(communicator, command, size, retry)

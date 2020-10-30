@@ -120,6 +120,7 @@ class SerialPort(Communicator):
         self.filter_device_type = None
         self.filter_device_type_assigned = False
         self._is_close = False
+        self._connection_history = None
 
         if options and options.baudrate != 'auto':
             self.baudrate_list = [options.baudrate]
@@ -152,7 +153,6 @@ class SerialPort(Communicator):
 
                 if self.try_last_port():
                     break
-
                 num_ports = self.find_ports()
                 self.autobaud(num_ports)
                 time.sleep(0.5)
@@ -189,6 +189,9 @@ class SerialPort(Communicator):
         # for port in ports:
         serial_port = None
         for port in ports:
+            if self.try_from_history(port):
+                return True
+
             for baud in self.baudrate_list:
                 # print("try {0}:{1}".format(port, baud))
                 APP_CONTEXT.get_logger().logger.info(
@@ -221,7 +224,11 @@ class SerialPort(Communicator):
                         continue
                     else:
                         self.serial_port = serial_port
-                        self.save_last_port()
+                        self.update_connection_history({
+                            'port': serial_port.port,
+                            'baud': serial_port.baudrate,
+                            'device_type': self.device.type
+                        })
                         # Assume max_len of a frame is less than 300 bytes.
                         for td in self.threadList:
                             td.stop()
@@ -275,29 +282,41 @@ class SerialPort(Communicator):
            returns: True if find header
                     False if not find header.
         '''
-        connection = None
+        parsed_json = None
         try:
             if not os.path.isfile(self.connection_file_path):
                 return False
 
+            # if self._connection_history is None:
             with open(self.connection_file_path) as json_data:
-                connection = json.load(json_data)
-            connection['baud'] = self.baudrate_list[0] if self.baudrate_assigned \
-                else connection['baud']
-            APP_CONTEXT.get_logger().logger.info('try to use last connected port {} {}'.format(
-                connection['port'], connection['baud']))
-            if connection:
-                self.open_serial_port(
-                    port=connection['port'], baud=connection['baud'], timeout=0.1)
+                parsed_json = json.load(json_data)
+
+            if not self._is_valid_connection_history(parsed_json):
+                return False
+
+            self._connection_history = parsed_json
+
+            last_connection_index = self._connection_history['last']
+            last_connection = self._connection_history['history'][last_connection_index]
+
+            if last_connection:
+                port = last_connection['port']
+                baud_rate = self.baudrate_list[0] if self.baudrate_assigned \
+                    else last_connection['baud']
+                device_type = last_connection['device_type']
+
+                APP_CONTEXT.get_logger().logger.info(
+                    'try to use last connected port {} {}'.format(port, baud_rate))
+
+                self.open_serial_port(port=port, baud=baud_rate, timeout=0.1)
+
                 if self.serial_port is not None:
                     ret = self.confirm_device(
-                        self.serial_port, self.filter_device_type)
+                        self.serial_port, device_type)
                     if not ret:
                         self.serial_port.close()
                         return False
                     else:
-                        self.save_last_port()
-                        # Assume max_len of a frame is less than 300 bytes.
                         return True
                 else:
                     return False
@@ -305,24 +324,89 @@ class SerialPort(Communicator):
             print(ex)
             return False
 
-    def save_last_port(self):
-        '''
-        save connected port info
-        '''
+    def try_from_history(self, port):
+        APP_CONTEXT.get_logger().logger.info(
+            'try to use connected port {} in history'.format(port))
 
-        if not os.path.exists(self.setting_folder_path):
-            try:
-                os.mkdir(self.setting_folder_path)
-            except:
-                return
+        history_connection_index = self._find_port_in_connection_history(port)
 
-        connection = {"port": self.serial_port.port,
-                      "baud": self.serial_port.baudrate}
+        if history_connection_index == -1:
+            return False
+
+        history_connection = self._connection_history['history'][history_connection_index]
+        if history_connection:
+            port = history_connection['port']
+            baud_rate = history_connection['baud']
+            device_type = history_connection['device_type']
+            self.open_serial_port(port=port, baud=baud_rate, timeout=0.1)
+
+            if self.serial_port is not None:
+                ret = self.confirm_device(
+                    self.serial_port, device_type)
+                if ret:
+                    # update connection history
+                    self.update_connection_history(
+                        history_connection, history_connection_index)
+                    return True
+                else:
+                    self.serial_port.close()
+                    return False
+        return False
+
+    def update_connection_history(self, connection, index=None):
+        if self._connection_history is None:
+            self._connection_history = {'history': []}
+
+        if index is None:
+            index = self._find_port_in_connection_history(connection['port'])
+
+        # query connection with port
+        # if found update, else append new one
+        if index > -1:
+            self._connection_history['last'] = index
+            self._connection_history['history'][index] = connection
+        elif index == -1:
+            self._connection_history['history'].append(connection)
+            self._connection_history['last'] = len(
+                self._connection_history['history'])-1
+
         try:
             with open(self.connection_file_path, 'w') as outfile:
-                json.dump(connection, outfile)
+                json.dump(self._connection_history, outfile)
         except:
             pass
+
+    def _is_valid_connection_history(self, parsed_json):
+        return parsed_json.__contains__('last') and parsed_json.__contains__('history')
+
+    def _find_port_in_connection_history(self, port):
+        exist_index = -1
+        if self._connection_history:
+            for index, connection in enumerate(self._connection_history['history']):
+                if connection['port'] == port:
+                    exist_index = index
+                    break
+
+        return exist_index
+
+        # def save_last_port(self, connection_info):
+        #     '''
+        #     save connected port info
+        #     '''
+
+        #     if not os.path.exists(self.setting_folder_path):
+        #         try:
+        #             os.mkdir(self.setting_folder_path)
+        #         except:
+        #             return
+
+        #     connection = {"port": self.serial_port.port,
+        #                   "baud": self.serial_port.baudrate}
+        #     try:
+        #         with open(self.connection_file_path, 'w') as outfile:
+        #             json.dump(connection, outfile)
+        #     except:
+        #         pass
 
     def open_serial_port(self, port=None, baud=115200, timeout=0.1):
         ''' open serial port
