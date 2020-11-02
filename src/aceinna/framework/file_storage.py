@@ -251,6 +251,7 @@ class FileLoger():
         output_packet = next(
             (x for x in self.output_packets if x['name'] == packet_type), None)
 
+        fields = [field['name'] for field in output_packet['payload']]
         '''Write row of CSV file based on data received.  Uses dictionary keys for column titles
         '''
         if self.log_file_rows[packet_type] == 0:
@@ -263,6 +264,8 @@ class FileLoger():
                           ' [' + \
                           output_packet['payload'][i]['unit'] + \
                           ']'''
+                if not fields.__contains__(k):
+                    continue
                 data_str = output_packet['payload'][i]['name']
                 unit_str = output_packet['payload'][i]['unit']
                 if unit_str == '':
@@ -283,14 +286,16 @@ class FileLoger():
         #   (with precision based on the data type defined in the json properties file)
         str = ''
         for i, (k, v) in enumerate(data.items()):
+            if not fields.__contains__(k):
+                continue
             output_packet_type = output_packet['payload'][i]['type']
 
             if output_packet['payload'][i].__contains__('scaling'):
-                str +='{0},'.format(v)
+                str += '{0},'.format(v)
             else:
                 if output_packet_type == 'uint32' or output_packet_type == 'int32' or \
-                output_packet_type == 'uint16' or output_packet_type == 'int16' or \
-                output_packet_type == 'uint64' or output_packet_type == 'int64':
+                        output_packet_type == 'uint16' or output_packet_type == 'int16' or \
+                        output_packet_type == 'uint64' or output_packet_type == 'int64':
                     # integers and unsigned integers
                     str += '{0:d},'.format(v)
                 elif output_packet_type == 'double':

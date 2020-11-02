@@ -3,6 +3,55 @@ import collections
 from ..dmu.configuration_field import CONFIGURATION_FIELD_DEFINES_SINGLETON
 from ..dmu.eeprom_field import EEPROM_FIELD_DEFINES_SINGLETON
 from .dmu_field_parser import decode_value
+
+
+class DMU_PACKET_STATUS(object):
+    PREV_PACKET_TYPE = ''
+    PREV_TIME_FIELD_VALUE = ''
+    PRE_ELAPSED_TIME_SEC = 0.0
+
+
+def _extract_time_field(configuration):
+    time_field_dict = {
+        'S0': 'GPSITOW',
+        'S1': 'counter',
+        'A1': 'timeITOW',
+        'A2': 'timeITOW'
+    }
+
+    field_name = time_field_dict.get(configuration['name'])
+    field = next((item for item in configuration['payload']
+                  if item['name'] == field_name), None)
+
+    return field
+
+
+def _calculate_time_value(packet_type, payload, field):
+    if DMU_PACKET_STATUS.PREV_PACKET_TYPE != packet_type:
+        DMU_PACKET_STATUS.PREV_PACKET_TYPE = packet_type
+        DMU_PACKET_STATUS.PREV_TIME_FIELD_VALUE = ''
+
+    time_field_value = 0.0
+    now = 0.0
+    prev = 0.0
+    offset = int(field['offset'])
+
+    if packet_type == 'S0' or packet_type == 'S1':
+        now = struct.unpack('>H', struct.pack(
+            '>2B', *payload[offset:offset+2]))[0]
+
+    if packet_type == 'A1' or packet_type == 'A2':
+        now = struct.unpack('>I', struct.pack(
+            '>4B', *payload[offset:offset+4]))[0]
+
+    prev = now if DMU_PACKET_STATUS.PREV_TIME_FIELD_VALUE == '' else DMU_PACKET_STATUS.PREV_TIME_FIELD_VALUE
+
+    time_field_value = 1.0/65535.0 * \
+        (now - prev) if now > prev else 1 - 1.0/65535.0 * (now - prev)
+
+    DMU_PACKET_STATUS.PRE_ELAPSED_TIME_SEC += time_field_value
+
+    return DMU_PACKET_STATUS.PRE_ELAPSED_TIME_SEC
 # input packet
 
 
@@ -158,6 +207,12 @@ def common_continuous_parser(payload, configuration, scaling):
 
             format_value = data[idx]*scaling_value
             out.append((item['name'], format_value))
+
+        time_field = _extract_time_field(configuration)
+        if time_field:
+            time_value = _calculate_time_value(
+                configuration['name'], payload, time_field)
+            out.append(('time', time_value))
 
         format_data = collections.OrderedDict(out)
 
