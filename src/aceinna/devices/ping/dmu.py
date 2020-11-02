@@ -9,7 +9,7 @@ ID = [0x49, 0x44]
 VR = [0x56, 0x52]
 
 
-def _run_command(communicator, message_type, response_message_type, message_bytes=[], size=500, retry=20):
+def _run_command(communicator, message_type, response_message_type, message_bytes=[], size=100, retry=5):
     command_line = dmu_helper.build_packet(message_type, message_bytes)
     communicator.write(command_line)
     time.sleep(0.1)
@@ -79,7 +79,7 @@ def ping(communicator, *args):
         if filter_device_type == 'DMU':
             return ping_info
 
-        if model_string.find('OpenIMU') > -1 and \
+        if model_string.find('OpenIMU') > -1 or \
                 model_string.find('OpenRTK') > -1:
             return None
 

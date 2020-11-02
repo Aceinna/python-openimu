@@ -190,6 +190,8 @@ class SerialPort(Communicator):
         serial_port = None
         for port in ports:
             if self.try_from_history(port):
+                for td in self.threadList:
+                    td.stop()
                 return True
 
             for baud in self.baudrate_list:
