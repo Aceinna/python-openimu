@@ -44,7 +44,6 @@ class Provider(OpenDeviceBase):
         self.app_info = None
         self.parameters = None
         self.setting_folder_path = None
-        self.connection_file = None
         self.data_folder = None
         self.debug_serial_port = None
         self.rtcm_serial_port = None
@@ -73,9 +72,6 @@ class Provider(OpenDeviceBase):
         if not os.path.isdir(data_folder_path):
             os.makedirs(data_folder_path)
         self.data_folder = data_folder_path
-
-        self.connection_file = os.path.join(
-            executor_path, setting_folder_name, 'connection.json')
 
         # copy contents of app_config under executor path
         self.setting_folder_path = os.path.join(
@@ -190,24 +186,6 @@ class Provider(OpenDeviceBase):
     def ntrip_client_thread(self):
         self.ntripClient = NTRIPClient(self.properties, self.communicator)
         self.ntripClient.run()
-
-    def build_connected_serial_port_info(self):
-        if not os.path.isfile(self.connection_file):
-            return None, None
-
-        with open(self.connection_file) as json_data:
-            connection = json.load(json_data)
-
-        user_port = connection['port']
-        user_port_num = ''
-        port_name = ''
-        for i in range(len(user_port)-1, -1, -1):
-            if (user_port[i] >= '0' and user_port[i] <= '9'):
-                user_port_num = user_port[i] + user_port_num
-            else:
-                port_name = user_port[:i+1]
-                break
-        return user_port_num, port_name
 
     def after_setup(self):
         set_user_para = self.cli_options and self.cli_options.set_user_para

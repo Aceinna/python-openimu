@@ -44,7 +44,6 @@ class Provider(OpenDeviceBase):
         self.app_info = None
         self.parameters = None
         self.setting_folder_path = None
-        self.connection_file = None
         self.data_folder = None
         self.debug_serial_port = None
         self.rtcm_serial_port = None
@@ -74,9 +73,6 @@ class Provider(OpenDeviceBase):
             os.makedirs(data_folder_path)
         self.data_folder = data_folder_path
 
-        self.connection_file = os.path.join(
-            executor_path, setting_folder_name, 'connection.json')
-
         # copy contents of app_config under executor path
         self.setting_folder_path = os.path.join(
             executor_path, setting_folder_name, 'openrtk')
@@ -101,8 +97,10 @@ class Provider(OpenDeviceBase):
         self._build_app_info(app_info)
         self.connected = True
 
-        return '# Connected {0} with UART #\n\rDevice:{1} \n\rFirmware:{2}'\
-            .format('OpenRTK', device_info, app_info)
+        port_name = self.communicator.serial_port.port
+
+        return '# Connected {0} with UART on {1} #\n\rDevice:{2} \n\rFirmware:{3}'\
+            .format('OpenRTK', port_name, device_info, app_info)
 
     def _build_device_info(self, text):
         '''
@@ -164,13 +162,7 @@ class Provider(OpenDeviceBase):
         self.ntripClient.run()
 
     def build_connected_serial_port_info(self):
-        if not os.path.isfile(self.connection_file):
-            return None, None
-
-        with open(self.connection_file) as json_data:
-            connection = json.load(json_data)
-
-        user_port = connection['port']
+        user_port = self.communicator.serial_port.port
         user_port_num = ''
         port_name = ''
         for i in range(len(user_port)-1, -1, -1):
