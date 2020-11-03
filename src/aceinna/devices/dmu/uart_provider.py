@@ -70,7 +70,7 @@ class Provider(OpenDeviceBase):
             with open(config_file_path, "wb") as code:
                 code.write(app_config_content)
 
-    def bind_device_info(self, device_info, app_info):
+    def bind_device_info(self, device_access, device_info, app_info):
         self._build_device_info(device_info)
         self._build_app_info(app_info)
         self.connected = True

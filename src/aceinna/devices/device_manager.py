@@ -31,7 +31,7 @@ class DeviceManager:
     device_list = []
 
     @staticmethod
-    def build_provider(communicator, ping_info):
+    def build_provider(communicator, device_access, ping_info):
         if ping_info is None:
             return None
 
@@ -61,7 +61,8 @@ class DeviceManager:
                 'provider': provider
             })
 
-        format_device_info = provider.bind_device_info(device_info, app_info)
+        format_device_info = provider.bind_device_info(
+            device_access, device_info, app_info)
 
         # print(format_device_info)
         print_green(format_device_info)
@@ -79,28 +80,28 @@ class DeviceManager:
             lan: communicator
         '''
         if communicator.type == 'uart':
-            actual_communicator = args[0]
+            device_access = args[0]
             filter_device_type = args[1]
 
             if filter_device_type is None or filter_device_type == 'IMU' or filter_device_type == 'RTK':
                 APP_CONTEXT.get_logger().logger.debug('Checking if is OpenRTK/OpenIMU device...')
                 ping_result = ping_opendevice(
-                    actual_communicator, filter_device_type)
+                    device_access, filter_device_type)
                 if ping_result is not None:
-                    return DeviceManager.build_provider(communicator, ping_result)
+                    return DeviceManager.build_provider(communicator, device_access, ping_result)
 
             if filter_device_type is None or filter_device_type == 'DMU':
                 APP_CONTEXT.get_logger().logger.debug('Checking if is DMU device...')
-                ping_result = ping_dmu(actual_communicator, filter_device_type)
+                ping_result = ping_dmu(device_access, filter_device_type)
                 if ping_result is not None:
                     return DeviceManager.build_provider(communicator, ping_result)
 
         if communicator.type == 'lan':
-            actual_communicator = args[0]
+            device_access = args[0]
 
             APP_CONTEXT.get_logger().logger.debug('Checking if is OpenRTK device...')
-            ping_result = ping_opendevice(actual_communicator, None)
+            ping_result = ping_opendevice(device_access, None)
             if ping_result is not None:
-                return DeviceManager.build_provider(communicator, ping_result)
+                return DeviceManager.build_provider(communicator, device_access, ping_result)
 
         return None

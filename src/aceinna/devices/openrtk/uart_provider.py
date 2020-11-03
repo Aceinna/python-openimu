@@ -92,12 +92,12 @@ class Provider(OpenDeviceBase):
                 with open(app_name_config_path, "wb") as code:
                     code.write(app_config_content)
 
-    def bind_device_info(self, device_info, app_info):
+    def bind_device_info(self, device_access, device_info, app_info):
         self._build_device_info(device_info)
         self._build_app_info(app_info)
         self.connected = True
 
-        port_name = self.communicator.serial_port.port
+        port_name = device_access.port
 
         return '# Connected {0} with UART on {1} #\n\rDevice:{2} \n\rFirmware:{3}'\
             .format('OpenRTK', port_name, device_info, app_info)
@@ -162,6 +162,9 @@ class Provider(OpenDeviceBase):
         self.ntripClient.run()
 
     def build_connected_serial_port_info(self):
+        if not self.communicator.serial_port:
+            return None, None
+
         user_port = self.communicator.serial_port.port
         user_port_num = ''
         port_name = ''
