@@ -90,7 +90,10 @@ class CommandLine:
         '''
         # asyncio.set_event_loop(asyncio.new_event_loop())
         self.webserver.start_webserver(current_loop)
-        current_loop.run_forever()
+
+        if not current_loop.is_running():
+            current_loop.run_forever()
+
     def _build_options(self, **kwargs):
         self.options = WebserverArgs(**kwargs)
 
@@ -140,7 +143,7 @@ class CommandLine:
             self.device_provider.stop_data_log()
 
         if self.webserver_running:
-            self.webserver.stop()
+            self.webserver.stop_ws_server()
             self.webserver_running = False
         return True
 
@@ -275,7 +278,7 @@ class CommandLine:
         '''
         Exit current process
         '''
-        #self.webserver.stop()
+        # self.webserver.stop()
         #self.webserver_running = False
         pid = getpid()
         process = psutil.Process(pid)

@@ -579,10 +579,13 @@ class Webserver(EventBase):
     def set_communicator(self, communicator):
         self.communicator = communicator
 
-    def stop(self):
+    def stop_ws_server(self):
         '''close websocket server'''
         if self.http_server is not None:
             self.http_server.stop()
+
+    def stop(self):
+        self.stop_ws_server()
 
         if self.device_provider is not None:
             self.device_provider.close()

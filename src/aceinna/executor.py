@@ -47,7 +47,7 @@ if __name__ == '__main__':
         import asyncio
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
-    from_default()
+    from_command_line()
 
     while True:
         time.sleep(10)

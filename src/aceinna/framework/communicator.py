@@ -305,7 +305,8 @@ class SerialPort(Communicator):
                 port = last_connection['port']
                 baud_rate = self.baudrate_list[0] if self.baudrate_assigned \
                     else last_connection['baud']
-                device_type = last_connection['device_type']
+                device_type = self.filter_device_type if self.filter_device_type_assigned \
+                    else last_connection['device_type']
 
                 APP_CONTEXT.get_logger().logger.info(
                     'try to use last connected port {} {}'.format(port, baud_rate))
@@ -338,8 +339,12 @@ class SerialPort(Communicator):
         history_connection = self._connection_history['history'][history_connection_index]
         if history_connection:
             port = history_connection['port']
-            baud_rate = history_connection['baud']
-            device_type = history_connection['device_type']
+            baud_rate = self.baudrate_list[0] if self.baudrate_assigned \
+                    else history_connection['baud']
+            device_type = self.filter_device_type if self.filter_device_type_assigned \
+                    else history_connection['device_type']
+            # baud_rate = history_connection['baud']
+            # device_type = history_connection['device_type']
             self.open_serial_port(port=port, baud=baud_rate, timeout=0.1)
 
             if self.serial_port is not None:

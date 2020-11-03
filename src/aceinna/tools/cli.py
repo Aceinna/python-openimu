@@ -9,7 +9,7 @@ def main(**kwargs):
     '''
     Work as command line, with WebSocket and UART
     '''
-    application = Loader.create('cli', **kwargs)
+    application = Loader.create('cli', vars(kwargs['options']))
     application.listen()
 
 

@@ -50,7 +50,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "openimu = aceinna.tools.cli:main",
+            "openimu = aceinna.executor:from_command_line",
         ]
     }
 )
