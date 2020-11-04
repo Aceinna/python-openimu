@@ -94,7 +94,7 @@ class DeviceManager:
                 APP_CONTEXT.get_logger().logger.debug('Checking if is DMU device...')
                 ping_result = ping_dmu(device_access, filter_device_type)
                 if ping_result is not None:
-                    return DeviceManager.build_provider(communicator, ping_result)
+                    return DeviceManager.build_provider(communicator, device_access, ping_result)
 
         if communicator.type == 'lan':
             device_access = args[0]

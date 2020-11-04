@@ -15,6 +15,14 @@ TIOCM_zero_str = struct.pack('I', 0)
 
 
 class DeviceAccess(object):
+    @property
+    def port(self):
+        return self._port
+
+    @port.setter
+    def port(self, value):
+        self._port = value
+
     def __init__(self, app_name):
         self._read_buffer = None
         self._output_buffer = None
@@ -27,7 +35,7 @@ class DeviceAccess(object):
         self._app = None
         self._app_name = app_name
         self._is_stop = False
-
+        self._port = 'test_port_01'
         self._load(app_name)
 
     def start(self):
@@ -99,7 +107,7 @@ class DeviceAccess(object):
             command = os.read(self._pipe_command_read, self.in_waiting)
         except:
             command = None
-        #print('stop',self._is_stop)
+        # print('stop',self._is_stop)
         if command:
             response = None
             try:
