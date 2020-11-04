@@ -512,8 +512,18 @@ class Provider(OpenDeviceBase):
 
         parsed_content = firmware_content_parser(firmware_content, rules)
 
-        user_port_num, port_name = self.build_connected_serial_port_info()
-        sdk_port = port_name + str(int(user_port_num) + 3)
+        if (self.properties["initial"]["useDefaultUart"]):
+            user_port_num, port_name = self.build_connected_serial_port_info()
+            sdk_port = port_name + str(int(user_port_num) + 3)
+        else:
+            for x in self.properties["initial"]["uart"]:
+                if x['enable'] == 1:
+                    if x['name'] == 'DEBUG':
+                        debug_port = x["value"]
+                    elif x['name'] == 'GNSS':
+                        rtcm_port = x["value"]
+                    elif x['name'] == 'SDK':
+                        sdk_port = x["value"]
 
         sdk_uart = serial.Serial(sdk_port, 115200, timeout=0.1)
         if not sdk_uart.isOpen():

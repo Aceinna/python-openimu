@@ -1,6 +1,6 @@
 {
 	"name": "OpenRTK330_INS",
-	"app_version": "1.3.5",
+	"app_version": "2.0.0",
 	"appName": "OpenRTK330 INS",
 	"type": "openrtk",
     "description": "6-axis OpenRTK with INS application",
@@ -15,6 +15,11 @@
             {
                 "name": "DEBUG",
                 "value": "com11",
+                "enable": 1 
+            },
+            {
+                "name": "SDK",
+                "value": "com12",
                 "enable": 1 
             }
         ],
