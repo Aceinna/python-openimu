@@ -99,7 +99,8 @@ class DeviceAccess(object):
     def _prepare_data(self):
         # read motion data, then send to _output_buffer
         sensor_data = next(self._generator)
-        #os.write(self._pipe_sensor_data_write, sensor_data)
+        #print('sensor data', len(sensor_data))
+        os.write(self._pipe_sensor_data_write, sensor_data)
 
     def _handle_command(self):
         command = None

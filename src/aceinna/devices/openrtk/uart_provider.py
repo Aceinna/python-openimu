@@ -620,10 +620,10 @@ class Provider(OpenDeviceBase):
             for i in range(2, conf_parameters_len, step):
                 start_byte = i
                 end_byte = i+step-1 if i+step < conf_parameters_len else conf_parameters_len
-
+                time.sleep(0.1)
                 command_line = helper.build_packet(
                     'gB', [start_byte, end_byte])
-                result = yield self._message_center.build(command=command_line, timeout=2)
+                result = yield self._message_center.build(command=command_line, timeout=10)
                 if result['error']:
                     has_error = True
                     break

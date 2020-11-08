@@ -417,6 +417,11 @@ class OpenDeviceBase(EventBase):
         self.restart()
 
     def connect_log(self, params):
+        if resource.is_dev_mode():
+            return {
+                'packetType': 'success'
+            }
+
         access_token = params['token']
         device_info = self.get_device_connection_info()
 

@@ -1,5 +1,6 @@
 # import asyncio
 import sys
+import uuid
 import threading
 import datetime
 import time
@@ -82,6 +83,7 @@ class DeviceMessageCenter(EventBase):
         self._is_ready = False
         self._has_running_checker = False
         self._last_timeout_command = None
+        self._run_id = None
 
     def is_ready(self):
         '''Check if message center is setuped
@@ -107,6 +109,9 @@ class DeviceMessageCenter(EventBase):
             self.run(message)
 
     def run(self, message):
+        if not self._is_running:
+            self._run_id = str(uuid.uuid1())
+
         self._is_running = True
         self._running_message = message
         message.set_start_time(datetime.datetime.now())
@@ -118,6 +123,7 @@ class DeviceMessageCenter(EventBase):
     def run_post(self):
         if self.prerun_queue.empty():
             self._is_running = False
+            self._run_id = None
         else:
             next_message = self.prerun_queue.get()
             self.run(next_message)
@@ -165,6 +171,7 @@ class DeviceMessageCenter(EventBase):
                 packet_info = self._parser.get_packet_info(
                     timeout_command)
                 self._last_timeout_command = packet_info
+                self._last_timeout_command['run_id'] = self._run_id
                 self._running_message.finish(
                     error='Timeout', **packet_info)
                 # print('timeout')
@@ -235,7 +242,6 @@ class DeviceMessageCenter(EventBase):
         #     import asyncio
         #     loop = asyncio.new_event_loop()
         #     asyncio.set_event_loop(loop)
-
         while True:
             if self._has_exception or self._is_stop:
                 return
@@ -265,11 +271,12 @@ class DeviceMessageCenter(EventBase):
                 self._parser.analyse(data)
 
     def on_command_receive(self, *args, **kwargs):
-        if self._last_timeout_command and \
-                kwargs.get('packet_type') == self._last_timeout_command['packet_type']:
-            # current response is for timeout, should ignore
-            self._last_timeout_command = None
-            return
+        # if self._run_id and self._last_timeout_command:
+        #     if self._run_id != self._last_timeout_command['run_id'] and \
+        #             kwargs.get('packet_type') == self._last_timeout_command['packet_type']:
+        #         # current response is for timeout, should ignore
+        #         self._last_timeout_command = None
+        #         return
         if self._running_message:
             self._running_message.finish(**kwargs)
         self.run_post()
