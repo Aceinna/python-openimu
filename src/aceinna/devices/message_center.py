@@ -217,7 +217,7 @@ class DeviceMessageCenter(EventBase):
 
             data = None
             try:
-                data = self._communicator.read()
+                data = self._communicator.read(1000)
             except Exception as ex:  # pylint: disable=broad-except
                 print('Thread:receiver error:', ex)
                 self.exception_lock.acquire()
