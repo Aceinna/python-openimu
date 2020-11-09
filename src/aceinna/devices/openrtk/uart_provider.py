@@ -5,6 +5,7 @@ import datetime
 import threading
 import math
 import re
+import collections
 import serial
 import serial.tools.list_ports
 from .ntrip_client import NTRIPClient
@@ -38,6 +39,8 @@ class Provider(OpenDeviceBase):
         self.server_update_rate = 100
         self.sky_data = []
         self.pS_data = []
+        self.ps_dic = collections.OrderedDict()
+        self.inspva_flag = 0
         self.bootloader_baudrate = 115200
         self.app_config_folder = ''
         self.device_info = None
@@ -489,6 +492,73 @@ class Provider(OpenDeviceBase):
                 if self.sky_data[0]['timeOfWeek'] == data[0]['timeOfWeek']:
                     self.sky_data.extend(data)
                 else:
+                    self.add_output_packet('stream', 'skyview', self.sky_data)
+                    self.add_output_packet('stream', 'snr', self.sky_data)
+                    self.sky_data = []
+                    self.sky_data.extend(data)
+            else:
+                self.sky_data.extend(data)
+
+        elif packet_type == 'g1':
+            self.ps_dic['positionMode'] = data['position_type']
+            self.ps_dic['numberOfSVs'] = data['number_of_satellites_in_solution']
+            self.ps_dic['hdop'] = data['hdop']
+            self.ps_dic['age'] = data['diffage']
+            if self.inspva_flag == 0:
+                self.ps_dic['GPS_Week'] = data['GPS_Week']
+                self.ps_dic['GPS_TimeofWeek'] = data['GPS_TimeOfWeek'] * 0.001
+                self.ps_dic['latitude'] = data['latitude']
+                self.ps_dic['longitude'] = data['longitude']
+                self.ps_dic['height'] = data['height']
+                self.ps_dic['velocityMode'] = 1
+                self.ps_dic['velocityNorth'] = data['north_vel']
+                self.ps_dic['velocityEast'] = data['east_vel']
+                self.ps_dic['velocityUp'] = data['up_vel']
+                self.ps_dic['latitude_std'] = data['latitude_standard_deviation']
+                self.ps_dic['longitude_std'] = data['longitude_standard_deviation']
+                self.ps_dic['height_std'] = data['height_standard_deviation']
+                self.ps_dic['north_vel_std'] = data['north_vel_standard_deviation']
+                self.ps_dic['east_vel_std'] = data['east_vel_standard_deviation']
+                self.ps_dic['up_vel_std'] = data['up_vel_standard_deviation']
+                self.add_output_packet('stream', 'pos', self.ps_dic)
+
+        elif packet_type == 'i1':
+            self.inspva_flag = 1
+            if data['GPS_TimeOfWeek'] % 200 == 0:
+                self.ps_dic['GPS_Week'] = data['GPS_Week']
+                self.ps_dic['GPS_TimeofWeek'] = data['GPS_TimeOfWeek'] * 0.001
+                self.ps_dic['latitude'] = data['latitude']
+                self.ps_dic['longitude'] = data['longitude']
+                self.ps_dic['height'] = data['height']
+                if data['ins_position_type'] != 1 and data['ins_position_type'] != 4 and data['ins_position_type'] != 5:
+                    self.ps_dic['velocityMode'] = 2
+                else:
+                    self.ps_dic['velocityMode'] = 1
+                self.ps_dic['insStatus'] = data['ins_status']
+                self.ps_dic['insPositionType'] = data['ins_position_type']
+                self.ps_dic['velocityNorth'] = data['north_velocity']
+                self.ps_dic['velocityEast'] = data['east_velocity']
+                self.ps_dic['velocityUp'] = data['up_velocity']
+                self.ps_dic['roll'] = data['roll']
+                self.ps_dic['pitch'] = data['pitch']
+                self.ps_dic['heading'] = data['heading']
+                self.ps_dic['latitude_std'] = data['latitude_std']
+                self.ps_dic['longitude_std'] = data['longitude_std']
+                self.ps_dic['height_std'] = data['height_std']
+                self.ps_dic['north_vel_std'] = data['north_velocity_std']
+                self.ps_dic['east_vel_std'] = data['east_velocity_std']
+                self.ps_dic['up_vel_std'] = data['up_velocity_std']
+                self.ps_dic['roll_std'] = data['roll_std']
+                self.ps_dic['pitch_std'] = data['pitch_std']
+                self.ps_dic['heading_std'] = data['heading_std']
+                self.add_output_packet('stream', 'pos', self.ps_dic)
+
+        elif packet_type == 'y1':
+            if self.sky_data:
+                if self.sky_data[0]['GPS_TimeOfWeek'] == data[0]['GPS_TimeOfWeek']:
+                    self.sky_data.extend(data)
+                else:
+                    # print(self.sky_data)
                     self.add_output_packet('stream', 'skyview', self.sky_data)
                     self.add_output_packet('stream', 'snr', self.sky_data)
                     self.sky_data = []
