@@ -69,10 +69,11 @@ class UartMessageParser(EventBase):
                 self.find_header = True
 
     def get_packet_info(self, raw_command):
-        packet_type, _, payload = helper.parse_command_packet(raw_command)
+        packet_type, payload, _ = helper.parse_command_packet(raw_command)
         return {
             'packet_type': packet_type,
-            'data': payload
+            'data': payload,
+            'raw': raw_command
         }
 
     def _parse_message(self, packet_type, payload_len, payload):

@@ -169,14 +169,17 @@ class TestDeviceMessageWrapper(unittest.TestCase):
 
         result1 = send_ping_command()
         result2 = send_get_version_timeout_command()
+        # for test, wait 1s, if it is a timeout command, but we should handle the timeout error
+        time.sleep(1)
         result3 = send_get_parameter_command()
         command_result = [
             result1['packet_type'],
             result2['packet_type'],
             result2['error'],
-            result3['packet_type']
+            result3['packet_type'],
+            result3['error'],
         ]
-        expect_result = ['pG', 'gV', 'Timeout', 'gP']
+        expect_result = ['pG', 'gV', 'Timeout', 'gP',False]
         self.assertEqual(command_result, expect_result,
                          'Got result after timeout')
         close_message_center()
@@ -186,6 +189,8 @@ class TestDeviceMessageWrapper(unittest.TestCase):
 
         result1 = send_ping_command()
         result2 = send_get_version_timeout_command()
+        # for test, wait 1s, if it is a timeout command, but we should handle the timeout error
+        time.sleep(1)
         result3 = send_get_version_command()
         command_result = [
             result1['packet_type'],
