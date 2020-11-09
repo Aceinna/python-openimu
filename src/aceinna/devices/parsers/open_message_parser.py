@@ -10,7 +10,7 @@ from .open_packet_parser import (
 MSG_HEADER = [0x55, 0x55]
 PACKET_TYPE_INDEX = 2
 PRIVATE_PACKET_TYPE = ['RE', 'WE', 'UE', 'LE', 'SR']
-INPUT_PACKETS = ['gA', 'gB', 'gP', 'sC', 'uP', 'uB',
+INPUT_PACKETS = ['pG', 'gV', 'gA', 'gB', 'gP', 'sC', 'uP', 'uB',
                  'rD', '\x15\x15', '\x00\x00',
                  'JI', 'JA', 'WA',
                  'RE', 'WE', 'UE', 'LE', 'SR']
@@ -68,6 +68,14 @@ class UartMessageParser(EventBase):
                 self.frame = MSG_HEADER[:]  # header_tp.copy()
                 self.find_header = True
 
+    def get_packet_info(self, raw_command):
+        packet_type, payload, _ = helper.parse_command_packet(raw_command)
+        return {
+            'packet_type': packet_type,
+            'data': payload,
+            'raw': raw_command
+        }
+
     def _parse_message(self, packet_type, payload_len, payload):
         # parse interactive commands
         is_interactive_cmd = INPUT_PACKETS.__contains__(packet_type)
@@ -78,9 +86,7 @@ class UartMessageParser(EventBase):
             self._parse_output_packet(packet_type, payload_len, payload)
 
     def _parse_input_packet(self, packet_type, payload_len, payload):
-        # print(packet_type, payload, payload_len)
         payload_parser = match_command_handler(packet_type)
-
         if payload_parser:
             data, error = payload_parser(
                 payload, self.properties['userConfiguration'])
@@ -90,7 +96,8 @@ class UartMessageParser(EventBase):
                       data=data,
                       error=error)
         else:
-            print('[Warning] Unsupported command {0}'.format(packet_type))
+            print('[Warning] Unsupported command {0}'.format(
+                packet_type.encode()))
 
     def _parse_output_packet(self, packet_type, payload_len, payload):
         # check if it is the valid out packet

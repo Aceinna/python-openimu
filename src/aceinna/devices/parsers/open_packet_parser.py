@@ -1,9 +1,26 @@
+import sys
 import struct
 import collections
 from .open_field_parser import decode_value
 # from .dmu_field_parser import decode_value
 
 # input packet
+
+
+def string_parser(payload, user_configuration):
+    error = False
+    data = ''
+    try:
+        if sys.version_info < (3, 0):
+            data = str(struct.pack(
+                '{0}B'.format(len(payload)), *payload))
+        else:
+            data = str(struct.pack(
+                '{0}B'.format(len(payload)), *payload), 'utf-8')
+    except UnicodeDecodeError:
+        data = ''
+
+    return data, error
 
 
 def get_all_parameters_parser(payload, user_configuration):
@@ -126,16 +143,20 @@ def get_parameter_parser(payload, user_configuration):
     data = None
     error = False
     param_id = decode_value('uint32', payload[0:4])
-    param = filter(lambda item: item['paramId'] ==
-                   param_id, user_configuration)
 
-    try:
-        first_item = next(iter(param), None)
-        param_value = decode_value(
-            first_item['type'], payload[4:12])
-        data = {"paramId": param_id,
-                "name": first_item['name'], "value": param_value}
-    except StopIteration:
+    if param_id:
+        param = filter(lambda item: item['paramId'] ==
+                       param_id, user_configuration)
+
+        try:
+            first_item = next(iter(param), None)
+            param_value = decode_value(
+                first_item['type'], payload[4:12])
+            data = {"paramId": param_id,
+                    "name": first_item['name'], "value": param_value}
+        except StopIteration:
+            error = True
+    else:
         error = True
 
     return data, error
@@ -264,6 +285,8 @@ def match_command_handler(packet_type):
     Find the handler for specified packet
     '''
     parser_dict = {
+        'pG': string_parser,
+        'gV': string_parser,
         'gA': get_all_parameters_parser,
         'gB': get_parameters_by_block_parser,
         'gP': get_parameter_parser,

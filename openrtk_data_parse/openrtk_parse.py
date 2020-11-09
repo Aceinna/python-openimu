@@ -394,7 +394,6 @@ class ZouParse:
 			ulCRC = ulTemp1 ^ ulTemp2
 		return ulCRC
 
-
 class UserRawParse:
     def __init__(self, data_file, path):
         self.rawdata = []
@@ -415,10 +414,6 @@ class UserRawParse:
         self.nmea_buffer = []
         self.nmea_sync = 0
         self.log_files = {}
-
-        self.s1_time = 0.0
-        self.inspva_time = 0.0
-        self.std1_time = 0.0
 
         with open('openrtk_packets.json') as json_data:
             self.rtk_properties = json.load(json_data)
@@ -495,37 +490,17 @@ class UserRawParse:
             self.log_files[output['name']] = open(self.path + output['name'] + '.csv', 'w')
             self.write_titlebar(self.log_files[output['name']], output)
 
-
-    def log(self, name, data):
-        if name == 's1':
-            for i in range(len(data)):
-                if i == 1:
-                    self.log_files[name].write(format((data[i]), '11.4f'))
-                    # if self.s1_time != 0.0:
-                    #     if float(data[i]) - self.s1_time > 0.01001:
-                    #         print('S1 timeout: {0}'.format(float(data[i])))
-                    self.s1_time = float(data[i])
-                elif i >= 2 and i <= 4:
-                    self.log_files[name].write(format(data[i], '14.10f'))
-                elif i >= 5 and i <= 7:
-                    self.log_files[name].write(format(data[i], '14.10f'))
-                elif i == 8:
-                    self.log_files[name].write(format(data[i], '14.10f'))
-                else:
-                    self.log_files[name].write(data[i].__str__())
-                if i < len(data)-1:
-                    self.log_files[name].write(",")
-            self.log_files[name].write("\n")
-        else:
-            for i in range(len(data)):
-                self.log_files[name].write(data[i].__str__())
+    def log(self, output, data):
+        name = output['name']
+        payload = output['payload']
+        for i in range(len(data)):
+            if i == 1:
+                self.log_files[name].write(format(data[i]/1000, payload[i]['format']))
+            else:
+                self.log_files[name].write(format(data[i], payload[i]['format']))
+            if i < len(data)-1:
                 self.log_files[name].write(",")
-            self.log_files[name].write("\n")
-            if name == 'iN':
-                # if self.inspva_time != 0.0:
-                #     if float(data[1]) - self.inspva_time > 0.01001:
-                #         print('inspva timeout: {0}'.format(float(data[1])))
-                self.inspva_time = float(data[1])
+        self.log_files[name].write("\n")
 
     def parse_output_packet_payload(self, packet_type):
         payload_lenth = self.packet_buffer[2]
@@ -585,14 +560,14 @@ class UserRawParse:
                 try:
                     b = struct.pack(len_fmt, *payload_c)
                     data = struct.unpack(pack_fmt, b)
-                    self.log(output['name'], data)
+                    self.log(output, data)
                 except Exception as e:
                     print("error happened when decode the payload {0}".format(e))
         else:
             try:
                 b = struct.pack(len_fmt, *payload)
                 data = struct.unpack(pack_fmt, b)
-                self.log(output['name'], data)
+                self.log(output, data)
             except Exception as e:
                 print("error happened when decode the payload, pls restart IMU firmware: {0}".format(e))    
     

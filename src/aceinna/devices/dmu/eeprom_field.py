@@ -51,11 +51,11 @@ class ProductConfigurationField(EEPROMField):
         bit_value = bytes2binstr(bytes_value)
 
         parsed_value = {
-            'mags':int(bit_value[-1]),
-            'gps':int(bit_value[-2]),
-            'algorithm':int(bit_value[-3]),
-            'ext_aiding':int(bit_value[-4]),
-            'architechture':int(bit_value[-8:-4], 2)
+            'mags': int(bit_value[-1]),
+            'gps': int(bit_value[-2]),
+            'algorithm': int(bit_value[-3]),
+            'ext_aiding': int(bit_value[-4]),
+            'architechture': int(bit_value[-8:-4], 2)
         }
 
         return parsed_value, True, None

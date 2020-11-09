@@ -16,7 +16,7 @@ class UpgradeCenter(EventBase):
 
     def register(self, worker):
         worker_key = 'worker-' + str(len(self.workers))
-        worker.set_key(worker_key)
+        worker.key = worker_key
         self.workers[worker_key] = {'executor': worker, 'current': 0}
         self.total += worker.get_upgrade_content_size()
 
@@ -34,6 +34,13 @@ class UpgradeCenter(EventBase):
             thead = threading.Thread(
                 target=self.thread_start_worker, args=(executor,))
             thead.start()
+        return True
+
+    def stop(self):
+        for worker in self.workers.values():
+            worker['executor'].stop()
+
+        self.is_processing = False
 
     def thread_start_worker(self, executor):
         executor.on('progress', self.handle_worker_progress)

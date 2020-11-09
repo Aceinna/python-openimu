@@ -56,7 +56,6 @@ class UartMessageParser(EventBase):
                     self.payload_len = 0
                     self.sync_pattern = collections.deque(2*[0], 2)
                 else:
-                    print()
                     APP_CONTEXT.get_logger().logger.info(
                         "crc check error! packet_type:{0}".format(packet_type))
                     input_packet_config = next(
@@ -71,6 +70,14 @@ class UartMessageParser(EventBase):
             if operator.eq(list(self.sync_pattern), MSG_HEADER):
                 self.frame = MSG_HEADER[:]  # header_tp.copy()
                 self.find_header = True
+
+    def get_packet_info(self, raw_command):
+        packet_type, payload, _ = helper.parse_command_packet(raw_command)
+        return {
+            'packet_type': packet_type,
+            'data': payload,
+            'raw': raw_command
+        }
 
     def _parse_message(self, packet_type, payload_len, payload):
         # parse interactive commands

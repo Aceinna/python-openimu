@@ -10,7 +10,7 @@ import struct
 from azure.storage.blob import BlockBlobService
 from ...framework.utils import helper
 from ...framework.utils import resource
-from ..base.uart_base import OpenDeviceBase
+from ..base import OpenDeviceBase
 from ..configs.openimu_predefine import (
     APP_STR, get_app_names
 )
@@ -74,47 +74,19 @@ class Provider(OpenDeviceBase):
                 with open(app_name_config_path, "wb") as code:
                     code.write(app_config_content)
 
-    def ping(self):
-        '''
-        Check if the connected device is OpenIMU
-        '''
-        # print('start to check if it is openimu')
-        device_info_text = self.internal_input_command('pG')
-        app_info_text = self.internal_input_command('gV')
-
-        # TODO: Prevent action. Get app info again,
-        # if cannot retrieve any info at the first time of ping. Should find the root cause.
-        if app_info_text == '':
-            app_info_text = self.internal_input_command('gV')
-
-        APP_CONTEXT.get_logger().logger.debug('Checking if is OpenIMU device...')
-        APP_CONTEXT.get_logger().logger.debug(
-            'Device: {0}'.format(device_info_text))
-        APP_CONTEXT.get_logger().logger.debug(
-            'Firmware: {0}'.format(app_info_text))
-
-        if device_info_text.find('OpenIMU') > -1 and \
-                device_info_text.find('OpenRTK') == -1:
-            self._build_device_info(device_info_text)
-            self._build_app_info(app_info_text)
-            self.connected = True
-            print('# Connected Information #')
-            print('Device:', device_info_text)
-            print('Firmware:', app_info_text)
-            APP_CONTEXT.get_logger().logger.info(
-                'Connected {0}, {1}'.format(device_info_text, app_info_text))
-            return True
-        return False
-
-    def build_device_info(self, device_info, app_info):
+    def bind_device_info(self, device_access, device_info, app_info):
         self._build_device_info(device_info)
         self._build_app_info(app_info)
+        self.connected = True
+
+        return '# Connected {0} #\n\rDevice:{1} \n\rFirmware:{2}'\
+            .format('OpenIMU', device_info, app_info)
 
     def _build_device_info(self, text):
         '''
         Build device info
         '''
-        split_text = text.split(' ')
+        split_text = [x for x in text.split(' ') if x != '']
         split_len = len(split_text)
         pre_sn = split_text[3].split(':') if split_len == 4 else ''
         serial_num = pre_sn[1] if len(pre_sn) == 2 else ''
@@ -176,6 +148,9 @@ class Provider(OpenDeviceBase):
 
     def after_setup(self):
         pass
+
+    def after_bootloader_switch(self):
+        self.communicator.serial_port.baudrate = self.bootloader_baudrate
 
     def on_read_raw(self, data):
         pass
@@ -340,8 +315,16 @@ class Provider(OpenDeviceBase):
         '''
         Update paramter value
         '''
-        command_line = helper.build_input_packet(
-            'uP', properties=self.properties, param=params['paramId'], value=params['value'])
+        try:
+            command_line = helper.build_input_packet(
+                'uP', properties=self.properties, param=params['paramId'], value=params['value'])
+        except:
+            yield {
+                'packetType': 'error',
+                'data': {
+                    'error': params['paramId']
+                }
+            }
 
         result = yield self._message_center.build(command=command_line)
 
@@ -363,7 +346,7 @@ class Provider(OpenDeviceBase):
         }
 
     @with_device_message
-    def reset_params(self, params, *args):  # pylint: disable=unused-argument
+    def reset_params(self, *args):  # pylint: disable=unused-argument
         '''
         Reset params to default
         '''

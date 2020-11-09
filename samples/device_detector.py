@@ -16,11 +16,10 @@ def on_find_device(device):
     # start log
     device.start_data_log()
 
-    device._lock()
-    # print('Logging...')
-    # time.sleep(10)
+    print('Logging...')
+    time.sleep(10)
     # stop log
-    # device.stop_data_log()
+    device.stop_data_log()
     device.close()
 
 

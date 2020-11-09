@@ -1,5 +1,5 @@
 import time
-from ..base.event_base import EventBase
+from ..base.upgrade_worker_base import UpgradeWorkerBase
 
 
 XLDR_TESEO5_BOOTLOADER_CUT2 = \
@@ -703,7 +703,7 @@ CRC32_TAB = \
     ]
 
 
-class SDKUpgradeWorker(EventBase):
+class SDKUpgradeWorker(UpgradeWorkerBase):
     '''
     Upgrade tool for SDK of OpenRTK
     '''
@@ -712,8 +712,8 @@ class SDKUpgradeWorker(EventBase):
         super(SDKUpgradeWorker, self).__init__()
         self._uart = uart
         self._file_content = file_content
-        self._key = None
-        self._is_stopped = False
+        # self._key = None
+        # self._is_stopped = False
         # self._uart = None
 
     def _match(self, result, check_data):
@@ -1000,11 +1000,13 @@ class SDKUpgradeWorker(EventBase):
         self.emit('error', self._key, message)
         return False
 
-    def set_key(self, key):
-        self._key = key
-
-    def get_key(self):
+    @property
+    def key(self):
         return self._key
+
+    @key.setter
+    def key(self, value):
+        self._key = value
 
     def stop(self):
         self._is_stopped = True

@@ -54,6 +54,7 @@
     ],
     "scaling":{
         "accel":"20*9.80665/65536",
+        "angle":"360/65536",
         "rate":"1260/65536",
         "mag":"2/65536",
         "temperature":"200/65536",
@@ -254,7 +255,7 @@
 				"graphs": [{
 						"name": "Acceleration",
 						"units": "m/s^2",
-						"xAxis": "GPSITOW",
+						"xAxis": "time",
 						"yAxes": ["xAccel", "yAccel", "zAccel"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
 						"yMax": 80
@@ -262,7 +263,7 @@
 					{
 						"name": "Angular Rate",
 						"units": "deg/s",
-						"xAxis": "GPSITOW",
+						"xAxis": "time",
 						"yAxes": ["xRate", "yRate", "zRate"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
 						"yMax": 400
@@ -270,7 +271,7 @@
 					{
 						"name": "Magnetic-Field",
 						"units": "Gauss",
-						"xAxis": "GPSITOW",
+						"xAxis": "time",
 						"yAxes": ["xMag", "yMag", "zMag"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
 						"yMax": 20
@@ -278,7 +279,7 @@
                     {
 						"name": "Board-Temperature",
 						"units": "degC",
-						"xAxis": "GPSITOW",
+						"xAxis": "time",
 						"yAxes": ["boardTemp"],
 						"colors": ["#FF0000"],
 						"yMax": 100
@@ -375,7 +376,7 @@
 				"graphs": [{
 						"name": "Acceleration",
 						"units": "m/s^2",
-						"xAxis": {"name":"counter","unit":"packets"},
+						"xAxis": {"name":"time","unit":"packets"},
 						"yAxes": ["xAccel", "yAccel", "zAccel"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
 						"yMax": 5
@@ -383,7 +384,7 @@
 					{
 						"name": "Angular-Rate",
 						"units": "deg/s",
-						"xAxis": {"name":"counter","unit":"packets"},
+						"xAxis": {"name":"time","unit":"packets"},
 						"yAxes": ["xRate", "yRate", "zRate"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
 						"yMax": 200
@@ -391,13 +392,258 @@
 					{
 						"name": "Board-Temperature",
 						"units": "degC",
-						"xAxis": {"name":"counter","unit":"packets"},
+						"xAxis": {"name":"time","unit":"packets"},
 						"yAxes": ["boardTemp"],
 						"colors": ["#FF0000"],
 						"yMax": 100
 					}
 				]
-			}					
+            },
+            {
+				"name": "A1",
+				"description": "Angle Data Packet 1",
+				"payload": [
+                    {
+						"type": "int16",
+						"name": "rollAngle",
+                        "unit": "deg",
+                        "offset": "0",
+                        "scaling":"angle"
+					},
+					{
+						"type": "int16",
+						"name": "pitchAngle",
+                        "unit": "deg",
+                        "offset": "2",
+                        "scaling":"angle"
+					},
+					{
+						"type": "int16",
+						"name": "yawAngleMag",
+                        "unit": "deg",
+                        "offset": "4",
+                        "scaling":"angle"
+					},
+					{
+						"type": "int16",
+						"name": "xRateCorrected",
+                        "unit": "deg/s",
+                        "offset": "6",
+                        "scaling":"rate"
+					},
+					{
+						"type": "int16",
+						"name": "yRateCorrected",
+                        "unit": "deg/s",
+                        "offset": "8",
+                        "scaling":"rate"
+					},
+					{
+						"type": "int16",
+						"name": "zRateCorrected",
+                        "unit": "deg/s",
+                        "offset": "10",
+                        "scaling":"rate"
+					},
+                    {
+						"type": "int16",
+						"name": "xAccel",
+                        "unit": "m/s^2",
+                        "offset": "12",
+                        "scaling":"accel"
+					},
+					{
+						"type": "int16",
+						"name": "yAccel",
+                        "unit": "m/s^2",
+                        "offset": "14",
+                        "scaling":"accel"
+					},
+					{
+						"type": "int16",
+						"name": "zAccel",
+                        "unit": "m/s^2",
+                        "offset": "16",
+                        "scaling":"accel"
+                    },
+                    {
+						"type": "int16",
+						"name": "xMag",
+                        "unit": "Gauss",
+                        "offset": "18",
+                        "scaling":"mag"
+                    },
+                    {
+						"type": "uint16",
+						"name": "yMag",
+                        "unit": "Gauss",
+                        "offset": "20",
+                        "scaling":"mag"
+                    },
+                    {
+						"type": "uint16",
+						"name": "zMag",
+                        "unit": "Gauss",
+                        "offset": "22",
+                        "scaling":"mag"
+                    },
+                    {
+						"type": "uint16",
+						"name": "xRateTemp",
+                        "unit": "deg",
+                        "offset": "24",
+                        "scaling":"temperature"
+                    },
+                    {
+						"type": "uint32",
+						"name": "timeITOW",
+                        "unit": "ms",
+                        "offset": "26"
+                    },
+                    {
+						"type": "uint16",
+						"name": "BITstatus",
+                        "unit": "",
+                        "offset": "30"
+					}
+				],
+				"graphs": [{
+						"name": "Acceleration",
+						"units": "m/s^2",
+						"xAxis": {"name":"time","unit":"msec"},
+						"yAxes": ["xAccel", "yAccel", "zAccel"],
+						"colors": ["#FF0000", "#00FF00", "#0000FF"],
+						"yMax": 5
+					},
+					{
+						"name": "Angular-Rate",
+						"units": "deg/s",
+						"xAxis": {"name":"time","unit":"msec"},
+						"yAxes": ["xRateCorrected", "yRateCorrected", "zRateCorrected"],
+						"colors": ["#FF0000", "#00FF00", "#0000FF"],
+						"yMax": 200
+					}
+				]
+            },
+            {
+				"name": "A2",
+				"description": "IMU Scaled-Sensor Output Message",
+				"payload": [
+                    {
+						"type": "int16",
+						"name": "rollAngle",
+                        "unit": "deg",
+                        "offset": "0",
+                        "scaling":"angle"
+					},
+					{
+						"type": "int16",
+						"name": "pitchAngle",
+                        "unit": "deg",
+                        "offset": "2",
+                        "scaling":"angle"
+					},
+					{
+						"type": "int16",
+						"name": "yawAngleMag",
+                        "unit": "deg",
+                        "offset": "4",
+                        "scaling":"angle"
+					},
+					{
+						"type": "int16",
+						"name": "xRateCorrected",
+                        "unit": "deg/s",
+                        "offset": "6",
+                        "scaling":"rate"
+					},
+					{
+						"type": "int16",
+						"name": "yRateCorrected",
+                        "unit": "deg/s",
+                        "offset": "8",
+                        "scaling":"rate"
+					},
+					{
+						"type": "int16",
+						"name": "zRateCorrected",
+                        "unit": "deg/s",
+                        "offset": "10",
+                        "scaling":"rate"
+					},
+                    {
+						"type": "int16",
+						"name": "xAccel",
+                        "unit": "m/s^2",
+                        "offset": "12",
+                        "scaling":"accel"
+					},
+					{
+						"type": "int16",
+						"name": "yAccel",
+                        "unit": "m/s^2",
+                        "offset": "14",
+                        "scaling":"accel"
+					},
+					{
+						"type": "int16",
+						"name": "zAccel",
+                        "unit": "m/s^2",
+                        "offset": "16",
+                        "scaling":"accel"
+                    },
+                    {
+						"type": "int16",
+						"name": "xRateTemp",
+                        "unit": "deg",
+                        "offset": "18",
+                        "scaling":"temperature"
+                    },
+                    {
+						"type": "uint16",
+						"name": "yRatetemp",
+                        "unit": "deg",
+                        "offset": "20",
+                        "scaling":"temperature"
+                    },
+                    {
+						"type": "uint16",
+						"name": "zRateTemp",
+                        "unit": "deg",
+                        "offset": "22",
+                        "scaling":"temperature"
+                    },
+                    {
+						"type": "uint32",
+						"name": "timeITOW",
+                        "unit": "ms",
+                        "offset": "24"
+                    },
+                    {
+						"type": "uint16",
+						"name": "BITstatus",
+                        "unit": "",
+                        "offset": "28"
+					}
+				],
+				"graphs": [{
+						"name": "Acceleration",
+						"units": "m/s^2",
+						"xAxis": {"name":"time","unit":"msec"},
+						"yAxes": ["xAccel", "yAccel", "zAccel"],
+						"colors": ["#FF0000", "#00FF00", "#0000FF"],
+						"yMax": 5
+					},
+					{
+						"name": "Angular-Rate",
+						"units": "deg/s",
+						"xAxis": {"name":"time","unit":"msec"},
+						"yAxes": ["xRateCorrected", "yRateCorrected", "zRateCorrected"],
+						"colors": ["#FF0000", "#00FF00", "#0000FF"],
+						"yMax": 200
+					}
+				]
+			}		
 		]
 	},
 	"bootloaderMessages": [{

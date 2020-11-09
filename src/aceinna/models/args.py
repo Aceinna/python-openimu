@@ -4,10 +4,10 @@ class KeyValuesArgumentBase(object):
     '''
     default_values = {}
 
-    def __init__(self, **kwargs):
+    def __init__(self, **options):
         keys = self.default_values.keys()
         for key in keys:
-            value = self._prepare_value(kwargs, key)
+            value = self._prepare_value(options, key)
             setattr(self, key, value)
 
     def _prepare_value(self, input_args, key):
@@ -30,6 +30,7 @@ class WebserverArgs(KeyValuesArgumentBase):
     Argument define for start webserver
     '''
     default_values = {
+        'protocol': 'uart',
         'device_type': 'auto',
         'port': 'auto',
         'baudrate': 'auto',

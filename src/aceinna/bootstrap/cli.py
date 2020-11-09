@@ -84,12 +84,15 @@ class CommandLine:
         self.exit_handler()
         return True
 
-    def start_webserver(self):
+    def start_webserver(self, current_loop):
         '''
         Start websocket server
         '''
         # asyncio.set_event_loop(asyncio.new_event_loop())
-        self.webserver.start_webserver()
+        self.webserver.start_webserver(current_loop)
+
+        if not current_loop.is_running():
+            current_loop.run_forever()
 
     def _build_options(self, **kwargs):
         self.options = WebserverArgs(**kwargs)
@@ -140,7 +143,7 @@ class CommandLine:
             self.device_provider.stop_data_log()
 
         if self.webserver_running:
-            self.webserver.stop()
+            self.webserver.stop_ws_server()
             self.webserver_running = False
         return True
 
@@ -248,7 +251,7 @@ class CommandLine:
             'value': self.input_string[2]
         })
 
-        #TODO: display a response message to user
+        # TODO: display a response message to user
 
         return True
 
@@ -264,7 +267,9 @@ class CommandLine:
         start a websocket server
         '''
         # self.webserver.start_websocket_server()
-        webserver_thread = threading.Thread(target=self.start_webserver)
+        loop = asyncio.get_event_loop()
+        webserver_thread = threading.Thread(
+            target=self.start_webserver, args=(loop,))
         webserver_thread.start()
         self.webserver_running = True
         return True
@@ -273,8 +278,8 @@ class CommandLine:
         '''
         Exit current process
         '''
-        self.webserver.stop()
-        self.webserver_running = False
+        # self.webserver.stop()
+        #self.webserver_running = False
         pid = getpid()
         process = psutil.Process(pid)
         process.kill()

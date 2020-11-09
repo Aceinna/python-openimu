@@ -8,8 +8,9 @@ class ParserManager:
     '''
     device_list = []
 
+    # TODO: communicator_type should be used to generate the parser
     @staticmethod
-    def build(device_type, properties):
+    def build(device_type, communicator_type, properties):  # pylint:disable=unused-argument
         '''
         Generate matched parser
         '''

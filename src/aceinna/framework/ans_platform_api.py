@@ -65,3 +65,17 @@ class AnsPlatformAPI:
         except Exception as ex:
             # TODO: use logger
             print('Exception when log device connection to db:', ex)
+
+    def save_record_log(self, data):
+        ''' save record log
+        '''
+        try:
+            url = self.host_url + "api/recordLogs/post"
+            data_json = json.dumps(data)
+            headers = {'Content-type': 'application/json',
+                       'Authorization': self.access_token}
+            response = requests.post(url, data=data_json, headers=headers)
+            return True if 'success' in response.json() else False
+        except Exception as ex:
+            # TODO: use logger
+            print('Exception when save record log:', ex)

@@ -3,7 +3,6 @@ import os
 import sys
 import threading
 import uuid
-import collections
 import time
 import struct
 import traceback
@@ -38,8 +37,6 @@ class OpenDeviceBase(EventBase):
         self.exit_thread = False
         self.data_lock = threading.Lock()
         self.clients = []
-        self.input_result = None
-        self.bootloader_result = None
         self.is_streaming = False
         self.has_running_checker = False
         self.has_backup_checker = False
@@ -74,6 +71,12 @@ class OpenDeviceBase(EventBase):
     def after_setup(self):
         '''
         Do some operations after setup
+        '''
+
+    @abstractmethod
+    def after_bootloader_switch(self):
+        '''
+        Do some opertions after bootloader is switched
         '''
 
     @abstractmethod
@@ -126,27 +129,22 @@ class OpenDeviceBase(EventBase):
         '''
         Get data from limit times of read
         '''
-        return helper.read_untils_have_data_through_serial_port(self.communicator, packet_type, read_length, retry_times)
+        return helper.read_untils_have_data(self.communicator, packet_type, read_length, retry_times)
 
     def _setup_message_center(self):
         if not self._message_center:
             self._message_center = DeviceMessageCenter(self.communicator)
 
         if not self._message_center.is_ready():
-            uart_parser = ParserManager.build(self.type, self.properties)
-            self._message_center.set_parser(uart_parser)
-            self._message_center.on(
-                'continuous_message',
-                self.on_receive_continuous_messsage
-            )
-            self._message_center.on(
-                'error',
-                self.on_recevie_message_center_error
-            )
-            self._message_center.on(
-                'read_block',
-                self.on_read_raw
-            )
+            parser = ParserManager.build(
+                self.type, self.communicator.type, self.properties)
+            self._message_center.set_parser(parser)
+            self._message_center.on('continuous_message',
+                                    self.on_receive_continuous_messsage)
+            self._message_center.on('error',
+                                    self.on_recevie_message_center_error)
+            self._message_center.on('read_block',
+                                    self.on_read_raw)
             self._message_center.setup()
         else:
             self._message_center.get_parser().set_configuration(self.properties)
@@ -227,8 +225,6 @@ class OpenDeviceBase(EventBase):
         self.clients.remove(client)
 
     def _reset_client(self):
-        self.input_result = None
-        self.bootloader_result = None
         self.is_streaming = False
         self.is_upgrading = False
 
@@ -303,7 +299,7 @@ class OpenDeviceBase(EventBase):
         firmware_content = None
         if not os.path.exists(upgarde_root):
             os.makedirs(upgarde_root)
-        
+
         del_list = os.listdir(upgarde_root)
         for f in del_list:
             file_path = os.path.join(upgarde_root, f)
@@ -351,7 +347,8 @@ class OpenDeviceBase(EventBase):
             time.sleep(3)
             # It is used to skip streaming data with size 1000 per read
             self.read_untils_have_data('JI', 1000, 50)
-            self.communicator.serial_port.baudrate = self.bootloader_baudrate
+            # A hook after bootloader is switched
+            self.after_bootloader_switch()
             return True
         except Exception as ex:  # pylint:disable=broad-except
             print('bootloader exception', ex)
@@ -361,8 +358,6 @@ class OpenDeviceBase(EventBase):
         '''
         Actions after upgrade complete
         '''
-        self.input_result = None
-        self.bootloader_result = None
         # self.data_queue.queue.clear()
         self.is_upgrading = False
 
@@ -422,6 +417,11 @@ class OpenDeviceBase(EventBase):
         self.restart()
 
     def connect_log(self, params):
+        if resource.is_dev_mode():
+            return {
+                'packetType': 'success'
+            }
+
         access_token = params['token']
         device_info = self.get_device_connection_info()
 
@@ -429,7 +429,7 @@ class OpenDeviceBase(EventBase):
         self.ans_platform.log_device_connection(
             sessionId=self.sessionId,
             device_info=device_info)
-        
+
         return {
             'packetType': 'success'
         }

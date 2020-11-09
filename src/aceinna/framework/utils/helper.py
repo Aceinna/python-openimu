@@ -184,6 +184,24 @@ def block_payload(data_len, addr, data):
     return data_bytes
 
 
+def parse_command_packet(raw_command):
+    packet_type = ''
+    payload = []
+    error = False
+
+    raw_command_start = raw_command[0:2]
+    raw_packet_type = raw_command[2:4]
+
+    if COMMAND_START == raw_command_start:
+        packet_type = bytes(raw_packet_type).decode()
+        payload_len = raw_command[4]  # struct.unpack('b', data[4])[0]
+        payload = raw_command[5:payload_len+5]
+    else:
+        error = True
+
+    return packet_type, payload, error
+
+
 def calc_crc(payload):
     '''
     Calculates 16-bit CRC-CCITT
@@ -318,7 +336,7 @@ def _parse_buffer(data_buffer):
     return response
 
 
-def read_untils_have_data_through_serial_port(communicator, packet_type, read_length=200, retry_times=20):
+def read_untils_have_data(communicator, packet_type, read_length=200, retry_times=20):
     '''
     Get data from limit times of read
     '''
@@ -327,8 +345,13 @@ def read_untils_have_data_through_serial_port(communicator, packet_type, read_le
     data_buffer = []
 
     while trys < retry_times:
-        data_buffer_per_time = bytearray(
-            communicator.read(read_length))
+        read_data = communicator.read(read_length)
+
+        if read_data is None:
+            trys += 1
+            continue
+
+        data_buffer_per_time = bytearray(read_data)
         data_buffer.extend(data_buffer_per_time)
 
         response = _parse_buffer(data_buffer)

@@ -5,22 +5,17 @@ import sys
 import os
 import time
 import json
+import socket
+import threading
 import serial
 import serial.tools.list_ports
-import threading
 from ..devices import DeviceManager
 from .constants import BAUDRATE_LIST
 from .context import APP_CONTEXT
 from .utils.resource import (
     get_executor_path
 )
-if sys.version_info[0] > 2:
-    from queue import Queue
-else:
-    from Queue import Queue
-
-import inspect
-import ctypes
+from .wrapper import SocketConnWrapper
 
 
 class CommunicatorFactory:
@@ -34,8 +29,8 @@ class CommunicatorFactory:
         '''
         if method == 'uart':
             return SerialPort(options)
-        elif method == 'spi':
-            return SPI(options)
+        elif method == 'lan':
+            return LAN(options)
         else:
             raise Exception('no matched communicator')
 
@@ -85,11 +80,12 @@ class Communicator(object):
         '''
         validate the connected device
         '''
-        device = DeviceManager.ping_with_port(self, *args)
+        device = DeviceManager.ping(self, *args)
         if device != None and self.device == None:
             self.device = device
             return True
         return False
+
 
 class StoppableThread(threading.Thread):
 
@@ -123,6 +119,8 @@ class SerialPort(Communicator):
         self.com_port_assigned = False
         self.filter_device_type = None
         self.filter_device_type_assigned = False
+        self._is_close = False
+        self._connection_history = None
 
         if options and options.baudrate != 'auto':
             self.baudrate_list = [options.baudrate]
@@ -138,6 +136,7 @@ class SerialPort(Communicator):
         ''' Finds active ports and then autobauds units
         '''
         self.device = None
+        self._is_close = False
         if self.com_port_assigned:
             # find device by assigned port
             self.autobaud([self.com_port])
@@ -149,9 +148,11 @@ class SerialPort(Communicator):
                     \n2. The device response incorrect format of device info and app info.'.format(self.com_port))
         else:
             while self.device is None:
+                if self._is_close == True:
+                    return
+
                 if self.try_last_port():
                     break
-
                 num_ports = self.find_ports()
                 self.autobaud(num_ports)
                 time.sleep(0.5)
@@ -188,6 +189,11 @@ class SerialPort(Communicator):
         # for port in ports:
         serial_port = None
         for port in ports:
+            if self.try_from_history(port):
+                for td in self.threadList:
+                    td.stop()
+                return True
+
             for baud in self.baudrate_list:
                 # print("try {0}:{1}".format(port, baud))
                 APP_CONTEXT.get_logger().logger.info(
@@ -207,8 +213,8 @@ class SerialPort(Communicator):
                     return False
 
                 if serial_port is not None and serial_port.isOpen():
-                    ret = self.confirm_device(port, serial_port, self.filter_device_type)
-
+                    ret = self.confirm_device(
+                        serial_port, self.filter_device_type)
                     if not ret:
                         serial_port.close()
                         time.sleep(0.1)
@@ -220,7 +226,11 @@ class SerialPort(Communicator):
                         continue
                     else:
                         self.serial_port = serial_port
-                        self.save_last_port()
+                        self.update_connection_history({
+                            'port': serial_port.port,
+                            'baud': serial_port.baudrate,
+                            'device_type': self.device.type
+                        })
                         # Assume max_len of a frame is less than 300 bytes.
                         for td in self.threadList:
                             td.stop()
@@ -239,11 +249,10 @@ class SerialPort(Communicator):
         APP_CONTEXT.get_logger().logger.info('start to connect serial port')
 
         # print('find ports: {0}'.format(ports))
-        DeviceManager.reset_ping()
         thread_num = (len(ports) if (len(ports) < 4) else 4)
         ports_list = [[] for i in range(thread_num)]
         for i, port in enumerate(ports):
-            ports_list[i%thread_num].append(port)
+            ports_list[i % thread_num].append(port)
 
         for i in range(thread_num):
             # print('{0} {1}'.format(i, ports_list[i]))
@@ -254,6 +263,9 @@ class SerialPort(Communicator):
             self.threadList.append(t)
 
         while self.device is None:
+            if self._is_close == True:
+                return
+
             is_threads_stop = True
             for td in self.threadList:
                 if not td.stopped():
@@ -272,28 +284,42 @@ class SerialPort(Communicator):
            returns: True if find header
                     False if not find header.
         '''
-        connection = None
+        parsed_json = None
         try:
             if not os.path.isfile(self.connection_file_path):
                 return False
 
+            # if self._connection_history is None:
             with open(self.connection_file_path) as json_data:
-                connection = json.load(json_data)
-            connection['baud'] = self.baudrate_list[0] if self.baudrate_assigned \
-                else connection['baud']
-            APP_CONTEXT.get_logger().logger.info('try to use last connected port {} {}'.format(
-                connection['port'], connection['baud']))
-            if connection:
-                self.open_serial_port(
-                    port=connection['port'], baud=connection['baud'], timeout=0.1)
+                parsed_json = json.load(json_data)
+
+            if not self._is_valid_connection_history(parsed_json):
+                return False
+
+            self._connection_history = parsed_json
+
+            last_connection_index = self._connection_history['last']
+            last_connection = self._connection_history['history'][last_connection_index]
+
+            if last_connection:
+                port = last_connection['port']
+                baud_rate = self.baudrate_list[0] if self.baudrate_assigned \
+                    else last_connection['baud']
+                device_type = self.filter_device_type if self.filter_device_type_assigned \
+                    else last_connection['device_type']
+
+                APP_CONTEXT.get_logger().logger.info(
+                    'try to use last connected port {} {}'.format(port, baud_rate))
+
+                self.open_serial_port(port=port, baud=baud_rate, timeout=0.1)
+
                 if self.serial_port is not None:
-                    ret = self.confirm_device(connection['port'], self.serial_port, self.filter_device_type)
+                    ret = self.confirm_device(
+                        self.serial_port, device_type)
                     if not ret:
-                        self.close()
+                        self.serial_port.close()
                         return False
                     else:
-                        self.save_last_port()
-                        # Assume max_len of a frame is less than 300 bytes.
                         return True
                 else:
                     return False
@@ -301,24 +327,93 @@ class SerialPort(Communicator):
             print(ex)
             return False
 
-    def save_last_port(self):
-        '''
-        save connected port info
-        '''
+    def try_from_history(self, port):
+        APP_CONTEXT.get_logger().logger.info(
+            'try to use connected port {} in history'.format(port))
 
-        if not os.path.exists(self.setting_folder_path):
-            try:
-                os.mkdir(self.setting_folder_path)
-            except:
-                return
+        history_connection_index = self._find_port_in_connection_history(port)
 
-        connection = {"port": self.serial_port.port,
-                      "baud": self.serial_port.baudrate}
+        if history_connection_index == -1:
+            return False
+
+        history_connection = self._connection_history['history'][history_connection_index]
+        if history_connection:
+            port = history_connection['port']
+            baud_rate = self.baudrate_list[0] if self.baudrate_assigned \
+                    else history_connection['baud']
+            device_type = self.filter_device_type if self.filter_device_type_assigned \
+                    else history_connection['device_type']
+            # baud_rate = history_connection['baud']
+            # device_type = history_connection['device_type']
+            self.open_serial_port(port=port, baud=baud_rate, timeout=0.1)
+
+            if self.serial_port is not None:
+                ret = self.confirm_device(
+                    self.serial_port, device_type)
+                if ret:
+                    # update connection history
+                    self.update_connection_history(
+                        history_connection, history_connection_index)
+                    return True
+                else:
+                    self.serial_port.close()
+                    return False
+        return False
+
+    def update_connection_history(self, connection, index=None):
+        if self._connection_history is None:
+            self._connection_history = {'history': []}
+
+        if index is None:
+            index = self._find_port_in_connection_history(connection['port'])
+
+        # query connection with port
+        # if found update, else append new one
+        if index > -1:
+            self._connection_history['last'] = index
+            self._connection_history['history'][index] = connection
+        elif index == -1:
+            self._connection_history['history'].append(connection)
+            self._connection_history['last'] = len(
+                self._connection_history['history'])-1
+
         try:
             with open(self.connection_file_path, 'w') as outfile:
-                json.dump(connection, outfile)
+                json.dump(self._connection_history, outfile)
         except:
             pass
+
+    def _is_valid_connection_history(self, parsed_json):
+        return parsed_json.__contains__('last') and parsed_json.__contains__('history')
+
+    def _find_port_in_connection_history(self, port):
+        exist_index = -1
+        if self._connection_history:
+            for index, connection in enumerate(self._connection_history['history']):
+                if connection['port'] == port:
+                    exist_index = index
+                    break
+
+        return exist_index
+
+        # def save_last_port(self, connection_info):
+        #     '''
+        #     save connected port info
+        #     '''
+
+        #     if not os.path.exists(self.setting_folder_path):
+        #         try:
+        #             os.mkdir(self.setting_folder_path)
+        #         except:
+        #             return
+
+        #     connection = {"port": self.serial_port.port,
+        #                   "baud": self.serial_port.baudrate}
+        #     try:
+        #         with open(self.connection_file_path, 'w') as outfile:
+        #             json.dump(connection, outfile)
+        #     except:
+        #         pass
 
     def open_serial_port(self, port=None, baud=115200, timeout=0.1):
         ''' open serial port
@@ -383,6 +478,7 @@ class SerialPort(Communicator):
         return self.open_serial_port(port, baud, timeout=0.1)
 
     def close(self):
+        self._is_close = True
         return self.close_serial_port()
 
     def reset_buffer(self):
@@ -393,9 +489,125 @@ class SerialPort(Communicator):
         self.serial_port.flushOutput()
 
 
-class SPI(Communicator):
-    '''SPI'''
+class LAN(Communicator):
+    '''LAN'''
 
     def __init__(self, options=None):
         super().__init__()
-        self.type = 'spi'
+        self.type = 'lan'
+        self.host = '192.168.137.1'  # TODO: predefined or configured?
+        self.port = 2203  # TODO: predefined or configured?
+
+        self.sock = None
+        self.device_conn = None
+        self.filter_device_type = None
+        self.filter_device_type_assigned = False
+
+        if options and options.device_type != 'auto':
+            self.filter_device_type = options.device_type
+            self.filter_device_type_assigned = True
+
+    def find_device(self, callback):
+        self.device = None
+
+        # find client by hostname
+        self.find_client_by_hostname('OPENRTK')
+
+        # establish TCP Server
+        self.open()
+
+        # wait for client
+        conn, addr = self.sock.accept()
+        self.device_conn = SocketConnWrapper(conn)
+
+        # read the greeting message, and send feedback
+        conn.recv(1024)
+        conn.send('i am pc'.encode())
+
+        # confirm device
+        self.confirm_device(self.device_conn)
+
+        if self.device:
+            callback(self.device)
+
+    def open(self):
+        '''
+        open
+        '''
+        if self.sock:
+            return True
+
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            self.sock.bind((self.host, self.port))
+            self.sock.listen(5)
+            return True
+        except socket.error:
+            self.sock = None
+            raise
+        except socket.timeout as e:
+            print(e)
+        except Exception as e:
+            self.sock = None
+            raise
+
+    def close(self):
+        '''
+        close
+        '''
+        if self.sock:
+            self.sock.close()
+            self.sock = None
+
+    def write(self, data, is_flush=False):
+        '''
+        write
+        '''
+        try:
+            if self.device_conn:
+                return self.device_conn.write(data)
+        except socket.error:
+            print("socket error,do reconnect.")
+            raise
+        except Exception as e:
+            raise
+
+    def read(self, size=100):
+        '''
+        read
+        '''
+        try:
+            if self.device_conn is None:
+                raise Exception('Device is not connected.')
+            data = self.device_conn.read(size)
+
+            if not data:
+                raise socket.error('Device is connected.')
+            else:
+                return data
+        except socket.error as e:
+            print("socket error,do reconnect.")
+            raise
+        except Exception as e:
+            raise
+        except:
+            raise
+
+    def find_client_by_hostname(self, name):
+        is_find = False
+        try:
+            socket.gethostbyname(name)
+            is_find = True
+        except Exception:
+            is_find = False
+
+        # continue to find the client
+        if not is_find:
+            time.sleep(1)
+            self.find_client_by_hostname(name)
+
+    def reset_buffer(self):
+        '''
+        reset buffer
+        '''
+        pass

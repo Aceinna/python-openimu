@@ -5,6 +5,7 @@ import datetime
 import threading
 import math
 import re
+import collections
 import serial
 import serial.tools.list_ports
 from .ntrip_client import NTRIPClient
@@ -12,7 +13,7 @@ from ...framework.utils import (
     helper, resource
 )
 from ...framework.context import APP_CONTEXT
-from ..base.uart_base import OpenDeviceBase
+from ..base.provider_base import OpenDeviceBase
 from ..configs.openrtk_predefine import (
     APP_STR, get_app_names
 )
@@ -38,13 +39,14 @@ class Provider(OpenDeviceBase):
         self.server_update_rate = 100
         self.sky_data = []
         self.pS_data = []
+        self.ps_dic = collections.OrderedDict()
+        self.inspva_flag = 0
         self.bootloader_baudrate = 115200
         self.app_config_folder = ''
         self.device_info = None
         self.app_info = None
         self.parameters = None
         self.setting_folder_path = None
-        self.connection_file = None
         self.data_folder = None
         self.debug_serial_port = None
         self.rtcm_serial_port = None
@@ -74,9 +76,6 @@ class Provider(OpenDeviceBase):
             os.makedirs(data_folder_path)
         self.data_folder = data_folder_path
 
-        self.connection_file = os.path.join(
-            executor_path, setting_folder_name, 'connection.json')
-
         # copy contents of app_config under executor path
         self.setting_folder_path = os.path.join(
             executor_path, setting_folder_name, 'openrtk')
@@ -96,42 +95,21 @@ class Provider(OpenDeviceBase):
                 with open(app_name_config_path, "wb") as code:
                     code.write(app_config_content)
 
-    def ping(self):
-        '''
-        Check if the connected device is OpenRTK
-        '''
-        # print('start to check if it is openrtk')
-        device_info_text = self.internal_input_command('pG')
-        app_info_text = self.internal_input_command('gV')
-
-        APP_CONTEXT.get_logger().logger.debug('Checking if is OpenRTK device...')
-        APP_CONTEXT.get_logger().logger.debug(
-            'Device: {0}'.format(device_info_text))
-        APP_CONTEXT.get_logger().logger.debug(
-            'Firmware: {0}'.format(app_info_text))
-
-        if device_info_text.find('OpenRTK') > -1:
-            self._build_device_info(device_info_text)
-            self._build_app_info(app_info_text)
-            self.connected = True
-            print('# Connected Information #')
-            split_device_info = device_info_text.split(' ')
-            print('Device: {0} {1} {2} {3}'.format(split_device_info[0], split_device_info[2], split_device_info[3], split_device_info[4]))
-            print('APP version:', app_info_text)
-            APP_CONTEXT.get_logger().logger.info(
-                'Connected {0}, {1}'.format(device_info_text, app_info_text))
-            return True
-        return False
-
-    def build_device_info(self, device_info, app_info):
+    def bind_device_info(self, device_access, device_info, app_info):
         self._build_device_info(device_info)
         self._build_app_info(app_info)
+        self.connected = True
+
+        port_name = device_access.port
+
+        return '# Connected {0} with UART on {1} #\n\rDevice:{2} \n\rFirmware:{3}'\
+            .format('OpenRTK', port_name, device_info, app_info)
 
     def _build_device_info(self, text):
         '''
         Build device info
         '''
-        split_text = text.split(' ')
+        split_text = [x for x in text.split(' ') if x != '']
         sn = split_text[4]
         # remove the prefix of SN
         if sn.find('SN:') == 0:
@@ -187,13 +165,10 @@ class Provider(OpenDeviceBase):
         self.ntripClient.run()
 
     def build_connected_serial_port_info(self):
-        if not os.path.isfile(self.connection_file):
+        if not self.communicator.serial_port:
             return None, None
 
-        with open(self.connection_file) as json_data:
-            connection = json.load(json_data)
-
-        user_port = connection['port']
+        user_port = self.communicator.serial_port.port
         user_port_num = ''
         port_name = ''
         for i in range(len(user_port)-1, -1, -1):
@@ -273,7 +248,7 @@ class Provider(OpenDeviceBase):
                             file_name + '/' + 'rtcm_base_' + file_time + '.bin', "wb")
                     else:
                         self.debug_logf = open(
-                            file_name + '/' + 'debug_' + file_time + '.bin', "wb")
+                            file_name + '/' + 'rtcm_base_' + file_time + '.bin', "wb")
                     t = threading.Thread(
                         target=self.thread_debug_port_receiver, args=(file_name,))
                     t.start()
@@ -289,6 +264,9 @@ class Provider(OpenDeviceBase):
             self.rtcm_serial_port = None
             print(e)
             return False
+
+    def after_bootloader_switch(self):
+        self.communicator.serial_port.baudrate = self.bootloader_baudrate
 
     def nmea_checksum(self, data):
         data = data.replace("\r", "").replace("\n", "").replace("$", "")
@@ -320,8 +298,8 @@ class Provider(OpenDeviceBase):
                                     print()
                                     if self.ntrip_client_enable and self.ntripClient != None:
                                         self.ntripClient.send(str_nmea)
-                                print(str_nmea, end = '')
-                                
+                                print(str_nmea, end='')
+
                                 # else:
                                 #     print("nmea checksum wrong {0} {1}".format(cksum, calc_cksum))
                         except Exception as e:
@@ -339,7 +317,7 @@ class Provider(OpenDeviceBase):
 
         is_get_configuration = 0
         file_name = args[0]
-        self.debug_c_f = open(file_name + '/' + 'configuration.txt', "w")
+        self.debug_c_f = open(file_name + '/' + 'configuration.json', "w")
 
         while True:
             if is_get_configuration:
@@ -475,7 +453,7 @@ class Provider(OpenDeviceBase):
                             if data['GPS_TimeofWeek'] - self.pS_data['GPS_TimeofWeek'] >= 0.2:
                                 self.add_output_packet('stream', 'pos', data)
                                 self.pS_data = data
-                                
+
                                 if data['insStatus'] >= 3 and data['insStatus'] <= 5:
                                     ins_status = 'INS_INACTIVE'
                                     if data['insStatus'] == 3:
@@ -495,9 +473,9 @@ class Provider(OpenDeviceBase):
 
                                     inspva = '#INSPVA,%s,%10.2f, %s, %s,%12.8f,%13.8f,%8.3f,%9.3f,%9.3f,%9.3f,%9.3f,%9.3f,%9.3f' %\
                                         (data['GPS_Week'], data['GPS_TimeofWeek'], ins_status, ins_pos_type,
-                                        data['latitude'], data['longitude'], data['height'],
-                                        data['velocityNorth'], data['velocityEast'], data['velocityUp'],
-                                        data['roll'], data['pitch'], data['heading'])
+                                         data['latitude'], data['longitude'], data['height'],
+                                         data['velocityNorth'], data['velocityEast'], data['velocityUp'],
+                                         data['roll'], data['pitch'], data['heading'])
                                     print(inspva)
                         else:
                             self.add_output_packet('stream', 'pos', data)
@@ -521,6 +499,73 @@ class Provider(OpenDeviceBase):
             else:
                 self.sky_data.extend(data)
 
+        elif packet_type == 'g1':
+            self.ps_dic['positionMode'] = data['position_type']
+            self.ps_dic['numberOfSVs'] = data['number_of_satellites_in_solution']
+            self.ps_dic['hdop'] = data['hdop']
+            self.ps_dic['age'] = data['diffage']
+            if self.inspva_flag == 0:
+                self.ps_dic['GPS_Week'] = data['GPS_Week']
+                self.ps_dic['GPS_TimeofWeek'] = data['GPS_TimeOfWeek'] * 0.001
+                self.ps_dic['latitude'] = data['latitude']
+                self.ps_dic['longitude'] = data['longitude']
+                self.ps_dic['height'] = data['height']
+                self.ps_dic['velocityMode'] = 1
+                self.ps_dic['velocityNorth'] = data['north_vel']
+                self.ps_dic['velocityEast'] = data['east_vel']
+                self.ps_dic['velocityUp'] = data['up_vel']
+                self.ps_dic['latitude_std'] = data['latitude_standard_deviation']
+                self.ps_dic['longitude_std'] = data['longitude_standard_deviation']
+                self.ps_dic['height_std'] = data['height_standard_deviation']
+                self.ps_dic['north_vel_std'] = data['north_vel_standard_deviation']
+                self.ps_dic['east_vel_std'] = data['east_vel_standard_deviation']
+                self.ps_dic['up_vel_std'] = data['up_vel_standard_deviation']
+                self.add_output_packet('stream', 'pos', self.ps_dic)
+
+        elif packet_type == 'i1':
+            self.inspva_flag = 1
+            if data['GPS_TimeOfWeek'] % 200 == 0:
+                self.ps_dic['GPS_Week'] = data['GPS_Week']
+                self.ps_dic['GPS_TimeofWeek'] = data['GPS_TimeOfWeek'] * 0.001
+                self.ps_dic['latitude'] = data['latitude']
+                self.ps_dic['longitude'] = data['longitude']
+                self.ps_dic['height'] = data['height']
+                if data['ins_position_type'] != 1 and data['ins_position_type'] != 4 and data['ins_position_type'] != 5:
+                    self.ps_dic['velocityMode'] = 2
+                else:
+                    self.ps_dic['velocityMode'] = 1
+                self.ps_dic['insStatus'] = data['ins_status']
+                self.ps_dic['insPositionType'] = data['ins_position_type']
+                self.ps_dic['velocityNorth'] = data['north_velocity']
+                self.ps_dic['velocityEast'] = data['east_velocity']
+                self.ps_dic['velocityUp'] = data['up_velocity']
+                self.ps_dic['roll'] = data['roll']
+                self.ps_dic['pitch'] = data['pitch']
+                self.ps_dic['heading'] = data['heading']
+                self.ps_dic['latitude_std'] = data['latitude_std']
+                self.ps_dic['longitude_std'] = data['longitude_std']
+                self.ps_dic['height_std'] = data['height_std']
+                self.ps_dic['north_vel_std'] = data['north_velocity_std']
+                self.ps_dic['east_vel_std'] = data['east_velocity_std']
+                self.ps_dic['up_vel_std'] = data['up_velocity_std']
+                self.ps_dic['roll_std'] = data['roll_std']
+                self.ps_dic['pitch_std'] = data['pitch_std']
+                self.ps_dic['heading_std'] = data['heading_std']
+                self.add_output_packet('stream', 'pos', self.ps_dic)
+
+        elif packet_type == 'y1':
+            if self.sky_data:
+                if self.sky_data[0]['GPS_TimeOfWeek'] == data[0]['GPS_TimeOfWeek']:
+                    self.sky_data.extend(data)
+                else:
+                    # print(self.sky_data)
+                    self.add_output_packet('stream', 'skyview', self.sky_data)
+                    self.add_output_packet('stream', 'snr', self.sky_data)
+                    self.sky_data = []
+                    self.sky_data.extend(data)
+            else:
+                self.sky_data.extend(data)
+
         else:
             output_packet_config = next(
                 (x for x in self.properties['userMessages']['outputPackets']
@@ -537,8 +582,18 @@ class Provider(OpenDeviceBase):
 
         parsed_content = firmware_content_parser(firmware_content, rules)
 
-        user_port_num, port_name = self.build_connected_serial_port_info()
-        sdk_port = port_name + str(int(user_port_num) + 3)
+        if (self.properties["initial"]["useDefaultUart"]):
+            user_port_num, port_name = self.build_connected_serial_port_info()
+            sdk_port = port_name + str(int(user_port_num) + 3)
+        else:
+            for x in self.properties["initial"]["uart"]:
+                if x['enable'] == 1:
+                    if x['name'] == 'DEBUG':
+                        debug_port = x["value"]
+                    elif x['name'] == 'GNSS':
+                        rtcm_port = x["value"]
+                    elif x['name'] == 'SDK':
+                        sdk_port = x["value"]
 
         sdk_uart = serial.Serial(sdk_port, 115200, timeout=0.1)
         if not sdk_uart.isOpen():
@@ -635,10 +690,10 @@ class Provider(OpenDeviceBase):
             for i in range(2, conf_parameters_len, step):
                 start_byte = i
                 end_byte = i+step-1 if i+step < conf_parameters_len else conf_parameters_len
-
+                time.sleep(0.1)
                 command_line = helper.build_packet(
                     'gB', [start_byte, end_byte])
-                result = yield self._message_center.build(command=command_line, timeout=2)
+                result = yield self._message_center.build(command=command_line, timeout=10)
                 if result['error']:
                     has_error = True
                     break
