@@ -5,7 +5,7 @@
 	"type": "openrtk",
     "description": "6-axis OpenRTK with INS application",
     "initial":{
-        "useDefaultUart": 0,
+        "useDefaultUart": 1,
         "uart":[
             {
                 "name": "GNSS",

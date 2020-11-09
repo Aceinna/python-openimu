@@ -248,7 +248,7 @@ class Provider(OpenDeviceBase):
                             file_name + '/' + 'rtcm_base_' + file_time + '.bin', "wb")
                     else:
                         self.debug_logf = open(
-                            file_name + '/' + 'debug_' + file_time + '.bin', "wb")
+                            file_name + '/' + 'rtcm_base_' + file_time + '.bin', "wb")
                     t = threading.Thread(
                         target=self.thread_debug_port_receiver, args=(file_name,))
                     t.start()
@@ -317,7 +317,7 @@ class Provider(OpenDeviceBase):
 
         is_get_configuration = 0
         file_name = args[0]
-        self.debug_c_f = open(file_name + '/' + 'configuration.txt', "w")
+        self.debug_c_f = open(file_name + '/' + 'configuration.json', "w")
 
         while True:
             if is_get_configuration:
