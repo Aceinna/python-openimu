@@ -63,3 +63,6 @@ parameters:
 Link device to your pc or mac. And the tool will auto detect the linked device.
 
 [More Usage](USAGE.md "More Usage")
+
+### 3. Changelogs and Release Notes
+
