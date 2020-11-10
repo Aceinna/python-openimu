@@ -190,6 +190,8 @@ class Provider(OpenDeviceBase):
         upgrade_center.on('finish', self.handle_upgrade_complete)
         upgrade_center.start()
 
+        return upgrade_center.total
+
     def get_device_connection_info(self):
         return {
             'modelName': self.device_info['name'],

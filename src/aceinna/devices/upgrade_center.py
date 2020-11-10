@@ -51,17 +51,19 @@ class UpgradeCenter(EventBase):
     def handle_worker_progress(self, worker_key, current, total):
         ''' on single worker progress
         '''
+        last_current = self.current
+        self.current = 0
+
         self.data_lock.acquire()
 
-        self.current = 0
         self.workers[worker_key]['current'] = current
-
         for worker in self.workers.values():
             self.current += worker['current']
 
         self.data_lock.release()
+        step = self.current-last_current
 
-        self.emit('progress', self.current, self.total)
+        self.emit('progress', step, self.current, self.total)
 
     def handle_worker_error(self, worker_key, message):
         ''' on worker error

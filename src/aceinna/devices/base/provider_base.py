@@ -6,6 +6,7 @@ import uuid
 import time
 import struct
 import traceback
+from tqdm import tqdm
 from pathlib import Path
 from azure.storage.blob import BlockBlobService
 from .event_base import EventBase
@@ -54,6 +55,7 @@ class OpenDeviceBase(EventBase):
         self._message_center = None
         self.sessionId = None
         self.ans_platform = AnsPlatformAPI()
+        self._pbar = None
 
     @abstractmethod
     def load_properties(self):
@@ -285,7 +287,8 @@ class OpenDeviceBase(EventBase):
                 return
             # step.3 write to block, use self write from specified device
             print('Firmware upgrading...')
-            self.do_write_firmware(firmware_content)
+            total = self.do_write_firmware(firmware_content)
+            self._pbar = tqdm(total=total)
             # self.write_firmware()
             # step.4 restart app
             # self.restart()
@@ -402,18 +405,21 @@ class OpenDeviceBase(EventBase):
         Linstener for upgrade failure
         '''
         print('Upgrade failed')
+        self._pbar.close()
         self.is_upgrading = False
         self._message_center.resume()
         self.add_output_packet(
             'stream', 'upgrade_complete', {'success': False, 'message': message})
 
-    def handle_upgrade_process(self, current, total):
+    def handle_upgrade_process(self, step, current, total):
+        self._pbar.update(step)
         self.add_output_packet('stream', 'upgrade_progress', {
             'addr': current,
             'fs_len': total
         })
 
     def handle_upgrade_complete(self):
+        self._pbar.close()
         self.restart()
 
     def connect_log(self, params):
