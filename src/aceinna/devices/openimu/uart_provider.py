@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 import json
 import binascii
@@ -391,6 +392,13 @@ class Provider(OpenDeviceBase):
             'data': error
         }
 
+    @with_device_message
+    def run_command(self, params, *args):
+        yield {
+            'packetType': 'success',
+            'data': params
+        }
+
     def mag_align_start(self, *args):  # pylint: disable=unused-argument
         '''
         Start mag align action
@@ -417,41 +425,38 @@ class Provider(OpenDeviceBase):
             # self.communicator.write(command_line)
             # result = self.get_input_result('ma', timeout=3)
             result = yield self._message_center.build(command=command_line, timeout=3)
-
             time.sleep(1)
             has_result = False
             while not has_result:
                 command_line = helper.build_input_packet(
                     'ma', self.properties, 'status')
-                # self.communicator.write(command_line)
-                # print('send ma status', command_line)
                 result = yield self._message_center.build(command=command_line)
-                # print(result['data'], self.is_mag_align)
+
                 if not self.is_mag_align:
                     break
-                # result = self.get_input_result('ma', timeout=1)
-                # print('got ma status', result['data'])
-                if result['data'] == b'\x00':
+
+                if result['data'] == [0]:
                     has_result = True
                 else:
                     time.sleep(0.5)
 
             if not has_result:
-                print('exit mag')
                 return
 
-            # print('ma status', result['data'])
-            # print('mag status', result['data'])
             command_line = helper.build_input_packet(
                 'ma', self.properties, 'stored')
-            # self.communicator.write(command_line)
-            # print('send ma stored', command_line)
-            result = yield self._message_center.build(command=command_line)
-            # print('ma stored result', result['data'])
-            # result = self.get_input_result('ma', timeout=2)
 
-            decoded_status = binascii.hexlify(result['data'])
-            mag_value = self.decode_mag_align_output(decoded_status)
+            result = yield self._message_center.build(command=command_line)
+
+            mag_value = dict()
+
+            if len(result['data']) > 0:
+                decoded_status = binascii.hexlify(bytes(result['data']))
+                mag_value = self.decode_mag_align_output(decoded_status)
+            else:
+                command_line = helper.build_input_packet(
+                    'ma', self.properties, 'abort')
+
             self.is_mag_align = False
 
             # TODO: reset packet rate after operation successful
@@ -459,7 +464,8 @@ class Provider(OpenDeviceBase):
                 'status': 'complete',
                 'value': mag_value
             })
-        except Exception:  # pylint: disable=broad-except
+        except Exception as ex:  # pylint: disable=broad-except
+            APP_CONTEXT.get_logger().error(ex)
             self.is_mag_align = False
             self.add_output_packet('stream', 'mag_status', {
                 'status': 'error'
@@ -472,14 +478,11 @@ class Provider(OpenDeviceBase):
         '''
         self.is_mag_align = False
 
-        time.sleep(1)
+        time.sleep(0.5)
         command_line = helper.build_input_packet(
             'ma', self.properties, 'abort')
-        print('send mag abort', command_line)
         result = yield self._message_center.build(command=command_line)
-        print('mag abort result', result['data'])
-        # self.communicator.write(command_line)
-        # result = self.get_input_result('ma', timeout=1)
+        # print('mag abort result', result['data'])
 
         if result['error']:
             yield {
@@ -525,18 +528,30 @@ class Provider(OpenDeviceBase):
         soft_iron_ratio = dict()
         soft_iron_angle = dict()
 
+        hard_iron_x['paramId'] = next(
+            (item['paramId'] for item in self.properties['userConfiguration']
+             if item.__contains__('argument') and item['argument'] == 'hard_iron_x'), None)
         hard_iron_x['value'] = self.hard_iron_cal(value[16:20], 'axis')
         hard_iron_x['name'] = 'Hard Iron X'
         hard_iron_x['argument'] = 'hard_iron_x'
 
+        hard_iron_y['paramId'] = next(
+            (item['paramId'] for item in self.properties['userConfiguration']
+             if item.__contains__('argument') and item['argument'] == 'hard_iron_y'), None)
         hard_iron_y['value'] = self.hard_iron_cal(value[20:24], 'axis')
         hard_iron_y['name'] = 'Hard Iron Y'
         hard_iron_y['argument'] = 'hard_iron_y'
 
+        soft_iron_ratio['paramId'] = next(
+            (item['paramId'] for item in self.properties['userConfiguration']
+             if item.__contains__('argument') and item['argument'] == 'soft_iron_ratio'), None)
         soft_iron_ratio['value'] = self.hard_iron_cal(value[24:28], 'ratio')
         soft_iron_ratio['name'] = 'Soft Iron Ratio'
         soft_iron_ratio['argument'] = 'soft_iron_ratio'
 
+        soft_iron_angle['paramId'] = next(
+            (item['paramId'] for item in self.properties['userConfiguration']
+             if item.__contains__('argument') and item['argument'] == 'soft_iron_angle'), None)
         soft_iron_angle['value'] = self.hard_iron_cal(value[28:32], 'angle')
         soft_iron_angle['name'] = 'Soft Iron Angle'
         soft_iron_angle['argument'] = 'soft_iron_angle'

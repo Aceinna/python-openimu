@@ -194,6 +194,7 @@ def common_input_parser(payload, user_configuration):
 def read_eeprom_parser(payload, user_configuration=None):
     return payload[3:], False
 
+
 # output packet
 
 
@@ -294,6 +295,7 @@ def match_command_handler(packet_type):
         'uP': update_parameter_parser,
         'uB': update_parameters_parser,
         'rD': common_input_parser,
+        'ma': common_input_parser,
         'RE': read_eeprom_parser,
         'WE': common_input_parser,
         'UE': common_input_parser,

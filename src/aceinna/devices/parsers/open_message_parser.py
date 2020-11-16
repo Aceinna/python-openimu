@@ -11,7 +11,7 @@ MSG_HEADER = [0x55, 0x55]
 PACKET_TYPE_INDEX = 2
 PRIVATE_PACKET_TYPE = ['RE', 'WE', 'UE', 'LE', 'SR']
 INPUT_PACKETS = ['pG', 'gV', 'gA', 'gB', 'gP', 'sC', 'uP', 'uB',
-                 'rD', '\x15\x15', '\x00\x00',
+                 'rD', '\x15\x15', '\x00\x00','ma',
                  'JI', 'JA', 'WA',
                  'RE', 'WE', 'UE', 'LE', 'SR']
 
