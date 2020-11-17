@@ -1,0 +1,42 @@
+# History
+
+---
+
+## 2.2.1 / 2020-11-17
+
+- [OpenIMU] Fix the mag align command cannot correctly response.
+- [Framework] Update the usage of asyncio.
+- [Framework] Fix cannot connect the websocket server on some versions of windows.
+
+## 2.2.0 / 2020-11-9
+
+- [OpenRTK] Important update for INS App v23.00, can't suitable for v2.0.0 or v20.00.
+- [OpenRTK] Modify user data packets.
+- [OpenRTK] Log base rtcm data on debug port.
+- [DMU] Add A1,A2 packet response for DUM device.
+- [Framework] Add Unit test cases.
+
+## 2.1.7 / 2020-08-26
+
+- [OpenRTK] Print 'NMEA' and #INSPVA.
+- [Framework] Improved the ping perform on devices.
+
+## 2.1.6 / 2020-08-19
+
+- [OpenRTK] Modify INS json: suitable for INS_APP v2.0.0.
+- [Framework] Improve the output of console.
+
+## 2.1.5 / 2020-08-11
+
+- [Framework] Support download combined GNSS_RTK_SDK and INS_APP Firmware.
+- [Framework] Display python driver version.
+- [Framework] Remove upgrade file when upgrade firmware.
+
+## 2.1.4 / 2020-07-23
+
+- [OpenRTK] Add 'rD' command to restore OpenRTK330 default configuration.
+	User can find 'RESTORE DEFAULTS' button in OpenRTK->SETTINGS.
+- [OpenRTK] Add 'gB' command to get configuration according to range of parameterID.
+- [OpenRTK] Support update GNSS_RTK_SDK in App Center.
+- [Framework] Enhance the message parser from device.
+

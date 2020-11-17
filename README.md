@@ -66,3 +66,4 @@ Link device to your pc or mac. And the tool will auto detect the linked device.
 
 ### 3. Changelogs and Release Notes
 
+[HISTORY.md](HISTORY.md "Change History")
