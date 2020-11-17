@@ -1,7 +1,7 @@
 """
 Command line entry
 """
-import asyncio
+#import asyncio
 import threading
 from os import getpid
 import psutil
@@ -91,8 +91,8 @@ class CommandLine:
         # asyncio.set_event_loop(asyncio.new_event_loop())
         self.webserver.start_webserver(current_loop)
 
-        if not current_loop.is_running():
-            current_loop.run_forever()
+        # if not current_loop.is_running():
+        #     current_loop.run_forever()
 
     def _build_options(self, **kwargs):
         self.options = WebserverArgs(**kwargs)
@@ -267,7 +267,7 @@ class CommandLine:
         start a websocket server
         '''
         # self.webserver.start_websocket_server()
-        loop = asyncio.get_event_loop()
+        loop = None #asyncio.get_event_loop()
         webserver_thread = threading.Thread(
             target=self.start_webserver, args=(loop,))
         webserver_thread.start()

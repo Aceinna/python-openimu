@@ -3,7 +3,7 @@ Websocket server entry
 """
 import os
 import sys
-import asyncio
+#import asyncio
 import json
 import time
 import traceback
@@ -389,7 +389,8 @@ class Webserver(EventBase):
         Start to find device
         '''
         print("Python driver version: {0}".format(VERSION))
-        loop = asyncio.get_event_loop()
+        loop = None  # asyncio.get_event_loop()
+
         thread = threading.Thread(target=self.start_webserver, args=(loop,))
         thread.start()
 
@@ -397,8 +398,8 @@ class Webserver(EventBase):
             target=self.detect_device_wrapper, args=(loop,))
         thread.start()
 
-        self.non_main_ioloop = tornado.ioloop.IOLoop.current()
-        loop.run_forever()
+        #self.non_main_ioloop = tornado.ioloop.IOLoop.current()
+        # loop.run_forever()
 
     def prepare_logger(self):
         '''
@@ -483,16 +484,16 @@ class Webserver(EventBase):
         self.device_provider.setup(self.options)
         self.device_provider.on('exception', self.handle_device_exception)
         self.device_provider.on(
-           'complete_upgrade', self.handle_device_complete_upgrade)
+            'complete_upgrade', self.handle_device_complete_upgrade)
 
     def start_webserver(self, current_loop):
         # self.webserver_io_loop = asyncio.new_event_loop()
         if sys.version_info[0] > 2:
             import asyncio
-            # asyncio.set_event_loop(asyncio.new_event_loop())
-            asyncio.set_event_loop(current_loop)
+            asyncio.set_event_loop(asyncio.new_event_loop())
+            # asyncio.set_event_loop(current_loop)
 
-        #self.non_main_ioloop = tornado.ioloop.IOLoop.current()
+        self.non_main_ioloop = tornado.ioloop.IOLoop.current()
         self.start_websocket_server()
 
     def start_websocket_server(self):
@@ -527,7 +528,7 @@ class Webserver(EventBase):
             print('Websocket server is started on port', activated_port)
 
             APP_CONTEXT.get_logger().enable_msg_store_handler(store)
-            # self.non_main_ioloop.start()
+            self.non_main_ioloop.start()
             # tornado.ioloop.IOLoop.current().start()
         except Exception as ex:
             print(ex)
@@ -561,8 +562,8 @@ class Webserver(EventBase):
         # self.webserver_io_loop = asyncio.new_event_loop()
         if sys.version_info[0] > 2:
             import asyncio
-            # asyncio.set_event_loop(asyncio.new_event_loop())
-            asyncio.set_event_loop(current_loop)
+            asyncio.set_event_loop(asyncio.new_event_loop())
+            # asyncio.set_event_loop(current_loop)
 
         #self.non_main_ioloop = tornado.ioloop.IOLoop.current()
         self.detect_device(self.device_discover_handler)

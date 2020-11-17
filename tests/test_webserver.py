@@ -22,7 +22,7 @@ WS_ADDRESS = "ws://127.0.0.1:8000"
 
 
 # pylint: disable=missing-class-docstring
-@unittest.skip
+#@unittest.skip
 class TestWebserver(unittest.TestCase):
     def setUp(self):
         pass
@@ -33,13 +33,7 @@ class TestWebserver(unittest.TestCase):
     def test_websocket_server_establish(self):
         # start web server
         webserver = Webserver()
-
-        def do_listen():
-            asyncio.set_event_loop(asyncio.new_event_loop())
-            webserver.listen()
-
-        thread = threading.Thread(target=do_listen)
-        thread.start()
+        webserver.listen()
         time.sleep(1)
         # send a ping request
         websocket_client = create_connection(WS_ADDRESS)
