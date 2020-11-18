@@ -280,6 +280,9 @@ def common_continuous_parser(payload, configuration):
     return data
 
 
+def other_output_parser(payload):
+    return payload
+
 # packet handler
 def match_command_handler(packet_type):
     '''

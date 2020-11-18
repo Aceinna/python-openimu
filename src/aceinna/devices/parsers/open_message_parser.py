@@ -5,15 +5,16 @@ from ..base.event_base import EventBase
 from ...framework.utils import helper
 from ...framework.context import APP_CONTEXT
 from .open_packet_parser import (
-    match_command_handler, common_continuous_parser)
+    match_command_handler, common_continuous_parser, other_output_parser)
 
 MSG_HEADER = [0x55, 0x55]
 PACKET_TYPE_INDEX = 2
 PRIVATE_PACKET_TYPE = ['RE', 'WE', 'UE', 'LE', 'SR']
 INPUT_PACKETS = ['pG', 'gV', 'gA', 'gB', 'gP', 'sC', 'uP', 'uB',
-                 'rD', '\x15\x15', '\x00\x00','ma',
+                 'rD', '\x15\x15', '\x00\x00', 'ma',
                  'JI', 'JA', 'WA',
                  'RE', 'WE', 'UE', 'LE', 'SR']
+OTHER_OUTPUT_PACKETS = ['CD', 'CB']
 
 
 class UartMessageParser(EventBase):
@@ -101,10 +102,18 @@ class UartMessageParser(EventBase):
 
     def _parse_output_packet(self, packet_type, payload_len, payload):
         # check if it is the valid out packet
+        payload_parser = None
+        is_other_output_packet = OTHER_OUTPUT_PACKETS.__contains__(packet_type)
+        if is_other_output_packet:
+            payload_parser = other_output_parser
+            data = payload_parser(payload)
+            return
+
         payload_parser = common_continuous_parser
+
         output_packet_config = next(
             (x for x in self.properties['userMessages']['outputPackets']
-             if x['name'] == packet_type), None)
+                if x['name'] == packet_type), None)
         data = payload_parser(payload, output_packet_config)
 
         if not data:
