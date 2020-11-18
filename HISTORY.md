@@ -8,6 +8,7 @@
 - [Framework] Update the usage of asyncio.
 - [Framework] Fix cannot connect the websocket server on some versions of windows.
 - [Framework] Support to start executor as a cli tool with startup parameter `--cli`.
+- [Framework] Fix data log will auto start after firmware upgrade without setting auto start.
 
 ## 2.2.0 / 2020-11-9
 

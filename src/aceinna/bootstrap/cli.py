@@ -113,6 +113,7 @@ class CommandLine:
         '''
         Connect to device, may no need it later
         '''
+        print(self.webserver.device_provider.get_device_info())
 
     def upgrade_handler(self):
         '''upgrade command is used for firmware upgrade and followed by file name

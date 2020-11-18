@@ -389,7 +389,9 @@ class OpenDeviceBase(EventBase):
         self._message_center.get_parser().set_configuration(self.properties)
         self._message_center.resume()
 
-        if options and not options.with_data_log and self.enable_data_log:
+        with_data_log = options and options.with_data_log
+
+        if with_data_log and not self.is_logging and self.enable_data_log:
             log_result = self._logger.start_user_log('data')
             if log_result == 1 or log_result == 2:
                 raise Exception('Cannot start data logger')
