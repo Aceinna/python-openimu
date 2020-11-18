@@ -32,11 +32,16 @@ def from_command_line(**kwargs):
 
 @handle_application_exception
 @receive_args
-def from_default(**kwargs):
+def start_app(**kwargs):
     '''
     Work as a executor, with WebSocket and UART
     '''
-    application = Loader.create('web', vars(kwargs['options']))
+    application = None
+    mode = 'web'
+    if kwargs['options'].use_cli:
+        mode = 'cli'
+
+    application = Loader.create(mode, vars(kwargs['options']))
     application.listen()
 
 
@@ -47,7 +52,7 @@ if __name__ == '__main__':
         import asyncio
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
-    from_default()
+    start_app()
 
     while True:
         time.sleep(10)

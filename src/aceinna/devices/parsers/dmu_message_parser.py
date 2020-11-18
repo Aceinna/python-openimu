@@ -50,7 +50,7 @@ class UartMessageParser(EventBase):
                     # find a whole frame
                     # self._parse_frame(self.frame, self.payload_len)
                     self._parse_message(
-                        packet_type, self.payload_len, self.frame[5:self.payload_len+5])
+                        packet_type, self.payload_len, self.frame)
 
                     self.find_header = False
                     self.payload_len = 0
@@ -79,16 +79,17 @@ class UartMessageParser(EventBase):
             'raw': raw_command
         }
 
-    def _parse_message(self, packet_type, payload_len, payload):
+    def _parse_message(self, packet_type, payload_len, frame):
+        payload = frame[5:payload_len+5]
         # parse interactive commands
         is_interactive_cmd = INPUT_PACKETS.__contains__(packet_type)
         if is_interactive_cmd:
-            self._parse_input_packet(packet_type, payload_len, payload)
+            self._parse_input_packet(packet_type, payload, frame)
         else:
             # consider as output packet, parse output Messages
-            self._parse_output_packet(packet_type, payload_len, payload)
+            self._parse_output_packet(packet_type, payload)
 
-    def _parse_input_packet(self, packet_type, payload_len, payload):
+    def _parse_input_packet(self, packet_type, payload, frame):
         # print(packet_type, payload, payload_len)
         payload_parser = match_command_handler(packet_type)
 
@@ -98,11 +99,12 @@ class UartMessageParser(EventBase):
             self.emit('command',
                       packet_type=packet_type,
                       data=data,
-                      error=error)
+                      error=error,
+                      raw=frame)
         else:
             print('[Warning] Unsupported command {0}'.format(packet_type))
 
-    def _parse_output_packet(self, packet_type, payload_len, payload):
+    def _parse_output_packet(self, packet_type, payload):
         # check if it is the valid out packet
         payload_parser = match_continuous_handler(packet_type)
         output_packet_config = next(

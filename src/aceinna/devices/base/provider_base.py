@@ -297,9 +297,26 @@ class OpenDeviceBase(EventBase):
             traceback.print_exc()
 
     def _do_download_firmware(self, file):
+        firmware_content = None
+
+        # try find file directly
+        directly_file = Path(file)
+
+        if directly_file.is_file():
+            firmware_content = open(directly_file, 'rb').read()
+            return firmware_content
+
+        # try find from executor path
+        executor_path_file = Path(os.path.join(
+            resource.get_executor_path(), file))
+
+        if executor_path_file.is_file():
+            firmware_content = open(executor_path_file, 'rb').read()
+            return firmware_content
+
+        # at last download from azure
         upgarde_root = os.path.join(resource.get_executor_path(), 'upgrade')
 
-        firmware_content = None
         if not os.path.exists(upgarde_root):
             os.makedirs(upgarde_root)
 
@@ -330,6 +347,7 @@ class OpenDeviceBase(EventBase):
         Downlaod firmware from Azure storage
         '''
         can_download = False
+        firmware_content = None
         try:
             firmware_content = self._do_download_firmware(file)
             can_download = True
@@ -405,21 +423,24 @@ class OpenDeviceBase(EventBase):
         Linstener for upgrade failure
         '''
         print('Upgrade failed')
-        self._pbar.close()
+        if self._pbar:
+            self._pbar.close()
         self.is_upgrading = False
         self._message_center.resume()
         self.add_output_packet(
             'stream', 'upgrade_complete', {'success': False, 'message': message})
 
     def handle_upgrade_process(self, step, current, total):
-        self._pbar.update(step)
+        if self._pbar:
+            self._pbar.update(step)
         self.add_output_packet('stream', 'upgrade_progress', {
             'addr': current,
             'fs_len': total
         })
 
     def handle_upgrade_complete(self):
-        self._pbar.close()
+        if self._pbar:
+            self._pbar.close()
         self.restart()
 
     def connect_log(self, params):

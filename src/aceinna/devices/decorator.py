@@ -29,12 +29,13 @@ def with_device_message(func):
                 else:
                     return next_device_message
 
-        def on_resolve(*args,**kwargs):
+        def on_resolve(*args, **kwargs):
             global generator_result
             generator_result = {
                 'packet_type': kwargs['packet_type'],
                 'data': kwargs['data'],
-                'error': kwargs['error']
+                'error': kwargs['error'],
+                'raw': kwargs['raw']
             }
 
         try:

@@ -37,6 +37,8 @@ def _build_args():
                         help="set user parameters (OpenRTK only)", default=False)
     parser.add_argument("-n", "--ntrip-client", dest='ntrip_client', action='store_true',
                         help="enable ntrip client (OpenRTK only)", default=False)
+    parser.add_argument("--cli", dest='use_cli', action='store_true',
+                        help="start as cli mode", default=False)
 
     return parser.parse_args()
 

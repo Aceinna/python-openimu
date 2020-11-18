@@ -7,6 +7,7 @@
 - [OpenIMU] Fix the mag align command cannot correctly response.
 - [Framework] Update the usage of asyncio.
 - [Framework] Fix cannot connect the websocket server on some versions of windows.
+- [Framework] Support to start executor as a cli tool with startup parameter `--cli`.
 
 ## 2.2.0 / 2020-11-9
 

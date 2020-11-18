@@ -156,6 +156,8 @@ def get_parameter_parser(payload, user_configuration):
                     "name": first_item['name'], "value": param_value}
         except StopIteration:
             error = True
+        except Exception:
+            error = True
     else:
         error = True
 
@@ -284,6 +286,8 @@ def other_output_parser(payload):
     return payload
 
 # packet handler
+
+
 def match_command_handler(packet_type):
     '''
     Find the handler for specified packet

@@ -53,14 +53,14 @@ class CommandLine:
         self.webserver.set_communicator(self.communicator)
         self.webserver.load_device_provider(device_provider)
         # setup command
-        self.device_provider = device_provider
+        #self.device_provider = device_provider
         self.setup_command_handler()
 
     def setup_command_handler(self):
         '''
         Prepare command
         '''
-        self.supported_commands = self.device_provider.get_command_lines()
+        self.supported_commands = self.webserver.device_provider.get_command_lines()
 
         while True:
             token = input(">>")
@@ -124,23 +124,23 @@ class CommandLine:
         else:
             file_name = self.input_string[1]
             # TODO: check device is idel
-            self.device_provider.upgrade_framework(file_name)
+            self.webserver.device_provider.upgrade_framework(file_name)
         return True
 
     def record_handler(self):
         '''record command is used to save the outputs into local machine
         '''
         # TODO: check device is idel
-        if not self.device_provider.is_logging:
-            self.device_provider.start_data_log()
+        if not self.webserver.device_provider.is_logging:
+            self.webserver.device_provider.start_data_log()
         return True
 
     def stop_handler(self):
         '''record command is used to save the outputs into local machine
         '''
         # TODO: check device is idel
-        if self.device_provider.is_logging:
-            self.device_provider.stop_data_log()
+        if self.webserver.device_provider.is_logging:
+            self.webserver.device_provider.stop_data_log()
 
         if self.webserver_running:
             self.webserver.stop_ws_server()
@@ -152,7 +152,7 @@ class CommandLine:
         Get parameter of device
         '''
         input_args = len(self.input_string)
-        conf = self.device_provider.get_conf()
+        conf = self.webserver.device_provider.get_conf()
         input_params_properties = conf['data']['inputParams']
         select_param = None
         if (input_args == 1):
@@ -179,7 +179,7 @@ class CommandLine:
                         i += 1
                     return True
 
-        param = self.device_provider.get_param(
+        param = self.webserver.device_provider.get_param(
             {'paramId': select_param['paramId']})
         print(param['data']['value'])
         return True
@@ -189,7 +189,7 @@ class CommandLine:
         Set parameter of device
         '''
         input_args = len(self.input_string)
-        conf = self.device_provider.get_conf()
+        conf = self.webserver.device_provider.get_conf()
         input_params_properties = conf['data']['inputParams']
         select_param = None
         not_in_options = False
@@ -246,7 +246,7 @@ class CommandLine:
             print(select_param['options'])
             return True
 
-        self.device_provider.set_param({
+        self.webserver.device_provider.set_param({
             'paramId': select_param['paramId'],
             'value': self.input_string[2]
         })
@@ -259,7 +259,7 @@ class CommandLine:
         '''
         Save device configuration
         '''
-        self.device_provider.save_config()
+        self.webserver.device_provider.save_config()
         return True
 
     def server_start_handler(self):
