@@ -5,15 +5,17 @@ parameters:
 
 | Name | Type | Default | Description |
 | - | :-: | :-: | - |
-| --port | Number | '8000' | Value should be an available port |
+| -p, --port | Number | '8000' | Value should be an available port |
 | --device-type | String | 'auto' | Value should be `IMU`, `RTK` |
-| --baudrate | String | None | Value should be baudrate |
-| --com-port | String | 'auto' | Value should be a COM port |
+| -b, --baudrate | String | None | Value should be baudrate |
+| -c, --com-port | String | 'auto' | Value should be a COM port |
 | --console-log | Boolean | False | Output log on console |
 | --debug | Boolean | False | Log debug information |
 | --with-data-log | Boolean | False | Contains internal data log (OpenIMU only) |
-| --with-raw-log | Boolean | False | Contains raw data log (OpenRTK only) |
-
+| -r, --with-raw-log | Boolean | False | Contains raw data log (OpenRTK only) |
+| -s, --set-user-para | Boolean | False | Set uesr parameters (OpenRTK only) |
+| -n, --ntrip-client | Boolean | False | Enable ntrip client (OpenRTK only) |
+| --cli | Boolean | False | Work as command line mode |
 
 # Work as sdk
 Detect device

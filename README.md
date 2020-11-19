@@ -1,4 +1,5 @@
-# python-ans-devices
+# python-openimu
+
 Python driver for OpenIMU and OpenRTK
 
 ## Working Environment 
@@ -50,20 +51,44 @@ parameters:
 
 | Name | Type | Default | Description |
 | - | :-: | :-: | - |
-| --port | Number | 8000 | Value should be an available port |
+| -p, --port | Number | '8000' | Value should be an available port |
 | --device-type | String | 'auto' | Value should be `IMU`, `RTK` |
-| --baudrate | String | None | Value should be baudrate |
-| --com-port | String | 'auto' | Value should be a COM port |
+| -b, --baudrate | String | None | Value should be baudrate |
+| -c, --com-port | String | 'auto' | Value should be a COM port |
 | --console-log | Boolean | False | Output log on console |
 | --debug | Boolean | False | Log debug information |
 | --with-data-log | Boolean | False | Contains internal data log (OpenIMU only) |
-| --with-raw-log | Boolean | False | Contains raw data log (OpenRTK only) |
+| -r, --with-raw-log | Boolean | False | Contains raw data log (OpenRTK only) |
+| -s, --set-user-para | Boolean | False | Set uesr parameters (OpenRTK only) |
+| -n, --ntrip-client | Boolean | False | Enable ntrip client (OpenRTK only) |
+| --cli | Boolean | False | Work as command line mode |
 
-### 2. Connect ans device
+### 2. Connect Aceinna device
 Link device to your pc or mac. And the tool will auto detect the linked device.
 
 [More Usage](USAGE.md "More Usage")
 
-### 3. Changelogs and Release Notes
+## Work Mode
+Normally, python-openimu works as Web mode. It will auto start a websocket server after device is detected. And it can works with [acinna developers site](https://developers.aceinna.com "Aceinna Developers Site") to do monitor and set configuration of connected device.
+
+You can specify the startup parameter `--cli` to switch to Command Line Mode. Command Line Mode helps you to interact with device without open the brower. 
+
+Commnad List:
+| Name  | Description |
+| - | - |
+| help | CLI help menu |
+| exit | Exit Command Line Mode |
+| run | Operations defined by users |
+| save | Save thee configuration into EEPROM |
+| connect | Show information of connected device |
+| upgrade | Upgrade firmware |
+| record | Record output data of device |
+| stop | Stop recording outputs |
+| server_start | Start server thread and must use `exit` command to quit |
+| get | Read the current configuration and output data |
+| set | Write parameters to device |
+
+
+## Changelogs and Release Notes
 
 [HISTORY.md](HISTORY.md "Change History")
