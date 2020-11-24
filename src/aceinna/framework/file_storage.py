@@ -11,6 +11,7 @@ from azure.storage.blob import ContentSettings
 from .utils import resource
 from .configuration import get_config
 from .ans_platform_api import AnsPlatformAPI
+from .context import APP_CONTEXT
 
 
 class FileLoger():
@@ -315,8 +316,14 @@ class FileLoger():
         #
         str = header + str[:-1] + '\n'
 
-        self.log_files_obj[packet_type].write(str)
-        self.log_files_obj[packet_type].flush()
+        try:
+            self.log_files_obj[packet_type].write(str)
+            self.log_files_obj[packet_type].flush()
+        except ValueError:
+            APP_CONTEXT.get_logger().logger.error(
+                'I/O Exception, file may be closed before using')
+        except Exception as ex:
+            APP_CONTEXT.get_logger().logger.error(ex)
 
         if self.ws:
             self.data_lock.acquire()
