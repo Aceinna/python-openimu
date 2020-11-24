@@ -10,8 +10,10 @@ from .open_packet_parser import (
 MSG_HEADER = [0x55, 0x55]
 PACKET_TYPE_INDEX = 2
 PRIVATE_PACKET_TYPE = ['RE', 'WE', 'UE', 'LE', 'SR']
-INPUT_PACKETS = ['pG', 'gV', 'gA', 'gB', 'gP', 'sC', 'uP', 'uB',
-                 'rD', '\x15\x15', '\x00\x00', 'ma',
+INPUT_PACKETS = ['pG', 'uC', 'uP',  'uA', 'uB'
+                 'sC', 'rD',
+                 'gC', 'gA',  'gB', 'gP', 'gV',
+                 '\x15\x15', '\x00\x00', 'ma',
                  'JI', 'JA', 'WA',
                  'RE', 'WE', 'UE', 'LE', 'SR']
 OTHER_OUTPUT_PACKETS = ['CD', 'CB']
