@@ -581,6 +581,7 @@ class Provider(OpenDeviceBase):
         ]
 
         parsed_content = firmware_content_parser(firmware_content, rules)
+        sdk_uart = ''
 
         if (self.properties["initial"]["useDefaultUart"]):
             user_port_num, port_name = self.build_connected_serial_port_info()
@@ -611,6 +612,8 @@ class Provider(OpenDeviceBase):
         upgrade_center.on('error', self.handle_upgrade_error)
         upgrade_center.on('finish', self.handle_upgrade_complete)
         upgrade_center.start()
+
+        return upgrade_center.total
 
     def get_device_connection_info(self):
         return {
