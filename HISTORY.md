@@ -2,6 +2,11 @@
 
 ---
 
+## 2.2.2 / 2020-11-26
+- [OpenIMU] Add exception handler when log data, although file is closed
+- [OpenIMU] Add uC,uA,gA command response
+- [OpenRTK] Fix upgrade issue through web
+
 ## 2.2.1 / 2020-11-17
 
 - [OpenIMU] Fix the mag align command cannot correctly response.
