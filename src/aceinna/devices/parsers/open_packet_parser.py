@@ -144,7 +144,7 @@ def get_parameter_parser(payload, user_configuration):
     error = False
     param_id = decode_value('uint32', payload[0:4])
 
-    if param_id:
+    if  param_id is not False:
         param = filter(lambda item: item['paramId'] ==
                        param_id, user_configuration)
 
@@ -294,12 +294,12 @@ def match_command_handler(packet_type):
     '''
     parser_dict = {
         'pG': string_parser,
-        'uC': common_input_parser,#update_command_parser,
+        'uC': common_input_parser,  # update_command_parser,
         'uP': update_parameter_parser,
-        'uA': common_input_parser,#update_all_command_parser,
+        'uA': common_input_parser,  # update_all_command_parser,
         'sC': common_input_parser,
         'rD': common_input_parser,
-        'gC': common_input_parser,#get_command_parser,
+        'gC': common_input_parser,  # get_command_parser,
         'gA': get_all_parameters_parser,
         'gP': get_parameter_parser,
         'gB': get_parameters_by_block_parser,

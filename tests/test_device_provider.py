@@ -28,13 +28,12 @@ def close_provider(provider):
     provider.close()
 
 
-@unittest.skip
+# @unittest.skip
 class TestOpenIMUProvider(unittest.TestCase):
     def test_get_params(self):
         provider = build_provider()
         all_params = provider.get_params()
         close_provider(provider)
-
         method_result = all_params['packetType']
         expect_result = 'inputParams'
         self.assertEqual(method_result, expect_result)
@@ -113,6 +112,34 @@ class TestOpenIMUProvider(unittest.TestCase):
         method_result = save_config_result['packetType']
         expect_result = 'success'
         self.assertEqual(method_result, expect_result)
+
+    def test_run_command(self):
+        provider = build_provider()
+
+        commands = [
+            {'name': 'pG', 'command': '55 55 70 47 00 5D 5F'},
+            {'name': 'uC', 'command': '55 55 75 43 10 01 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00 3A 51'},
+            {'name': 'uP', 'command': '55 55 75 50 0C 00 00 00 00 64 00 00 00 00 00 00 00 6A 5F'},
+            {'name': 'uA', 'command': '55 55 75 41 08 00 00 00 00 00 00 00 00 2E 30'},
+            {'name': 'sC', 'command': '55 55 73 43 00 C8 CB'},
+            {'name': 'rD', 'command': '55 55 72 44 00 66 6C'},
+            {'name': 'gC', 'command': '55 55 67 43 08 01 00 00 00 00 00 00 00 42 E7'},
+            {'name': 'gA', 'command': '55 55 67 41 00 31 0A'},
+            {'name': 'gP', 'command': '55 55 67 50 04 00 00 00 00 4B BE'},
+            {'name': 'gV', 'command': '55 55 67 56 00 AB EE'},
+        ]
+        command_results = []
+        for command in commands:
+            result = provider.run_command(command['command'])
+            command_results.append(result['packetType'])
+
+        close_provider(provider)
+
+        expect_results = []
+        for _ in command_results:
+            expect_results.append('success')
+
+        self.assertEqual(command_results, expect_results)
 
 
 @unittest.skip
@@ -201,7 +228,7 @@ class TestOpenRTKProvider(unittest.TestCase):
         self.assertEqual(method_result, expect_result)
 
 
-@unittest.skip
+#@unittest.skip
 class TestOpenDMUProvider(unittest.TestCase):
     def test_get_conf(self):
         provider = build_provider('DMU')
@@ -279,7 +306,7 @@ class TestOpenDMUProvider(unittest.TestCase):
         expect_result = 'success'
         self.assertEqual(method_result, expect_result)
 
-
+@unittest.skip
 class TestProviderSwitch(unittest.TestCase):
     def test_reconnect_with_same_device(self):
         pass

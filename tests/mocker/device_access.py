@@ -57,6 +57,7 @@ class DeviceAccess(object):
         os.close(self._pipe_sensor_data_write)
         os.close(self._pipe_command_read)
         os.close(self._pipe_command_write)
+        #print('device is closed')
 
     def _run(self):
         print('device is running')

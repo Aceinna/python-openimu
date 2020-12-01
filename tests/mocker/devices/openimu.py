@@ -110,6 +110,71 @@ class OpenIMUMocker(DeviceBase):
 
         if packet_type == 'pG':
             output_packet = pack_str(self._ping_str)
+
+        if packet_type == 'uC':
+            count = struct.unpack('<L', payload[0:4])[0]
+            param_id = struct.unpack('<L', payload[4:8])[0]
+
+            is_payload_len_valid = len(payload) != 8 + count*8
+            define_parameter = self._params.get(str(param_id))
+
+            if not is_payload_len_valid:
+                output_packet = struct.pack('i', -3)
+            elif not define_parameter:
+                output_packet = struct.pack('i', -1)
+            else:
+                try:
+                    for i in range(count):
+                        start_index = 8+i*8
+                        update_param = self._params.get(str(param_id+i))
+                        update_value = decode_value(
+                            update_param.data_type,
+                            payload[start_index:8])
+                        update_param.value = update_value
+                        output_packet = struct.pack('i', 0)
+                except:
+                    output_packet = struct.pack('i', -2)
+
+        if packet_type == 'uP':
+            param_id = struct.unpack('<L', payload[0:4])[0]
+            define_parameter = self._params[str(param_id)]
+
+            update_value = decode_value(
+                define_parameter.data_type, payload[4:12])
+            define_parameter.value = update_value
+
+            output_packet = struct.pack('i', 0)
+
+        if packet_type == 'uA':
+            output_packet = struct.pack('i', 0)
+
+        if packet_type == 'sC':
+            output_packet = bytes([])
+
+        if packet_type == 'rD':
+            output_packet = bytes([])
+
+        if packet_type == 'gC':
+            count = struct.unpack('<L', payload[0:4])[0]
+            param_id = struct.unpack('<L', payload[4:8])[0]
+
+            define_parameter = self._params.get(str(param_id))
+
+            if not define_parameter:
+                output_packet = struct.pack('i', -1)
+            else:
+                try:
+                    for i in range(count):
+                        start_index = 8+i*8
+                        get_param = self._params.get(str(param_id+i))
+                        data_type = get_param.data_type
+                        value = get_param.value
+                        output_packet.extend(encode_value(data_type, value))
+
+                    output_packet = bytes(output_packet)
+                except:
+                    output_packet = struct.pack('i', -2)
+
         if packet_type == 'gV':
             output_packet = pack_str(self._version_str)
         if packet_type == 'gA':
@@ -121,6 +186,7 @@ class OpenIMUMocker(DeviceBase):
             output_packet = bytes(output_packet)
         if packet_type == 'gP':
             param_id = struct.unpack('<L', payload[0:4])[0]
+
             define_parameter = self._params.get(str(param_id))
 
             if define_parameter:
@@ -133,18 +199,7 @@ class OpenIMUMocker(DeviceBase):
                 output_packet = bytes([])
                 return build_output_packet('\x00\x00', output_packet)
 
-        if packet_type == 'sC':
-            output_packet = bytes([])
-        if packet_type == 'uP':
-            param_id = struct.unpack('<L', payload[0:4])[0]
-            define_parameter = self._params[str(param_id)]
-
-            update_value = decode_value(
-                define_parameter.data_type, payload[4:12])
-            define_parameter.value = update_value
-
-            output_packet = struct.pack('i', 0)
-        if packet_type == 'rD':
+        if packet_type == 'ma':
             output_packet = bytes([])
 
         if packet_type == 'NA':

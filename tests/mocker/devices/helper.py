@@ -1,6 +1,11 @@
 import struct
 
-VALID_OPEN_PACKET_TYPES = ['pG', 'gA', 'gV', 'gP', 'sC', 'uP', 'NA','rD']
+VALID_OPEN_PACKET_TYPES = ['pG', 'uC', 'uP', 'uA', 'uB',
+                           'sC', 'rD',
+                           'gC', 'gA', 'gB', 'gV', 'gP',
+                           '\x15\x15', '\x00\x00', 'ma', 'NA',
+                           'JI', 'JA', 'WA',
+                           'RE', 'WE', 'UE', 'LE', 'SR']
 
 VALID_CLOSURE_PACKET_TYPES = ['PK', 'GP', 'SF', 'WF', 'GF', 'RF', 'RE', 'NA']
 

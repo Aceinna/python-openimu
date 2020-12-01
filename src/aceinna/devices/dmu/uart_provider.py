@@ -260,6 +260,14 @@ class Provider(OpenDeviceBase):
         result = yield self._message_center.build(command=command_line)
 
         data = result['data']
+        error = result['error']
+
+        if error:
+            yield {
+                'packetType': 'error',
+                'data': 'No Response'
+            }
+
         if data:
             yield {
                 'packetType': 'inputParam',

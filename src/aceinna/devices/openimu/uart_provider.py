@@ -266,11 +266,20 @@ class Provider(OpenDeviceBase):
         result = yield self._message_center.build(command=command_line)
 
         data = result['data']
+        error = result['error']
+
+        if error:
+            yield {
+                'packetType': 'error',
+                'data': 'No Response'
+            }
+
         if data:
             yield {
                 'packetType': 'inputParam',
                 'data': data
             }
+
         yield {
             'packetType': 'error',
             'data': 'No Response'
@@ -411,7 +420,7 @@ class Provider(OpenDeviceBase):
                 'packetType': 'error',
                 'data': {
                     'error': 'Runtime Error',
-                    'message':'The device cannot response the command'
+                    'message': 'The device cannot response the command'
                 }
             }
 

@@ -551,11 +551,20 @@ class Provider(OpenDeviceBase):
         # result = self.get_input_result('gP', timeout=1)
         result = yield self._message_center.build(command=command_line)
 
-        if result['data']:
-            self.parameters = result['data']
+        data = result['data']
+        error = result['error']
+
+        if error:
+            yield {
+                'packetType': 'error',
+                'data': 'No Response'
+            }
+
+        if data:
+            self.parameters = data
             yield {
                 'packetType': 'inputParam',
-                'data': result['data']
+                'data': data
             }
 
         yield {

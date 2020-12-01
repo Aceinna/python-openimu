@@ -84,6 +84,7 @@ class DeviceMessageCenter(EventBase):
         self._has_running_checker = False
         self._last_timeout_command = None
         self._run_id = None
+        self.loop = None
 
     def is_ready(self):
         '''Check if message center is setuped
@@ -154,6 +155,8 @@ class DeviceMessageCenter(EventBase):
 
     def stop(self):
         self._is_stop = True
+        # if self.loop:
+        #     self.loop.close()
 
     def timeout_check(self):
         if self._is_running:
@@ -183,8 +186,8 @@ class DeviceMessageCenter(EventBase):
         '''
         if sys.version_info[0] > 2:
             import asyncio
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
+            self.loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(self.loop)
 
         while True:
             self.exception_lock.acquire()
