@@ -326,7 +326,7 @@ class Provider(OpenDeviceBase):
             self.debug_serial_port.write(cmd_configuration.encode())
             try_times = 20
             for i in range(try_times):
-                data_buffer = self.debug_serial_port.read(500)
+                data_buffer = self.debug_serial_port.read(700)
                 if len(data_buffer):
                     try:
                         #print('len = {0}'.format(len(data_buffer)))

@@ -2,6 +2,10 @@
 
 ---
 
+## 2.2.3 / 2020-12-01
+- [OpenRTK] Update Configuration read size
+- [Framework] Fix cannot parse 'sC', 'uB' command
+
 ## 2.2.2 / 2020-11-26
 - [OpenIMU] Add exception handler when log data, although file is closed
 - [OpenIMU] Add uC,uA,gA command response
