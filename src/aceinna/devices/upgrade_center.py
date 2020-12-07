@@ -4,7 +4,7 @@ from .base.event_base import EventBase
 
 
 class UpgradeCenter(EventBase):
-    def __init__(self):
+    def __init__(self, mode='async'):
         super(UpgradeCenter, self).__init__()
         self.workers = {}
         self.run_status = []
@@ -13,6 +13,7 @@ class UpgradeCenter(EventBase):
         self.current = 0
         self.total = 0
         self.data_lock = threading.Lock()
+        self._mode = mode
 
     def register(self, worker):
         worker_key = 'worker-' + str(len(self.workers))
@@ -26,14 +27,18 @@ class UpgradeCenter(EventBase):
             return False
 
         self.is_processing = True
+
         for worker in self.workers.values():
             '''start thread to invoke worker's work
             '''
             executor = worker['executor']
 
-            thead = threading.Thread(
-                target=self.thread_start_worker, args=(executor,))
-            thead.start()
+            if self._mode == 'async':
+                thead = threading.Thread(
+                    target=self.thread_start_worker, args=(executor,))
+                thead.start()
+            else:
+                self.thread_start_worker(executor)
         return True
 
     def stop(self):

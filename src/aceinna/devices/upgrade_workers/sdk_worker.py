@@ -1,5 +1,6 @@
 import time
 from ..base.upgrade_worker_base import UpgradeWorkerBase
+from ...framework.utils import helper
 
 
 XLDR_TESEO5_BOOTLOADER_CUT2 = \
@@ -708,10 +709,12 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
     Upgrade tool for SDK of OpenRTK
     '''
 
-    def __init__(self, uart, file_content):
+    def __init__(self, uart, baudrate, file_content):
         super(SDKUpgradeWorker, self).__init__()
         self._uart = uart
         self._file_content = file_content
+
+        self._uart.baudrate = baudrate
         # self._key = None
         # self._is_stopped = False
         # self._uart = None
@@ -778,6 +781,27 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
             read_times -= 1
 
         return is_match
+
+    def send_sdk_cmd(self):
+        if self._is_stopped:
+            return False
+
+        command_line = helper.build_bootloader_input_packet('JS')
+        self._uart.write(command_line)
+        time.sleep(0.5)
+        response = helper.read_untils_have_data(self._uart, 'JS')
+        # print(rev_data)
+        return True if response is not None else False
+
+    def send_sdk_cmd_JG(self):
+        if self._is_stopped:
+            return False
+
+        command_line = helper.build_bootloader_input_packet('JG')
+        self._uart.write(command_line)
+        time.sleep(0.5)
+        response = helper.read_untils_have_data(self._uart, 'JG')
+        return True if response is not None else False
 
     def send_sync(self):
         if self._is_stopped:
@@ -956,11 +980,20 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
 
         return self.read_until(0xCC, 500, 1)
 
+    def erase_nvm_wait(self):
+        if self._is_stopped:
+            return False
+        return self.read_until(0xCC, 100, 1)
+
+    def flash_write_pre(self, fs_len, bin_data):
+        data_to_sdk = bin_data[0:5120*2]
+        self._uart.write(data_to_sdk)
+
     def flash_write(self, fs_len, bin_data):
         write_result = True
         packet_num = int(fs_len / 5120)
         current = 0
-        for i in range(packet_num+1):
+        for i in range(2, packet_num+1):
             if self._is_stopped:
                 return False
 
@@ -1023,6 +1056,10 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
 
         # if not self.connect_serail_port():
         #     return self._raise_error('Connect serial Port failed')
+        if not self.send_sdk_cmd():
+            return self._raise_error('Send sdk command failed')
+
+        time.sleep(18)
 
         if not self.send_sync():
             return self._raise_error('Sync failed')
@@ -1048,11 +1085,18 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
         if not self.send_bin_info(bin_info_list):
             return self._raise_error('Send binary info failed')
 
+        # TODO: pre send
+        self.flash_write_pre(fs_len, self._file_content)
+
         if not self.devinit_wait():
             return self._raise_error('Wait devinit failed')
 
         if not self.erase_wait():
             return self._raise_error('Wait erase failed')
+
+        #TODO: erase_nvm_wait
+        if not self.erase_nvm_wait():
+            return self._raise_error('Wait nvm failed')
 
         if not self.flash_write(fs_len, self._file_content):
             return self._raise_error('Write flash failed')

@@ -185,7 +185,7 @@ class Provider(OpenDeviceBase):
         upgrade_center = UpgradeCenter()
 
         upgrade_center.register(
-            FirmwareUpgradeWorker(self.communicator, firmware_content))
+            FirmwareUpgradeWorker(self.communicator, self.bootloader_baudrate, firmware_content))
 
         upgrade_center.on('progress', self.handle_upgrade_process)
         upgrade_center.on('error', self.handle_upgrade_error)

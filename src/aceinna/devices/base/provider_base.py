@@ -264,8 +264,8 @@ class OpenDeviceBase(EventBase):
         '''
         # output firmware upgrade finished
         time.sleep(1)
-        command_line = helper.build_bootloader_input_packet('JA')
-        self.communicator.write(command_line)
+        #command_line = helper.build_bootloader_input_packet('JA')
+        #self.communicator.write(command_line)
         print('Restarting app ...')
         time.sleep(5)
 

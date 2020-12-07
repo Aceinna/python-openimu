@@ -1,19 +1,22 @@
 import time
 from ..base.upgrade_worker_base import UpgradeWorkerBase
 from ...framework.utils import helper
+from ..ping.open import ping
 
 
 class FirmwareUpgradeWorker(UpgradeWorkerBase):
     '''Firmware upgrade worker
     '''
 
-    def __init__(self, communicator, file_content):
+    def __init__(self, communicator, baudrate, file_content):
         super(FirmwareUpgradeWorker, self).__init__()
         self._file_content = file_content
         self._communicator = communicator
         self.current = 0
         self.total = len(file_content)
         self.max_data_len = 240
+
+        self._communicator.serial_port.baudrate = baudrate
         # self._key = None
         # self._is_stopped = False
 
@@ -52,6 +55,18 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
             self.emit('error', self._key, 'Invalid file content')
             return
 
+        # run command JI
+        command_line = helper.build_bootloader_input_packet('JI')
+        self._communicator.reset_buffer()  # clear input and output buffer
+        self._communicator.write(command_line, True)
+        time.sleep(3)
+
+        # It is used to skip streaming data with size 1000 per read
+        response = helper.read_untils_have_data(
+            self._communicator, 'JI', 1000, 50)
+
+        print(response)
+
         while self.current < self.total:
             if self._is_stopped:
                 return
@@ -70,6 +85,20 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
 
             self.current += packet_data_len
             self.emit('progress', self._key, self.current, self.total)
+
+        # run command JA
+        command_line = helper.build_bootloader_input_packet('JA')
+        self._communicator.write(command_line, True)
+        time.sleep(5)
+
+        # ping device
+        can_ping = False
+
+        while not can_ping:
+            info = ping(self._communicator)
+            if info:
+                can_ping = True
+            time.sleep(0.5)
 
         if self.total > 0 and self.current >= self.total:
             self.emit('finish', self._key)
