@@ -88,6 +88,12 @@ class OpenDeviceBase(EventBase):
         '''
 
     @abstractmethod
+    def build_upgrade_center(self, firmware_content):
+        '''
+        Build upgrade center
+        '''
+
+    @abstractmethod
     def get_device_info(self, *args):
         '''
         Get device info for connection log
@@ -282,13 +288,14 @@ class OpenDeviceBase(EventBase):
                 self.handle_upgrade_error('cannot find firmware file')
                 return
             # step.2 jump to bootloader
-            if not self.switch_to_bootloader():
-                self.handle_upgrade_error('Bootloader Start Failed')
-                return
+            # if not self.switch_to_bootloader():
+            #     self.handle_upgrade_error('Bootloader Start Failed')
+            #     return
             # step.3 write to block, use self write from specified device
             print('Firmware upgrading...')
-            total = self.do_write_firmware(firmware_content)
-            self._pbar = tqdm(total=total)
+            upgrade_center = self.build_upgrade_center(firmware_content)
+            self._pbar = tqdm(total=upgrade_center.total)
+            upgrade_center.start()
             # self.write_firmware()
             # step.4 restart app
             # self.restart()

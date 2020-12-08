@@ -194,6 +194,17 @@ class Provider(OpenDeviceBase):
 
         return upgrade_center.total
 
+    def build_upgrade_center(self, firmware_content):
+        upgrade_center = UpgradeCenter()
+
+        upgrade_center.register(
+            FirmwareUpgradeWorker(self.communicator, self.bootloader_baudrate, firmware_content))
+
+        upgrade_center.on('progress', self.handle_upgrade_process)
+        upgrade_center.on('error', self.handle_upgrade_error)
+        upgrade_center.on('finish', self.handle_upgrade_complete)
+        return upgrade_center
+
     def get_device_connection_info(self):
         return {
             'modelName': self.device_info['name'],

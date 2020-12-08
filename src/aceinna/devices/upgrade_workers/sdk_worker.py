@@ -709,12 +709,12 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
     Upgrade tool for SDK of OpenRTK
     '''
 
-    def __init__(self, uart, baudrate, file_content):
+    def __init__(self, communicator, baudrate, file_content):
         super(SDKUpgradeWorker, self).__init__()
-        self._uart = uart
+        self._uart = communicator.serial_port
         self._file_content = file_content
 
-        self._uart.baudrate = baudrate
+        self._baudrate = baudrate
         # self._key = None
         # self._is_stopped = False
         # self._uart = None
@@ -789,6 +789,7 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
         command_line = helper.build_bootloader_input_packet('JS')
         self._uart.write(command_line)
         time.sleep(0.5)
+
         response = helper.read_untils_have_data(self._uart, 'JS')
         # print(rev_data)
         return True if response is not None else False
@@ -847,10 +848,10 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
             return False
 
         check_baud = [0x38]
-        time.sleep(0.01)
+        time.sleep(1)
         self._uart.write(check_baud)
 
-        return self.read_until(0xCC, 10, 1)
+        return self.read_until(0xCC, 500, 1)
 
     def is_host_ready(self):
         if self._is_stopped:
@@ -1030,6 +1031,7 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
             return False
         # wait a time, output data to client
         time.sleep(.5)
+        print(message)
         self.emit('error', self._key, message)
         return False
 
@@ -1051,6 +1053,8 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
         '''
         Start to do upgrade
         '''
+        self._uart.baudrate = self._baudrate
+
         fs_len = len(self._file_content)
         bin_info_list = self.get_bin_info_list(fs_len, self._file_content)
 

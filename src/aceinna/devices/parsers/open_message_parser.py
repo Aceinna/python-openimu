@@ -85,9 +85,9 @@ class UartMessageParser(EventBase):
         is_interactive_cmd = INPUT_PACKETS.__contains__(packet_type)
         if is_interactive_cmd:
             self._parse_input_packet(packet_type, payload, frame)
-        else:
+        #else:
             # consider as output packet, parse output Messages
-            self._parse_output_packet(packet_type, payload)
+            #  self._parse_output_packet(packet_type, payload)
 
     def _parse_input_packet(self, packet_type, payload, frame):
         payload_parser = match_command_handler(packet_type)

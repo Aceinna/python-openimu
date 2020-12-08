@@ -153,6 +153,9 @@ class Provider(OpenDeviceBase):
     def do_write_firmware(self, firmware_content):
         raise Exception('Not implement write firmware.')
 
+    def build_upgrade_center(self, firmware_content):
+        raise Exception('Not implement build upgrade center')
+
     def get_device_connection_info(self):
         return {
             'modelName': self.device_info['name'],

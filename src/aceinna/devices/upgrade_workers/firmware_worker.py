@@ -15,8 +15,8 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
         self.current = 0
         self.total = len(file_content)
         self.max_data_len = 240
+        self._baudrate = baudrate
 
-        self._communicator.serial_port.baudrate = baudrate
         # self._key = None
         # self._is_stopped = False
 
@@ -51,6 +51,8 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
     def work(self):
         '''Upgrades firmware of connected device to file provided in argument
         '''
+        self._communicator.serial_port.baudrate = self._baudrate
+
         if self.current == 0 and self.total == 0:
             self.emit('error', self._key, 'Invalid file content')
             return
@@ -62,10 +64,8 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
         time.sleep(3)
 
         # It is used to skip streaming data with size 1000 per read
-        response = helper.read_untils_have_data(
+        helper.read_untils_have_data(
             self._communicator, 'JI', 1000, 50)
-
-        print(response)
 
         while self.current < self.total:
             if self._is_stopped:
@@ -95,7 +95,7 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
         can_ping = False
 
         while not can_ping:
-            info = ping(self._communicator)
+            info = ping(self._communicator, None)
             if info:
                 can_ping = True
             time.sleep(0.5)
