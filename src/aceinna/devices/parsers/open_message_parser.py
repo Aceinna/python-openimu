@@ -87,7 +87,7 @@ class UartMessageParser(EventBase):
             self._parse_input_packet(packet_type, payload, frame)
         #else:
             # consider as output packet, parse output Messages
-            #  self._parse_output_packet(packet_type, payload)
+            self._parse_output_packet(packet_type, payload)
 
     def _parse_input_packet(self, packet_type, payload, frame):
         payload_parser = match_command_handler(packet_type)
