@@ -1023,8 +1023,8 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
         return self.read_until(0xCC, 200)
 
     def _raise_error(self, message):
-        if self._uart.isOpen():
-            self._uart.close()
+        # if self._uart.isOpen():
+        #     self._uart.close()
 
         # if the worker is mark as stopped, don't raise any error
         if self._is_stopped:
@@ -1065,7 +1065,10 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
 
         time.sleep(2)
         self._uart.reset_input_buffer()
+        self._uart.close()
         time.sleep(10)
+
+        self._uart.open()
 
         if not self.send_sync():
             return self._raise_error('Sync failed')
