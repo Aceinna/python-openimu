@@ -838,8 +838,8 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
 
         has_read = self.read_until(0xCC, 10)
 
-        if has_read:
-            self._uart.baudrate = baud_int
+        # if has_read:
+        #     self._uart.baudrate = baud_int
 
         return has_read
 
@@ -1063,7 +1063,9 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
         if not self.send_sdk_cmd():
             return self._raise_error('Send sdk command failed')
 
-        time.sleep(18)
+        time.sleep(2)
+        self._uart.reset_input_buffer()
+        time.sleep(10)
 
         if not self.send_sync():
             return self._raise_error('Sync failed')

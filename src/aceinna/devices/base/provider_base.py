@@ -269,11 +269,10 @@ class OpenDeviceBase(EventBase):
         Restart device
         '''
         # output firmware upgrade finished
-        time.sleep(1)
         #command_line = helper.build_bootloader_input_packet('JA')
         #self.communicator.write(command_line)
         print('Restarting app ...')
-        time.sleep(5)
+        time.sleep(10)
 
         self.emit('complete_upgrade')
 
