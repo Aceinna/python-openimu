@@ -792,7 +792,7 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
 
         response = helper.read_untils_have_data(self._uart, 'JS')
         # print(rev_data)
-        return True if response is not None else False
+        return True  # if response is not None else False
 
     def send_sdk_cmd_JG(self):
         if self._is_stopped:
@@ -1110,5 +1110,5 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
         if not self.flash_crc():
             return self._raise_error('CRC check fail')
         else:
-            self._uart.close()
+            # self._uart.close()
             self.emit('finish', self._key)

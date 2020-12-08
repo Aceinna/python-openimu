@@ -272,7 +272,7 @@ class OpenDeviceBase(EventBase):
         #command_line = helper.build_bootloader_input_packet('JA')
         #self.communicator.write(command_line)
         print('Restarting app ...')
-        time.sleep(10)
+        time.sleep(5)
 
         self.emit('complete_upgrade')
 
