@@ -1005,7 +1005,7 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
             # fs.write(bytes(data_to_sdk))
             current += len(data_to_sdk)
             self._uart.write(data_to_sdk)
-
+            # print('write data', i, data_to_sdk)
             has_read = self.read_until(0xCC, 100)
 
             if has_read:
@@ -1021,6 +1021,12 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
             return False
 
         return self.read_until(0xCC, 200)
+
+    def flash_restart(self):
+        if self._is_stopped:
+            return False
+
+        return self.read_until(0xCC, 1000)
 
     def _raise_error(self, message):
         # if self._uart.isOpen():
@@ -1094,7 +1100,6 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
         if not self.send_bin_info(bin_info_list):
             return self._raise_error('Send binary info failed')
 
-        # TODO: pre send
         self.flash_write_pre(fs_len, self._file_content)
 
         if not self.devinit_wait():
@@ -1103,7 +1108,6 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
         if not self.erase_wait():
             return self._raise_error('Wait erase failed')
 
-        #TODO: erase_nvm_wait
         if not self.erase_nvm_wait():
             return self._raise_error('Wait nvm failed')
 
@@ -1112,6 +1116,12 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
 
         if not self.flash_crc():
             return self._raise_error('CRC check fail')
+
+        if not self.flash_restart():
+            return self._raise_error('flash_restart fail')
+
+        if not self.send_sdk_cmd_JG():
+            return self._raise_error('Send sdk command JG fail')
         else:
             # self._uart.close()
             self.emit('finish', self._key)
