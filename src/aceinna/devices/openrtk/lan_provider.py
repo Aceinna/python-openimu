@@ -120,7 +120,7 @@ class Provider(OpenDeviceBase):
             return True
         return False
 
-    def bind_device_info(self, device_info, app_info):
+    def bind_device_info(self, device_access, device_info, app_info):
         self._build_device_info(device_info)
         self._build_app_info(app_info)
         self.connected = True
