@@ -384,7 +384,7 @@
                 {
                     "type": "uint32",
                     "name": "GPS_TimeOfWeek",
-                    "unit": "s",
+                    "unit": "ms",
                     "format": "11.4f"
                 },
                 {
@@ -479,7 +479,7 @@
                     "type": "uint8",
                     "name": "position_type",
                     "unit": "",
-                    "format": ""
+                    "format": "3"
                 },
                 {
                     "type": "double",
@@ -521,13 +521,13 @@
                     "type": "uint8",
                     "name": "number_of_satellites",
                     "unit": "",
-                    "format": ""
+                    "format": "3"
                 },
                 {
                     "type": "uint8",
                     "name": "number_of_satellites_in_solution",
                     "unit": "",
-                    "format": ""
+                    "format": "3"
                 },
                 {
                     "type": "float",
@@ -599,13 +599,13 @@
                     "type": "uint8",
                     "name": "ins_status",
                     "unit": "",
-                    "format": ""
+                    "format": "3"
                 },
                 {
                     "type": "uint8",
                     "name": "ins_position_type",
                     "unit": "",
-                    "format": ""
+                    "format": "3"
                 },
                 {
                     "type": "double",
@@ -737,7 +737,7 @@
                     "type": "uint8",
                     "name": "mode",
                     "unit": "",
-                    "format": ""
+                    "format": "3"
                 },
                 {
                     "type": "double",
@@ -749,13 +749,13 @@
                     "type": "uint8",
                     "name": "fwd",
                     "unit": "",
-                    "format": ""
+                    "format": "3"
                 },
                 {
                     "type": "uint64",
                     "name": "wheel_tick",
                     "unit": "",
-                    "format": ""
+                    "format": "16"
                 }
             ]
         },
@@ -779,31 +779,31 @@
                     "type": "uint8",
                     "name": "satelliteId",
                     "unit": "",
-                    "format": ""
+                    "format": "4"
                 },
                 {
                     "type": "uint8",
                     "name": "systemId",
                     "unit": "",
-                    "format": ""
+                    "format": "4"
                 },
                 {
                     "type": "uint8",
                     "name": "antennaId",
                     "unit": "",
-                    "format": ""
+                    "format": "5"
                 },
                 {
                     "type": "uint8",
                     "name": "l1cn0",
                     "unit": "",
-                    "format": ""
+                    "format": "4"
                 },
                 {
                     "type": "uint8",
                     "name": "l2cn0",
                     "unit": "",
-                    "format": ""
+                    "format": "4"
                 },
                 {
                     "type": "float",
