@@ -882,7 +882,7 @@ class UserRawParse:
     
     def write_titlebar(self, file, output):
         for value in output['payload']:
-            file.write(value['name'])
+            file.write(value['name']+'('+value['unit']+')')
             file.write(",")
         file.write("\n")
 

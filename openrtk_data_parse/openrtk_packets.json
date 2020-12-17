@@ -384,7 +384,7 @@
                 {
                     "type": "uint32",
                     "name": "GPS_TimeOfWeek",
-                    "unit": "ms",
+                    "unit": "s",
                     "format": "11.4f"
                 },
                 {
@@ -538,7 +538,7 @@
                 {
                     "type": "float",
                     "name": "diffage",
-                    "unit": "",
+                    "unit": "s",
                     "format": "5.1f"
                 },
                 {
@@ -664,13 +664,13 @@
                 {
                     "type": "float",
                     "name": "latitude_std",
-                    "unit": "deg",
+                    "unit": "m",
                     "format": "8.3f"
                 },
                 {
                     "type": "float",
                     "name": "longitude_std",
-                    "unit": "deg",
+                    "unit": "m",
                     "format": "8.3f"
                 },
                 {
@@ -808,13 +808,13 @@
                 {
                     "type": "float",
                     "name": "azimuth",
-                    "unit": "",
+                    "unit": "deg",
                     "format": "10.3f"
                 },
                 {
                     "type": "float",
                     "name": "elevation",
-                    "unit": "",
+                    "unit": "deg",
                     "format": "10.3f"
                 }
             ]
