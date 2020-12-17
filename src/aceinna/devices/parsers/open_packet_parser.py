@@ -2,10 +2,12 @@ import sys
 import struct
 import collections
 from .open_field_parser import decode_value
+from ...framework.utils.print import print_yellow
+from ...framework.context import APP_CONTEXT
 # from .dmu_field_parser import decode_value
 
 # input packet
-
+error_decode_packet = 0
 
 def string_parser(payload, user_configuration):
     error = False
@@ -275,9 +277,16 @@ def common_continuous_parser(payload, configuration):
                    for idx, value in enumerate(configuration['payload'])]
             data = collections.OrderedDict(out)
         except Exception as ex:  # pylint: disable=broad-except
-            print(
-                "error happened when decode the payload of packets, pls restart driver: {0}"
-                .format(ex))
+            global error_decode_packet
+            error_decode_packet = error_decode_packet + 1
+            if error_decode_packet == 100 or error_decode_packet == 400 or error_decode_packet == 700:
+                print_yellow("warning: your firmware may not suitable for this driver, pls update firmware or driver")
+
+            if error_decode_packet % 300 == 0:
+                APP_CONTEXT.get_logger().logger.warning(
+                    "error happened when decode the payload of packets, pls restart driver: {0}"
+                    .format(ex))
+
 
     return data
 
