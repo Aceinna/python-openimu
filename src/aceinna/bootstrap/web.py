@@ -419,6 +419,13 @@ class Webserver(EventBase):
                 level=log_level,
                 console_log=console_log
             ))
+        
+        APP_CONTEXT.set_print_logger(
+            AppLogger(
+                filename=os.path.join(executor_path, 'loggers', 'print_' + time.strftime('%Y%m%d_%H%M%S') + '.log'),
+                gen_file=True,
+                level=log_level
+            ))
 
     def get_device(self):
         '''

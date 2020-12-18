@@ -468,7 +468,7 @@ class SerialPort(Communicator):
             return self.serial_port.read(size)
         except serial.SerialException:
             print(
-                'Serial Exception! Please check the serial port connector is stable or not.')
+                'Serial Exception! Please check the serial port connector is stable or not.\n')
             raise
         except Exception as ex:
             # print(e)

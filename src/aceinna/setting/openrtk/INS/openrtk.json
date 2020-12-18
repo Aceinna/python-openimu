@@ -10,7 +10,7 @@
             {
                 "name": "GNSS",
                 "value": "com10",
-                "enable": 0 
+                "enable": 0
             },
             {
                 "name": "DEBUG",
@@ -776,15 +776,6 @@
 					"name": "User Version"
 				}
 			},
-			{
-				"name": "gA",
-				"description": "Get All Configuration Parameters",
-				"inputPayload": {},
-				"responsePayload": {
-					"type": "userConfiguration",
-					"name": "Full Current Configuration"
-				}
-            },
             {
 				"name": "gB",
 				"description": "Get Configuration Parameters by Block",
@@ -837,7 +828,7 @@
                     {
                         "type": "uint32",
                         "name": "GPS_TimeOfWeek",
-                        "unit": "s",
+                        "unit": "ms",
                         "format": "11.4f"
                     },
                     {
@@ -881,7 +872,7 @@
 					{
 						"name": "Acceleration",
 						"units": "m/s^2",
-						"xAxis": {"name":"GPS_TimeofWeek", "unit":"sec"},
+						"xAxis": {"name":"GPS_TimeOfWeek", "unit":"s"},
 						"yAxes": [
 							"x_accel",
 							"y_accel",
@@ -897,7 +888,7 @@
 					{
 						"name": "Angular-Rate",
 						"units": "deg/s",
-						"xAxis": {"name":"GPS_TimeofWeek", "unit":"sec"},
+						"xAxis": {"name":"GPS_TimeOfWeek", "unit":"s"},
 						"yAxes": [
 							"x_gyro",
 							"y_gyro",
@@ -925,14 +916,14 @@
                     {
                         "type": "uint32",
                         "name": "GPS_TimeOfWeek",
-                        "unit": "s",
+                        "unit": "ms",
                         "format": "11.4f"
                     },
                     {
                         "type": "uint8",
                         "name": "position_type",
                         "unit": "",
-                        "format": ""
+                        "format": "3"
                     },
                     {
                         "type": "double",
@@ -974,13 +965,13 @@
                         "type": "uint8",
                         "name": "number_of_satellites",
                         "unit": "",
-                        "format": ""
+                        "format": "3"
                     },
                     {
                         "type": "uint8",
                         "name": "number_of_satellites_in_solution",
                         "unit": "",
-                        "format": ""
+                        "format": "3"
                     },
                     {
                         "type": "float",
@@ -991,7 +982,7 @@
                     {
                         "type": "float",
                         "name": "diffage",
-                        "unit": "",
+                        "unit": "s",
                         "format": "5.1f"
                     },
                     {
@@ -1045,20 +1036,20 @@
                     {
                         "type": "uint32",
                         "name": "GPS_TimeOfWeek",
-                        "unit": "s",
+                        "unit": "ms",
                         "format": "11.4f"
                     },
                     {
                         "type": "uint8",
                         "name": "ins_status",
                         "unit": "",
-                        "format": ""
+                        "format": "3"
                     },
                     {
                         "type": "uint8",
                         "name": "ins_position_type",
                         "unit": "",
-                        "format": ""
+                        "format": "3"
                     },
                     {
                         "type": "double",
@@ -1117,13 +1108,13 @@
                     {
                         "type": "float",
                         "name": "latitude_std",
-                        "unit": "deg",
+                        "unit": "m",
                         "format": "8.3f"
                     },
                     {
                         "type": "float",
                         "name": "longitude_std",
-                        "unit": "deg",
+                        "unit": "m",
                         "format": "8.3f"
                     },
                     {
@@ -1183,14 +1174,14 @@
                     {
                         "type": "uint32",
                         "name": "GPS_TimeOfWeek",
-                        "unit": "s",
+                        "unit": "ms",
                         "format": "11.4f"
                     },
                     {
                         "type": "uint8",
                         "name": "mode",
                         "unit": "",
-                        "format": ""
+                        "format": "3"
                     },
                     {
                         "type": "double",
@@ -1202,13 +1193,13 @@
                         "type": "uint8",
                         "name": "fwd",
                         "unit": "",
-                        "format": ""
+                        "format": "3"
                     },
                     {
                         "type": "uint64",
                         "name": "wheel_tick",
                         "unit": "",
-                        "format": ""
+                        "format": "16"
                     }
                 ]
             },
@@ -1225,49 +1216,49 @@
                     {
                         "type": "uint32",
                         "name": "GPS_TimeOfWeek",
-                        "unit": "s",
+                        "unit": "ms",
                         "format": "11.4f"
                     },
                     {
                         "type": "uint8",
                         "name": "satelliteId",
                         "unit": "",
-                        "format": ""
+                        "format": "4"
                     },
                     {
                         "type": "uint8",
                         "name": "systemId",
                         "unit": "",
-                        "format": ""
+                        "format": "4"
                     },
                     {
                         "type": "uint8",
                         "name": "antennaId",
                         "unit": "",
-                        "format": ""
+                        "format": "5"
                     },
                     {
                         "type": "uint8",
                         "name": "l1cn0",
                         "unit": "",
-                        "format": ""
+                        "format": "4"
                     },
                     {
                         "type": "uint8",
                         "name": "l2cn0",
                         "unit": "",
-                        "format": ""
+                        "format": "4"
                     },
                     {
                         "type": "float",
                         "name": "azimuth",
-                        "unit": "",
+                        "unit": "deg",
                         "format": "10.3f"
                     },
                     {
                         "type": "float",
                         "name": "elevation",
-                        "unit": "",
+                        "unit": "deg",
                         "format": "10.3f"
                     }
                 ]
@@ -1285,29 +1276,14 @@
 			"function": ""
 		},
 		{
-			"name": "run",
-			"description": "Operations defined by users",
-			"function": "run_handler"
-		},
-		{
 			"name": "save",
 			"description": "Save the configuration into EEPROM",
 			"function": "save_handler"
 		},
 		{
-			"name": "connect",
-			"description": "Find OpenIMU device",
-			"function": "connect_handler"
-		},
-		{
 			"name": "upgrade",
 			"description": "Upgrade firmware",
 			"function": "upgrade_handler"
-		},
-		{
-			"name": "record",
-			"description": "Record output data of OpenIMU on local machine",
-			"function": "record_handler"
 		},
 		{
 			"name": "stop",
@@ -1318,16 +1294,6 @@
 			"name": "server_start",
 			"description": "start server thread and must use exit command to quit",
 			"function": "server_start_handler"
-		},
-		{
-			"name": "get",
-			"description": "Read the current configuration and output data",
-			"function": "get_handler"
-		},
-		{
-			"name": "set",
-			"description": "Write parameters to OpenIMU",
-			"function": "set_handler"
 		}
 	]
 }

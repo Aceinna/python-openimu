@@ -26,7 +26,9 @@ from ..upgrade_workers import (
 )
 from ..upgrade_center import UpgradeCenter
 from ..parsers.open_field_parser import encode_value
-
+from ...framework.utils.print import print_green
+from ...framework.utils.print import print_yellow
+from ...framework.utils.print import print_red
 
 class Provider(OpenDeviceBase):
     '''
@@ -102,7 +104,7 @@ class Provider(OpenDeviceBase):
 
         port_name = device_access.port
 
-        return '# Connected {0} with UART on {1} #\n\rDevice:{2} \n\rFirmware:{3}'\
+        return '# Connected {0} with UART on {1} #\nDevice:{2} \nFirmware:{3}'\
             .format('OpenRTK', port_name, device_info, app_info)
 
     def _build_device_info(self, text):
@@ -187,7 +189,6 @@ class Provider(OpenDeviceBase):
         if set_user_para:
             result = self.set_params(
                 self.properties["initial"]["userParameters"])
-            ##print('set user para {0}'.format(result))
             if (result['packetType'] == 'success'):
                 self.save_config()
 
@@ -204,7 +205,6 @@ class Provider(OpenDeviceBase):
                 user_port_num, port_name = self.build_connected_serial_port_info()
                 if not user_port_num or not port_name:
                     return False
-                #print('user_port {0} {1}'.format(user_port_num, port_name))
                 debug_port = port_name + str(int(user_port_num) + 2)
                 rtcm_port = port_name + str(int(user_port_num) + 1)
             else:
@@ -225,7 +225,7 @@ class Provider(OpenDeviceBase):
                     file_name + '/' + 'user_' + file_time + '.bin', "wb")
 
             if rtcm_port != '':
-                print('OpenRTK log GNSS UART {0}'.format(rtcm_port))
+                print_green('OpenRTK log GNSS UART {0}'.format(rtcm_port))
                 self.rtcm_serial_port = serial.Serial(
                     rtcm_port, '460800', timeout=0.1)
                 if self.rtcm_serial_port.isOpen():
@@ -236,7 +236,7 @@ class Provider(OpenDeviceBase):
                     t.start()
 
             if debug_port != '':
-                print('OpenRTK log DEBUG UART {0}'.format(debug_port))
+                print_green('OpenRTK log DEBUG UART {0}'.format(debug_port))
                 self.debug_serial_port = serial.Serial(
                     debug_port, '460800', timeout=0.1)
                 if self.debug_serial_port.isOpen():
@@ -262,7 +262,7 @@ class Provider(OpenDeviceBase):
                     self.rtcm_serial_port.close()
             self.debug_serial_port = None
             self.rtcm_serial_port = None
-            print(e)
+            print_red('Can not log GNSS UART or DEBUG UART, pls check uart driver and connection!')
             return False
 
     def after_bootloader_switch(self):
@@ -295,11 +295,11 @@ class Provider(OpenDeviceBase):
                                 str_nmea)
                             if cksum == calc_cksum:
                                 if str_nmea.find("$GPGGA") != -1:
-                                    print()
+                                    #print()
                                     if self.ntrip_client_enable and self.ntripClient != None:
                                         self.ntripClient.send(str_nmea)
-                                print(str_nmea, end='')
-
+                                #print(str_nmea, end='')
+                                APP_CONTEXT.get_print_logger().info(str_nmea.replace('\r\n',''))
                                 # else:
                                 #     print("nmea checksum wrong {0} {1}".format(cksum, calc_cksum))
                         except Exception as e:
@@ -335,7 +335,7 @@ class Provider(OpenDeviceBase):
                         json_data = json.loads(str_data)
                         for key in json_data.keys():
                             if key == 'openrtk configuration':
-                                print('{0}'.format(json_data))
+                                APP_CONTEXT.get_print_logger().info('{0}'.format(json_data))
                                 if self.debug_c_f:
                                     self.debug_c_f.write(str_data)
                                     self.debug_c_f.close()
@@ -355,7 +355,7 @@ class Provider(OpenDeviceBase):
             try:
                 data = bytearray(self.debug_serial_port.read_all())
             except Exception as e:
-                print('DEBUG PORT Thread:receiver error:', e)
+                print_red('DEBUG PORT Thread error: {0}'.format(e))
                 return  # exit thread receiver
             if len(data):
                 self.debug_logf.write(data)
@@ -369,7 +369,7 @@ class Provider(OpenDeviceBase):
             try:
                 data = bytearray(self.rtcm_serial_port.read_all())
             except Exception as e:
-                print('RTCM PORT Thread:receiver error:', e)
+                print_red('RTCM PORT Thread error: {0}'.format(e))
                 return  # exit thread receiver
             if len(data):
                 self.rtcm_logf.write(data)
@@ -440,7 +440,7 @@ class Provider(OpenDeviceBase):
                 if str_checksum.startswith("0x"):
                     str_checksum = str_checksum[2:]
                 gpgga = gpgga + '*' + str_checksum + '\r\n'
-                print(gpgga)
+                APP_CONTEXT.get_print_logger().info(gpgga)
                 if self.ntripClient != None:
                     self.ntripClient.send(gpgga)
                 return
@@ -476,7 +476,7 @@ class Provider(OpenDeviceBase):
                                          data['latitude'], data['longitude'], data['height'],
                                          data['velocityNorth'], data['velocityEast'], data['velocityUp'],
                                          data['roll'], data['pitch'], data['heading'])
-                                    print(inspva)
+                                    APP_CONTEXT.get_print_logger().info(inspva)
                         else:
                             self.add_output_packet('stream', 'pos', data)
                             self.pS_data = data
@@ -484,7 +484,6 @@ class Provider(OpenDeviceBase):
                         self.add_output_packet('stream', 'pos', data)
                         self.pS_data = data
             except Exception as e:
-                # print(e)
                 pass
 
         elif packet_type == 'sK':
@@ -558,7 +557,6 @@ class Provider(OpenDeviceBase):
                 if self.sky_data[0]['GPS_TimeOfWeek'] == data[0]['GPS_TimeOfWeek']:
                     self.sky_data.extend(data)
                 else:
-                    # print(self.sky_data)
                     self.add_output_packet('stream', 'skyview', self.sky_data)
                     self.add_output_packet('stream', 'snr', self.sky_data)
                     self.sky_data = []
@@ -570,8 +568,10 @@ class Provider(OpenDeviceBase):
             output_packet_config = next(
                 (x for x in self.properties['userMessages']['outputPackets']
                  if x['name'] == packet_type), None)
-            if output_packet_config and output_packet_config.__contains__('from') \
-                    and output_packet_config['from'] == 'imu':
+            if output_packet_config and output_packet_config.__contains__('active') \
+                    and output_packet_config['active']:
+                timeOfWeek = int(data['GPS_TimeOfWeek']) % 60480000
+                data['GPS_TimeOfWeek'] = timeOfWeek / 1000
                 self.add_output_packet('stream', 'imu', data)
 
     def do_write_firmware(self, firmware_content):

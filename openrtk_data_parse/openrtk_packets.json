@@ -373,7 +373,6 @@
         {
             "name": "s1",
             "isList": 0,
-            "from": "imu",
             "payload": [
                 {
                     "type": "uint16",
@@ -422,40 +421,6 @@
                     "name": "z_gyro",
                     "unit": "deg/s",
                     "format": "14.10f"
-                }
-            ],
-            "graphs": [
-                {
-                    "name": "Acceleration",
-                    "units": "m/s^2",
-                    "xAxis": {"name":"GPS_TimeofWeek", "unit":"sec"},
-                    "yAxes": [
-                        "x_accel",
-                        "y_accel",
-                        "z_accel"
-                    ],
-                    "colors": [
-                        "#FF0000",
-                        "#00FF00",
-                        "#0000FF"
-                    ],
-                    "yMax": 20
-                },
-                {
-                    "name": "Angular-Rate",
-                    "units": "deg/s",
-                    "xAxis": {"name":"GPS_TimeofWeek", "unit":"sec"},
-                    "yAxes": [
-                        "x_gyro",
-                        "y_gyro",
-                        "z_gyro"
-                    ],
-                    "colors": [
-                        "#FF0000",
-                        "#00FF00",
-                        "#0000FF"
-                    ],
-                    "yMax": 200
                 }
             ]
         },
