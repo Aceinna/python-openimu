@@ -6,7 +6,6 @@ import uuid
 import time
 import struct
 import traceback
-from tqdm import tqdm
 from pathlib import Path
 from azure.storage.blob import BlockBlobService
 from .event_base import EventBase
@@ -16,6 +15,7 @@ from ...framework.configuration import get_config
 from ...framework.ans_platform_api import AnsPlatformAPI
 from ..message_center import DeviceMessageCenter
 from ..parser_manager import ParserManager
+from ...framework.progress_bar import ProgressBar
 
 if sys.version_info[0] > 2:
     from queue import Queue
@@ -288,7 +288,7 @@ class OpenDeviceBase(EventBase):
             # step.3 write to block, use self write from specified device
             print('Firmware upgrading...')
             total = self.do_write_firmware(firmware_content)
-            self._pbar = tqdm(total=total)
+            self._pbar = ProgressBar(total=total)
             # self.write_firmware()
             # step.4 restart app
             # self.restart()
