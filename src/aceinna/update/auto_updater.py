@@ -5,6 +5,10 @@ import threading
 from .. import VERSION
 from ..models import (VersionInfo, LocalInstallerInfo)
 
+github_repo = 'baweiji/python-openimu'
+
+current_milli_time = lambda: int(round(time.time() * 1000))
+
 
 def get_installed_info():
     import winreg
@@ -56,12 +60,15 @@ class AutoUpdater(object):
 
     #TODO
     def _get_new_version_info(self):
-        version_info = None
         # check if has network, do a ping
+        has_internet = self._check_internet()
+        if not has_internet:
+            return None
 
-        # access remote interface
+        version_info = None
+        # request github get latest version info
 
-        # request github release
+        # download the latest.json, contains file info, version, download url
 
         version_info = VersionInfo()
         version_info.name = ''
@@ -70,7 +77,15 @@ class AutoUpdater(object):
 
         return version_info
 
-    def _get_exist_install_file_info(self):
+    def _check_internet():
+        try:
+            url = 'https://navview.blob.core.windows.net/'
+            requests.get(url, timeout=1, stream=True)
+            return True
+        except requests.exceptions.Timeout as err:
+            return False
+
+    def _get_exist_install_file_info(self) -> LocalInstallerInfo:
         if self._installed_path and self._is_installed:
             # check if exists installed folder/versions
             installers_path = os.path.join(self._is_installed, 'versions')
@@ -83,21 +98,36 @@ class AutoUpdater(object):
             return install_file
         return None
 
-    def _get_latest_install_file(self, installers_path):
+    def _get_latest_install_file(self, installers_path) -> LocalInstallerInfo:
         latest_version = ''
         install_files = []
         reg_expression = 'installer.(\S+).exe'
 
         with os.scandir(installers_path) as it:
             for entry in it:
-                if entry.is_file() and re.match(reg_expression, entry.name,
-                                                re.M | re.I):
-                    install_files.append(entry.path)
+                if not entry.is_file():
+                    continue
+
+                match_group = re.match(reg_expression, entry.name, re.M | re.I)
+
+                if not match_group:
+                    continue
+
+                install_files.append((entry.path, match_group[1]))
 
         if len(install_files) == 0:
             return None
 
-        return install_files.sort(reverse=True)[0]
+        def extract_version(element):
+            return element[1]
+
+        install_files.sort(key=extract_version, reverse=True)
+        path, version = install_files[0]
+
+        installer_info = LocalInstallerInfo()
+        installer_info.path = path
+        installer_info.version_no = version
+        return installer_info
 
     def _run_installer(self, installer_path):
         # Start to install new version
@@ -105,11 +135,10 @@ class AutoUpdater(object):
         # kill current process
         os.kill(os.getpid(), signal.SIGTERM)
 
-    #TODO
     def _download_installer(self, version_info: VersionInfo):
         can_download = False
         # create a temp file
-        temp_name = 'TMP-xxx'
+        temp_name = 'tmp-{0}'.format(current_milli_time())  # tmp-{timestamp}
         # save to installed folder/versions
         saved_folder = os.path.join(self._installed_path, 'versions')
         if not os.path.isdir(saved_folder):
@@ -121,8 +150,8 @@ class AutoUpdater(object):
                                              saved_folder)
         except:
             # rename the temp file as a format name
-            # log the exception while downloading
-            pass
+            self._remove_temp_files(saved_folder)
+            # TODO: log the exception while downloading
 
         if can_download:
             # rename the temp file as a format name
@@ -132,7 +161,7 @@ class AutoUpdater(object):
                              'installer.' + version_info.version_no + '.exe'))
         else:
             # remove temp files if there is any exception
-            pass
+            self._remove_temp_files(saved_folder)
 
     def _do_download(self, url, temp_name, saved_folder):
         chunk_size = 4096
@@ -153,9 +182,15 @@ class AutoUpdater(object):
 
         return True
 
-    def _remove_temp_files(self):
-
-        pass
+    def _remove_temp_files(self, from_folder):
+        try:
+            with os.scandir(from_folder) as it:
+                for entry in it:
+                    if entry.is_file() and entry.name.startswith('tmp-'):
+                        os.unlink(entry.path)
+        except Exception as ex:
+            # TODO: log the remove exception
+            pass
 
     def _print_new_version(self):
         if self._is_installed:

@@ -4,27 +4,20 @@ import sys
 import time
 import re
 
-path=r'C:\Program Files (x86)\Aceinna\Driver\versions'
+path = r'C:\Program Files (x86)\Aceinna\Driver\versions'
 
-def _get_latest_install_file(installers_path):
-        latest_version = ''
-        install_files = []
-        reg_expression = 'installer.(\S+).exe'
 
-        with os.scandir(installers_path) as it:
-            for entry in it:
-                if entry.is_file() and re.match(reg_expression, entry.name,
-                                                re.M | re.I):
-                    install_files.append(entry.path)
-        print(install_files)
-        if len(install_files) == 0:
-            return None
+def internet_on():
+    try:
+        url = 'https://navview.blob.core.windows.net/'
+        requests.get(url, timeout=1, stream=True)
+        return True
+    except requests.exceptions.Timeout as err:
+        return False
 
-        install_files.sort(reverse=True)
 
-        return install_files[0]
+print(internet_on())
 
-print(_get_latest_install_file(path))
 # chunk_size = 1024
 # response = requests.get(
 #     url=
