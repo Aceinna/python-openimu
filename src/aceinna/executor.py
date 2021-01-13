@@ -6,11 +6,12 @@ import sys
 import signal
 import time
 from aceinna.bootstrap import Loader
-from aceinna.framework.decorator import (
-    receive_args, handle_application_exception)
+from aceinna.framework.decorator import (receive_args,
+                                         handle_application_exception)
+from aceinna.update import AutoUpdater
 
-IS_WINDOWS = sys.platform.__contains__(
-    'win32') or sys.platform.__contains__('win64')
+IS_WINDOWS = sys.platform.__contains__('win32') or sys.platform.__contains__(
+    'win64')
 IS_LATER_PY_38 = sys.version_info > (3, 8)
 
 
@@ -45,6 +46,11 @@ def start_app(**kwargs):
     application.listen()
 
 
+def check_update():
+    autoUpdater = AutoUpdater()
+    autoUpdater.check()
+
+
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, kill_app)
     # compatible code for windows python 3.8
@@ -52,6 +58,7 @@ if __name__ == '__main__':
         import asyncio
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
+    check_update()
     start_app()
 
     while True:
