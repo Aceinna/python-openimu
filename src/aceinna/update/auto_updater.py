@@ -1,11 +1,18 @@
 import os
 import subprocess
 import requests
+import signal
 import threading
+import json
+import time
+import re
 from .. import VERSION
 from ..models import (VersionInfo, LocalInstallerInfo)
+from ..framework.utils.print import print_green
 
-github_repo = 'baweiji/python-openimu'
+github_owner = 'baweiji'
+
+github_repo = 'python-openimu'
 
 current_milli_time = lambda: int(round(time.time() * 1000))
 
@@ -35,49 +42,79 @@ class AutoUpdater(object):
         self._is_installed = is_installed
 
     def check(self):
-        # check if there new version on remote server
-        print('check if there new version on remote server')
-        new_version_info = self._get_new_version_info()
-        if new_version_info:
-            #inform there is a new version
-            self._print_new_version()
-
-            if self._is_installed:
-                thread = threading.Thread(target=self._download_installer,
-                                          args=(new_version_info, ))
-                thread.start()
-
         # check if local has a new install file
-        print('check if local has a new install file')
+        is_process_install = False
         exist_install_file_info = self._get_exist_install_file_info()
-        if  new_version_info and \
-            exist_install_file_info and \
-            new_version_info.version == exist_install_file_info.version:
-            is_process_install = self._inform_user(new_version_info.version)
+
+        if  exist_install_file_info and \
+            VERSION < exist_install_file_info.version_no:
+
+            is_process_install = self._inform_user(
+                exist_install_file_info.version_no)
 
             if is_process_install:
                 self._run_installer(exist_install_file_info.path)
+                return
 
-    #TODO
+        # check if there new version on remote server
+        threading.Thread(target=self._version_check, args=( is_process_install, exist_install_file_info,)).start()
+
+    def _version_check(self, is_process_install, exist_install_file_info):
+        new_version_info = self._get_new_version_info()
+        if new_version_info:
+            if is_process_install:
+                return
+
+            if exist_install_file_info and \
+                new_version_info.version_no <= exist_install_file_info.version_no:
+                return
+
+            #inform there is a new version
+            self._print_new_version(new_version_info.url)
+
+            if self._is_installed:
+                self._download_installer(new_version_info)
+
     def _get_new_version_info(self):
         # check if has network, do a ping
         has_internet = self._check_internet()
         if not has_internet:
             return None
 
+        tag_name = None
         version_info = None
         # request github get latest version info
+        response = requests.get(
+            'https://api.github.com/repos/{0}/{1}/releases/latest'.format(
+                github_owner, github_repo))
+        #convert to json, get the tag_name
+        if response.status_code == 200:
+            tag_name = json.loads(response.text).get('tag_name')
+
+        if not tag_name:
+            return None
 
         # download the latest.json, contains file info, version, download url
+        response = requests.get(
+            'https://github.com/{0}/{1}/releases/download/{2}/latest.json'.
+            format(github_owner, github_repo, tag_name))
+        if response.status_code == 200:
+            latest_text = json.loads(response.text)
 
-        version_info = VersionInfo()
-        version_info.name = ''
-        version_info.url = ''
-        version_info.version_no = ''
+            latest_version = latest_text.get('version')
+
+            if latest_version <= VERSION:
+                return None
+
+            version_info = VersionInfo()
+            version_info.name = latest_text.get('name')
+            version_info.url = 'https://github.com/{0}/{1}/releases/download/{2}/{3}'.format(
+                github_owner, github_repo, tag_name, latest_text.get('url'))
+            version_info.version_no = latest_text.get('version')
 
         return version_info
 
-    def _check_internet():
+    def _check_internet(self):
         try:
             url = 'https://navview.blob.core.windows.net/'
             requests.get(url, timeout=1, stream=True)
@@ -88,7 +125,7 @@ class AutoUpdater(object):
     def _get_exist_install_file_info(self) -> LocalInstallerInfo:
         if self._installed_path and self._is_installed:
             # check if exists installed folder/versions
-            installers_path = os.path.join(self._is_installed, 'versions')
+            installers_path = os.path.join(self._installed_path, 'versions')
             if not os.path.isdir(installers_path):
                 return None
 
@@ -137,18 +174,22 @@ class AutoUpdater(object):
 
     def _download_installer(self, version_info: VersionInfo):
         can_download = False
-        # create a temp file
-        temp_name = 'tmp-{0}'.format(current_milli_time())  # tmp-{timestamp}
         # save to installed folder/versions
         saved_folder = os.path.join(self._installed_path, 'versions')
         if not os.path.isdir(saved_folder):
             os.makedirs(saved_folder)
 
+        self._remove_temp_files(saved_folder)
+
+        # create a temp file
+        temp_name = 'tmp-{0}'.format(current_milli_time())  # tmp-{timestamp}
+
         try:
             # download from parsed link
             can_download = self._do_download(version_info.url, temp_name,
                                              saved_folder)
-        except:
+        except Exception as ex:
+            print('Download exception:', ex)
             # rename the temp file as a format name
             self._remove_temp_files(saved_folder)
             # TODO: log the exception while downloading
@@ -156,27 +197,28 @@ class AutoUpdater(object):
         if can_download:
             # rename the temp file as a format name
             os.replace(
-                os.path.join(self._installed_path, temp_name),
-                os.path.join(self._installed_path,
+                os.path.join(saved_folder, temp_name),
+                os.path.join(saved_folder,
                              'installer.' + version_info.version_no + '.exe'))
         else:
             # remove temp files if there is any exception
             self._remove_temp_files(saved_folder)
 
     def _do_download(self, url, temp_name, saved_folder):
-        chunk_size = 4096
+        chunk_size = 32 * 1024  # save file per 32k buffer data
         response = requests.get(url=url, stream=True)
         start = time.time()
         size = 0
         content_size = int(response.headers['content-length'])
-
         if response.status_code == 200:
             filepath = os.path.join(saved_folder, temp_name)
             with open(filepath, 'wb') as file:
                 for data in response.iter_content(chunk_size=chunk_size):
                     file.write(data)
                     size += len(data)
+                    #print('\r' + 'File current', size, end=' ')
             end = time.time()
+            print_green('[Version] The new version is downloaded')
         else:
             return False
 
@@ -192,12 +234,13 @@ class AutoUpdater(object):
             # TODO: log the remove exception
             pass
 
-    def _print_new_version(self):
+    def _print_new_version(self, url):
         if self._is_installed:
-            print('New version is found, downloading...')
+            print_green('[Version] New version is found, downloading from ' +
+                        url)
         else:
-            print(
-                'New version is found, please download the lastest version on https://github.com/Aceinna/python-openimu/releases'
+            print_green(
+                '[Version] New version is found, please download the lastest version on https://github.com/Aceinna/python-openimu/releases'
             )
 
     def _inform_user(self, version_no):

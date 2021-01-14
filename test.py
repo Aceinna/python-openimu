@@ -3,20 +3,17 @@ import os
 import sys
 import time
 import re
+import json
 
-path = r'C:\Program Files (x86)\Aceinna\Driver\versions'
+github_owner = 'baweiji'
+github_repo = 'python-openimu'
 
+response = requests.get(
+            'https://api.github.com/repos/{0}/{1}/releases/latest'.format(github_owner, github_repo))
 
-def internet_on():
-    try:
-        url = 'https://navview.blob.core.windows.net/'
-        requests.get(url, timeout=1, stream=True)
-        return True
-    except requests.exceptions.Timeout as err:
-        return False
-
-
-print(internet_on())
+if response.status_code==200:
+    print(response.text)
+    print(json.loads(response.text).get('tag_name'))
 
 # chunk_size = 1024
 # response = requests.get(
