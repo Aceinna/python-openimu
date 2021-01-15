@@ -3,9 +3,13 @@ import sys
 import argparse
 import traceback
 from functools import wraps
+from typing import TypeVar
 from .constants import (DEVICE_TYPES, BAUDRATE_LIST)
 from .utils.print import print_red
 from .utils.resource import is_dev_mode
+
+
+T = TypeVar('T')
 
 
 def _build_args():
@@ -74,3 +78,18 @@ def handle_application_exception(func):
             print_red('Application Exit Exception: {0}'.format(ex))
             os._exit(1)
     return decorated
+
+
+def skip_error(T: type):
+    '''
+    add websocket error handler
+    '''
+    def outer(func):
+        @wraps(func)
+        def decorated(*args, **kwargs):
+            try:
+                func(*args, **kwargs)
+            except T:
+                pass
+        return decorated
+    return outer

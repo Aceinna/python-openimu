@@ -22,6 +22,7 @@ from ..framework.utils import (helper, resource)
 from ..models import WebserverArgs
 from ..framework.constants import DEFAULT_PORT_RANGE
 from ..framework import AppLogger
+from ..framework.decorator import skip_error
 if sys.version_info[0] > 2:
     from queue import Queue
 else:
@@ -84,7 +85,8 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         connected_device = self.get_device()
         if connected_device:
             connected_device.remove_client(self)
-            # print('close client count:', len(connected_device.clients))
+        self.latest_packet_collection = []
+        # print('close client count:', len(connected_device.clients))
 
     def check_origin(self, origin):
         return True
@@ -146,6 +148,9 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         '''
         If detect device, setup output and logger
         '''
+        if self.ws_connection is None or self.ws_connection.is_closing():
+            return
+
         if len(device.clients) == 1:
             self.response_only_allow_one_client()
             return
@@ -157,6 +162,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         if force_response:
             self.response_server_info(device)
 
+    @skip_error(tornado.websocket.WebSocketClosedError)
     def response_message(self, method, data):
         '''
         Format response
@@ -169,6 +175,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                 }
             ))
 
+    @skip_error(tornado.websocket.WebSocketClosedError)
     def response_unkonwn_method(self):
         '''
         Format unknonwn method message
@@ -199,6 +206,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                 'deviceType': device.type
             }})
 
+    @skip_error(tornado.websocket.WebSocketClosedError)
     def response_output_packet(self):
         '''
         Response streaming data
@@ -419,10 +427,11 @@ class Webserver(EventBase):
                 level=log_level,
                 console_log=console_log
             ))
-        
+
         APP_CONTEXT.set_print_logger(
             AppLogger(
-                filename=os.path.join(executor_path, 'loggers', 'print_' + time.strftime('%Y%m%d_%H%M%S') + '.log'),
+                filename=os.path.join(
+                    executor_path, 'loggers', 'print_' + time.strftime('%Y%m%d_%H%M%S') + '.log'),
                 gen_file=True,
                 level=log_level
             ))
@@ -481,7 +490,7 @@ class Webserver(EventBase):
             if self.ws_handler:
                 self.ws_handler.on_receive_output_packet(
                     'stream', 'upgrade_complete', {'success': False})
-         #   self.device_provider.close()
+            #   self.device_provider.close()
 
     def load_device_provider(self, device_provider):
         '''
