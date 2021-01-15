@@ -25,7 +25,7 @@ def get_installed_info():
     string = r'Software\Aceinna_Devices_Driver'
     try:
         handle = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, string, 0,
-                                winreg.KEY_READ)
+                                winreg.KEY_WOW64_32KEY + winreg.KEY_READ)
         location, _ = winreg.QueryValueEx(handle, "Install_Dir")
         has_value = True
     except:
@@ -57,7 +57,11 @@ class AutoUpdater(object):
                 return
 
         # check if there new version on remote server
-        threading.Thread(target=self._version_check, args=( is_process_install, exist_install_file_info,)).start()
+        threading.Thread(target=self._version_check,
+                         args=(
+                             is_process_install,
+                             exist_install_file_info,
+                         )).start()
 
     def _version_check(self, is_process_install, exist_install_file_info):
         new_version_info = self._get_new_version_info()
@@ -168,7 +172,11 @@ class AutoUpdater(object):
 
     def _run_installer(self, installer_path):
         # Start to install new version
-        subprocess.Popen([installer_path])
+        elevate_path = os.path.join(self._installed_path, 'elevate.exe')
+        try:
+            subprocess.Popen([installer_path])
+        except:
+            subprocess.Popen([elevate_path, installer_path])
         # kill current process
         os.kill(os.getpid(), signal.SIGTERM)
 

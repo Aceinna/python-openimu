@@ -8,16 +8,17 @@ import sys
 sys.path.append('./')
 from src.aceinna import VERSION
 
+ELEVATE_NAME = 'elevate.exe'
 EXECUTABLE_NAME = 'ans-devices.exe'
-RELESE_PATH = 'C:\\Users\\bawei\\Documents\\Projects\\forks\\python-openimu\\dist'
-NSIS_PATH = 'C:\\Users\\bawei\\Documents\\Projects\\forks\\python-openimu\\tools\\nsis'
-TEMPLATES_PATH = 'C:\\Users\\bawei\\Documents\\Projects\\forks\\python-openimu\\tools\\templates'
+RELESE_PATH = os.path.join(os.getcwd(), 'dist')
+NSIS_PATH = os.path.join(os.getcwd(), 'tools', 'nsis')
+TEMPLATES_PATH = os.path.join(os.getcwd(), 'tools', 'templates')
 SETUP_FILE_NAME = 'Setup.' + VERSION + '.exe'
 
 
 # TODO: add version
 def run_command(command, arguments, script):
-    subprocess.run([command, *arguments, script])
+    subprocess.run([command, *arguments, script], env={"NSISDIR": NSIS_PATH})
 
 
 def build():
@@ -29,6 +30,7 @@ def build_setup():
     command = os.path.join(NSIS_PATH, 'makensis.exe')
     arguments = [
         '-DEXECUTABLE=' + os.path.join(RELESE_PATH, EXECUTABLE_NAME),
+        '-DELEVATE=' + os.path.join(NSIS_PATH, ELEVATE_NAME),
         '-XOutFile ' + os.path.join(RELESE_PATH, SETUP_FILE_NAME)
     ]
     script = os.path.join(TEMPLATES_PATH, 'install.nsi')
@@ -38,22 +40,16 @@ def build_setup():
 def build_package_info():
     package_info_path = os.path.join(RELESE_PATH, 'latest.json')
     try:
+        package_info = {}
+        package_info['name'] = 'Aceinna Devices Driver'
+        package_info['version'] = VERSION
+        package_info['url'] = SETUP_FILE_NAME
+        package_info['releaseDate'] = datetime.datetime.utcnow().strftime(
+            "%Y-%m-%dT%H:%M:%S.%fZ")
         with open(package_info_path, 'w') as outfile:
-            json.dump(
-                {
-                    'name':
-                    'Aceinna Devices Driver',
-                    'version':
-                    VERSION,
-                    'url':
-                    SETUP_FILE_NAME,
-                    'releaseDate':
-                    datetime.datetime.utcnow().strftime(
-                        "%Y-%m-%dT%H:%M:%S.%fZ")
-                }, outfile)
+            json.dump(package_info, outfile)
     except Exception as ex:
         print(ex)
-        pass
 
 
 if __name__ == '__main__':

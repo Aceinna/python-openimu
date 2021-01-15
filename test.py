@@ -5,15 +5,26 @@ import time
 import re
 import json
 
-github_owner = 'baweiji'
-github_repo = 'python-openimu'
 
-response = requests.get(
-            'https://api.github.com/repos/{0}/{1}/releases/latest'.format(github_owner, github_repo))
+def get_installed_info():
+    import winreg
 
-if response.status_code==200:
-    print(response.text)
-    print(json.loads(response.text).get('tag_name'))
+    location = None
+    has_value = False
+    string = r'Software\Aceinna_Devices_Driver'
+    try:
+        handle = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, string, 0,
+                                winreg.KEY_WOW64_32KEY + winreg.KEY_READ)
+        location, _ = winreg.QueryValueEx(handle, "Install_Dir")
+        has_value = True
+    except:
+        location = None
+        has_value = False
+
+    return location, has_value
+
+
+print(get_installed_info())
 
 # chunk_size = 1024
 # response = requests.get(
