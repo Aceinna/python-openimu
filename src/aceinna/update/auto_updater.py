@@ -175,7 +175,7 @@ class AutoUpdater(object):
         elevate_path = os.path.join(self._installed_path, 'elevate.exe')
         try:
             subprocess.Popen([installer_path])
-        except:
+        except Exception as ex:
             subprocess.Popen([elevate_path, installer_path])
         # kill current process
         os.kill(os.getpid(), signal.SIGTERM)
