@@ -10,30 +10,13 @@ from .. import VERSION
 from ..models import (VersionInfo, LocalInstallerInfo)
 from ..framework.utils.print import print_green
 from ..framework.terminal import Choice
+from ..framework.utils.resource import (get_executor_path, get_installed_info)
 
 github_owner = 'baweiji'
 
 github_repo = 'python-openimu'
 
 current_milli_time = lambda: int(round(time.time() * 1000))
-
-
-def get_installed_info():
-    import winreg
-
-    location = None
-    has_value = False
-    string = r'Software\Aceinna_Devices_Driver'
-    try:
-        handle = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, string, 0,
-                                winreg.KEY_WOW64_32KEY + winreg.KEY_READ)
-        location, _ = winreg.QueryValueEx(handle, "Install_Dir")
-        has_value = True
-    except:
-        location = None
-        has_value = False
-
-    return location, has_value
 
 
 class AutoUpdater(object):
@@ -86,8 +69,7 @@ class AutoUpdater(object):
 
     def _add_to_skip_versions(self, version_no):
         self._skip_versions.append(version_no)
-        skip_versions_file_path = os.path.join(self._installed_path,
-                                               'versions',
+        skip_versions_file_path = os.path.join(get_executor_path(), 'versions',
                                                'skip_versions.json')
         try:
             with open(skip_versions_file_path, 'w') as outfile:
@@ -165,7 +147,7 @@ class AutoUpdater(object):
     def _get_exist_install_file_info(self) -> LocalInstallerInfo:
         if self._installed_path and self._is_installed:
             # check if exists installed folder/versions
-            installers_path = os.path.join(self._installed_path, 'versions')
+            installers_path = os.path.join(get_executor_path(), 'versions')
             skip_versions_file_path = os.path.join(installers_path,
                                                    'skip_versions.json')
             if not os.path.isdir(installers_path):
@@ -224,7 +206,7 @@ class AutoUpdater(object):
     def _download_installer(self, version_info: VersionInfo):
         can_download = False
         # save to installed folder/versions
-        saved_folder = os.path.join(self._installed_path, 'versions')
+        saved_folder = os.path.join(get_executor_path(), 'versions')
         if not os.path.isdir(saved_folder):
             os.makedirs(saved_folder)
 
@@ -295,7 +277,7 @@ class AutoUpdater(object):
     def _inform_user(self, version_no):
         c = Choice(
             title='New version {0} is prepared, continue to update?'.format(
-            version_no), 
+                version_no),
             options=['Yes', 'No', 'Skip this version'])
 
         choice = c.get_choice()
