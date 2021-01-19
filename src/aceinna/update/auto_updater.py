@@ -9,6 +9,7 @@ import re
 from .. import VERSION
 from ..models import (VersionInfo, LocalInstallerInfo)
 from ..framework.utils.print import print_green
+from ..framework.terminal import Choice
 
 github_owner = 'baweiji'
 
@@ -40,20 +41,30 @@ class AutoUpdater(object):
         installed_path, is_installed = get_installed_info()
         self._installed_path = installed_path
         self._is_installed = is_installed
+        self._skip_versions = []
 
     def check(self):
         # check if local has a new install file
         is_process_install = False
-        exist_install_file_info = self._get_exist_install_file_info()
+        exist_install_file_info, self._skip_versions = self._get_exist_install_file_info(
+        )
 
         if  exist_install_file_info and \
-            VERSION < exist_install_file_info.version_no:
+            VERSION < exist_install_file_info.version_no and \
+            not self._skip_versions.__contains__(exist_install_file_info.version_no):
 
-            is_process_install = self._inform_user(
+            process_option_index = self._inform_user(
                 exist_install_file_info.version_no)
 
-            if is_process_install:
+            is_process_install = process_option_index == 0
+
+            if process_option_index == 0:
                 self._run_installer(exist_install_file_info.path)
+                return
+
+            if process_option_index == 2:
+                #store skip version no
+                self._add_to_skip_versions(exist_install_file_info.version_no)
                 return
 
         # check if there new version on remote server
@@ -63,6 +74,28 @@ class AutoUpdater(object):
                              exist_install_file_info,
                          )).start()
 
+    def _load_skip_verions(self, skip_versions_file_path):
+        # open and load
+        temp = []
+        if not os.path.isfile(skip_versions_file_path):
+            return temp
+
+        with open(skip_versions_file_path) as json_data:
+            temp = json.load(json_data)
+        return temp
+
+    def _add_to_skip_versions(self, version_no):
+        self._skip_versions.append(version_no)
+        skip_versions_file_path = os.path.join(self._installed_path,
+                                               'versions',
+                                               'skip_versions.json')
+        try:
+            with open(skip_versions_file_path, 'w') as outfile:
+                json.dump(self._skip_versions, outfile)
+        except:
+            os.unlink(skip_versions_file_path)
+        #save to file
+
     def _version_check(self, is_process_install, exist_install_file_info):
         new_version_info = self._get_new_version_info()
         if new_version_info:
@@ -71,6 +104,9 @@ class AutoUpdater(object):
 
             if exist_install_file_info and \
                 new_version_info.version_no <= exist_install_file_info.version_no:
+                return
+
+            if self._skip_versions.__contains__(new_version_info.version_no):
                 return
 
             #inform there is a new version
@@ -130,14 +166,19 @@ class AutoUpdater(object):
         if self._installed_path and self._is_installed:
             # check if exists installed folder/versions
             installers_path = os.path.join(self._installed_path, 'versions')
+            skip_versions_file_path = os.path.join(installers_path,
+                                                   'skip_versions.json')
             if not os.path.isdir(installers_path):
-                return None
+                return None, []
 
             # list the files, and find the last modified file with name format=installer.{version}.exe
             install_file = self._get_latest_install_file(installers_path)
 
-            return install_file
-        return None
+            skip_versions = self._load_skip_verions(skip_versions_file_path)
+
+            return install_file, skip_versions
+
+        return None, []
 
     def _get_latest_install_file(self, installers_path) -> LocalInstallerInfo:
         latest_version = ''
@@ -174,7 +215,7 @@ class AutoUpdater(object):
         # Start to install new version
         elevate_path = os.path.join(self._installed_path, 'elevate.exe')
         try:
-            subprocess.Popen([installer_path])
+            subprocess.Popen([installer_path], shell=True)
         except Exception as ex:
             subprocess.Popen([elevate_path, installer_path])
         # kill current process
@@ -252,8 +293,13 @@ class AutoUpdater(object):
             )
 
     def _inform_user(self, version_no):
-        answer = input(
-            'New version {0} is prepared, continue to update? y/n (yes)'.
-            format(version_no))
-        is_yes_option = ['y', 'yes', ''].__contains__(answer.lower())
-        return is_yes_option
+        c = Choice(
+            title='New version {0} is prepared, continue to update?'.format(
+            version_no), 
+            options=['Yes', 'No', 'Skip this version'])
+
+        choice = c.get_choice()
+        if choice:
+            index, _ = choice
+
+        return index

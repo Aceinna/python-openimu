@@ -25,10 +25,10 @@ Var appExe
 ;--------------------------------
 ;Pages
 
+  ;!insertmacro MUI_PAGE_WELCOME
   ;!insertmacro MUI_PAGE_LICENSE "${NSISDIR}\Docs\Modern UI\License.txt"
   ;!insertmacro MUI_PAGE_COMPONENTS
-  ;!insertmacro MUI_PAGE_DIRECTORY
-  ;!insertmacro MUI_PAGE_WELCOME
+  !insertmacro MUI_PAGE_DIRECTORY
   !insertmacro MUI_PAGE_INSTFILES
 
   !define MUI_FINISHPAGE_RUN
@@ -91,7 +91,7 @@ Section 'un.install'
   
 SectionEnd
 
-;function要写字section之后
+;function
 Function LaunchLink
     ExecShell "" "$INSTDIR\$appExe"
 FunctionEnd
