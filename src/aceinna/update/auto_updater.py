@@ -92,7 +92,7 @@ class AutoUpdater(object):
                 return
 
             #inform there is a new version
-            self._print_new_version(new_version_info.url)
+            self._print_new_version(new_version_info)
 
             if self._is_installed:
                 self._download_installer(new_version_info)
@@ -128,12 +128,13 @@ class AutoUpdater(object):
             if latest_version <= VERSION:
                 return None
 
+            url = latest_text.get('url')
+
             version_info = VersionInfo()
             version_info.name = latest_text.get('name')
-            version_info.url = 'https://github.com/{0}/{1}/releases/download/{2}/{3}'.format(
-                github_owner, github_repo, tag_name, latest_text.get('url'))
+            version_info.url = url if url.startswith('https://') else 'https://github.com/{0}/{1}/releases/download/{2}/{3}'.format(
+                github_owner, github_repo, tag_name, url)
             version_info.version_no = latest_text.get('version')
-
         return version_info
 
     def _check_internet(self):
@@ -265,19 +266,19 @@ class AutoUpdater(object):
             # TODO: log the remove exception
             pass
 
-    def _print_new_version(self, url):
+    def _print_new_version(self, version_info: VersionInfo):
         tag = '[Version] '
         if self._is_installed:
             print_green('{0}New version is found, downloading from {1}'.format(
-                tag, url))
+                tag, version_info.url))
         else:
             space = 2 * ' '
             print_green(
-                '{0}New version is found, below is some suggestion for different startup.'.format(tag)
-            )
+                '{0}New version is found, below is some suggestion for different startup.'
+                .format(tag))
             print_green(
-                '{0}1. Pip package. Run `pip install --upgrade openimu=={1}`'
-                .format(space, VERSION))
+                '{0}1. Pip package. Run `pip install --upgrade openimu=={1}`'.
+                format(space, version_info.version_no))
             print_green(
                 '{0}2. Executable file. Download the lastest version from https://github.com/Aceinna/python-openimu/releases'
                 .format(space))

@@ -344,7 +344,7 @@ class OpenDeviceBase(EventBase):
 
     def download_firmware(self, file):
         '''
-        Downlaod firmware from Azure storage
+        Download firmware from Azure storage
         '''
         can_download = False
         firmware_content = None

@@ -14,6 +14,7 @@ RELESE_PATH = os.path.join(os.getcwd(), 'dist')
 NSIS_PATH = os.path.join(os.getcwd(), 'tools', 'nsis')
 TEMPLATES_PATH = os.path.join(os.getcwd(), 'tools', 'templates')
 SETUP_FILE_NAME = 'Setup.' + VERSION + '.exe'
+FILE_STORAGE = 'https://navview.blob.core.windows.net/executables/'
 
 
 # TODO: add version
@@ -44,7 +45,7 @@ def build_package_info():
         package_info = {}
         package_info['name'] = 'Aceinna Devices Driver'
         package_info['version'] = VERSION
-        package_info['url'] = SETUP_FILE_NAME
+        package_info['url'] = FILE_STORAGE + SETUP_FILE_NAME
         package_info['releaseDate'] = datetime.datetime.utcnow().strftime(
             "%Y-%m-%dT%H:%M:%S.%fZ")
         with open(package_info_path, 'w') as outfile:
