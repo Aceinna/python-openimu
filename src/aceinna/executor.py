@@ -27,6 +27,7 @@ def from_command_line(**kwargs):
     '''
     Work as command line, with WebSocket and UART
     '''
+    check_update()
     application = Loader.create('cli', vars(kwargs['options']))
     application.listen()
 
@@ -37,6 +38,7 @@ def start_app(**kwargs):
     '''
     Work as a executor, with WebSocket and UART
     '''
+    check_update()
     application = None
     mode = 'web'
     if kwargs['options'].use_cli:
@@ -58,7 +60,6 @@ if __name__ == '__main__':
         import asyncio
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
-    check_update()
     start_app()
 
     while True:

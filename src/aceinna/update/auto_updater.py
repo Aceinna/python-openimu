@@ -266,13 +266,21 @@ class AutoUpdater(object):
             pass
 
     def _print_new_version(self, url):
+        tag = '[Version] '
         if self._is_installed:
-            print_green('[Version] New version is found, downloading from ' +
-                        url)
+            print_green('{0}New version is found, downloading from {1}'.format(
+                tag, url))
         else:
+            space = 2 * ' '
             print_green(
-                '[Version] New version is found, please download the lastest version on https://github.com/Aceinna/python-openimu/releases'
+                '{0}New version is found, below is some suggestion for different startup.'.format(tag)
             )
+            print_green(
+                '{0}1. Pip package. Run `pip install --upgrade openimu=={1}`'
+                .format(space, VERSION))
+            print_green(
+                '{0}2. Executable file. Download the lastest version from https://github.com/Aceinna/python-openimu/releases'
+                .format(space))
 
     def _inform_user(self, version_no):
         c = Choice(

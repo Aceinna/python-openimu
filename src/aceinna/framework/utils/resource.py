@@ -63,3 +63,18 @@ def get_installed_info():
         has_value = False
 
     return location, has_value
+
+def calculate_package_type():
+    default_package_type='pip'
+    if is_in_bundle():
+        _, is_installed = get_installed_info()
+        if is_installed:
+            return 'installed-exe'
+        else:
+            return 'exe'
+
+    if is_dev_mode():
+        return 'local'
+
+    return default_package_type
+
