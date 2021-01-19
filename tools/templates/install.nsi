@@ -20,6 +20,8 @@ InstallDir $PROGRAMFILES\Aceinna\Driver
 ; overwrite the old one automatically)
 InstallDirRegKey HKLM "Software\Aceinna_Devices_Driver" "Install_Dir"
 
+BrandingText "Aceinna Devices Driver ${VERSION}"
+
 Var appExe 
 
 ;--------------------------------

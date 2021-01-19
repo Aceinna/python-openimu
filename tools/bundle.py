@@ -31,6 +31,7 @@ def build_setup():
     arguments = [
         '-DEXECUTABLE=' + os.path.join(RELESE_PATH, EXECUTABLE_NAME),
         '-DELEVATE=' + os.path.join(NSIS_PATH, ELEVATE_NAME),
+        '-DVERSION=' + VERSION,
         '-XOutFile ' + os.path.join(RELESE_PATH, SETUP_FILE_NAME)
     ]
     script = os.path.join(TEMPLATES_PATH, 'install.nsi')
