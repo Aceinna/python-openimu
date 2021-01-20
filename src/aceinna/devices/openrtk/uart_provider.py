@@ -30,6 +30,7 @@ from ...framework.utils.print import print_green
 from ...framework.utils.print import print_yellow
 from ...framework.utils.print import print_red
 
+
 class Provider(OpenDeviceBase):
     '''
     OpenRTK UART provider
@@ -262,7 +263,8 @@ class Provider(OpenDeviceBase):
                     self.rtcm_serial_port.close()
             self.debug_serial_port = None
             self.rtcm_serial_port = None
-            print_red('Can not log GNSS UART or DEBUG UART, pls check uart driver and connection!')
+            print_red(
+                'Can not log GNSS UART or DEBUG UART, pls check uart driver and connection!')
             return False
 
     def after_bootloader_switch(self):
@@ -295,11 +297,11 @@ class Provider(OpenDeviceBase):
                                 str_nmea)
                             if cksum == calc_cksum:
                                 if str_nmea.find("$GPGGA") != -1:
-                                    #print()
+                                    # print()
                                     if self.ntrip_client_enable and self.ntripClient != None:
                                         self.ntripClient.send(str_nmea)
                                 #print(str_nmea, end='')
-                                APP_CONTEXT.get_print_logger().info(str_nmea.replace('\r\n',''))
+                                APP_CONTEXT.get_print_logger().info(str_nmea.replace('\r\n', ''))
                                 # else:
                                 #     print("nmea checksum wrong {0} {1}".format(cksum, calc_cksum))
                         except Exception as e:
@@ -335,7 +337,8 @@ class Provider(OpenDeviceBase):
                         json_data = json.loads(str_data)
                         for key in json_data.keys():
                             if key == 'openrtk configuration':
-                                APP_CONTEXT.get_print_logger().info('{0}'.format(json_data))
+                                APP_CONTEXT.get_print_logger().info(
+                                    '{0}'.format(json_data))
                                 if self.debug_c_f:
                                     self.debug_c_f.write(str_data)
                                     self.debug_c_f.close()
@@ -574,6 +577,35 @@ class Provider(OpenDeviceBase):
                 data['GPS_TimeOfWeek'] = timeOfWeek / 1000
                 self.add_output_packet('stream', 'imu', data)
 
+    def append_to_upgrade_center(self, upgrade_center, rule, content):
+        if rule == 'rtk':
+            upgrade_center.register(
+                FirmwareUpgradeWorker(self.communicator, content))
+            return
+
+        if rule == 'sdk':
+            sdk_port = ''
+            if (self.properties["initial"]["useDefaultUart"]):
+                user_port_num, port_name = self.build_connected_serial_port_info()
+                sdk_port = port_name + str(int(user_port_num) + 3)
+            else:
+                for uart in self.properties["initial"]["uart"]:
+                    if uart['enable'] == 1:
+                        if uart['name'] == 'DEBUG':
+                            debug_port = uart["value"]
+                        elif uart['name'] == 'GNSS':
+                            rtcm_port = uart["value"]
+                        elif uart['name'] == 'SDK':
+                            sdk_port = uart["value"]
+
+            sdk_uart = serial.Serial(sdk_port, 115200, timeout=0.1)
+            if not sdk_uart.isOpen():
+                raise Exception('Cannot open SDK upgrade port')
+
+            upgrade_center.register(
+                SDKUpgradeWorker(sdk_uart, content))
+            return
+
     def do_write_firmware(self, firmware_content):
         rules = [
             InternalCombineAppParseRule('rtk', 'rtk_start:', 4),
@@ -581,32 +613,13 @@ class Provider(OpenDeviceBase):
         ]
 
         parsed_content = firmware_content_parser(firmware_content, rules)
-        sdk_port = ''
 
-        if (self.properties["initial"]["useDefaultUart"]):
-            user_port_num, port_name = self.build_connected_serial_port_info()
-            sdk_port = port_name + str(int(user_port_num) + 3)
-        else:
-            for x in self.properties["initial"]["uart"]:
-                if x['enable'] == 1:
-                    if x['name'] == 'DEBUG':
-                        debug_port = x["value"]
-                    elif x['name'] == 'GNSS':
-                        rtcm_port = x["value"]
-                    elif x['name'] == 'SDK':
-                        sdk_port = x["value"]
-
-        sdk_uart = serial.Serial(sdk_port, 115200, timeout=0.1)
-        if not sdk_uart.isOpen():
-            raise Exception('Cannot open SDK upgrade port')
-
+        # foreach parsed content, if empty, skip register into upgrade center
         upgrade_center = UpgradeCenter()
-
-        upgrade_center.register(
-            FirmwareUpgradeWorker(self.communicator, parsed_content['rtk']))
-
-        upgrade_center.register(
-            SDKUpgradeWorker(sdk_uart, parsed_content['sdk']))
+        for _, rule in enumerate(parsed_content):
+            content = parsed_content[rule]
+            if len(content) > 0:
+                self.append_to_upgrade_center(upgrade_center, rule, content)
 
         upgrade_center.on('progress', self.handle_upgrade_process)
         upgrade_center.on('error', self.handle_upgrade_error)

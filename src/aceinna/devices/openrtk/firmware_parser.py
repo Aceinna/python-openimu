@@ -26,6 +26,6 @@ def parser(content, parser_rules):
             parsed_content[rule.name] = content[part_data_len_pos: part_data_end_pos]
             current_pos = part_data_end_pos
         else:
-            raise Exception('Cannot parse OpenRTK combined firmware')
+            parsed_content[rule.name] = b''
 
     return parsed_content
