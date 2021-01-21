@@ -14,13 +14,15 @@ from ...framework.utils import helper
 from ...framework.utils import resource
 from ..base import OpenDeviceBase
 from ..configs.openimu_predefine import (
-    APP_STR, get_app_names
+    APP_STR,
+    get_openimu_products
 )
 from ...framework.context import APP_CONTEXT
 from ..decorator import with_device_message
 from ...framework.configuration import get_config
 from ..upgrade_workers import FirmwareUpgradeWorker
 from ..upgrade_center import UpgradeCenter
+from ...framework.utils.print import print_yellow
 
 
 class Provider(OpenDeviceBase):
@@ -59,26 +61,35 @@ class Provider(OpenDeviceBase):
 
         # copy contents of app_config under executor path
         self.setting_folder_path = os.path.join(
-            executor_path, setting_folder_name, 'openimu')
+            executor_path, setting_folder_name)
 
-        for app_name in get_app_names():
-            app_name_path = os.path.join(self.setting_folder_path, app_name)
-            app_name_config_path = os.path.join(
-                app_name_path, config_file_name)
-            if not os.path.isfile(app_name_config_path):
-                if not os.path.isdir(app_name_path):
-                    os.makedirs(app_name_path)
-                app_config_content = resource.get_content_from_bundle(
-                    setting_folder_name, os.path.join('openimu', app_name, config_file_name))
-                if app_config_content is None:
-                    continue
+        all_products = get_openimu_products()
 
-                with open(app_name_config_path, "wb") as code:
-                    code.write(app_config_content)
+        for product in all_products:
+            product_folder = os.path.join(self.setting_folder_path, product)
+            if not os.path.isdir(product_folder):
+                os.makedirs(product_folder)
+
+            for app_name in all_products[product]:
+                app_name_path = os.path.join(product_folder, app_name)
+                app_name_config_path = os.path.join(
+                    app_name_path, config_file_name)
+
+                if not os.path.isfile(app_name_config_path):
+                    if not os.path.isdir(app_name_path):
+                        os.makedirs(app_name_path)
+                    app_config_content = resource.get_content_from_bundle(
+                        setting_folder_name, os.path.join(product, app_name, config_file_name))
+                    if app_config_content is None:
+                        continue
+
+                    with open(app_name_config_path, "wb") as code:
+                        code.write(app_config_content)
 
     def bind_device_info(self, device_access, device_info, app_info):
         self._build_device_info(device_info)
         self._build_app_info(app_info)
+
         self.connected = True
 
         return '# Connected {0} #\n\rDevice:{1} \n\rFirmware:{2}'\
@@ -92,6 +103,7 @@ class Provider(OpenDeviceBase):
         split_len = len(split_text)
         pre_sn = split_text[3].split(':') if split_len == 4 else ''
         serial_num = pre_sn[1] if len(pre_sn) == 2 else ''
+
         self.device_info = {
             'name': split_text[0],
             'pn': split_text[1],
@@ -109,7 +121,7 @@ class Provider(OpenDeviceBase):
         if can_indicator in app_version:
             app_version = app_version.replace(can_indicator, '')
 
-        split_text = app_version.split(' ')
+        split_text = [x for x in app_version.split(' ') if x != '']
         app_name = next(
             (item for item in APP_STR if item in split_text), None)
 
@@ -117,12 +129,15 @@ class Provider(OpenDeviceBase):
             app_name = 'IMU'
             self.is_app_matched = False
         else:
-            self.is_app_matched = True
+            self.is_app_matched = False
 
         self.app_info = {
             'app_name': app_name,
             'version': text
         }
+
+        if split_text[0] in get_openimu_products():
+            self.device_info['name'] = split_text[0]
 
     def load_properties(self):
         # Load config from user working path
@@ -133,17 +148,17 @@ class Provider(OpenDeviceBase):
                 return
 
         # Load the openimu.json based on its app
+        product_name = self.device_info['name']
         app_name = self.app_info['app_name']
         app_file_path = os.path.join(
-            self.setting_folder_path, app_name, 'openimu.json')
+            self.setting_folder_path, product_name, app_name, 'openimu.json')
 
         if not self.is_app_matched:
-            APP_CONTEXT.get_logger().warning(
-                ('Failed to extract app version information from unit. The supported application list is {0}.').format(get_app_names()))
-            APP_CONTEXT.get_logger().warning(
-                'To keep runing, use IMU configuration as default.')
-            APP_CONTEXT.get_logger().warning(
-                'You can choose to place your json file under exection path if it is an unknown application.')
+            print_yellow(
+                'Failed to extract app version information from unit.' +
+                '\nThe supported application list is {0}.'.format(APP_STR) +
+                '\nTo keep runing, use IMU configuration as default.' +
+                '\nYou can choose to place your json file under exection path if it is an unknown application.')
 
         with open(app_file_path) as json_data:
             self.properties = json.load(json_data)

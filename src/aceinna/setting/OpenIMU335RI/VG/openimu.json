@@ -1,11 +1,8 @@
 {
-	"name": "OpenIMU335_VG",
-	"app_version": "OpenIMU335RI VG 1.0.2",
-	"appName": "OpenIMU335RI VG 1.0.2",
-	"type": "openimu",
+	"appVersion": "OpenIMU335RI VG 1.0.2",
 	"description": "6-axis OpenIMU with VG application",
 	"userConfiguration": [
-    { "paramId": 0,"category": "General", "paramType": "disabled", "type": "uint64", "name": "Data CRC" },
+    	{ "paramId": 0,"category": "General", "paramType": "disabled", "type": "uint64", "name": "Data CRC" },
 		{ "paramId": 1,"category": "General", "paramType": "disabled", "type": "uint64", "name": "Data Size" },
 		{ "paramId": 2, "category": "General","paramType": "select", "type": "int64", "name": "Baud Rate", "argument": "baud_rate","value_range":[-1,1], "value_accuracy":6, "options": [115200, 57600, 230400, 38400] },
 		{ "paramId": 3, "category": "General","paramType": "select", "type": "char8", "name": "Packet Type", "argument": "type", "value_range":[-1,1],"value_accuracy":6, "options": ["z1", "a1", "a2", "s1"],"popular":true },
@@ -580,12 +577,5 @@
 			"description": "Write parameters to OpenIMU",
 			"function": "set_handler"
 		}
-	],
-	"MagCommands":[
-		{"start": "55556D610101E10F"},
-		{"abort":"55556D61010691E8" },
-		{"status":"55556D610100F12E"},
-		{"save": "55556d610105A18B"}
-
 	]
 }
