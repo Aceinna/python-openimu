@@ -15,7 +15,7 @@ from ...framework.utils import (
 from ...framework.context import APP_CONTEXT
 from ..base.provider_base import OpenDeviceBase
 from ..configs.openrtk_predefine import (
-    APP_STR, get_openimu_products
+    APP_STR, get_openrtk_products
 )
 from ..decorator import with_device_message
 from .firmware_parser import parser as firmware_content_parser
@@ -83,7 +83,7 @@ class Provider(OpenDeviceBase):
         self.setting_folder_path = os.path.join(
             executor_path, setting_folder_name)
 
-        all_products = get_openimu_products()
+        all_products = get_openrtk_products()
 
         for product in all_products:
             product_folder = os.path.join(self.setting_folder_path, product)
