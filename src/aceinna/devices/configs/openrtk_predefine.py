@@ -6,8 +6,8 @@ JSON_FILE_NAME = 'openrtk.json'
 
 def get_openrtk_products():
     return {
-        'OpenIMU330LI': ['INS', 'RAWDATA', 'RTK'],
-        'RTK330LA': ['RTK_INS'],
+        'OpenRTK330L': ['INS', 'RAWDATA', 'RTK'],
+        'RTK330L': ['RTK_INS'],
     }
 
 
