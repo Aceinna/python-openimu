@@ -12,6 +12,7 @@ def create_provider(device_type, communicator):
     if communicator.type == 'uart':
         if device_type == 'OpenIMU':
             return OpenIMUUartProvider(communicator)
+        # TODO: RTK330L may have a single provider, currently, OpenRTK and RTK300L use same provider
         if device_type == 'OpenRTK':
             return OpenRTKUartProvider(communicator)
         if device_type == 'DMU':
