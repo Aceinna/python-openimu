@@ -15,7 +15,7 @@ from ...framework.utils import (
 from ...framework.context import APP_CONTEXT
 from ..base.provider_base import OpenDeviceBase
 from ..configs.openrtk_predefine import (
-    APP_STR, get_app_names
+    APP_STR, get_openrtk_products
 )
 from ..decorator import with_device_message
 from .firmware_parser import parser as firmware_content_parser
@@ -26,6 +26,7 @@ from ..upgrade_workers import (
 )
 from ..upgrade_center import UpgradeCenter
 from ..parsers.open_field_parser import encode_value
+from ...framework.utils.print import print_yellow
 
 
 class Provider(OpenDeviceBase):
@@ -77,20 +78,28 @@ class Provider(OpenDeviceBase):
         self.setting_folder_path = os.path.join(
             executor_path, setting_folder_name, 'openrtk')
 
-        for app_name in get_app_names():
-            app_name_path = os.path.join(self.setting_folder_path, app_name)
-            app_name_config_path = os.path.join(
-                app_name_path, config_file_name)
-            if not os.path.isfile(app_name_config_path):
-                if not os.path.isdir(app_name_path):
-                    os.makedirs(app_name_path)
-                app_config_content = resource.get_content_from_bundle(
-                    setting_folder_name, os.path.join('openrtk', app_name, config_file_name))
-                if app_config_content is None:
-                    continue
+        all_products = get_openrtk_products()
 
-                with open(app_name_config_path, "wb") as code:
-                    code.write(app_config_content)
+        for product in all_products:
+            product_folder = os.path.join(self.setting_folder_path, product)
+            if not os.path.isdir(product_folder):
+                os.makedirs(product_folder)
+
+            for app_name in all_products[product]:
+                app_name_path = os.path.join(product_folder, app_name)
+                app_name_config_path = os.path.join(
+                    app_name_path, config_file_name)
+
+                if not os.path.isfile(app_name_config_path):
+                    if not os.path.isdir(app_name_path):
+                        os.makedirs(app_name_path)
+                    app_config_content = resource.get_content_from_bundle(
+                        setting_folder_name, os.path.join(product, app_name, config_file_name))
+                    if app_config_content is None:
+                        continue
+
+                    with open(app_name_config_path, "wb") as code:
+                        code.write(app_config_content)
 
     def ping(self):
         '''
@@ -176,12 +185,20 @@ class Provider(OpenDeviceBase):
                 return
 
         # Load the openimu.json based on its app
+        product_name = self.device_info['name']
         app_name = self.app_info['app_name']
         app_file_path = os.path.join(
-            self.setting_folder_path, app_name, 'openrtk.json')
+            self.setting_folder_path, product_name, app_name, 'openrtk.json')
 
         with open(app_file_path) as json_data:
             self.properties = json.load(json_data)
+
+        if not self.is_app_matched:
+            print_yellow(
+                'Failed to extract app version information from unit.' +
+                '\nThe supported application list is {0}.'.format(APP_STR) +
+                '\nTo keep runing, use INS configuration as default.' +
+                '\nYou can choose to place your json file under exection path if it is an unknown application.')
 
     def ntrip_client_thread(self):
         self.ntripClient = NTRIPClient(self.properties, self.communicator)

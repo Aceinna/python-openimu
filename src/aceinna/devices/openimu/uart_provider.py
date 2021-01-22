@@ -129,13 +129,14 @@ class Provider(OpenDeviceBase):
             app_name = 'IMU'
             self.is_app_matched = False
         else:
-            self.is_app_matched = False
+            self.is_app_matched = True
 
         self.app_info = {
             'app_name': app_name,
             'version': text
         }
 
+        # Change the device model name if got model name from the first split string of version
         if split_text[0] in get_openimu_products():
             self.device_info['name'] = split_text[0]
 
