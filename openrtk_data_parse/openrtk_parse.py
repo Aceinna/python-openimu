@@ -1331,6 +1331,32 @@ class InceptioParse:
             buffer = buffer + format(data[9], output['payload'][9]['format']) + ","
             buffer = buffer + format(data[10], output['payload'][10]['format']) + "\n"
 
+        elif output['name'] == 'fM':
+            buffer = buffer + format(data[0], output['payload'][0]['format']) + ","
+            buffer = buffer + format(data[1], output['payload'][1]['format']) + ","
+            buffer = buffer + format(data[2], output['payload'][2]['format']) + ","
+            buffer = buffer + format(data[3], output['payload'][3]['format']) + ","
+            buffer = buffer + format(data[4], output['payload'][4]['format']) + ","
+            buffer = buffer + format(data[5], output['payload'][5]['format']) + ","
+            buffer = buffer + format(data[6], output['payload'][6]['format']) + ","
+            buffer = buffer + format(data[7], output['payload'][7]['format']) + ","
+            buffer = buffer + format(data[8], output['payload'][8]['format']) + ","
+            buffer = buffer + format(data[9], output['payload'][9]['format']) + ","
+            buffer = buffer + format(data[10], output['payload'][10]['format']) + ","
+            buffer = buffer + format(data[11], output['payload'][11]['format']) + ","
+            buffer = buffer + format(data[12], output['payload'][12]['format']) + ","
+            buffer = buffer + format(data[13], output['payload'][13]['format']) + ","
+            buffer = buffer + format(data[14], output['payload'][14]['format']) + ","
+            buffer = buffer + format(data[15], output['payload'][15]['format']) + ","
+            buffer = buffer + format(data[16], output['payload'][16]['format']) + ","
+            buffer = buffer + format(data[17], output['payload'][17]['format']) + ","
+            buffer = buffer + format(data[18], output['payload'][18]['format']) + ","
+            buffer = buffer + format(data[19], output['payload'][19]['format']) + ","
+            buffer = buffer + format(data[20], output['payload'][20]['format']) + ","
+            buffer = buffer + format(data[21], output['payload'][21]['format']) + ","
+            buffer = buffer + format(data[22], output['payload'][22]['format']) + ","
+            buffer = buffer + format(data[23], output['payload'][23]['format']) + "\n"
+
         self.log_files[output['name']].write(buffer)
 
     def parse_output_packet_payload(self, packet_type):

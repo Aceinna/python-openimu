@@ -1,8 +1,158 @@
 {
     "version": "2.0.3",
     "userNMEAList": ["$GPGGA", "$GPRMC", "$GPGSV", "$GLGSV", "$GAGSV", "$BDGSV", "$GPGSA", "$GLGSA", "$GAGSA", "$BDGSA"],
-	"userPacketsTypeList": ["s1", "gN", "iN", "d1", "sT"],
+	"userPacketsTypeList": ["s1", "gN", "iN", "d1", "sT", "fM"],
 	"userOutputPackets": [
+        {
+			"name": "fM",
+			"isList": 0,
+			"payload":  [
+                {
+                    "type": "uint32",
+                    "name": "GPS_Week",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+                    "type": "double",
+                    "name": "GPS_TimeofWeek",
+                    "unit": "s",
+                    "format": "11.4f"
+                },
+				{
+					"type": "int32",
+					"name": "xAccelCounts1",
+					"unit": "",
+                    "format": "8"
+				},
+				{
+					"type": "int32",
+					"name": "yAccelCounts1",
+					"unit": "",
+                    "format": "8"
+                },
+				{
+					"type": "int32",
+					"name": "zAccelCounts1",
+					"unit": "",
+                    "format": "8"
+                },
+                {
+					"type": "int32",
+					"name": "xRateCounts1",
+					"unit": "",
+                    "format": "8"
+                },
+                {
+					"type": "int32",
+					"name": "yRateCounts1",
+					"unit": "",
+                    "format": "8"
+                },
+                {
+					"type": "int32",
+					"name": "zRateCounts1",
+					"unit": "",
+                    "format": "8"
+                },
+                {
+					"type": "int32",
+					"name": "TempCounts1",
+					"unit": "",
+                    "format": "8"
+                },
+                {
+					"type": "int32",
+					"name": "xAccelCounts2",
+					"unit": "",
+                    "format": "8"
+				},
+				{
+					"type": "int32",
+					"name": "yAccelCounts2",
+					"unit": "",
+                    "format": "8"
+                },
+				{
+					"type": "int32",
+					"name": "zAccelCounts2",
+					"unit": "",
+                    "format": "8"
+                },
+                {
+					"type": "int32",
+					"name": "xRateCounts2",
+					"unit": "",
+                    "format": "8"
+                },
+                {
+					"type": "int32",
+					"name": "yRateCounts2",
+					"unit": "",
+                    "format": "8"
+                },
+                {
+					"type": "int32",
+					"name": "zRateCounts2",
+					"unit": "",
+                    "format": "8"
+                },
+                {
+					"type": "int32",
+					"name": "TempCounts2",
+					"unit": "",
+                    "format": "8"
+                },
+                {
+					"type": "int32",
+					"name": "xAccelCounts3",
+					"unit": "",
+                    "format": "8"
+				},
+				{
+					"type": "int32",
+					"name": "yAccelCounts3",
+					"unit": "",
+                    "format": "8"
+                },
+				{
+					"type": "int32",
+					"name": "zAccelCounts3",
+					"unit": "",
+                    "format": "8"
+                },
+                {
+					"type": "int32",
+					"name": "xRateCounts3",
+					"unit": "",
+                    "format": "8"
+                },
+                {
+					"type": "int32",
+					"name": "yRateCounts3",
+					"unit": "",
+                    "format": "8"
+                },
+                {
+					"type": "int32",
+					"name": "zRateCounts3",
+					"unit": "",
+                    "format": "8"
+                },
+                {
+					"type": "int32",
+					"name": "TempCounts3",
+					"unit": "",
+                    "format": "8"
+                },
+                {
+					"type": "uint16",
+					"name": "index",
+					"unit": "",
+                    "format": ""
+				}
+			]
+		},
         {
             "name": "s1",
             "isList": 0,
