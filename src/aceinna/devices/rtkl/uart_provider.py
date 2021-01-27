@@ -1,11 +1,8 @@
 import time
-import json
 import serial
 import serial.tools.list_ports
 
-from ...framework.context import APP_CONTEXT
 from ..base.rtk_provider_base import RTKProviderBase
-
 from ..upgrade_workers import (
     FirmwareUpgradeWorker,
     FIRMWARE_EVENT_TYPE,
@@ -16,56 +13,23 @@ from ...framework.utils.print import print_red
 
 class Provider(RTKProviderBase):
     '''
-    OpenRTK UART provider
+    RTK330LA UART provider
     '''
 
     def __init__(self, communicator, *args):
         super(Provider, self).__init__(communicator)
+        self.type = 'RTKL'
         self.bootloader_baudrate = 115200
 
     # override
     def after_bootloader_switch(self):
         self.communicator.serial_port.baudrate = self.bootloader_baudrate
+        self.communicator.serial_port.reset_input_buffer()
+        time.sleep(8)
 
     def thread_debug_port_receiver(self, *args, **kwargs):
         if self.debug_logf is None:
             return
-
-        is_get_configuration = 0
-        file_name = args[0]
-        self.debug_c_f = open(file_name + '/' + 'configuration.json', "w")
-
-        while True:
-            if is_get_configuration:
-                break
-            cmd_configuration = 'get configuration\r\n'
-            self.debug_serial_port.write(cmd_configuration.encode())
-            try_times = 20
-            for i in range(try_times):
-                data_buffer = self.debug_serial_port.read(700)
-                if len(data_buffer):
-                    try:
-                        # print('len = {0}'.format(len(data_buffer)))
-                        str_data = bytes.decode(data_buffer)
-                        # print('{0}'.format(str_data))
-                        json_data = json.loads(str_data)
-                        for key in json_data.keys():
-                            if key == 'openrtk configuration':
-                                APP_CONTEXT.get_print_logger().info(
-                                    '{0}'.format(json_data))
-                                if self.debug_c_f:
-                                    self.debug_c_f.write(str_data)
-                                    self.debug_c_f.close()
-                                is_get_configuration = 1
-                        if is_get_configuration:
-                            break
-                    except Exception as e:
-                        # print('DEBUG PORT Thread:json error:', e)
-                        # the json will not be completed
-                        pass
-
-        cmd_log = 'log debug on\r\n'
-        self.debug_serial_port.write(cmd_log.encode())
 
         # log data
         while True:
@@ -82,9 +46,10 @@ class Provider(RTKProviderBase):
     # override
     def append_to_upgrade_center(self, upgrade_center, rule, content):
         if rule == 'rtk':
-            firmware_worker = FirmwareUpgradeWorker(self.communicator, content)
+            firmware_worker = FirmwareUpgradeWorker(
+                self.communicator, content, 192)
             firmware_worker.on(
-                FIRMWARE_EVENT_TYPE.FIRST_PACKET, lambda: time.sleep(8))
+                FIRMWARE_EVENT_TYPE.FIRST_PACKET, lambda: time.sleep(26))
             upgrade_center.register(firmware_worker)
             return
 

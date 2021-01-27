@@ -20,7 +20,10 @@ from ..configs.openimu_predefine import (
 from ...framework.context import APP_CONTEXT
 from ..decorator import with_device_message
 from ...framework.configuration import get_config
-from ..upgrade_workers import FirmwareUpgradeWorker
+from ..upgrade_workers import (
+    FirmwareUpgradeWorker,
+    FIRMWARE_EVENT_TYPE
+)
 from ..upgrade_center import UpgradeCenter
 from ...framework.utils.print import print_yellow
 
@@ -200,8 +203,12 @@ class Provider(OpenDeviceBase):
     def do_write_firmware(self, firmware_content):
         upgrade_center = UpgradeCenter()
 
-        upgrade_center.register(
-            FirmwareUpgradeWorker(self.communicator, firmware_content))
+        firmware_worker = FirmwareUpgradeWorker(
+            self.communicator, firmware_content)
+        firmware_worker.on(
+            FIRMWARE_EVENT_TYPE.FIRST_PACKET, lambda: time.sleep(8))
+
+        upgrade_center.register(firmware_worker)
 
         upgrade_center.on('progress', self.handle_upgrade_process)
         upgrade_center.on('error', self.handle_upgrade_error)

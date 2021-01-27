@@ -3,17 +3,26 @@ from ..base.upgrade_worker_base import UpgradeWorkerBase
 from ...framework.utils import helper
 
 
+class EVENT_TYPE:
+    '''
+    Event type of Device Message Center
+    '''
+    FIRST_PACKET = 'first_packet'
+    BEFORE_WRITE = 'before_write'
+    AFTER_WRITE = 'after_write'
+
+
 class FirmwareUpgradeWorker(UpgradeWorkerBase):
     '''Firmware upgrade worker
     '''
 
-    def __init__(self, communicator, file_content):
+    def __init__(self, communicator, file_content, block_size=240):
         super(FirmwareUpgradeWorker, self).__init__()
         self._file_content = file_content
         self._communicator = communicator
         self.current = 0
         self.total = len(file_content)
-        self.max_data_len = 240
+        self.max_data_len = block_size  # custom
         # self._key = None
         # self._is_stopped = False
 
@@ -35,8 +44,9 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
         except Exception as ex:  # pylint: disable=broad-except
             return False
 
+        # custom
         if current == 0:
-            time.sleep(8)
+            self.emit(EVENT_TYPE.FIRST_PACKET)
 
         response = helper.read_untils_have_data(
             self._communicator, 'WA', 50, 50)
@@ -51,6 +61,8 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
         if self.current == 0 and self.total == 0:
             self.emit('error', self._key, 'Invalid file content')
             return
+
+        self.emit(EVENT_TYPE.BEFORE_WRITE)
 
         while self.current < self.total:
             if self._is_stopped:
@@ -73,3 +85,5 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
 
         if self.total > 0 and self.current >= self.total:
             self.emit('finish', self._key)
+
+        self.emit(EVENT_TYPE.AFTER_WRITE)
