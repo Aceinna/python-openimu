@@ -424,7 +424,7 @@ class OpenDeviceBase(EventBase):
         '''
         Linstener for upgrade failure
         '''
-        print('Upgrade failed')
+        print('Upgrade failed:', message)
         if self._pbar:
             self._pbar.close()
         self.is_upgrading = False

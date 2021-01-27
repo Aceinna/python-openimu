@@ -34,7 +34,7 @@ MESSAGE_CENTER = None
 
 DEVICE_TYPE = APP_NAME = 'IMU'
 APP_FILE_PATH = os.path.join(
-    os.getcwd(), 'setting', 'openimu', APP_NAME, 'openimu.json')
+    os.getcwd(), 'setting', 'OpenIMU300ZI', APP_NAME, 'openimu.json')
 PROPERTIES = None
 with open(APP_FILE_PATH) as json_data:
     PROPERTIES = json.load(json_data)
