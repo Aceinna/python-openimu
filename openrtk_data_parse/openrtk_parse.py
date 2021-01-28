@@ -259,6 +259,9 @@ class InceptioParse:
         
 
     def save_ins_kml(self):
+        '''
+        '''
+        # white-cyan, red, purple, light-yellow, green, yellow
         color = ["ffffffff","ff0000ff","ffff00ff","50FF78F0","ff00ff00","ff00aaff"]
         kml_header = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"\
                 + "<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n"\
@@ -332,22 +335,22 @@ class InceptioParse:
                     + "<TR ALIGN=RIGHT><TD ALIGN=LEFT>Att(r,p,h):</TD><TD>"\
                     + "%.4f" % (ins[10]/100) + "</TD><TD>" + "%.4f" % (ins[11]/100) + "</TD><TD>" + "%.4f" % (ins[12]/100) + "</TD><TD>(deg,approx)</TD></TR>\n"\
                     + "<TR ALIGN=RIGHT><TD ALIGN=LEFT>Mode:</TD><TD>"\
-                    + "0" + "</TD><TD>" + str(ins[3]) + "</TD><TR>\n"\
+                    + str(ins[2]) + "</TD><TD>" + str(ins[3]) + "</TD><TR>\n"\
                     + "</TABLE>\n"\
                     + "]]></description>\n"
                 
                 pcolor = 0
-                if ins[2] == 0:     # "INS_INACTIVE"
+                if ins[3] == 0:     # "INS_INACTIVE"
                     pcolor = 0
-                elif ins[2] == 1:   # "INS_ALIGNING"
-                    pcolor = 2
-                elif ins[2] == 2:   # "INS_HIGH_VARIANCE"
-                    pcolor = 4
-                elif ins[2] == 3:   # "INS_SOLUTION_GOOD"
-                    pcolor = 4
-                elif ins[2] == 4:   # "INS_SOLUTION_FREE"
+                elif ins[3] == 1:   # "SPP/INS_SPP"
                     pcolor = 1
-                elif ins[2] == 5:   # "INS_ALIGNMENT_COMPLETE"
+                elif ins[3] == 2:   # "PSRDIFF/INS_PSRDIFF (RTD)"
+                    pcolor = 2
+                elif ins[3] == 3:   # "INS_DR"
+                    pcolor = 3
+                elif ins[3] == 4:   # "RTK_FIX/INS_RTKFIXED"
+                    pcolor = 4
+                elif ins[3] == 5:   # "RTK_FLOAT/INS_RTKFLOAT"
                     pcolor = 5
                 # pcolor = 4
 
