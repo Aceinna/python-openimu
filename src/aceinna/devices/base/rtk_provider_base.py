@@ -141,7 +141,7 @@ class RTKProviderBase(OpenDeviceBase):
             (item for item in APP_STR if item in split_text), None)
 
         if not app_name:
-            app_name = 'INS'
+            app_name = 'RTK_INS'
             self.is_app_matched = False
         else:
             self.is_app_matched = True
@@ -175,6 +175,8 @@ class RTKProviderBase(OpenDeviceBase):
         with open(app_file_path) as json_data:
             self.properties = json.load(json_data)
 
+        # save parameters to data log folder
+
     def ntrip_client_thread(self):
         self.ntripClient = NTRIPClient(self.properties, self.communicator)
         self.ntripClient.run()
@@ -199,6 +201,7 @@ class RTKProviderBase(OpenDeviceBase):
         self.ntrip_client_enable = self.cli_options and self.cli_options.ntrip_client
         # with_raw_log = self.cli_options and self.cli_options.with_raw_log
 
+        # set parameters from predefined parameters
         if set_user_para:
             result = self.set_params(
                 self.properties["initial"]["userParameters"])
@@ -639,7 +642,7 @@ class RTKProviderBase(OpenDeviceBase):
         has_error = False
         parameter_values = []
 
-        if self.app_info['app_name'] == 'INS':
+        if self.app_info['app_name'] == 'RTK_INS':
             conf_parameters = self.properties['userConfiguration']
             conf_parameters_len = len(conf_parameters)-1
             step = 10
