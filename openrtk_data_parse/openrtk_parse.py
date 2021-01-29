@@ -420,10 +420,10 @@ class InceptioParse:
             buffer = buffer + format(data[8], output['payload'][8]['format']) + ","
             buffer = buffer + format(data[9]/100, output['payload'][9]['format']) + ","
             buffer = buffer + format(data[10]/100, output['payload'][10]['format']) + ","
-            buffer = buffer + format(data[11]/100, output['payload'][11]['format']) + ","
-            buffer = buffer + format(data[12]/100, output['payload'][12]['format']) + ","
-            buffer = buffer + format(data[13]/100, output['payload'][13]['format']) + ","
-            buffer = buffer + format(data[14]/100, output['payload'][14]['format']) + "\n"
+            buffer = buffer + format(data[11]/100, output['payload'][11]['format']) + "\n"
+            #buffer = buffer + format(data[12]/100, output['payload'][12]['format']) + ","
+            #buffer = buffer + format(data[13]/100, output['payload'][13]['format']) + ","
+            #buffer = buffer + format(data[14]/100, output['payload'][14]['format']) + "\n"
 
             ff_buffer = '$GPGNSS,'
             ff_buffer = ff_buffer + format(data[0], output['payload'][0]['format']) + ","
@@ -431,9 +431,20 @@ class InceptioParse:
             ff_buffer = ff_buffer + format(data[3]*180/2147483648, output['payload'][3]['format']) + ","
             ff_buffer = ff_buffer + format(data[4]*180/2147483648, output['payload'][4]['format']) + ","
             ff_buffer = ff_buffer + format(data[5], output['payload'][5]['format']) + ","
-            ff_buffer = ff_buffer + format(data[12]/100, output['payload'][12]['format']) + ","
-            ff_buffer = ff_buffer + format(data[13]/100, output['payload'][13]['format']) + ","
-            ff_buffer = ff_buffer + format(data[14]/100, output['payload'][14]['format']) + ","
+            #ff_buffer = ff_buffer + format(data[12]/100, output['payload'][12]['format']) + ","
+            #ff_buffer = ff_buffer + format(data[13]/100, output['payload'][13]['format']) + ","
+            #ff_buffer = ff_buffer + format(data[14]/100, output['payload'][14]['format']) + ","
+                
+            std = 100
+            if data[2] == 1:
+                std = 10
+            elif data[2] == 5:
+                std = 5
+            elif data[2] == 4:
+                std = 0.1
+            ff_buffer = ff_buffer + format(std, output['payload'][5]['format']) + ","
+            ff_buffer = ff_buffer + format(std, output['payload'][5]['format']) + ","
+            ff_buffer = ff_buffer + format(std * 2, output['payload'][5]['format']) + ","
             ff_buffer = ff_buffer + format(data[2], output['payload'][2]['format']) + "\n"
             self.f_process.write(ff_buffer)
 

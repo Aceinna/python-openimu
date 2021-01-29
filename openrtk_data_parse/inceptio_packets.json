@@ -282,24 +282,6 @@
                     "name": "velocityUp",
                     "unit": "m/s",
                     "format": "10.4f"
-                },
-                {
-                    "type": "int16",
-                    "name": "latitude_std",
-                    "unit": "",
-                    "format": "8.3f"
-                },
-                {
-                    "type": "int16",
-                    "name": "longitude_std",
-                    "unit": "",
-                    "format": "8.3f"
-                },
-                {
-                    "type": "int16",
-                    "name": "height_std",
-                    "unit": "",
-                    "format": "8.3f"
                 }
             ]
         },

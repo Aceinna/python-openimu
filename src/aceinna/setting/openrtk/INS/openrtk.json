@@ -1,7 +1,7 @@
 {
 	"name": "OpenRTK330 INCEPTIO",
-	"app_version": "2.0.5",
-	"appName": "RTK_INS 2.0.5",
+	"app_version": "2.0.4",
+	"appName": "RTK_INS 2.0.4",
 	"type": "openrtk",
     "description": "6-axis OpenRTK with INS application",
     "initial":{
@@ -597,25 +597,7 @@
 						"type": "int16",
 						"name": "velocityUp",
 						"unit": "m/s"
-					},
-                    {
-                        "type": "int16",
-                        "name": "latitude_std",
-                        "unit": "",
-                        "format": "8.3f"
-                    },
-                    {
-                        "type": "int16",
-                        "name": "longitude_std",
-                        "unit": "",
-                        "format": "8.3f"
-                    },
-                    {
-                        "type": "int16",
-                        "name": "height_std",
-                        "unit": "",
-                        "format": "8.3f"
-                    }
+					}
 				]
 			},
             {
