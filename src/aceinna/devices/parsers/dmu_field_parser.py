@@ -188,7 +188,7 @@ def decode_value(data_type, data):
     ret_value = do_decode_value(data_type, data)
 
     if not isinstance(ret_value, float):
-        return
+        return ret_value
 
     if math.isnan(ret_value):
         return 0
