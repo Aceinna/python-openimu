@@ -76,6 +76,12 @@ class OpenDeviceBase(EventBase):
         '''
 
     @abstractmethod
+    def after_upgrade_completed(self):
+        '''
+        Do some operations after upgrade completed
+        '''
+
+    @abstractmethod
     def after_bootloader_switch(self):
         '''
         Do some opertions after bootloader is switched
@@ -153,7 +159,10 @@ class OpenDeviceBase(EventBase):
             self._message_center.setup()
 
     def setup(self, options):
-        ''' start 2 threads, receiver, parser
+        ''' Setup components
+        1. load properties
+        2. register message center
+        3. log raw data
         '''
         self.load_properties()
         self._logger = FileLoger(self.properties)
@@ -169,9 +178,9 @@ class OpenDeviceBase(EventBase):
                 raise Exception('Cannot start data logger')
             self.is_logging = True
 
+        self.sessionId = str(uuid.uuid1())
         self.after_setup()
 
-        self.sessionId = str(uuid.uuid1())
 
     def on_recevie_message_center_error(self, error_type, message):
         '''
@@ -396,6 +405,8 @@ class OpenDeviceBase(EventBase):
             if log_result == 1 or log_result == 2:
                 raise Exception('Cannot start data logger')
             self.is_logging = True
+
+        self.after_upgrade_completed()
 
     def start_data_log(self):
         '''

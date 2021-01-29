@@ -23,6 +23,7 @@ from ..models import WebserverArgs
 from ..framework.constants import DEFAULT_PORT_RANGE
 from ..framework import AppLogger
 from ..framework.decorator import skip_error
+from ..framework.utils.print import print_red
 if sys.version_info[0] > 2:
     from queue import Queue
 else:
@@ -387,6 +388,7 @@ class Webserver(EventBase):
         self.sse_handler = None
         self.http_server = None
         self.non_main_ioloop = None
+        self.options = None
         self._build_options(**options)
         APP_CONTEXT.set_app(self)
 
@@ -575,14 +577,17 @@ class Webserver(EventBase):
         self.detect_device(self.device_complete_upgrade_handler)
 
     def detect_device_wrapper(self, current_loop):
-        # self.webserver_io_loop = asyncio.new_event_loop()
-        if sys.version_info[0] > 2:
-            import asyncio
-            asyncio.set_event_loop(asyncio.new_event_loop())
-            # asyncio.set_event_loop(current_loop)
+        try:
+            # self.webserver_io_loop = asyncio.new_event_loop()
+            if sys.version_info[0] > 2:
+                import asyncio
+                asyncio.set_event_loop(asyncio.new_event_loop())
+                # asyncio.set_event_loop(current_loop)
 
-        #self.non_main_ioloop = tornado.ioloop.IOLoop.current()
-        self.detect_device(self.device_discover_handler)
+            #self.non_main_ioloop = tornado.ioloop.IOLoop.current()
+            self.detect_device(self.device_discover_handler)
+        except Exception as ex:
+            print_red(ex)
 
     def detect_device(self, callback):
         '''find if there is a connected device'''
