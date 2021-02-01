@@ -371,3 +371,14 @@ def read_untils_have_data(communicator, packet_type, read_length=200, retry_time
         trys += 1
 
     return result
+
+
+def collection_to_dict(collection, key):
+    '''
+    Convet a collection to dict
+    '''
+    inst = dict()
+    for item in collection:
+        actual_key = item[key]
+        inst[actual_key] = item
+    return inst

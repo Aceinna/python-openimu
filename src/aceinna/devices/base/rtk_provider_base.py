@@ -216,7 +216,7 @@ class RTKProviderBase(OpenDeviceBase):
             raise Exception(
                 'Cannot create log folder, please check if the application has create folder permission')
 
-        # save parameters to data log folder
+        # save parameters to data log folder after device is successfully detected
         self.save_parameters_result(os.path.join(
             self.rtk_log_file_name, 'parameters_{0}.json'.format(formatted_file_time)))
 
@@ -226,6 +226,9 @@ class RTKProviderBase(OpenDeviceBase):
                 self.properties["initial"]["userParameters"])
             if (result['packetType'] == 'success'):
                 self.save_config()
+
+            # check saved result
+            self.check_predefined_result()
 
         # start ntrip client
         if self.ntrip_client_enable:
@@ -592,6 +595,46 @@ class RTKProviderBase(OpenDeviceBase):
         if result['packetType'] == 'inputParams':
             with open(file_path, 'w') as outfile:
                 json.dump(result['data'], outfile)
+
+    def check_predefined_result(self):
+        local_time = time.localtime()
+        formatted_file_time = time.strftime("%Y_%m_%d_%H_%M_%S", local_time)
+        file_path = os.path.join(
+            self.rtk_log_file_name,
+            'parameters_predefined_{0}.json'.format(formatted_file_time)
+        )
+        # save parameters to data log folder after predefined parameters setup
+        result = self.get_params()
+        if result['packetType'] == 'inputParams':
+            with open(file_path, 'w') as outfile:
+                json.dump(result['data'], outfile)
+
+        # compare saved parameters with predefined parameters
+        hashed_predefined_parameters = helper.collection_to_dict(
+            self.properties["initial"]["userParameters"], key='paramId')
+        hashed_current_parameters = helper.collection_to_dict(
+            result['data'], key='paramId')
+
+        success_count = 0
+        fail_count = 0
+        fail_parameters = []
+        for key in hashed_predefined_parameters:
+            if hashed_current_parameters[key]['value'] == \
+                    hashed_predefined_parameters[key]['value']:
+                success_count += 1
+            else:
+                fail_count += 1
+                fail_parameters.append(
+                    hashed_predefined_parameters[key]['name'])
+
+        check_result = 'Predefined Parameters are saved. Success ({0}), Fail ({1})'.format(
+            success_count, fail_count)
+        if success_count == len(hashed_predefined_parameters.keys()):
+            print_green(check_result)
+
+        if fail_count > 0:
+            print_yellow(check_result)
+            print_yellow('The failed parameters: {0}'.format(fail_parameters))
 
     def after_upgrade_completed(self):
         local_time = time.localtime()
