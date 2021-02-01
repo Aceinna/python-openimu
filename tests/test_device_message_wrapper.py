@@ -96,7 +96,7 @@ def send_get_version_timeout_command():
     delay = 2
     command_line = helper.build_input_packet('gV')
     result = yield MESSAGE_CENTER.build(
-        command=test_helper.wrap_delay_response_command(command_line, delay))
+        command=test_helper.wrap_delay_response_command(command_line, delay), timeout=1)
     return result
 
 
