@@ -1034,7 +1034,7 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
             current += len(data_to_sdk)
             self.send_packet(data_to_sdk)
             # print('write data', i, data_to_sdk)
-            has_read= self.read_until(0xCC, 100)
+            has_read= self.read_until(0xCC, 1000)
 
             if has_read:
                 self.emit('progress', self._key, current, packet_num)
