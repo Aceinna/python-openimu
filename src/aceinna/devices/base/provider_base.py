@@ -82,6 +82,12 @@ class OpenDeviceBase(EventBase):
         '''
 
     @abstractmethod
+    def after_upgrade_completed(self):
+        '''
+        Do some operations after upgrade completed
+        '''
+
+    @abstractmethod
     def do_write_firmware(self, firmware_content):
         '''
         Do firmware upgrade
@@ -270,7 +276,7 @@ class OpenDeviceBase(EventBase):
         '''
         # output firmware upgrade finished
         #command_line = helper.build_bootloader_input_packet('JA')
-        #self.communicator.write(command_line)
+        # self.communicator.write(command_line)
         print('Restarting app ...')
         time.sleep(5)
 
@@ -402,6 +408,8 @@ class OpenDeviceBase(EventBase):
             if log_result == 1 or log_result == 2:
                 raise Exception('Cannot start data logger')
             self.is_logging = True
+
+        self.after_upgrade_completed()
 
     def start_data_log(self):
         '''

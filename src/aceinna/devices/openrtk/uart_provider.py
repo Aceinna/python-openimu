@@ -26,6 +26,7 @@ from ..upgrade_workers import (
 )
 from ..upgrade_center import UpgradeCenter
 from ..parsers.open_field_parser import encode_value
+from ...framework.utils.print import (print_green, print_yellow, print_red)
 
 
 class Provider(OpenDeviceBase):
@@ -61,6 +62,7 @@ class Provider(OpenDeviceBase):
         self.nmea_sync = 0
         self.prepare_folders()
         self.ntripClient = None
+        self.rtk_log_file_name = ''
         self.connected = True
 
     def prepare_folders(self):
@@ -180,31 +182,50 @@ class Provider(OpenDeviceBase):
         return user_port_num, port_name
 
     def after_setup(self):
+        local_time = time.localtime()
+        formatted_dir_time = time.strftime("%Y%m%d_%H%M%S", local_time)
+        formatted_file_time = time.strftime("%Y_%m_%d_%H_%M_%S", local_time)
+        debug_port = ''
+        rtcm_port = ''
         set_user_para = self.cli_options and self.cli_options.set_user_para
         self.ntrip_client_enable = self.cli_options and self.cli_options.ntrip_client
-        # with_raw_log = self.cli_options and self.cli_options.with_raw_log
 
+        if self.data_folder is None:
+            raise Exception(
+                'Data folder does not exists, please check if the application has create folder permission')
+
+        try:
+            self.rtk_log_file_name = os.path.join(
+                self.data_folder, 'openrtk_log_{0}'.format(formatted_dir_time))
+            os.mkdir(self.rtk_log_file_name)
+        except:
+            raise Exception(
+                'Cannot create log folder, please check if the application has create folder permission')
+
+        # save parameters to data log folder after device is successfully detected
+        self.save_parameters_result(os.path.join(
+            self.rtk_log_file_name, 'parameters_{0}.json'.format(formatted_file_time)))
+
+        # set parameters from predefined parameters
         if set_user_para:
             result = self.set_params(
                 self.properties["initial"]["userParameters"])
-            ##print('set user para {0}'.format(result))
             if (result['packetType'] == 'success'):
                 self.save_config()
 
-        if self.ntrip_client_enable:
-            t = threading.Thread(target=self.ntrip_client_thread)
-            t.start()
+            # check saved result
+            self.check_predefined_result()
 
-        # if with_raw_log:
-        connection = None
-        debug_port = ''
-        rtcm_port = ''
+        # start ntrip client
+        if self.ntrip_client_enable:
+            thead = threading.Thread(target=self.ntrip_client_thread)
+            thead.start()
+
         try:
             if (self.properties["initial"]["useDefaultUart"]):
                 user_port_num, port_name = self.build_connected_serial_port_info()
                 if not user_port_num or not port_name:
                     return False
-                #print('user_port {0} {1}'.format(user_port_num, port_name))
                 debug_port = port_name + str(int(user_port_num) + 2)
                 rtcm_port = port_name + str(int(user_port_num) + 1)
             else:
@@ -215,45 +236,34 @@ class Provider(OpenDeviceBase):
                         elif x['name'] == 'GNSS':
                             rtcm_port = x["value"]
 
-            if self.data_folder is not None:
-                dir_time = time.strftime("%Y%m%d_%H%M%S", time.localtime())
-                file_time = time.strftime(
-                    "%Y_%m_%d_%H_%M_%S", time.localtime())
-                file_name = self.data_folder + '/' + 'openrtk_log_' + dir_time
-                os.mkdir(file_name)
-                self.user_logf = open(
-                    file_name + '/' + 'user_' + file_time + '.bin', "wb")
+            self.user_logf = open(os.path.join(
+                self.rtk_log_file_name, 'user_{0}.bin'.format(formatted_file_time)), "wb")
 
             if rtcm_port != '':
-                print('OpenRTK log GNSS UART {0}'.format(rtcm_port))
+                print_green('OpenRTK log GNSS UART {0}'.format(rtcm_port))
                 self.rtcm_serial_port = serial.Serial(
                     rtcm_port, '460800', timeout=0.1)
                 if self.rtcm_serial_port.isOpen():
                     self.rtcm_logf = open(
-                        file_name + '/' + 'rtcm_rover_' + file_time + '.bin', "wb")
-                    t = threading.Thread(
-                        target=self.thread_rtcm_port_receiver, args=(file_name,))
-                    t.start()
+                        os.path.join(self.rtk_log_file_name, 'rtcm_rover_{0}.bin'.format(
+                            formatted_file_time)), "wb")
+                    thead = threading.Thread(
+                        target=self.thread_rtcm_port_receiver, args=(self.rtk_log_file_name,))
+                    thead.start()
 
             if debug_port != '':
-                print('OpenRTK log DEBUG UART {0}'.format(debug_port))
+                print_green('OpenRTK log DEBUG UART {0}'.format(debug_port))
                 self.debug_serial_port = serial.Serial(
                     debug_port, '460800', timeout=0.1)
                 if self.debug_serial_port.isOpen():
-                    if self.app_info['app_name'] == 'RAWDATA':
-                        self.debug_logf = open(
-                            file_name + '/' + 'rtcm_base_' + file_time + '.bin', "wb")
-                    elif self.app_info['app_name'] == 'RTK':
-                        self.debug_logf = open(
-                            file_name + '/' + 'rtcm_base_' + file_time + '.bin', "wb")
-                    else:
-                        self.debug_logf = open(
-                            file_name + '/' + 'rtcm_base_' + file_time + '.bin', "wb")
-                    t = threading.Thread(
-                        target=self.thread_debug_port_receiver, args=(file_name,))
-                    t.start()
+                    self.debug_logf = open(
+                        os.path.join(self.rtk_log_file_name, 'rtcm_base_{0}.bin'.format(
+                            formatted_file_time)), "wb")
+                    thead = threading.Thread(
+                        target=self.thread_debug_port_receiver, args=(self.rtk_log_file_name,))
+                    thead.start()
 
-        except Exception as e:
+        except Exception:
             if self.debug_serial_port is not None:
                 if self.debug_serial_port.isOpen():
                     self.debug_serial_port.close()
@@ -262,7 +272,8 @@ class Provider(OpenDeviceBase):
                     self.rtcm_serial_port.close()
             self.debug_serial_port = None
             self.rtcm_serial_port = None
-            print(e)
+            print_red(
+                'Can not log GNSS UART or DEBUG UART, pls check uart driver and connection!')
             return False
 
     def after_bootloader_switch(self):
@@ -627,6 +638,59 @@ class Provider(OpenDeviceBase):
             'partNumber': self.device_info['pn'],
             'firmware': self.device_info['firmware_version']
         }
+
+    def save_parameters_result(self, file_path):
+        result = self.get_params()
+        if result['packetType'] == 'inputParams':
+            with open(file_path, 'w') as outfile:
+                json.dump(result['data'], outfile)
+
+    def check_predefined_result(self):
+        local_time = time.localtime()
+        formatted_file_time = time.strftime("%Y_%m_%d_%H_%M_%S", local_time)
+        file_path = os.path.join(
+            self.rtk_log_file_name,
+            'parameters_predefined_{0}.json'.format(formatted_file_time)
+        )
+        # save parameters to data log folder after predefined parameters setup
+        result = self.get_params()
+        if result['packetType'] == 'inputParams':
+            with open(file_path, 'w') as outfile:
+                json.dump(result['data'], outfile)
+
+        # compare saved parameters with predefined parameters
+        hashed_predefined_parameters = helper.collection_to_dict(
+            self.properties["initial"]["userParameters"], key='paramId')
+        hashed_current_parameters = helper.collection_to_dict(
+            result['data'], key='paramId')
+
+        success_count = 0
+        fail_count = 0
+        fail_parameters = []
+        for key in hashed_predefined_parameters:
+            if hashed_current_parameters[key]['value'] == \
+                    hashed_predefined_parameters[key]['value']:
+                success_count += 1
+            else:
+                fail_count += 1
+                fail_parameters.append(
+                    hashed_predefined_parameters[key]['name'])
+
+        check_result = 'Predefined Parameters are saved. Success ({0}), Fail ({1})'.format(
+            success_count, fail_count)
+        if success_count == len(hashed_predefined_parameters.keys()):
+            print_green(check_result)
+
+        if fail_count > 0:
+            print_yellow(check_result)
+            print_yellow('The failed parameters: {0}'.format(fail_parameters))
+
+    def after_upgrade_completed(self):
+        local_time = time.localtime()
+        formatted_file_time = time.strftime("%Y_%m_%d_%H_%M_%S", local_time)
+        file_path = os.path.join(
+            self.rtk_log_file_name, 'parameters_{0}.json'.format(formatted_file_time))
+        self.save_parameters_result(file_path)
 
     # command list
     def server_status(self, *args):  # pylint: disable=invalid-name
