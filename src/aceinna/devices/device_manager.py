@@ -2,6 +2,7 @@ from .ping.dmu import ping as ping_dmu
 from .ping.open import ping as ping_opendevice
 from .openimu.uart_provider import Provider as OpenIMUUartProvider
 from .openrtk.uart_provider import Provider as OpenRTKUartProvider
+from .rtkl.uart_provider import Provider as RTKLUartProvider
 from .openrtk.lan_provider import Provider as OpenRTKLANProvider
 from .dmu.uart_provider import Provider as DMUUartProvider
 from ..framework.context import APP_CONTEXT
@@ -14,6 +15,8 @@ def create_provider(device_type, communicator):
             return OpenIMUUartProvider(communicator)
         if device_type == 'OpenRTK':
             return OpenRTKUartProvider(communicator)
+        if device_type == 'RTKL':
+            return RTKLUartProvider(communicator)
         if device_type == 'DMU':
             return DMUUartProvider(communicator)
 

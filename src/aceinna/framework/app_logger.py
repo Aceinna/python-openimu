@@ -27,7 +27,8 @@ class AppLogger(object):
 
     def __init__(self, filename, level='info', when='D',
                  backCount=1, gen_file=False, console_log=False,
-                 fmt='%(asctime)s - %(pathname)s[line:%(lineno)d] - %(levelname)s: %(message)s'):
+                 fmt='%(asctime)s - %(levelname)s: %(message)s'):
+                #  fmt='%(asctime)s - %(pathname)s[line:%(lineno)d] - %(levelname)s: %(message)s'):
         self._store = None
         self.logger = logging.getLogger()
         self.format_str = logging.Formatter(fmt)

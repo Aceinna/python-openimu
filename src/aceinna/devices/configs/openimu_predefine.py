@@ -4,6 +4,15 @@ predefined params for openimu
 JSON_FILE_NAME = 'openimu.json'
 
 
+def get_openimu_products():
+    return {
+        'OpenIMU300RI': ['Compass', 'IMU', 'INS', 'Leveler', 'VG_AHRS'],
+        'OpenIMU300ZI': ['Compass', 'IMU', 'INS', 'Leveler', 'VG_AHRS'],
+        'OpenIMU330BI': ['IMU', 'VG_AHRS'],
+        'OpenIMU335RI': ['IMU', 'VG']
+    }
+
+
 def get_app_names():
     '''
     define openimu app type
@@ -19,4 +28,4 @@ def get_app_names():
     return app_names
 
 
-APP_STR = ['INS', 'VG', 'VG_AHRS', 'Compass', 'Leveler', 'IMU', 'OpenIMU']
+APP_STR = ['INS', 'VG', 'VG_AHRS', 'Compass', 'Leveler', 'IMU']

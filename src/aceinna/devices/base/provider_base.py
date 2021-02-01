@@ -6,7 +6,6 @@ import uuid
 import time
 import struct
 import traceback
-from tqdm import tqdm
 from pathlib import Path
 from azure.storage.blob import BlockBlobService
 from .event_base import EventBase
@@ -16,6 +15,7 @@ from ...framework.configuration import get_config
 from ...framework.ans_platform_api import AnsPlatformAPI
 from ..message_center import DeviceMessageCenter
 from ..parser_manager import ParserManager
+from ...framework.progress_bar import ProgressBar
 
 if sys.version_info[0] > 2:
     from queue import Queue
@@ -73,6 +73,12 @@ class OpenDeviceBase(EventBase):
     def after_setup(self):
         '''
         Do some operations after setup
+        '''
+
+    @abstractmethod
+    def after_upgrade_completed(self):
+        '''
+        Do some operations after upgrade completed
         '''
 
     @abstractmethod
@@ -165,7 +171,10 @@ class OpenDeviceBase(EventBase):
             self._message_center.setup()
 
     def setup(self, options):
-        ''' start 2 threads, receiver, parser
+        ''' Setup components
+        1. load properties
+        2. register message center
+        3. log raw data
         '''
         self.load_properties()
         self._logger = FileLoger(self.properties)
@@ -181,9 +190,9 @@ class OpenDeviceBase(EventBase):
                 raise Exception('Cannot start data logger')
             self.is_logging = True
 
+        self.sessionId = str(uuid.uuid1())
         self.after_setup()
 
-        self.sessionId = str(uuid.uuid1())
 
     def on_recevie_message_center_error(self, error_type, message):
         '''
@@ -299,7 +308,7 @@ class OpenDeviceBase(EventBase):
             # step.3 write to block, use self write from specified device
             print('Firmware upgrading...')
             upgrade_center = self.build_upgrade_center(firmware_content)
-            self._pbar = tqdm(total=upgrade_center.total)
+            self._pbar = ProgressBar(total=upgrade_center.total)
             upgrade_center.start()
             # self.write_firmware()
             # step.4 restart app
@@ -438,7 +447,7 @@ class OpenDeviceBase(EventBase):
         '''
         Linstener for upgrade failure
         '''
-        print('Upgrade failed')
+        print('Upgrade failed:', message)
         if self._pbar:
             self._pbar.close()
         self.is_upgrading = False

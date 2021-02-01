@@ -2,6 +2,10 @@
 
 ---
 
+## 2.2.4 / 2020-12-18
+- [OpenRTK] Remove console print and add print.log to save these infomation.
+- [OpenRTK] Update openrtk parse to make kml files
+
 ## 2.2.3 / 2020-12-01
 - [OpenRTK] Update Configuration read size
 - [Framework] Fix cannot parse 'sC', 'uB' command

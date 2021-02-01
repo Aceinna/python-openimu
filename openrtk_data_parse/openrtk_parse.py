@@ -25,7 +25,7 @@ class InceptioParse:
                 self.rawdata.append(ord(c))
         self.path = path
         self.inskml_rate = 1/inskml_rate
-        self.packet_buffer = []   
+        self.packet_buffer = []
         self.sync_state = 0
         self.sync_pattern = collections.deque(4*[0], 4)
         self.userPacketsTypeList = []
@@ -92,7 +92,7 @@ class InceptioParse:
             fmt_dic['len_b'] = len_fmt
             fmt_dic['pack'] = pack_fmt
             self.pkfmt[x['name']] = fmt_dic
-        
+
         self.f_process = open(self.path[0:-1] + '-process', 'w')
         self.f_nmea = open(self.path[0:-1] + '-nmea', 'wb')
         self.f_gnss_kml = open(self.path[0:-1] + '-gnss.kml', 'w')
@@ -105,9 +105,9 @@ class InceptioParse:
             if self.sync_state == 1:
                 self.packet_buffer.append(new_byte)
                 if len(self.packet_buffer) == self.packet_buffer[2] + 5: # packet len
-                    packet_crc = 256 * self.packet_buffer[-2] + self.packet_buffer[-1]    
+                    packet_crc = 256 * self.packet_buffer[-2] + self.packet_buffer[-1]
                     if packet_crc == self.calc_crc(self.packet_buffer[:-2]): # packet crc
-                        self.parse_output_packet_payload(packet_type) 
+                        self.parse_output_packet_payload(packet_type)
                         self.packet_buffer = []
                         self.sync_state = 0
                     else:
@@ -117,7 +117,7 @@ class InceptioParse:
                 for packet_type in self.userPacketsTypeList:
                     packet_type_0 = ord(packet_type[0])
                     packet_type_1 = ord(packet_type[1])
-                    if list(self.sync_pattern) == [0x55, 0x55, packet_type_0, packet_type_1]: # packet type 
+                    if list(self.sync_pattern) == [0x55, 0x55, packet_type_0, packet_type_1]: # packet type
                         self.packet_buffer = [packet_type_0, packet_type_1]
                         self.sync_state = 1
                         break
@@ -237,7 +237,7 @@ class InceptioParse:
                 + "0" + "</TD><TD>" + str(pos[2]) + "</TD><TR>\n"\
                 + "</TABLE>\n"\
                 + "]]></description>\n"
-            
+
             gnss_track += "<styleUrl>#P" + str(pos[2]) + "</styleUrl>\n"\
                     + "<Style>\n"\
                     + "<IconStyle>\n"\
@@ -256,7 +256,7 @@ class InceptioParse:
                 + "</kml>\n"
 
         self.f_gnss_kml.write(gnss_track)
-        
+
 
     def save_ins_kml(self):
         '''
@@ -296,10 +296,10 @@ class InceptioParse:
         ins_track += "</coordinates>\n"\
                 + "</LineString>\n"\
                 + "</Placemark>\n"
-        
+
         ins_track += "<Folder>\n"\
                 + "<name>Rover Position</name>\n"
-        
+
         for i, ins in enumerate(self.insdata):
             ep = self.weeksecondstoutc(ins[0], ins[1]*1000/1000, -18)
             ep_sp = time.strptime(ep, "%Y-%m-%d %H:%M:%S")
@@ -338,7 +338,7 @@ class InceptioParse:
                     + str(ins[2]) + "</TD><TD>" + str(ins[3]) + "</TD><TR>\n"\
                     + "</TABLE>\n"\
                     + "]]></description>\n"
-                
+
                 pcolor = 0
                 if ins[3] == 0:     # "INS_INACTIVE"
                     pcolor = 0
@@ -370,7 +370,7 @@ class InceptioParse:
         ins_track += "</Folder>\n"\
                 + "</Document>\n"\
                 + "</kml>\n"
-        
+
         self.f_ins_kml.write(ins_track)
 
     def close_files(self):
@@ -434,7 +434,7 @@ class InceptioParse:
             #ff_buffer = ff_buffer + format(data[12]/100, output['payload'][12]['format']) + ","
             #ff_buffer = ff_buffer + format(data[13]/100, output['payload'][13]['format']) + ","
             #ff_buffer = ff_buffer + format(data[14]/100, output['payload'][14]['format']) + ","
-                
+
             std = 100
             if data[2] == 1:
                 std = 10
@@ -579,7 +579,7 @@ class InceptioParse:
                 self.log(output, data)
             except Exception as e:
                 print("error happened when decode the {0} {1}".format(output['name'], e))
-    
+
     def write_titlebar(self, file, output):
         for value in output['payload']:
             file.write(value['name']+'('+value['unit']+')')
@@ -627,7 +627,7 @@ if __name__ == '__main__':
 
 
     json_setting = 'inceptio_packets.json'
-    
+
     if args.i != 1 and args.i != 2 and args.i != 5 and args.i != 10:
         print('waring: no ins kml rate {0}, just can be 1 2 5 10!'.format(args.i))
         sys.exit(0)

@@ -1,7 +1,8 @@
+import math
 import struct
 
 
-def decode_value(data_type, data):
+def do_decode_value(data_type, data):
     if data_type == 'uint64':
         try:
             pack_item = struct.pack('8B', *data)
@@ -101,6 +102,18 @@ def decode_value(data_type, data):
             return False
     else:
         return False
+
+
+def decode_value(data_type, data):
+    ret_value = do_decode_value(data_type, data)
+
+    if not isinstance(ret_value, float):
+        return ret_value
+
+    if math.isnan(ret_value):
+        return 0
+    else:
+        return ret_value
 
 
 def encode_value(data_type, data):

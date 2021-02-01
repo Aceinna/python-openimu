@@ -5,33 +5,42 @@ import datetime
 import threading
 import math
 import re
-from ..widgets import (
-    NTRIPClient, LanDataLogger
-)
+import collections
+import serial
+import serial.tools.list_ports
+from ..widgets import NTRIPClient
 from ...framework.utils import (
     helper, resource
 )
 from ...framework.context import APP_CONTEXT
+from ...framework.utils.firmware_parser import parser as firmware_content_parser
+from ...framework.utils.print import (print_green, print_yellow, print_red)
 from ..base.provider_base import OpenDeviceBase
 from ..configs.openrtk_predefine import (
     APP_STR, get_openrtk_products
 )
 from ..decorator import with_device_message
+from ...models import InternalCombineAppParseRule
+from ..upgrade_center import UpgradeCenter
 from ..parsers.open_field_parser import encode_value
-from ...framework.utils.print import print_yellow
+from abc import ABCMeta, abstractmethod
 
 
-class Provider(OpenDeviceBase):
+class RTKProviderBase(OpenDeviceBase):
     '''
-    OpenRTK LAN provider
+    RTK Series UART provider
     '''
+    __metaclass__ = ABCMeta
 
     def __init__(self, communicator, *args):
-        super(Provider, self).__init__(communicator)
+        super(RTKProviderBase, self).__init__(communicator)
         self.type = 'RTK'
         self.server_update_rate = 100
         self.sky_data = []
         self.pS_data = []
+        self.ps_dic = collections.OrderedDict()
+        self.inspva_flag = 0
+        self.bootloader_baudrate = 115200
         self.app_config_folder = ''
         self.device_info = None
         self.app_info = None
@@ -51,6 +60,7 @@ class Provider(OpenDeviceBase):
         self.nmea_sync = 0
         self.prepare_folders()
         self.ntripClient = None
+        self.rtk_log_file_name = ''
         self.connected = True
 
     def prepare_folders(self):
@@ -68,7 +78,7 @@ class Provider(OpenDeviceBase):
 
         # copy contents of app_config under executor path
         self.setting_folder_path = os.path.join(
-            executor_path, setting_folder_name, 'openrtk')
+            executor_path, setting_folder_name)
 
         all_products = get_openrtk_products()
 
@@ -93,47 +103,21 @@ class Provider(OpenDeviceBase):
                     with open(app_name_config_path, "wb") as code:
                         code.write(app_config_content)
 
-    def ping(self):
-        '''
-        Check if the connected device is OpenRTK
-        '''
-        # print('start to check if it is openrtk')
-        device_info_text = self.internal_input_command('pG')
-        app_info_text = self.internal_input_command('gV')
-
-        APP_CONTEXT.get_logger().logger.debug('Checking if is OpenRTK device...')
-        APP_CONTEXT.get_logger().logger.debug(
-            'Device: {0}'.format(device_info_text))
-        APP_CONTEXT.get_logger().logger.debug(
-            'Firmware: {0}'.format(app_info_text))
-
-        if device_info_text.find('OpenRTK') > -1:
-            self._build_device_info(device_info_text)
-            self._build_app_info(app_info_text)
-            self.connected = True
-            print('# Connected Information #')
-            split_device_info = device_info_text.split(' ')
-            print('Device: {0} {1} {2} {3}'.format(
-                split_device_info[0], split_device_info[2], split_device_info[3], split_device_info[4]))
-            print('APP version:', app_info_text)
-            APP_CONTEXT.get_logger().logger.info(
-                'Connected {0}, {1}'.format(device_info_text, app_info_text))
-            return True
-        return False
-
     def bind_device_info(self, device_access, device_info, app_info):
         self._build_device_info(device_info)
         self._build_app_info(app_info)
         self.connected = True
 
-        return '# Connected {0} with LAN #\n\rDevice:{1} \n\rFirmware:{2}'\
-            .format('OpenRTK', device_info, app_info)
+        port_name = device_access.port
+
+        return '# Connected {0} with UART on {1} #\nDevice:{2} \nFirmware:{3}'\
+            .format('OpenRTK', port_name, device_info, app_info)
 
     def _build_device_info(self, text):
         '''
         Build device info
         '''
-        split_text = text.split(' ')
+        split_text = [x for x in text.split(' ') if x != '']
         sn = split_text[4]
         # remove the prefix of SN
         if sn.find('SN:') == 0:
@@ -158,7 +142,7 @@ class Provider(OpenDeviceBase):
             (item for item in APP_STR if item in split_text), None)
 
         if not app_name:
-            app_name = 'INS'
+            app_name = 'RTK_INS'
             self.is_app_matched = False
         else:
             self.is_app_matched = True
@@ -182,9 +166,6 @@ class Provider(OpenDeviceBase):
         app_file_path = os.path.join(
             self.setting_folder_path, product_name, app_name, 'openrtk.json')
 
-        with open(app_file_path) as json_data:
-            self.properties = json.load(json_data)
-
         if not self.is_app_matched:
             print_yellow(
                 'Failed to extract app version information from unit.' +
@@ -192,45 +173,124 @@ class Provider(OpenDeviceBase):
                 '\nTo keep runing, use INS configuration as default.' +
                 '\nYou can choose to place your json file under exection path if it is an unknown application.')
 
+        with open(app_file_path) as json_data:
+            self.properties = json.load(json_data)
+
     def ntrip_client_thread(self):
         self.ntripClient = NTRIPClient(self.properties, self.communicator)
         self.ntripClient.run()
 
+    def build_connected_serial_port_info(self):
+        if not self.communicator.serial_port:
+            return None, None
+
+        user_port = self.communicator.serial_port.port
+        user_port_num = ''
+        port_name = ''
+        for i in range(len(user_port)-1, -1, -1):
+            if (user_port[i] >= '0' and user_port[i] <= '9'):
+                user_port_num = user_port[i] + user_port_num
+            else:
+                port_name = user_port[:i+1]
+                break
+        return user_port_num, port_name
+
     def after_setup(self):
+        local_time = time.localtime()
+        formatted_dir_time = time.strftime("%Y%m%d_%H%M%S", local_time)
+        formatted_file_time = time.strftime("%Y_%m_%d_%H_%M_%S", local_time)
+        debug_port = ''
+        rtcm_port = ''
         set_user_para = self.cli_options and self.cli_options.set_user_para
         self.ntrip_client_enable = self.cli_options and self.cli_options.ntrip_client
-        # with_raw_log = self.cli_options and self.cli_options.with_raw_log
 
+        if self.data_folder is None:
+            raise Exception(
+                'Data folder does not exists, please check if the application has create folder permission')
+
+        try:
+            self.rtk_log_file_name = os.path.join(
+                self.data_folder, 'openrtk_log_{0}'.format(formatted_dir_time))
+            os.mkdir(self.rtk_log_file_name)
+        except:
+            raise Exception(
+                'Cannot create log folder, please check if the application has create folder permission')
+
+        # save parameters to data log folder after device is successfully detected
+        self.save_parameters_result(os.path.join(
+            self.rtk_log_file_name, 'parameters_{0}.json'.format(formatted_file_time)))
+
+        # set parameters from predefined parameters
         if set_user_para:
             result = self.set_params(
                 self.properties["initial"]["userParameters"])
-            ##print('set user para {0}'.format(result))
-            if result['packetType'] == 'success':
+            if (result['packetType'] == 'success'):
                 self.save_config()
 
+            # check saved result
+            self.check_predefined_result()
+
+        # start ntrip client
         if self.ntrip_client_enable:
-            t = threading.Thread(target=self.ntrip_client_thread)
-            t.start()
+            thead = threading.Thread(target=self.ntrip_client_thread)
+            thead.start()
 
         try:
-            if self.data_folder is not None:
-                dir_time = time.strftime("%Y%m%d_%H%M%S", time.localtime())
-                file_time = time.strftime(
-                    "%Y_%m_%d_%H_%M_%S", time.localtime())
-                file_name = self.data_folder + '/' + 'openrtk_log_' + dir_time
-                os.mkdir(file_name)
-                self.user_logf = open(
-                    file_name + '/' + 'user_' + file_time + '.bin', "wb")
+            if (self.properties["initial"]["useDefaultUart"]):
+                user_port_num, port_name = self.build_connected_serial_port_info()
+                if not user_port_num or not port_name:
+                    return False
+                debug_port = port_name + str(int(user_port_num) + 2)
+                rtcm_port = port_name + str(int(user_port_num) + 1)
+            else:
+                for x in self.properties["initial"]["uart"]:
+                    if x['enable'] == 1:
+                        if x['name'] == 'DEBUG':
+                            debug_port = x["value"]
+                        elif x['name'] == 'GNSS':
+                            rtcm_port = x["value"]
 
-            # start a thread to log data
-            data_log_thread = threading.Thread(
-                target=self.thread_data_log)
-            data_log_thread.start()
+            self.user_logf = open(os.path.join(
+                self.rtk_log_file_name, 'user_{0}.bin'.format(formatted_file_time)), "wb")
 
-        except Exception as e:
-            print(e)
+            if rtcm_port != '':
+                print_green('OpenRTK log GNSS UART {0}'.format(rtcm_port))
+                self.rtcm_serial_port = serial.Serial(
+                    rtcm_port, '460800', timeout=0.1)
+                if self.rtcm_serial_port.isOpen():
+                    self.rtcm_logf = open(
+                        os.path.join(self.rtk_log_file_name, 'rtcm_rover_{0}.bin'.format(
+                            formatted_file_time)), "wb")
+                    thead = threading.Thread(
+                        target=self.thread_rtcm_port_receiver, args=(self.rtk_log_file_name,))
+                    thead.start()
+
+            if debug_port != '':
+                print_green('OpenRTK log DEBUG UART {0}'.format(debug_port))
+                self.debug_serial_port = serial.Serial(
+                    debug_port, '460800', timeout=0.1)
+                if self.debug_serial_port.isOpen():
+                    self.debug_logf = open(
+                        os.path.join(self.rtk_log_file_name, 'rtcm_base_{0}.bin'.format(
+                            formatted_file_time)), "wb")
+                    thead = threading.Thread(
+                        target=self.thread_debug_port_receiver, args=(self.rtk_log_file_name,))
+                    thead.start()
+
+        except Exception:
+            if self.debug_serial_port is not None:
+                if self.debug_serial_port.isOpen():
+                    self.debug_serial_port.close()
+            if self.rtcm_serial_port is not None:
+                if self.rtcm_serial_port.isOpen():
+                    self.rtcm_serial_port.close()
+            self.debug_serial_port = None
+            self.rtcm_serial_port = None
+            print_red(
+                'Can not log GNSS UART or DEBUG UART, pls check uart driver and connection!')
             return False
 
+    @abstractmethod
     def after_bootloader_switch(self):
         pass
 
@@ -261,10 +321,11 @@ class Provider(OpenDeviceBase):
                                 str_nmea)
                             if cksum == calc_cksum:
                                 if str_nmea.find("$GPGGA") != -1:
+                                    # print()
                                     if self.ntrip_client_enable and self.ntripClient != None:
                                         self.ntripClient.send(str_nmea)
-                                print(str_nmea, end='')
-
+                                # print(str_nmea, end='')
+                                APP_CONTEXT.get_print_logger().info(str_nmea.replace('\r\n', ''))
                                 # else:
                                 #     print("nmea checksum wrong {0} {1}".format(cksum, calc_cksum))
                         except Exception as e:
@@ -273,13 +334,26 @@ class Provider(OpenDeviceBase):
                     self.nmea_buffer = []
                     self.nmea_sync = 0
 
-        # if self.user_logf is not None:
-        #     self.user_logf.write(data)
+        if self.user_logf is not None:
+            self.user_logf.write(data)
 
-    def thread_data_log(self, *args, **kwargs):
-        self.lan_data_logger = LanDataLogger(
-            self.properties, self.communicator, self.user_logf)
-        self.lan_data_logger.run()
+    @abstractmethod
+    def thread_debug_port_receiver(self, *args, **kwargs):
+        pass
+
+    def thread_rtcm_port_receiver(self, *args, **kwargs):
+        if self.rtcm_logf is None:
+            return
+        while True:
+            try:
+                data = bytearray(self.rtcm_serial_port.read_all())
+            except Exception as e:
+                print_red('RTCM PORT Thread error: {0}'.format(e))
+                return  # exit thread receiver
+            if len(data):
+                self.rtcm_logf.write(data)
+            else:
+                time.sleep(0.001)
 
     def on_receive_output_packet(self, packet_type, data, error=None):
         '''
@@ -345,7 +419,7 @@ class Provider(OpenDeviceBase):
                 if str_checksum.startswith("0x"):
                     str_checksum = str_checksum[2:]
                 gpgga = gpgga + '*' + str_checksum + '\r\n'
-                print(gpgga)
+                APP_CONTEXT.get_print_logger().info(gpgga)
                 if self.ntripClient != None:
                     self.ntripClient.send(gpgga)
                 return
@@ -381,7 +455,7 @@ class Provider(OpenDeviceBase):
                                          data['latitude'], data['longitude'], data['height'],
                                          data['velocityNorth'], data['velocityEast'], data['velocityUp'],
                                          data['roll'], data['pitch'], data['heading'])
-                                    print(inspva)
+                                    APP_CONTEXT.get_print_logger().info(inspva)
                         else:
                             self.add_output_packet('stream', 'pos', data)
                             self.pS_data = data
@@ -389,7 +463,6 @@ class Provider(OpenDeviceBase):
                         self.add_output_packet('stream', 'pos', data)
                         self.pS_data = data
             except Exception as e:
-                # print(e)
                 pass
 
         elif packet_type == 'sK':
@@ -404,43 +477,109 @@ class Provider(OpenDeviceBase):
             else:
                 self.sky_data.extend(data)
 
+        elif packet_type == 'g1':
+            self.ps_dic['positionMode'] = data['position_type']
+            self.ps_dic['numberOfSVs'] = data['number_of_satellites_in_solution']
+            self.ps_dic['hdop'] = data['hdop']
+            self.ps_dic['age'] = data['diffage']
+            if self.inspva_flag == 0:
+                self.ps_dic['GPS_Week'] = data['GPS_Week']
+                self.ps_dic['GPS_TimeofWeek'] = data['GPS_TimeOfWeek'] * 0.001
+                self.ps_dic['latitude'] = data['latitude']
+                self.ps_dic['longitude'] = data['longitude']
+                self.ps_dic['height'] = data['height']
+                self.ps_dic['velocityMode'] = 1
+                self.ps_dic['velocityNorth'] = data['north_vel']
+                self.ps_dic['velocityEast'] = data['east_vel']
+                self.ps_dic['velocityUp'] = data['up_vel']
+                self.ps_dic['latitude_std'] = data['latitude_standard_deviation']
+                self.ps_dic['longitude_std'] = data['longitude_standard_deviation']
+                self.ps_dic['height_std'] = data['height_standard_deviation']
+                self.ps_dic['north_vel_std'] = data['north_vel_standard_deviation']
+                self.ps_dic['east_vel_std'] = data['east_vel_standard_deviation']
+                self.ps_dic['up_vel_std'] = data['up_vel_standard_deviation']
+                self.add_output_packet('stream', 'pos', self.ps_dic)
+
+        elif packet_type == 'i1':
+            self.inspva_flag = 1
+            if data['GPS_TimeOfWeek'] % 200 == 0:
+                self.ps_dic['GPS_Week'] = data['GPS_Week']
+                self.ps_dic['GPS_TimeofWeek'] = data['GPS_TimeOfWeek'] * 0.001
+                self.ps_dic['latitude'] = data['latitude']
+                self.ps_dic['longitude'] = data['longitude']
+                self.ps_dic['height'] = data['height']
+                if data['ins_position_type'] != 1 and data['ins_position_type'] != 4 and data['ins_position_type'] != 5:
+                    self.ps_dic['velocityMode'] = 2
+                else:
+                    self.ps_dic['velocityMode'] = 1
+                self.ps_dic['insStatus'] = data['ins_status']
+                self.ps_dic['insPositionType'] = data['ins_position_type']
+                self.ps_dic['velocityNorth'] = data['north_velocity']
+                self.ps_dic['velocityEast'] = data['east_velocity']
+                self.ps_dic['velocityUp'] = data['up_velocity']
+                self.ps_dic['roll'] = data['roll']
+                self.ps_dic['pitch'] = data['pitch']
+                self.ps_dic['heading'] = data['heading']
+                self.ps_dic['latitude_std'] = data['latitude_std']
+                self.ps_dic['longitude_std'] = data['longitude_std']
+                self.ps_dic['height_std'] = data['height_std']
+                self.ps_dic['north_vel_std'] = data['north_velocity_std']
+                self.ps_dic['east_vel_std'] = data['east_velocity_std']
+                self.ps_dic['up_vel_std'] = data['up_velocity_std']
+                self.ps_dic['roll_std'] = data['roll_std']
+                self.ps_dic['pitch_std'] = data['pitch_std']
+                self.ps_dic['heading_std'] = data['heading_std']
+                self.add_output_packet('stream', 'pos', self.ps_dic)
+
+        elif packet_type == 'y1':
+            if self.sky_data:
+                if self.sky_data[0]['GPS_TimeOfWeek'] == data[0]['GPS_TimeOfWeek']:
+                    self.sky_data.extend(data)
+                else:
+                    self.add_output_packet('stream', 'skyview', self.sky_data)
+                    self.add_output_packet('stream', 'snr', self.sky_data)
+                    self.sky_data = []
+                    self.sky_data.extend(data)
+            else:
+                self.sky_data.extend(data)
+
         else:
             output_packet_config = next(
                 (x for x in self.properties['userMessages']['outputPackets']
                  if x['name'] == packet_type), None)
-            if output_packet_config and output_packet_config.__contains__('from') \
-                    and output_packet_config['from'] == 'imu':
+            if output_packet_config and output_packet_config.__contains__('active') \
+                    and output_packet_config['active']:
+                timeOfWeek = int(data['GPS_TimeOfWeek']) % 60480000
+                data['GPS_TimeOfWeek'] = timeOfWeek / 1000
                 self.add_output_packet('stream', 'imu', data)
 
-    def do_write_firmware(self, firmware_content):
-        raise Exception('It is not supported by connecting device with LAN')
+    @abstractmethod
+    def append_to_upgrade_center(self, upgrade_center, rule, content):
+        ''' Append worker to upgrade center
+        '''
+        pass
 
-        # rules = [
-        #     InternalCombineAppParseRule('rtk', 'rtk_start:', 4),
-        #     InternalCombineAppParseRule('sdk', 'sdk_start:', 4),
-        # ]
+    # override
+    def build_upgrade_center(self, firmware_content):
+        rules = [
+            InternalCombineAppParseRule('rtk', 'rtk_start:', 4),
+            InternalCombineAppParseRule('sdk', 'sdk_start:', 4),
+        ]
 
-        # parsed_content = firmware_content_parser(firmware_content, rules)
+        parsed_content = firmware_content_parser(firmware_content, rules)
 
-        # user_port_num, port_name = self.build_connected_serial_port_info()
-        # sdk_port = port_name + str(int(user_port_num) + 3)
+        upgrade_center = UpgradeCenter(mode='sync')
 
-        # sdk_uart = serial.Serial(sdk_port, 115200, timeout=0.1)
-        # if not sdk_uart.isOpen():
-        #     raise Exception('Cannot open SDK upgrade port')
+        for _, rule in enumerate(parsed_content):
+            content = parsed_content[rule]
+            if len(content) > 0:
+                self.append_to_upgrade_center(upgrade_center, rule, content)
 
-        # upgrade_center = UpgradeCenter()
+        upgrade_center.on('progress', self.handle_upgrade_process)
+        upgrade_center.on('error', self.handle_upgrade_error)
+        upgrade_center.on('finish', self.handle_upgrade_complete)
 
-        # upgrade_center.register(
-        #     FirmwareUpgradeWorker(self.communicator, parsed_content['rtk']))
-
-        # upgrade_center.register(
-        #     SDKUpgradeWorker(sdk_uart, parsed_content['sdk']))
-
-        # upgrade_center.on('progress', self.handle_upgrade_process)
-        # upgrade_center.on('error', self.handle_upgrade_error)
-        # upgrade_center.on('finish', self.handle_upgrade_complete)
-        # upgrade_center.start()
+        return upgrade_center
 
     def get_device_connection_info(self):
         return {
@@ -450,6 +589,59 @@ class Provider(OpenDeviceBase):
             'partNumber': self.device_info['pn'],
             'firmware': self.device_info['firmware_version']
         }
+
+    def save_parameters_result(self, file_path):
+        result = self.get_params()
+        if result['packetType'] == 'inputParams':
+            with open(file_path, 'w') as outfile:
+                json.dump(result['data'], outfile)
+
+    def check_predefined_result(self):
+        local_time = time.localtime()
+        formatted_file_time = time.strftime("%Y_%m_%d_%H_%M_%S", local_time)
+        file_path = os.path.join(
+            self.rtk_log_file_name,
+            'parameters_predefined_{0}.json'.format(formatted_file_time)
+        )
+        # save parameters to data log folder after predefined parameters setup
+        result = self.get_params()
+        if result['packetType'] == 'inputParams':
+            with open(file_path, 'w') as outfile:
+                json.dump(result['data'], outfile)
+
+        # compare saved parameters with predefined parameters
+        hashed_predefined_parameters = helper.collection_to_dict(
+            self.properties["initial"]["userParameters"], key='paramId')
+        hashed_current_parameters = helper.collection_to_dict(
+            result['data'], key='paramId')
+
+        success_count = 0
+        fail_count = 0
+        fail_parameters = []
+        for key in hashed_predefined_parameters:
+            if hashed_current_parameters[key]['value'] == \
+                    hashed_predefined_parameters[key]['value']:
+                success_count += 1
+            else:
+                fail_count += 1
+                fail_parameters.append(
+                    hashed_predefined_parameters[key]['name'])
+
+        check_result = 'Predefined Parameters are saved. Success ({0}), Fail ({1})'.format(
+            success_count, fail_count)
+        if success_count == len(hashed_predefined_parameters.keys()):
+            print_green(check_result)
+
+        if fail_count > 0:
+            print_yellow(check_result)
+            print_yellow('The failed parameters: {0}'.format(fail_parameters))
+
+    def after_upgrade_completed(self):
+        local_time = time.localtime()
+        formatted_file_time = time.strftime("%Y_%m_%d_%H_%M_%S", local_time)
+        file_path = os.path.join(
+            self.rtk_log_file_name, 'parameters_{0}.json'.format(formatted_file_time))
+        self.save_parameters_result(file_path)
 
     # command list
     def server_status(self, *args):  # pylint: disable=invalid-name
@@ -512,7 +704,7 @@ class Provider(OpenDeviceBase):
         has_error = False
         parameter_values = []
 
-        if self.app_info['app_name'] == 'INS':
+        if self.app_info['app_name'] == 'RTK_INS':
             conf_parameters = self.properties['userConfiguration']
             conf_parameters_len = len(conf_parameters)-1
             step = 10
@@ -520,10 +712,10 @@ class Provider(OpenDeviceBase):
             for i in range(2, conf_parameters_len, step):
                 start_byte = i
                 end_byte = i+step-1 if i+step < conf_parameters_len else conf_parameters_len
-
+                time.sleep(0.1)
                 command_line = helper.build_packet(
                     'gB', [start_byte, end_byte])
-                result = yield self._message_center.build(command=command_line, timeout=2)
+                result = yield self._message_center.build(command=command_line, timeout=10)
                 if result['error']:
                     has_error = True
                     break
@@ -747,8 +939,8 @@ class Provider(OpenDeviceBase):
             thread = threading.Thread(
                 target=self.thread_do_upgrade_framework, args=(file,))
             thread.start()
-            print("Upgrade OpenRTK firmware started at:[{0}].".format(
-                datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+            # print("Upgrade OpenRTK firmware started at:[{0}].".format(
+            #     datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 
         return {
             'packetType': 'success'

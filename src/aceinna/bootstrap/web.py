@@ -22,6 +22,8 @@ from ..framework.utils import (helper, resource)
 from ..models import WebserverArgs
 from ..framework.constants import DEFAULT_PORT_RANGE
 from ..framework import AppLogger
+from ..framework.decorator import skip_error
+from ..framework.utils.print import print_red
 if sys.version_info[0] > 2:
     from queue import Queue
 else:
@@ -84,7 +86,8 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         connected_device = self.get_device()
         if connected_device:
             connected_device.remove_client(self)
-            # print('close client count:', len(connected_device.clients))
+        self.latest_packet_collection = []
+        # print('close client count:', len(connected_device.clients))
 
     def check_origin(self, origin):
         return True
@@ -146,6 +149,9 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         '''
         If detect device, setup output and logger
         '''
+        if self.ws_connection is None or self.ws_connection.is_closing():
+            return
+
         if len(device.clients) == 1:
             self.response_only_allow_one_client()
             return
@@ -157,6 +163,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         if force_response:
             self.response_server_info(device)
 
+    @skip_error(tornado.websocket.WebSocketClosedError)
     def response_message(self, method, data):
         '''
         Format response
@@ -169,6 +176,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                 }
             ))
 
+    @skip_error(tornado.websocket.WebSocketClosedError)
     def response_unkonwn_method(self):
         '''
         Format unknonwn method message
@@ -199,6 +207,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                 'deviceType': device.type
             }})
 
+    @skip_error(tornado.websocket.WebSocketClosedError)
     def response_output_packet(self):
         '''
         Response streaming data
@@ -379,6 +388,7 @@ class Webserver(EventBase):
         self.sse_handler = None
         self.http_server = None
         self.non_main_ioloop = None
+        self.options = None
         self._build_options(**options)
         APP_CONTEXT.set_app(self)
 
@@ -418,6 +428,14 @@ class Webserver(EventBase):
                 gen_file=True,
                 level=log_level,
                 console_log=console_log
+            ))
+
+        APP_CONTEXT.set_print_logger(
+            AppLogger(
+                filename=os.path.join(
+                    executor_path, 'loggers', 'print_' + time.strftime('%Y%m%d_%H%M%S') + '.log'),
+                gen_file=True,
+                level=log_level
             ))
 
     def get_device(self):
@@ -474,7 +492,7 @@ class Webserver(EventBase):
             if self.ws_handler:
                 self.ws_handler.on_receive_output_packet(
                     'stream', 'upgrade_complete', {'success': False})
-         #   self.device_provider.close()
+            #   self.device_provider.close()
 
     def load_device_provider(self, device_provider):
         '''
@@ -559,14 +577,17 @@ class Webserver(EventBase):
         self.detect_device(self.device_complete_upgrade_handler)
 
     def detect_device_wrapper(self, current_loop):
-        # self.webserver_io_loop = asyncio.new_event_loop()
-        if sys.version_info[0] > 2:
-            import asyncio
-            asyncio.set_event_loop(asyncio.new_event_loop())
-            # asyncio.set_event_loop(current_loop)
+        try:
+            # self.webserver_io_loop = asyncio.new_event_loop()
+            if sys.version_info[0] > 2:
+                import asyncio
+                asyncio.set_event_loop(asyncio.new_event_loop())
+                # asyncio.set_event_loop(current_loop)
 
-        #self.non_main_ioloop = tornado.ioloop.IOLoop.current()
-        self.detect_device(self.device_discover_handler)
+            #self.non_main_ioloop = tornado.ioloop.IOLoop.current()
+            self.detect_device(self.device_discover_handler)
+        except Exception as ex:
+            print_red(ex)
 
     def detect_device(self, callback):
         '''find if there is a connected device'''

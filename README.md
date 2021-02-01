@@ -69,7 +69,7 @@ Link device to your pc or mac. And the tool will auto detect the linked device.
 [More Usage](USAGE.md "More Usage")
 
 ## Work Mode
-Normally, python-openimu works as Web mode. It will auto start a websocket server after device is detected. And it can works with [acinna developers site](https://developers.aceinna.com "Aceinna Developers Site") to do monitor and set configuration of connected device.
+Normally, python-openimu works as Web mode. It will auto start a websocket server after device is detected. And it can works with [aceinna developers site](https://developers.aceinna.com "Aceinna Developers Site") to do monitor and set configuration of connected device.
 
 You can specify the startup parameter `--cli` to switch to Command Line Mode. Command Line Mode helps you to interact with device without open the brower. 
 
@@ -91,4 +91,4 @@ Commnad List:
 
 ## Changelogs and Release Notes
 
-[HISTORY.md](HISTORY.md "Change History")
+Please refer to [HISTORY.md](HISTORY.md "Change History")

@@ -100,7 +100,7 @@ class DeviceMessageCenter(EventBase):
     def get_parser(self):
         return self._parser
 
-    def build(self, command, timeout=1):
+    def build(self, command, timeout=3):
         return DeviceMessage(self, command, timeout)
 
     def request_run(self, message):

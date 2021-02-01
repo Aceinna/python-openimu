@@ -1,7 +1,5 @@
 {
-	"name": "OpenRTK330 INCEPTIO",
-	"app_version": "2.0.4",
-	"appName": "RTK_INS 2.0.4",
+	"appVersion": "RTK330LA INS 27.00",
 	"type": "openrtk",
     "description": "6-axis OpenRTK with INS application",
     "initial":{
@@ -77,12 +75,12 @@
             {
                 "paramId": 12,
                 "name": "user lever arm x",
-                "value": 0.0
+                "value": 1.19
             },
             {
                 "paramId": 13,
                 "name": "user lever arm y",
-                "value": 0.0
+                "value": -10
             },
             {
                 "paramId": 14,
@@ -324,7 +322,6 @@
             {
                 "name": "s1",
                 "isList": 0,
-				"active": true,
                 "payload": [
                     {
                         "type": "uint32",
@@ -371,7 +368,7 @@
 					{
 						"name": "Acceleration",
 						"units": "m/s^2",
-						"xAxis": {"name":"GPS_TimeofWeek", "unit":"s"},
+						"xAxis": {"name":"GPS_TimeofWeek", "unit":"sec"},
 						"yAxes": [
 							"x_accel",
 							"y_accel",
@@ -387,7 +384,7 @@
 					{
 						"name": "Angular-Rate",
 						"units": "deg/s",
-						"xAxis": {"name":"GPS_TimeofWeek", "unit":"s"},
+						"xAxis": {"name":"GPS_TimeofWeek", "unit":"sec"},
 						"yAxes": [
 							"x_rate",
 							"y_rate",
@@ -404,7 +401,7 @@
             },
             {
 				"name": "iN",
-				"isList": 0,
+                "isList": 0,
 				"payload": [
 					{
 						"type": "uint32",
@@ -471,7 +468,8 @@
 						"name": "heading",
 						"unit": "m/s"
                     }
-				]
+				],
+				"graphs": []
             },
             {
 				"name": "d1",
@@ -532,7 +530,8 @@
 						"name": "heading_std",
 						"unit": ""
 					}
-				]
+				],
+				"graphs": []
             },
             {
 				"name": "gN",
@@ -598,7 +597,8 @@
 						"name": "velocityUp",
 						"unit": "m/s"
 					}
-				]
+				],
+				"graphs": []
 			},
             {
 				"name": "sT",
@@ -660,7 +660,8 @@
 						"name": "mcu_temperature",
 						"unit": ""
 					}
-				]
+				],
+				"graphs": []
 			}
 		]
 	},
