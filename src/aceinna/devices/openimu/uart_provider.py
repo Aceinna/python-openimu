@@ -140,8 +140,11 @@ class Provider(OpenDeviceBase):
         }
 
         # Change the device model name if got model name from the first split string of version
-        if split_text[0] in get_openimu_products():
+        if len(split_text) > 0 and split_text[0] in get_openimu_products():
             self.device_info['name'] = split_text[0]
+
+        if len(split_text) == 0:
+            self.device_info['name'] = 'OpenIMU300ZI'
 
     def load_properties(self):
         # Load config from user working path
@@ -638,10 +641,17 @@ class Provider(OpenDeviceBase):
             pi_value = 2 ** 15 / math.pi
             return decoded_value / pi_value
 
-    def upgrade_framework(self, file, *args):  # pylint: disable=invalid-name
+    def upgrade_framework(self, params, *args):  # pylint: disable=invalid-name
         '''
         upgrade framework
         '''
+        file = ''
+        if isinstance(params, str):
+            file = params
+
+        if isinstance(params, dict):
+            file = params['file']
+
         # start a thread to do upgrade
         if not self.is_upgrading:
             self.is_upgrading = True
