@@ -3,7 +3,7 @@ Websocket server entry
 """
 import os
 import sys
-#import asyncio
+# import asyncio
 import json
 import time
 import traceback
@@ -289,6 +289,48 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         self.response_message('stopLog', {'packetType': 'success', 'data': ''})
 
 
+class UploadHandler(tornado.web.RequestHandler):
+    def set_default_headers(self):
+        self.set_header('Access-Control-Allow-Origin', '*')
+        self.set_header('Access-Control-Allow-Headers',
+                        'x-requested-with, authorization')
+        self.set_header('Access-Control-Allow-Methods',
+                        'POST, GET, PUT, DELETE')
+
+    def get(self):
+        self.write('some get')
+
+    def post(self, *args, **kwargs):
+        files = self.request.files
+        uploaded_files = []
+
+        try:
+            for inputname in files:
+                http_file = files[inputname]
+                for file_inst in http_file:
+                    file_path = os.path.join(
+                        resource.get_executor_path(), 'upgrade', file_inst.filename)
+
+                    with open(file_path, 'wb') as file_writer:
+                        file_writer.write(file_inst.body)
+
+                    uploaded_files.append(
+                        {'name': file_inst.filename, 'path': file_path})
+            self.write({
+                'success': True,
+                'data': uploaded_files
+            })
+        except:
+            self.write({
+                'success': False
+            })
+
+    def options(self):
+        # no body
+        self.set_status(204)
+        self.finish()
+
+
 class MessageStore(object):
     def __init__(self):
         self.messages = Queue()
@@ -330,8 +372,8 @@ class LoggerServerSentEvent(tornado.web.RequestHandler):
 
     def __init__(self, *args, **kwargs):
         super(LoggerServerSentEvent, self).__init__(*args, **kwargs)
-        #self.set_header('Content-Type', 'text/event-stream')
-        #self.set_header('Access-Control-Allow-Origin', '*')
+        # self.set_header('Content-Type', 'text/event-stream')
+        # self.set_header('Access-Control-Allow-Origin', '*')
 
     def initialize(self, store):
         '''
@@ -408,7 +450,7 @@ class Webserver(EventBase):
             target=self.detect_device_wrapper, args=(loop,))
         thread.start()
 
-        #self.non_main_ioloop = tornado.ioloop.IOLoop.current()
+        # self.non_main_ioloop = tornado.ioloop.IOLoop.current()
         # loop.run_forever()
 
     def prepare_logger(self):
@@ -524,7 +566,8 @@ class Webserver(EventBase):
             application = tornado.web.Application(
                 [
                     (r'/', WSHandler, dict(server=self)),
-                    (r'/sse', LoggerServerSentEvent, dict(store=store))
+                    (r'/sse', LoggerServerSentEvent, dict(store=store)),
+                    (r'/upload', UploadHandler)
                 ])
             self.http_server = tornado.httpserver.HTTPServer(application)
             # self.http_server.listen(self.options.port)
@@ -584,7 +627,7 @@ class Webserver(EventBase):
                 asyncio.set_event_loop(asyncio.new_event_loop())
                 # asyncio.set_event_loop(current_loop)
 
-            #self.non_main_ioloop = tornado.ioloop.IOLoop.current()
+            # self.non_main_ioloop = tornado.ioloop.IOLoop.current()
             self.detect_device(self.device_discover_handler)
         except Exception as ex:
             print_red(ex)

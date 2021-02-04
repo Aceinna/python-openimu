@@ -1,5 +1,5 @@
 {
-	"appVersion": "RTK330LA INS 27.00",
+	"appVersion": "RTK330LA INS 24.00",
 	"type": "openrtk",
     "description": "6-axis OpenRTK with INS application",
     "initial":{

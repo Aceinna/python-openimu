@@ -67,6 +67,7 @@ class RTKProviderBase(OpenDeviceBase):
         '''
         Prepare folders for data storage and configuration
         '''
+
         executor_path = resource.get_executor_path()
         setting_folder_name = 'setting'
         config_file_name = 'openrtk.json'
@@ -86,6 +87,11 @@ class RTKProviderBase(OpenDeviceBase):
             product_folder = os.path.join(self.setting_folder_path, product)
             if not os.path.isdir(product_folder):
                 os.makedirs(product_folder)
+
+            if product == 'RTK330L':
+                config_file_name = 'RTK330L.json'
+            else:
+                config_file_name = 'openrtk.json'
 
             for app_name in all_products[product]:
                 app_name_path = os.path.join(product_folder, app_name)
@@ -153,18 +159,23 @@ class RTKProviderBase(OpenDeviceBase):
         }
 
     def load_properties(self):
+        product_name = self.device_info['name']
+        app_name = self.app_info['app_name']
+
+        json_file_name = 'openrtk.json'
+        if product_name == 'RTK330L':
+            json_file_name = 'RTK330L.json'
+
         # Load config from user working path
-        local_config_file_path = os.path.join(os.getcwd(), 'openrtk.json')
+        local_config_file_path = os.path.join(os.getcwd(), json_file_name)
         if os.path.isfile(local_config_file_path):
             with open(local_config_file_path) as json_data:
                 self.properties = json.load(json_data)
                 return
 
         # Load the openimu.json based on its app
-        product_name = self.device_info['name']
-        app_name = self.app_info['app_name']
         app_file_path = os.path.join(
-            self.setting_folder_path, product_name, app_name, 'openrtk.json')
+            self.setting_folder_path, product_name, app_name, json_file_name)
 
         if not self.is_app_matched:
             print_yellow(
