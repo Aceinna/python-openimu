@@ -1,8 +1,9 @@
 import math
 import struct
+import decimal
 
 
-def do_decode_value(data_type, data):
+def do_decode_value(data_type, data, conf):
     if data_type == 'uint64':
         try:
             pack_item = struct.pack('8B', *data)
@@ -38,7 +39,14 @@ def do_decode_value(data_type, data):
             pack_item = struct.pack('4B', *data)
         except:  # pylint: disable=bare-except
             return False
-        return struct.unpack('<f', pack_item)[0]
+
+        unpack_value = struct.unpack('<f', pack_item)[0]
+        # use decimal, float type is a special case
+        if conf and conf['value_accuracy']:
+            precision = conf['value_accuracy']
+            decimal_wrapped = decimal.Decimal(unpack_value)
+            unpack_value = float(round(decimal_wrapped, precision))
+        return unpack_value
     elif data_type == 'uint16':
         try:
             pack_item = struct.pack('2B', *data)
@@ -104,8 +112,8 @@ def do_decode_value(data_type, data):
         return False
 
 
-def decode_value(data_type, data):
-    ret_value = do_decode_value(data_type, data)
+def decode_value(data_type, data, conf=None):
+    ret_value = do_decode_value(data_type, data, conf)
 
     if not isinstance(ret_value, float):
         return ret_value

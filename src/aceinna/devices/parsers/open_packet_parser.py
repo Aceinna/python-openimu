@@ -104,7 +104,7 @@ def get_parameters_by_block_parser(payload, user_configuration):
                 data_len = data_len + 2
             elif param_type == 'uint32' or param_type == 'int32' or param_type == 'float':
                 value = decode_value(
-                    param_type, payload[data_len:data_len + 4])
+                    param_type, payload[data_len:data_len + 4], exist_param_conf)
                 data_len = data_len + 4
             elif param_type == 'uint64' or param_type == 'int64' or param_type == 'double':
                 value = decode_value(
