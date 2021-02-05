@@ -645,6 +645,12 @@ class RTKProviderBase(OpenDeviceBase):
             self.rtk_log_file_name, 'parameters_{0}.json'.format(formatted_file_time))
         self.save_parameters_result(file_path)
 
+    def get_operation_status(self):
+        if self.is_logging:
+            return 'LOGGING'
+
+        return 'IDLE'
+
     # command list
     def server_status(self, *args):  # pylint: disable=invalid-name
         '''

@@ -1,6 +1,6 @@
 import time
 import threading
-from .base.event_base import EventBase
+from .base import EventBase
 
 
 class UpgradeCenter(EventBase):

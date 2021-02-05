@@ -1,5 +1,5 @@
 from abc import ABCMeta, abstractmethod
-from ..base.event_base import EventBase
+from . import EventBase
 from ...framework.utils import helper
 
 class MessageParserBase(EventBase):

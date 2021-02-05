@@ -4,7 +4,7 @@ import uuid
 import threading
 import datetime
 import time
-from .base.event_base import EventBase
+from .base import EventBase
 from ..framework.utils import helper
 if sys.version_info[0] > 2:
     from queue import Queue
@@ -184,10 +184,10 @@ class DeviceMessageCenter(EventBase):
         '''
         Check running status
         '''
-        if sys.version_info[0] > 2:
-            import asyncio
-            self.loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(self.loop)
+        # if sys.version_info[0] > 2:
+        #     import asyncio
+        #     self.loop = asyncio.new_event_loop()
+        #     asyncio.set_event_loop(self.loop)
 
         while True:
             self.exception_lock.acquire()

@@ -448,6 +448,12 @@ class Provider(OpenDeviceBase):
             'firmware': self.device_info['firmware_version']
         }
 
+    def get_operation_status(self):
+        if self.is_logging:
+            return 'LOGGING'
+
+        return 'IDLE'
+
     # command list
     def server_status(self, *args):  # pylint: disable=invalid-name
         '''

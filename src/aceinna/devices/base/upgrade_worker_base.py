@@ -1,5 +1,5 @@
 from abc import ABCMeta, abstractmethod
-from .event_base import EventBase
+from . import EventBase
 
 
 class UpgradeWorkerBase(EventBase):

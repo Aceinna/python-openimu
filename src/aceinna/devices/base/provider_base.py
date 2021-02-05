@@ -8,7 +8,7 @@ import struct
 import traceback
 from pathlib import Path
 from azure.storage.blob import BlockBlobService
-from .event_base import EventBase
+from . import EventBase
 from ...framework.utils import (helper, resource)
 from ...framework.file_storage import FileLoger
 from ...framework.configuration import get_config
@@ -33,10 +33,6 @@ class OpenDeviceBase(EventBase):
     def __init__(self, communicator):
         super(OpenDeviceBase, self).__init__()
         self.type = 'None'
-        self.threads = []  # thread of receiver and paser
-        self.exception_thread = False  # flag of exit threads
-        self.exception_lock = threading.Lock()  # lock of exception_thread
-        self.exit_thread = False
         self.data_lock = threading.Lock()
         self.clients = []
         self.is_streaming = False
@@ -98,6 +94,11 @@ class OpenDeviceBase(EventBase):
     def get_device_connection_info(self):
         '''
         Get device connection info, used to store to db
+        '''
+
+    @abstractmethod
+    def get_operation_status(self):
+        ''' Return current devcie operation status
         '''
 
     def internal_input_command(self, command, read_length=500):
@@ -201,7 +202,7 @@ class OpenDeviceBase(EventBase):
         Trigger when read raw data
         '''
 
-    def get_command_lines(self):
+    def get_command_lines(self, *args):
         '''
         Get command line defines
         '''
@@ -213,6 +214,7 @@ class OpenDeviceBase(EventBase):
         '''
         Add output packet
         '''
+        self.emit('continous', packet_type, data)
         for client in self.clients:
             client.on_receive_output_packet(method, packet_type, data)
 
@@ -244,11 +246,8 @@ class OpenDeviceBase(EventBase):
         Reset
         '''
         self._reset_client()
-        # self.threads.clear()
-        helper.clear_elements(self.threads)
         self.listeners.clear()
         # self.clients.clear()
-        self.exception_thread = False
         # self.data_queue.queue.clear()
 
     def close(self):
@@ -259,7 +258,6 @@ class OpenDeviceBase(EventBase):
         self.reset()
         self._message_center.stop()
         self._message_center = None
-        self.exit_thread = True
 
     def restart(self):
         '''
@@ -272,7 +270,8 @@ class OpenDeviceBase(EventBase):
         print('Restarting app ...')
         time.sleep(5)
 
-        self.emit('complete_upgrade')
+        if self.is_upgrading:
+            self.emit('upgrade_restart')
 
     def thread_do_upgrade_framework(self, file):
         '''
@@ -384,7 +383,7 @@ class OpenDeviceBase(EventBase):
 
         self.after_upgrade_completed()
 
-    def start_data_log(self):
+    def start_data_log(self, *args):
         '''
         Start to log
         '''
@@ -399,11 +398,11 @@ class OpenDeviceBase(EventBase):
             raise Exception('Cannot start data logger')
         self.is_logging = True
 
-    def stop_data_log(self):
+    def stop_data_log(self, *args):
         '''
         Stop logging
         '''
-        if self.is_logging and not self._logger:
+        if self.is_logging and self._logger:
             self._logger.stop_user_log()
             self.is_logging = False
 

@@ -214,6 +214,25 @@ class Provider(OpenDeviceBase):
             'partNumber': self.device_info['pn'],
             'firmware': self.device_info['firmware_version']
         }
+
+    def get_operation_status(self):
+        if self.is_logging:
+            return 'LOGGING'
+
+        if self.is_upgrading:
+            return 'UPGRADING'
+
+        if self.is_mag_align:
+            return 'MAG_ALIGN'
+
+        if self.is_backup:
+            return 'BACKUP'
+
+        if self.is_restore:
+            return 'RESTORE'
+
+        return 'IDLE'
+
     # command list
 
     def get_device_info(self, *args):  # pylint: disable=invalid-name

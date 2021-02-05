@@ -8,6 +8,10 @@ from ...framework.utils import (helper, resource)
 from . import dmu_helper
 from .configuration_field import CONFIGURATION_FIELD_DEFINES_SINGLETON
 from .eeprom_field import EEPROM_FIELD_DEFINES_SINGLETON
+from ..upgrade_workers import (
+    FirmwareUpgradeWorker,
+    FIRMWARE_EVENT_TYPE
+)
 
 ID = [0x49, 0x44]
 VR = [0x56, 0x52]
@@ -147,8 +151,12 @@ class Provider(OpenDeviceBase):
         '''
         self.add_output_packet('stream', packet_type, data)
 
-    def do_write_firmware(self, firmware_content):
-        raise Exception('Not implement write firmware.')
+    def get_upgrade_workers(self, firmware_content):
+        firmware_worker = FirmwareUpgradeWorker(
+            self.communicator, self.bootloader_baudrate, firmware_content)
+        firmware_worker.on(
+            FIRMWARE_EVENT_TYPE.FIRST_PACKET, lambda: time.sleep(8))
+        return [firmware_worker]
 
     def get_device_connection_info(self):
         return {
@@ -158,6 +166,18 @@ class Provider(OpenDeviceBase):
             'partNumber': self.device_info['pn'],
             'firmware': self.app_info['version']
         }
+
+    def get_operation_status(self):
+        if self.is_logging:
+            return 'LOGGING'
+
+        if self.is_upgrading:
+            return 'UPGRADING'
+
+        if self.is_mag_align:
+            return 'MAG_ALIGN'
+
+        return 'IDLE'
 
     def get_device_info(self, *args):  # pylint: disable=unused-argument
         '''

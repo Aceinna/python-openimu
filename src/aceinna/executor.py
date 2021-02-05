@@ -37,7 +37,7 @@ def start_app(**kwargs):
     Work as a executor, with WebSocket and UART
     '''
     application = None
-    mode = 'web'
+    mode = 'default'
     if kwargs['options'].use_cli:
         mode = 'cli'
 
