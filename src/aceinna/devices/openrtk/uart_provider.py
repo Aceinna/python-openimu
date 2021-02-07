@@ -80,13 +80,12 @@ class Provider(RTKProviderBase):
                 time.sleep(0.001)
 
     # override
-    def append_to_upgrade_center(self, upgrade_center, rule, content):
+    def build_worker(self, rule, content):
         if rule == 'rtk':
             firmware_worker = FirmwareUpgradeWorker(self.communicator, content)
             firmware_worker.on(
                 FIRMWARE_EVENT_TYPE.FIRST_PACKET, lambda: time.sleep(8))
-            upgrade_center.register(firmware_worker)
-            return
+            return firmware_worker
 
         if rule == 'sdk':
             sdk_port = ''
@@ -103,9 +102,7 @@ class Provider(RTKProviderBase):
             if not sdk_uart.isOpen():
                 raise Exception('Cannot open SDK upgrade port')
 
-            upgrade_center.register(
-                SDKUpgradeWorker(sdk_uart, content))
-            return
+            return SDKUpgradeWorker(sdk_uart, content)
 
     # command list
     # use base methods

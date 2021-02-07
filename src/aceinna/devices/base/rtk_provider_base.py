@@ -565,12 +565,13 @@ class RTKProviderBase(OpenDeviceBase):
                 self.add_output_packet('stream', 'imu', data)
 
     @abstractmethod
-    def append_to_upgrade_center(self, upgrade_center, rule, content):
-        ''' Append worker to upgrade center
+    def build_worker(self, rule, content):
+        ''' Build upgarde worker by rule and content
         '''
         pass
 
-    def do_write_firmware(self, firmware_content):
+    def get_upgrade_workers(self, firmware_content):
+        workers = []
         rules = [
             InternalCombineAppParseRule('rtk', 'rtk_start:', 4),
             InternalCombineAppParseRule('sdk', 'sdk_start:', 4),
@@ -579,18 +580,12 @@ class RTKProviderBase(OpenDeviceBase):
         parsed_content = firmware_content_parser(firmware_content, rules)
 
         # foreach parsed content, if empty, skip register into upgrade center
-        upgrade_center = UpgradeCenter()
         for _, rule in enumerate(parsed_content):
             content = parsed_content[rule]
             if len(content) > 0:
-                self.append_to_upgrade_center(upgrade_center, rule, content)
+                workers.append(self.build_worker(rule, content))
 
-        upgrade_center.on('progress', self.handle_upgrade_process)
-        upgrade_center.on('error', self.handle_upgrade_error)
-        upgrade_center.on('finish', self.handle_upgrade_complete)
-        upgrade_center.start()
-
-        return upgrade_center.total
+        return workers
 
     def get_device_connection_info(self):
         return {

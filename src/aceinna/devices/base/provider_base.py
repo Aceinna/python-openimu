@@ -16,6 +16,7 @@ from ...framework.ans_platform_api import AnsPlatformAPI
 from ..message_center import DeviceMessageCenter
 from ..parser_manager import ParserManager
 from ...framework.progress_bar import ProgressBar
+from ..upgrade_center import UpgradeCenter
 
 if sys.version_info[0] > 2:
     from queue import Queue
@@ -88,7 +89,7 @@ class OpenDeviceBase(EventBase):
         '''
 
     @abstractmethod
-    def do_write_firmware(self, firmware_content):
+    def get_upgrade_workers(self, firmware_content):
         '''
         Do firmware upgrade
         '''
@@ -180,7 +181,6 @@ class OpenDeviceBase(EventBase):
 
         self.sessionId = str(uuid.uuid1())
         self.after_setup()
-
 
     def on_recevie_message_center_error(self, error_type, message):
         '''
@@ -285,22 +285,28 @@ class OpenDeviceBase(EventBase):
         Do upgrade firmware
         '''
         try:
-            # step.1 download firmware
+            # Download firmware
             can_download, firmware_content = self.download_firmware(file)
             if not can_download:
                 self.handle_upgrade_error('cannot find firmware file')
                 return
+
             # step.2 jump to bootloader
             if not self.switch_to_bootloader():
                 self.handle_upgrade_error('Bootloader Start Failed')
                 return
-            # step.3 write to block, use self write from specified device
-            print('Firmware upgrading...')
-            total = self.do_write_firmware(firmware_content)
-            self._pbar = ProgressBar(total=total)
-            # self.write_firmware()
-            # step.4 restart app
-            # self.restart()
+
+            workers = self.get_upgrade_workers(firmware_content)
+
+            upgrade_center = UpgradeCenter()
+            upgrade_center.register_workers(workers)
+            upgrade_center.on('progress', self.handle_upgrade_process)
+            upgrade_center.on('error', self.handle_upgrade_error)
+            upgrade_center.on('finish', self.handle_upgrade_complete)
+
+            self._pbar = ProgressBar(total=upgrade_center.total)
+            upgrade_center.start()
+
         except Exception:  # pylint:disable=broad-except
             self.handle_upgrade_error('Upgrade Failed')
             traceback.print_exc()

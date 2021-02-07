@@ -203,22 +203,12 @@ class Provider(OpenDeviceBase):
             }
         }
 
-    def do_write_firmware(self, firmware_content):
-        upgrade_center = UpgradeCenter()
-
+    def get_upgrade_workers(self, firmware_content):
         firmware_worker = FirmwareUpgradeWorker(
             self.communicator, firmware_content)
         firmware_worker.on(
             FIRMWARE_EVENT_TYPE.FIRST_PACKET, lambda: time.sleep(8))
-
-        upgrade_center.register(firmware_worker)
-
-        upgrade_center.on('progress', self.handle_upgrade_process)
-        upgrade_center.on('error', self.handle_upgrade_error)
-        upgrade_center.on('finish', self.handle_upgrade_complete)
-        upgrade_center.start()
-
-        return upgrade_center.total
+        return [firmware_worker]
 
     def get_device_connection_info(self):
         return {

@@ -20,6 +20,10 @@ class UpgradeCenter(EventBase):
         self.workers[worker_key] = {'executor': worker, 'current': 0}
         self.total += worker.get_upgrade_content_size()
 
+    def register_workers(self, workers):
+        for worker in workers:
+            self.register(worker)
+
     def start(self):
         if self.is_processing:
             print('upgrade is in processing...')
