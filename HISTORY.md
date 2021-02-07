@@ -1,6 +1,11 @@
 # History
-
+# b is a special version for INCEPTIO
 ---
+
+## 2.2.4b / 2021-02-07 
+- [OpenRTK] Download sdk firmware throught user com port
+- [OpenRTK] Save all parameters in a json file
+- [OpenRTK] Update openrtk.json and openrtk parse for INCEPTIO.
 
 ## 2.2.4 / 2020-12-18
 - [OpenRTK] Remove console print and add print.log to save these infomation.
