@@ -21,12 +21,6 @@ class Provider(RTKProviderBase):
         self.type = 'RTKL'
         self.bootloader_baudrate = 115200
 
-    # override
-    def after_bootloader_switch(self):
-        self.communicator.serial_port.baudrate = self.bootloader_baudrate
-        self.communicator.serial_port.reset_input_buffer()
-        time.sleep(8)
-
     def thread_debug_port_receiver(self, *args, **kwargs):
         if self.debug_logf is None:
             return
@@ -44,12 +38,19 @@ class Provider(RTKProviderBase):
                 time.sleep(0.001)
 
     # override
+
+    def before_write_content(self):
+        time.sleep(8)
+
+    # override
     def build_worker(self, rule, content):
         if rule == 'rtk':
             firmware_worker = FirmwareUpgradeWorker(
-                self.communicator, content, 192)
+                self.communicator, self.bootloader_baudrate, content, 192)
             firmware_worker.on(
                 FIRMWARE_EVENT_TYPE.FIRST_PACKET, lambda: time.sleep(26))
+            firmware_worker.on(FIRMWARE_EVENT_TYPE.BEFORE_WRITE,
+                               self.before_write_content)
             return firmware_worker
 
         if rule == 'sdk':

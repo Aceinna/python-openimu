@@ -16,12 +16,13 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
     '''Firmware upgrade worker
     '''
 
-    def __init__(self, communicator, file_content, block_size=240):
+    def __init__(self, communicator, baudrate, file_content, block_size=240):
         super(FirmwareUpgradeWorker, self).__init__()
         self._file_content = file_content
         self._communicator = communicator
         self.current = 0
         self.total = len(file_content)
+        self._baudrate = baudrate
         self.max_data_len = block_size  # custom
         # self._key = None
         # self._is_stopped = False
@@ -61,6 +62,19 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
         if self.current == 0 and self.total == 0:
             self.emit('error', self._key, 'Invalid file content')
             return
+
+        # run command JI
+        command_line = helper.build_bootloader_input_packet('JI')
+        self._communicator.reset_buffer()  # clear input and output buffer
+        self._communicator.write(command_line, True)
+        time.sleep(3)
+
+        # It is used to skip streaming data with size 1000 per read
+        helper.read_untils_have_data(
+            self._communicator, 'JI', 1000, 50)
+
+        self._communicator.serial_port.baudrate = self._baudrate
+        self._communicator.serial_port.reset_input_buffer()
 
         self.emit(EVENT_TYPE.BEFORE_WRITE)
 

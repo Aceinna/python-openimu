@@ -83,12 +83,6 @@ class OpenDeviceBase(EventBase):
         '''
 
     @abstractmethod
-    def after_bootloader_switch(self):
-        '''
-        Do some opertions after bootloader is switched
-        '''
-
-    @abstractmethod
     def get_upgrade_workers(self, firmware_content):
         '''
         Do firmware upgrade
@@ -291,11 +285,6 @@ class OpenDeviceBase(EventBase):
                 self.handle_upgrade_error('cannot find firmware file')
                 return
 
-            # step.2 jump to bootloader
-            if not self.switch_to_bootloader():
-                self.handle_upgrade_error('Bootloader Start Failed')
-                return
-
             workers = self.get_upgrade_workers(firmware_content)
 
             upgrade_center = UpgradeCenter()
@@ -370,25 +359,6 @@ class OpenDeviceBase(EventBase):
             can_download = False
 
         return can_download, firmware_content
-
-    def switch_to_bootloader(self):
-        '''
-        Switch to bootloader
-        '''
-        try:
-            # TODO: should send set quiet command before go to bootloader mode
-            command_line = helper.build_bootloader_input_packet('JI')
-            self.communicator.reset_buffer()  # clear input and output buffer
-            self.communicator.write(command_line, True)
-            time.sleep(3)
-            # It is used to skip streaming data with size 1000 per read
-            self.read_untils_have_data('JI', 1000, 50)
-            # A hook after bootloader is switched
-            self.after_bootloader_switch()
-            return True
-        except Exception as ex:  # pylint:disable=broad-except
-            print('bootloader exception', ex)
-            return False
 
     def upgrade_completed(self, options):
         '''

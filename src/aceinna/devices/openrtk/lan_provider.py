@@ -231,9 +231,6 @@ class Provider(OpenDeviceBase):
             print(e)
             return False
 
-    def after_bootloader_switch(self):
-        pass
-
     def nmea_checksum(self, data):
         data = data.replace("\r", "").replace("\n", "").replace("$", "")
         nmeadata, cksum = re.split('\*', data)

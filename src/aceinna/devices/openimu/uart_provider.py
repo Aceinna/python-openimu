@@ -173,9 +173,6 @@ class Provider(OpenDeviceBase):
     def after_setup(self):
         pass
 
-    def after_bootloader_switch(self):
-        self.communicator.serial_port.baudrate = self.bootloader_baudrate
-
     def on_read_raw(self, data):
         pass
 
@@ -205,7 +202,7 @@ class Provider(OpenDeviceBase):
 
     def get_upgrade_workers(self, firmware_content):
         firmware_worker = FirmwareUpgradeWorker(
-            self.communicator, firmware_content)
+            self.communicator, self.bootloader_baudrate, firmware_content)
         firmware_worker.on(
             FIRMWARE_EVENT_TYPE.FIRST_PACKET, lambda: time.sleep(8))
         return [firmware_worker]

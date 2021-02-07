@@ -138,9 +138,6 @@ class Provider(OpenDeviceBase):
     def after_setup(self):
         self.is_conf_loaded = False
 
-    def after_bootloader_switch(self):
-        self.communicator.serial_port.baudrate = self.bootloader_baudrate
-
     def on_read_raw(self, data):
         pass
 

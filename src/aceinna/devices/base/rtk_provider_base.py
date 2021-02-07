@@ -301,10 +301,6 @@ class RTKProviderBase(OpenDeviceBase):
                 'Can not log GNSS UART or DEBUG UART, pls check uart driver and connection!')
             return False
 
-    @abstractmethod
-    def after_bootloader_switch(self):
-        pass
-
     def nmea_checksum(self, data):
         data = data.replace("\r", "").replace("\n", "").replace("$", "")
         nmeadata, cksum = re.split('\*', data)
