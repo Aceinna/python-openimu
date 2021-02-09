@@ -417,6 +417,10 @@ class UserRawParse:
         self.log_files = {}
         self.f_nmea = None
         self.f_process = None
+        self.f_imu = None
+        self.f_odo = None
+        self.f_gnssposvel = None
+        self.f_ins = None
         self.f_gnss_kml = None
         self.f_ins_kml = None
         self.gnssdata = []
@@ -475,6 +479,10 @@ class UserRawParse:
             self.pkfmt[x['name']] = fmt_dic
         
         self.f_process = open(self.path[0:-1] + '-process', 'w')
+        self.f_gnssposvel = open(self.path[0:-1] + '-gnssposvel.txt', 'w')
+        self.f_imu = open(self.path[0:-1] + '-imu.txt', 'w')
+        self.f_odo = open(self.path[0:-1] + '-odo.txt', 'w')
+        self.f_ins = open(self.path[0:-1] + '-ins.txt', 'w')
         self.f_nmea = open(self.path[0:-1] + '-nmea', 'wb')
         self.f_gnss_kml = open(self.path[0:-1] + '-gnss.kml', 'w')
         self.f_ins_kml = open(self.path[0:-1] + '-ins.kml', 'w')
@@ -759,6 +767,10 @@ class UserRawParse:
             v.close()
         self.f_nmea.close()
         self.f_process.close()
+        self.f_gnssposvel.close()
+        self.f_imu.close()
+        self.f_odo.close()
+        self.f_ins.close()
         self.f_gnss_kml.close()
         self.f_ins_kml.close()
         self.log_files.clear()
@@ -781,7 +793,7 @@ class UserRawParse:
         if output['name'] == 's1':
             buffer = '$GPIMU,'
             buffer = buffer + format(data[0], output['payload'][0]['format']) + ","
-            buffer = buffer + format(data[1]/1000, output['payload'][1]['format']) + ","
+            buffer = buffer + format(data[1]/1000, output['payload'][1]['format']) + "," + "    ,"
             buffer = buffer + format(data[2], output['payload'][2]['format']) + ","
             buffer = buffer + format(data[3], output['payload'][3]['format']) + ","
             buffer = buffer + format(data[4], output['payload'][4]['format']) + ","
@@ -789,6 +801,18 @@ class UserRawParse:
             buffer = buffer + format(data[6], output['payload'][6]['format']) + ","
             buffer = buffer + format(data[7], output['payload'][7]['format']) + "\n"
             self.f_process.write(buffer)
+
+            buffer = ''
+            buffer = buffer + format(data[0], output['payload'][0]['format']) + ","
+            buffer = buffer + format(data[1]/1000, output['payload'][1]['format']) + "," + "    ,"
+            buffer = buffer + format(data[2], output['payload'][2]['format']) + ","
+            buffer = buffer + format(data[3], output['payload'][3]['format']) + ","
+            buffer = buffer + format(data[4], output['payload'][4]['format']) + ","
+            buffer = buffer + format(data[5], output['payload'][5]['format']) + ","
+            buffer = buffer + format(data[6], output['payload'][6]['format']) + ","
+            buffer = buffer + format(data[7], output['payload'][7]['format']) + "\n"
+            self.f_imu.write(buffer)
+
             # if self.last_time != 0:
             #     now_time = data[0] * 604800 * 1000 + data[1]
             #     if now_time - self.last_time > 10:
@@ -820,10 +844,27 @@ class UserRawParse:
             buffer = buffer + format(data[15], output['payload'][15]['format']) + "\n"
             self.f_process.write(buffer)
 
+            buffer = ''
+            buffer = buffer + format(data[0], output['payload'][0]['format']) + ","
+            buffer = buffer + format(data[1]/1000, output['payload'][1]['format']) + ","
+            buffer = buffer + format(data[3], output['payload'][3]['format']) + ","
+            buffer = buffer + format(data[4], output['payload'][4]['format']) + ","
+            buffer = buffer + format(data[5], output['payload'][5]['format']) + ","
+            buffer = buffer + format(data[6], output['payload'][6]['format']) + ","
+            buffer = buffer + format(data[7], output['payload'][7]['format']) + ","
+            buffer = buffer + format(data[8], output['payload'][8]['format']) + ","
+            buffer = buffer + format(data[2], output['payload'][2]['format']) + ","
+            buffer = buffer + format(data[13],output['payload'][13]['format']) + ","
+            buffer = buffer + format(data[14],output['payload'][14]['format']) + ","
+            buffer = buffer + format(data[15],output['payload'][15]['format']) + ","
+            track_over_ground = math.atan2(data[14], data[13]) * (57.295779513082320)
+            buffer = buffer + format(track_over_ground, output['payload'][14]['format']) + "\n"
+            self.f_gnssposvel.write(buffer)
+
             self.gnssdata.append(data)
         
         elif output['name'] == 'o1':
-            buffer = '$ODO,'
+            buffer = '$GPODO,'
             buffer = buffer + format(data[0], output['payload'][0]['format']) + ","
             buffer = buffer + format(data[1]/1000, output['payload'][1]['format']) + ","
             buffer = buffer + format(data[2], output['payload'][2]['format']) + ","
@@ -831,6 +872,15 @@ class UserRawParse:
             buffer = buffer + format(data[4], output['payload'][4]['format']) + ","
             buffer = buffer + format(data[5], output['payload'][5]['format']) + "\n"
             self.f_process.write(buffer)
+
+            buffer = ''
+            buffer = buffer + format(data[0], output['payload'][0]['format']) + ","
+            buffer = buffer + format(data[1]/1000, output['payload'][1]['format']) + ","
+            buffer = buffer + format(data[2], output['payload'][2]['format']) + ","
+            buffer = buffer + format(data[3], output['payload'][3]['format']) + ","
+            buffer = buffer + format(data[4], output['payload'][4]['format']) + ","
+            buffer = buffer + format(data[5], output['payload'][5]['format']) + "\n"
+            self.f_odo.write(buffer)
 
         elif output['name'] == 'i1':
             if data[1] % 100 == 0:
@@ -848,6 +898,22 @@ class UserRawParse:
                 buffer = buffer + format(data[12], output['payload'][12]['format']) + ","
                 buffer = buffer + format(data[3], output['payload'][3]['format']) + "\n"
                 self.f_process.write(buffer)
+
+                buffer = ''
+                buffer = buffer + format(data[0], output['payload'][0]['format']) + ","
+                buffer = buffer + format(data[1]/1000, output['payload'][1]['format']) + ","
+                buffer = buffer + format(data[4], output['payload'][4]['format']) + ","
+                buffer = buffer + format(data[5], output['payload'][5]['format']) + ","
+                buffer = buffer + format(data[6], output['payload'][6]['format']) + ","
+                buffer = buffer + format(data[7], output['payload'][7]['format']) + ","
+                buffer = buffer + format(data[8], output['payload'][8]['format']) + ","
+                buffer = buffer + format(data[9], output['payload'][9]['format']) + ","
+                buffer = buffer + format(data[10], output['payload'][10]['format']) + ","
+                buffer = buffer + format(data[11], output['payload'][11]['format']) + ","
+                buffer = buffer + format(data[12], output['payload'][12]['format']) + ","
+                buffer = buffer + format(data[3], output['payload'][3]['format']) + ","
+                buffer = buffer + format(data[2], output['payload'][2]['format']) + "\n"         
+                self.f_ins.write(buffer)
 
                 self.insdata.append(data)
 
