@@ -36,6 +36,9 @@ class InceptioParse:
         self.log_files = {}
         self.f_nmea = None
         self.f_process = None
+        self.f_imu = None
+        self.f_gnssposvel = None
+        self.f_ins = None
         self.f_gnss_kml = None
         self.f_ins_kml = None
         self.gnssdata = []
@@ -94,6 +97,9 @@ class InceptioParse:
             self.pkfmt[x['name']] = fmt_dic
 
         self.f_process = open(self.path[0:-1] + '-process', 'w')
+        self.f_gnssposvel = open(self.path[0:-1] + '-gnssposvel.txt', 'w')
+        self.f_imu = open(self.path[0:-1] + '-imu.txt', 'w')
+        self.f_ins = open(self.path[0:-1] + '-ins.txt', 'w')
         self.f_nmea = open(self.path[0:-1] + '-nmea', 'wb')
         self.f_gnss_kml = open(self.path[0:-1] + '-gnss.kml', 'w')
         self.f_ins_kml = open(self.path[0:-1] + '-ins.kml', 'w')
@@ -378,6 +384,9 @@ class InceptioParse:
             v.close()
         self.f_nmea.close()
         self.f_process.close()
+        self.f_gnssposvel.close()
+        self.f_imu.close()
+        self.f_ins.close()
         self.f_gnss_kml.close()
         self.f_ins_kml.close()
         self.log_files.clear()
@@ -385,7 +394,7 @@ class InceptioParse:
     def log(self, output, data):
         if output['name'] not in self.log_files.keys():
             self.log_files[output['name']] = open(self.path + output['name'] + '.csv', 'w')
-            # self.write_titlebar(self.log_files[output['name']], output)
+            self.write_titlebar(self.log_files[output['name']], output)
         buffer = ''
         if output['name'] == 's1':
             buffer = buffer + format(data[0], output['payload'][0]['format']) + ","
@@ -399,7 +408,7 @@ class InceptioParse:
 
             ff_buffer = '$GPIMU,'
             ff_buffer = ff_buffer + format(data[0], output['payload'][0]['format']) + ","
-            ff_buffer = ff_buffer + format(data[1], output['payload'][1]['format']) + ","
+            ff_buffer = ff_buffer + format(data[1], output['payload'][1]['format']) + "," + "    ,"
             ff_buffer = ff_buffer + format(data[2], output['payload'][2]['format']) + ","
             ff_buffer = ff_buffer + format(data[3], output['payload'][3]['format']) + ","
             ff_buffer = ff_buffer + format(data[4], output['payload'][4]['format']) + ","
@@ -407,6 +416,17 @@ class InceptioParse:
             ff_buffer = ff_buffer + format(data[6], output['payload'][6]['format']) + ","
             ff_buffer = ff_buffer + format(data[7], output['payload'][7]['format']) + "\n"
             self.f_process.write(ff_buffer)
+
+            e_buffer = ''
+            e_buffer = e_buffer + format(data[0], output['payload'][0]['format']) + ","
+            e_buffer = e_buffer + format(data[1], output['payload'][1]['format']) + "," + "    ,"
+            e_buffer = e_buffer + format(data[2], output['payload'][2]['format']) + ","
+            e_buffer = e_buffer + format(data[3], output['payload'][3]['format']) + ","
+            e_buffer = e_buffer + format(data[4], output['payload'][4]['format']) + ","
+            e_buffer = e_buffer + format(data[5], output['payload'][5]['format']) + ","
+            e_buffer = e_buffer + format(data[6], output['payload'][6]['format']) + ","
+            e_buffer = e_buffer + format(data[7], output['payload'][7]['format']) + "\n"
+            self.f_imu.write(e_buffer)
 
         elif output['name'] == 'gN':
             buffer = buffer + format(data[0], output['payload'][0]['format']) + ","
@@ -437,11 +457,11 @@ class InceptioParse:
 
             std = 100
             if data[2] == 1:
-                std = 10
-            elif data[2] == 5:
                 std = 5
+            elif data[2] == 5:
+                std = 0.3
             elif data[2] == 4:
-                std = 0.1
+                std = 0.01
             ff_buffer = ff_buffer + format(std, output['payload'][5]['format']) + ","
             ff_buffer = ff_buffer + format(std, output['payload'][5]['format']) + ","
             ff_buffer = ff_buffer + format(std * 2, output['payload'][5]['format']) + ","
@@ -453,12 +473,29 @@ class InceptioParse:
             ff_buffer = ff_buffer + format(data[1], output['payload'][1]['format']) + ","
             north_vel = data[9]/100
             east_vel = data[10]/100
+            up_vel = data[11]/100
             horizontal_speed = math.sqrt(north_vel * north_vel + east_vel * east_vel)
             track_over_ground = math.atan2(east_vel, north_vel) * (57.295779513082320)
             ff_buffer = ff_buffer + format(horizontal_speed, output['payload'][9]['format']) + ","
             ff_buffer = ff_buffer + format(track_over_ground, output['payload'][10]['format']) + ","
-            ff_buffer = ff_buffer + format(data[11]/100, output['payload'][11]['format']) + "\n"
+            ff_buffer = ff_buffer + format(up_vel, output['payload'][11]['format']) + "\n"
             self.f_process.write(ff_buffer)
+
+            e_buffer = ''
+            e_buffer = e_buffer + format(data[0], output['payload'][0]['format']) + ","
+            e_buffer = e_buffer + format(data[1], output['payload'][1]['format']) + ","
+            e_buffer = e_buffer + format(data[3]*180/2147483648, output['payload'][3]['format']) + ","
+            e_buffer = e_buffer + format(data[4]*180/2147483648, output['payload'][4]['format']) + ","
+            e_buffer = e_buffer + format(data[5], output['payload'][5]['format']) + ","
+            e_buffer = e_buffer + format(std, output['payload'][5]['format']) + ","
+            e_buffer = e_buffer + format(std, output['payload'][5]['format']) + ","
+            e_buffer = e_buffer + format(std * 2, output['payload'][5]['format']) + ","
+            e_buffer = e_buffer + format(data[2], output['payload'][2]['format']) + ","
+            e_buffer = e_buffer + format(north_vel, output['payload'][9]['format']) + ","
+            e_buffer = e_buffer + format(east_vel, output['payload'][10]['format']) + ","
+            e_buffer = e_buffer + format(up_vel, output['payload'][11]['format']) + ","
+            e_buffer = e_buffer + format(track_over_ground, output['payload'][10]['format']) + "\n"
+            self.f_gnssposvel.write(e_buffer)
 
             self.gnssdata.append(data)
 
@@ -477,7 +514,7 @@ class InceptioParse:
             buffer = buffer + format(data[11]/100, output['payload'][11]['format']) + ","
             buffer = buffer + format(data[12]/100, output['payload'][12]['format']) + "\n"
 
-            if data[1] % 100 == 0:
+            if (data[1]*1000) % 100 == 0:
                 ff_buffer = '$GPINS,'
                 ff_buffer = ff_buffer + format(data[0], output['payload'][0]['format']) + ","
                 ff_buffer = ff_buffer + format(data[1], output['payload'][1]['format']) + ","
@@ -493,7 +530,23 @@ class InceptioParse:
                 ff_buffer = ff_buffer + format(data[3], output['payload'][3]['format']) + "\n"
                 self.f_process.write(ff_buffer)
 
-            self.insdata.append(data)
+                e_buffer = ''
+                e_buffer = e_buffer + format(data[0], output['payload'][0]['format']) + ","
+                e_buffer = e_buffer + format(data[1], output['payload'][1]['format']) + ","
+                e_buffer = e_buffer + format(data[4]*180/2147483648, output['payload'][4]['format']) + ","
+                e_buffer = e_buffer + format(data[5]*180/2147483648, output['payload'][5]['format']) + ","
+                e_buffer = e_buffer + format(data[6], output['payload'][6]['format']) + ","
+                e_buffer = e_buffer + format(data[7]/100, output['payload'][7]['format']) + ","
+                e_buffer = e_buffer + format(data[8]/100, output['payload'][8]['format']) + ","
+                e_buffer = e_buffer + format(data[9]/100, output['payload'][9]['format']) + ","
+                e_buffer = e_buffer + format(data[10]/100, output['payload'][10]['format']) + ","
+                e_buffer = e_buffer + format(data[11]/100, output['payload'][11]['format']) + ","
+                e_buffer = e_buffer + format(data[12]/100, output['payload'][12]['format']) + ","
+                e_buffer = e_buffer + format(data[3], output['payload'][3]['format']) + ","
+                e_buffer = e_buffer + format(data[2], output['payload'][2]['format']) + "\n"         
+                self.f_ins.write(e_buffer)
+
+                self.insdata.append(data)
 
         elif output['name'] == 'd1':
             buffer = buffer + format(data[0], output['payload'][0]['format']) + ","
@@ -634,7 +687,7 @@ if __name__ == '__main__':
 
     for root, dirs, file_name in os.walk(args.p):
         for fname in file_name:
-            if (fname.startswith('user') or fname.startswith('debug')) and fname.endswith('.bin') or (fname.startswith('IMU')) or (fname.endswith('.log')):
+            if fname.startswith('user') and fname.endswith('.bin'):
                 file_path = os.path.join(root, fname)
                 print('processing {0}'.format(file_path))
                 path = mkdir(file_path)
