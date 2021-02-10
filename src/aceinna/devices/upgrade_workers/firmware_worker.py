@@ -60,8 +60,6 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
     def work(self):
         '''Upgrades firmware of connected device to file provided in argument
         '''
-        self._communicator.serial_port.baudrate = self._baudrate
-
         if self.current == 0 and self.total == 0:
             self.emit('error', self._key, 'Invalid file content')
             return
@@ -75,6 +73,8 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
         # It is used to skip streaming data with size 1000 per read
         helper.read_untils_have_data(
             self._communicator, 'JI', 1000, 50)
+
+        self._communicator.serial_port.baudrate = self._baudrate
 
         self.emit(EVENT_TYPE.BEFORE_WRITE)
 
