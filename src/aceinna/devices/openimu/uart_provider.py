@@ -24,7 +24,6 @@ from ..upgrade_workers import (
     FirmwareUpgradeWorker,
     FIRMWARE_EVENT_TYPE
 )
-from ..upgrade_center import UpgradeCenter
 from ...framework.utils.print import print_yellow
 
 
