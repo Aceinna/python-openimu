@@ -20,6 +20,7 @@ class Provider(RTKProviderBase):
         super(Provider, self).__init__(communicator)
         self.type = 'RTKL'
         self.bootloader_baudrate = 115200
+        self.config_file_name = 'RTK330L.json'
 
     def thread_debug_port_receiver(self, *args, **kwargs):
         if self.debug_logf is None:

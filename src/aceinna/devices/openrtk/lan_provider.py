@@ -158,7 +158,7 @@ class Provider(OpenDeviceBase):
             (item for item in APP_STR if item in split_text), None)
 
         if not app_name:
-            app_name = 'INS'
+            app_name = 'RTK_INS'
             self.is_app_matched = False
         else:
             self.is_app_matched = True

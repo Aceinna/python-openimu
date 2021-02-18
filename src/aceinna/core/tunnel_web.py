@@ -344,6 +344,9 @@ class WebServer(TunnelBase):
     def __init__(self, options, event_loop):
         super(WebServer, self).__init__()
         self.options = options
+        if not event_loop:
+            event_loop = tornado.ioloop.IOLoop.current()
+
         self.non_main_ioloop = event_loop
 
     def notify(self, notify_type, *other):
@@ -398,3 +401,11 @@ class WebServer(TunnelBase):
     def stop_ws_server(self):
         if self.http_server is not None:
             self.http_server.stop()
+
+    def stop(self):
+        self.stop_ws_server()
+
+        if self.non_main_ioloop is not None:
+            self.non_main_ioloop.add_callback_from_signal(
+                self.non_main_ioloop.stop)
+            self.non_main_ioloop.stop()
