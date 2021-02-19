@@ -2,6 +2,10 @@
 # b is a special version for INCEPTIO
 ---
 
+## 2.2.4c / 2021-02-18 
+- [OpenRTK] Update openrtk parse
+- [OpenRTK] Fix upgrade issue
+
 ## 2.2.4b / 2021-02-07 
 - [OpenRTK] Download sdk firmware throught user com port
 - [OpenRTK] Save all parameters in a json file
