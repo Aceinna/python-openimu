@@ -170,6 +170,7 @@ class InceptioParse:
         return datetime.datetime.strftime(epoch + elapsed,datetimeformat)
 
     def save_gnss_kml(self):
+         # white-cyan, red, purple, light-yellow, green, yellow
         color = ["ffffffff","ff0000ff","ffff00ff","50FF78F0","ff00ff00","ff00aaff"]
         kml_header = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"\
                 + "<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n"\
@@ -195,6 +196,9 @@ class InceptioParse:
                 + "<coordinates>\n"
 
         for pos in self.gnssdata:
+            if pos[2] == 0:
+                continue
+
             gnss_track += format(pos[4]*180/2147483648, ".9f") + ',' + format(pos[3]*180/2147483648, ".9f") + ',' + format(pos[5], ".3f") + '\n'
 
         gnss_track += "</coordinates>\n"\
@@ -208,54 +212,57 @@ class InceptioParse:
             ep = self.weeksecondstoutc(pos[0], pos[1]*1000/1000, -18)
             ep_sp = time.strptime(ep, "%Y-%m-%d %H:%M:%S")
 
-            track_ground = math.atan2(pos[10]/100, pos[9]/100) * (57.295779513082320)
-
-            gnss_track += "<Placemark>\n"
-            if i <= 1:
-                gnss_track += "<name>Start</name>\n"
-            elif i == len(self.gnssdata)-1:
-                gnss_track += "<name>End</name>\n"
+            if pos[2] == 0:
+                pass
             else:
-                if math.fmod(ep_sp[5]+((pos[1]*1000)%1000)/1000+0.025, 30) < 0.05:
-                    gnss_track += "<name>"\
-                        + "%02d" % ep_sp[3] + "%02d" % ep_sp[4] + "%02d" % ep_sp[5]\
-                        + "</name>\n"
+                track_ground = math.atan2(pos[10]/100, pos[9]/100) * (57.295779513082320)
 
-            gnss_track += "<TimeStamp><when>"\
-                    + time.strftime("%Y-%m-%dT%H:%M:%S.", ep_sp)\
-                    + "%02dZ" % (((pos[1]*1000)%1000)/10)\
-                    + "</when></TimeStamp>\n"
+                gnss_track += "<Placemark>\n"
+                if i <= 1:
+                    gnss_track += "<name>Start</name>\n"
+                elif i == len(self.gnssdata)-1:
+                    gnss_track += "<name>End</name>\n"
+                else:
+                    if math.fmod(ep_sp[5]+((pos[1]*1000)%1000)/1000+0.025, 30) < 0.05:
+                        gnss_track += "<name>"\
+                            + "%02d" % ep_sp[3] + "%02d" % ep_sp[4] + "%02d" % ep_sp[5]\
+                            + "</name>\n"
 
-            gnss_track += "<description><![CDATA[\n"\
-                + "<TABLE border=\"1\" width=\"100%\" Align=\"center\">\n"\
-                + "<TR ALIGN=RIGHT>\n"\
-                + "<TR ALIGN=RIGHT><TD ALIGN=LEFT>Time:</TD><TD>"\
-                + str(pos[0]) + "</TD><TD>" + "%.3f" % ((pos[1]*1000)/1000) + "</TD><TD>"\
-                + "%2d:%2d:%7.4f" % (ep_sp[3],ep_sp[4],ep_sp[5]+((pos[1]*1000)%1000)/1000) + "</TD><TD>"\
-                + "%4d/%2d/%2d" % (ep_sp[0], ep_sp[1], ep_sp[2]) + "</TD></TR>\n"\
-                + "<TR ALIGN=RIGHT><TD ALIGN=LEFT>Position:</TD><TD>"\
-                + "%.8f" % (pos[3]*180/2147483648) + "</TD><TD>" + "%.8f" % (pos[4]*180/2147483648) + "</TD><TD>" + "%.4f" % pos[5] + "</TD><TD>(DMS,m)</TD></TR>\n"\
-                + "<TR ALIGN=RIGHT><TD ALIGN=LEFT>Vel(N,E,D):</TD><TD>"\
-                + "%.4f" % (pos[9]/100) + "</TD><TD>" + "%.4f" % (pos[10]/100) + "</TD><TD>" + "%.4f" % (-pos[11]/100) + "</TD><TD>(m/s)</TD></TR>\n"\
-                + "<TR ALIGN=RIGHT><TD ALIGN=LEFT>Att(r,p,h):</TD><TD>"\
-                + "0" + "</TD><TD>" + "0" + "</TD><TD>" + "%.4f" % track_ground + "</TD><TD>(deg,approx)</TD></TR>\n"\
-                + "<TR ALIGN=RIGHT><TD ALIGN=LEFT>Mode:</TD><TD>"\
-                + "0" + "</TD><TD>" + str(pos[2]) + "</TD><TR>\n"\
-                + "</TABLE>\n"\
-                + "]]></description>\n"
+                gnss_track += "<TimeStamp><when>"\
+                        + time.strftime("%Y-%m-%dT%H:%M:%S.", ep_sp)\
+                        + "%02dZ" % (((pos[1]*1000)%1000)/10)\
+                        + "</when></TimeStamp>\n"
 
-            gnss_track += "<styleUrl>#P" + str(pos[2]) + "</styleUrl>\n"\
-                    + "<Style>\n"\
-                    + "<IconStyle>\n"\
-                    + "<heading>" + "%.4f" % track_ground + "</heading>\n"\
-                    + "</IconStyle>\n"\
-                    + "</Style>\n"
+                gnss_track += "<description><![CDATA[\n"\
+                    + "<TABLE border=\"1\" width=\"100%\" Align=\"center\">\n"\
+                    + "<TR ALIGN=RIGHT>\n"\
+                    + "<TR ALIGN=RIGHT><TD ALIGN=LEFT>Time:</TD><TD>"\
+                    + str(pos[0]) + "</TD><TD>" + "%.3f" % ((pos[1]*1000)/1000) + "</TD><TD>"\
+                    + "%2d:%2d:%7.4f" % (ep_sp[3],ep_sp[4],ep_sp[5]+((pos[1]*1000)%1000)/1000) + "</TD><TD>"\
+                    + "%4d/%2d/%2d" % (ep_sp[0], ep_sp[1], ep_sp[2]) + "</TD></TR>\n"\
+                    + "<TR ALIGN=RIGHT><TD ALIGN=LEFT>Position:</TD><TD>"\
+                    + "%.8f" % (pos[3]*180/2147483648) + "</TD><TD>" + "%.8f" % (pos[4]*180/2147483648) + "</TD><TD>" + "%.4f" % pos[5] + "</TD><TD>(DMS,m)</TD></TR>\n"\
+                    + "<TR ALIGN=RIGHT><TD ALIGN=LEFT>Vel(N,E,D):</TD><TD>"\
+                    + "%.4f" % (pos[9]/100) + "</TD><TD>" + "%.4f" % (pos[10]/100) + "</TD><TD>" + "%.4f" % (-pos[11]/100) + "</TD><TD>(m/s)</TD></TR>\n"\
+                    + "<TR ALIGN=RIGHT><TD ALIGN=LEFT>Att(r,p,h):</TD><TD>"\
+                    + "0" + "</TD><TD>" + "0" + "</TD><TD>" + "%.4f" % track_ground + "</TD><TD>(deg,approx)</TD></TR>\n"\
+                    + "<TR ALIGN=RIGHT><TD ALIGN=LEFT>Mode:</TD><TD>"\
+                    + "0" + "</TD><TD>" + str(pos[2]) + "</TD><TR>\n"\
+                    + "</TABLE>\n"\
+                    + "]]></description>\n"
 
-            gnss_track += "<Point>\n"\
-                    + "<coordinates>" + "%.9f,%.9f,%.3f" % (pos[4]*180/2147483648, pos[3]*180/2147483648, pos[5]) + "</coordinates>\n"\
-                    + "</Point>\n"
+                gnss_track += "<styleUrl>#P" + str(pos[2]) + "</styleUrl>\n"\
+                        + "<Style>\n"\
+                        + "<IconStyle>\n"\
+                        + "<heading>" + "%.4f" % track_ground + "</heading>\n"\
+                        + "</IconStyle>\n"\
+                        + "</Style>\n"
 
-            gnss_track += "</Placemark>\n"
+                gnss_track += "<Point>\n"\
+                        + "<coordinates>" + "%.9f,%.9f,%.3f" % (pos[4]*180/2147483648, pos[3]*180/2147483648, pos[5]) + "</coordinates>\n"\
+                        + "</Point>\n"
+
+                gnss_track += "</Placemark>\n"
 
         gnss_track += "</Folder>\n"\
                 + "</Document>\n"\
@@ -297,6 +304,9 @@ class InceptioParse:
             ep_sp = time.strptime(ep, "%Y-%m-%d %H:%M:%S")
 
             if math.fmod(ep_sp[5]+((ins[1]*1000)%1000)/1000+0.0005, self.inskml_rate) < 0.005:
+                if math.abs(ins[5]*ins[4]) < 0.00000001
+                    continue
+                
                 ins_track += format(ins[5]*180/2147483648, ".9f") + ',' + format(ins[4]*180/2147483648, ".9f") + ',' + format(ins[6], ".3f") + '\n'
 
         ins_track += "</coordinates>\n"\
