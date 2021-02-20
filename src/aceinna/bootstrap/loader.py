@@ -4,7 +4,7 @@ Application Loader
 """
 from .cli import CommandLine as CommandLineApp
 from .default import Default as DefaultApp
-
+from .. import VERSION
 
 class APP_TYPE:
     DEFAULT = 'default'
@@ -18,6 +18,8 @@ class Loader:
     def create(platform, options):
         '''Initial bootstrap instance
         '''
+        print("[Info] Python driver version: {0} ".format(VERSION))
+
         active_app = None
         if platform == APP_TYPE.DEFAULT:
             active_app = DefaultApp(**options)

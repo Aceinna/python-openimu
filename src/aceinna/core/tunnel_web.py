@@ -397,7 +397,7 @@ class WebServer(TunnelBase):
             else:
                 self.http_server.listen(self.options.port)
                 activated_port = self.options.port
-            print('Websocket server is started on port', activated_port)
+            print('[Info] Websocket server is started on port', activated_port)
             self.non_main_ioloop.start()
             # tornado.ioloop.IOLoop.current().start()
         except Exception as ex:
