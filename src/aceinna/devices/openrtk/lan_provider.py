@@ -353,7 +353,7 @@ class Provider(OpenDeviceBase):
                     if self.pS_data:
                         if self.pS_data['GPS_Week'] == data['GPS_Week']:
                             if data['GPS_TimeofWeek'] - self.pS_data['GPS_TimeofWeek'] >= 0.2:
-                                self.add_output_packet('stream', 'pos', data)
+                                self.add_output_packet('pos', data)
                                 self.pS_data = data
 
                                 if data['insStatus'] >= 3 and data['insStatus'] <= 5:
@@ -380,10 +380,10 @@ class Provider(OpenDeviceBase):
                                          data['roll'], data['pitch'], data['heading'])
                                     print(inspva)
                         else:
-                            self.add_output_packet('stream', 'pos', data)
+                            self.add_output_packet('pos', data)
                             self.pS_data = data
                     else:
-                        self.add_output_packet('stream', 'pos', data)
+                        self.add_output_packet('pos', data)
                         self.pS_data = data
             except Exception as e:
                 # print(e)
@@ -394,8 +394,8 @@ class Provider(OpenDeviceBase):
                 if self.sky_data[0]['timeOfWeek'] == data[0]['timeOfWeek']:
                     self.sky_data.extend(data)
                 else:
-                    self.add_output_packet('stream', 'skyview', self.sky_data)
-                    self.add_output_packet('stream', 'snr', self.sky_data)
+                    self.add_output_packet('skyview', self.sky_data)
+                    self.add_output_packet('snr', self.sky_data)
                     self.sky_data = []
                     self.sky_data.extend(data)
             else:
@@ -407,7 +407,7 @@ class Provider(OpenDeviceBase):
                  if x['name'] == packet_type), None)
             if output_packet_config and output_packet_config.__contains__('from') \
                     and output_packet_config['from'] == 'imu':
-                self.add_output_packet('stream', 'imu', data)
+                self.add_output_packet('imu', data)
 
     def do_write_firmware(self, firmware_content):
         raise Exception('It is not supported by connecting device with LAN')

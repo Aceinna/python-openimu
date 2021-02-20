@@ -30,7 +30,7 @@ def simple_start():
 
 def parameters_start():
     detector = Detector(
-        device_type='opemimu',
+        device_type='IMU',
         com_port='COM1',
         baudrate=115200
     )

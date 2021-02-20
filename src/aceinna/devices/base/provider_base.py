@@ -9,11 +9,12 @@ import traceback
 from pathlib import Path
 from azure.storage.blob import BlockBlobService
 from . import EventBase
+from ...framework.context import APP_CONTEXT
 from ...framework.utils import (helper, resource)
 from ...framework.file_storage import FileLoger
 from ...framework.configuration import get_config
 from ...framework.ans_platform_api import AnsPlatformAPI
-from ..message_center import DeviceMessageCenter
+from ..message_center import (DeviceMessageCenter, EVENT_TYPE)
 from ..parser_manager import ParserManager
 from ...framework.progress_bar import ProgressBar
 from ..upgrade_center import UpgradeCenter
@@ -143,12 +144,14 @@ class OpenDeviceBase(EventBase):
             parser = ParserManager.build(
                 self.type, self.communicator.type, self.properties)
             self._message_center.set_parser(parser)
-            self._message_center.on('continuous_message',
+            self._message_center.on(EVENT_TYPE.CONTINUOUS_MESSAGE,
                                     self.on_receive_continuous_messsage)
-            self._message_center.on('error',
+            self._message_center.on(EVENT_TYPE.ERROR,
                                     self.on_recevie_message_center_error)
-            self._message_center.on('read_block',
+            self._message_center.on(EVENT_TYPE.READ_BLOCK,
                                     self.on_read_raw)
+            self._message_center.on(
+                EVENT_TYPE.CRC_FAILURE, self.on_crc_failure)
             self._message_center.setup()
         else:
             self._message_center.get_parser().set_configuration(self.properties)
@@ -184,10 +187,13 @@ class OpenDeviceBase(EventBase):
         self.connected = False
         self.emit('exception', error_type, message)
 
-    def on_receive_continuous_messsage(self, packet_type, data):
+    def on_receive_continuous_messsage(self, packet_type, data, event_time):
         '''
         event handler after got continuous message
         '''
+        # collect output packet data for statistics
+        APP_CONTEXT.statistics.collect('success', packet_type, event_time)
+
         if isinstance(data, list):
             for item in data:
                 self._logger.append(packet_type, item)
@@ -195,6 +201,13 @@ class OpenDeviceBase(EventBase):
             self._logger.append(packet_type, data)
 
         self.on_receive_output_packet(packet_type, data)
+
+    def on_crc_failure(self, packet_type, event_time):
+        '''
+        event handler when got crc failure
+        '''
+        # save store crc data in app context
+        APP_CONTEXT.statistics.collect('fail', packet_type, event_time)
 
     @abstractmethod
     def on_read_raw(self, data):
@@ -210,13 +223,13 @@ class OpenDeviceBase(EventBase):
             return self.properties['CLICommands']
         return []
 
-    def add_output_packet(self, method, packet_type, data):
+    def add_output_packet(self, packet_type, data):
         '''
         Add output packet
         '''
         self.emit('continous', packet_type, data)
-        for client in self.clients:
-            client.on_receive_output_packet(method, packet_type, data)
+        # for client in self.clients:
+        #     client.on_receive_output_packet(method, packet_type, data)
 
     def append_client(self, client):
         '''
@@ -415,13 +428,13 @@ class OpenDeviceBase(EventBase):
             self._pbar.close()
         self.is_upgrading = False
         self._message_center.resume()
-        self.add_output_packet(
-            'stream', 'upgrade_complete', {'success': False, 'message': message})
+        self.add_output_packet('upgrade_complete', {
+                               'success': False, 'message': message})
 
     def handle_upgrade_process(self, step, current, total):
         if self._pbar:
             self._pbar.update(step)
-        self.add_output_packet('stream', 'upgrade_progress', {
+        self.add_output_packet('upgrade_progress', {
             'addr': current,
             'fs_len': total
         })
@@ -444,6 +457,13 @@ class OpenDeviceBase(EventBase):
         self.ans_platform.log_device_connection(
             sessionId=self.sessionId,
             device_info=device_info)
+
+        return {
+            'packetType': 'success'
+        }
+
+    def reset_statistics(self, *args):
+        APP_CONTEXT.statistics.reset()
 
         return {
             'packetType': 'success'

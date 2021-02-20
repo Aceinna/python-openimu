@@ -15,7 +15,7 @@ from ...framework.utils import (
 from ...framework.context import APP_CONTEXT
 from ...framework.utils.firmware_parser import parser as firmware_content_parser
 from ...framework.utils.print import (print_green, print_yellow, print_red)
-from ..base.provider_base import OpenDeviceBase
+from ..base import OpenDeviceBase
 from ..configs.openrtk_predefine import (
     APP_STR, get_openrtk_products
 )
@@ -428,7 +428,7 @@ class RTKProviderBase(OpenDeviceBase):
                     if self.pS_data:
                         if self.pS_data['GPS_Week'] == data['GPS_Week']:
                             if data['GPS_TimeofWeek'] - self.pS_data['GPS_TimeofWeek'] >= 0.2:
-                                self.add_output_packet('stream', 'pos', data)
+                                self.add_output_packet('pos', data)
                                 self.pS_data = data
 
                                 if data['insStatus'] >= 3 and data['insStatus'] <= 5:
@@ -455,10 +455,10 @@ class RTKProviderBase(OpenDeviceBase):
                                          data['roll'], data['pitch'], data['heading'])
                                     APP_CONTEXT.get_print_logger().info(inspva)
                         else:
-                            self.add_output_packet('stream', 'pos', data)
+                            self.add_output_packet('pos', data)
                             self.pS_data = data
                     else:
-                        self.add_output_packet('stream', 'pos', data)
+                        self.add_output_packet('pos', data)
                         self.pS_data = data
             except Exception as e:
                 pass
@@ -468,8 +468,8 @@ class RTKProviderBase(OpenDeviceBase):
                 if self.sky_data[0]['timeOfWeek'] == data[0]['timeOfWeek']:
                     self.sky_data.extend(data)
                 else:
-                    self.add_output_packet('stream', 'skyview', self.sky_data)
-                    self.add_output_packet('stream', 'snr', self.sky_data)
+                    self.add_output_packet('skyview', self.sky_data)
+                    self.add_output_packet('snr', self.sky_data)
                     self.sky_data = []
                     self.sky_data.extend(data)
             else:
@@ -496,7 +496,7 @@ class RTKProviderBase(OpenDeviceBase):
                 self.ps_dic['north_vel_std'] = data['north_vel_standard_deviation']
                 self.ps_dic['east_vel_std'] = data['east_vel_standard_deviation']
                 self.ps_dic['up_vel_std'] = data['up_vel_standard_deviation']
-                self.add_output_packet('stream', 'pos', self.ps_dic)
+                self.add_output_packet('pos', self.ps_dic)
 
         elif packet_type == 'i1':
             self.inspva_flag = 1
@@ -527,15 +527,15 @@ class RTKProviderBase(OpenDeviceBase):
                 self.ps_dic['roll_std'] = data['roll_std']
                 self.ps_dic['pitch_std'] = data['pitch_std']
                 self.ps_dic['heading_std'] = data['heading_std']
-                self.add_output_packet('stream', 'pos', self.ps_dic)
+                self.add_output_packet('pos', self.ps_dic)
 
         elif packet_type == 'y1':
             if self.sky_data:
                 if self.sky_data[0]['GPS_TimeOfWeek'] == data[0]['GPS_TimeOfWeek']:
                     self.sky_data.extend(data)
                 else:
-                    self.add_output_packet('stream', 'skyview', self.sky_data)
-                    self.add_output_packet('stream', 'snr', self.sky_data)
+                    self.add_output_packet('skyview', self.sky_data)
+                    self.add_output_packet('snr', self.sky_data)
                     self.sky_data = []
                     self.sky_data.extend(data)
             else:
@@ -549,7 +549,7 @@ class RTKProviderBase(OpenDeviceBase):
                     and output_packet_config['active']:
                 timeOfWeek = int(data['GPS_TimeOfWeek']) % 60480000
                 data['GPS_TimeOfWeek'] = timeOfWeek / 1000
-                self.add_output_packet('stream', 'imu', data)
+                self.add_output_packet('imu', data)
 
     @abstractmethod
     def build_worker(self, rule, content):

@@ -1,5 +1,6 @@
 import collections
 import operator
+import time
 from ..base.message_parser_base import MessageParserBase
 from ...framework.utils import helper
 from ...framework.context import APP_CONTEXT
@@ -54,6 +55,8 @@ class UartMessageParser(MessageParserBase):
                 else:
                     APP_CONTEXT.get_logger().logger.info(
                         "crc check error! packet_type:{0}".format(packet_type))
+
+                    self.emit('crc_failure', packet_type=packet_type, event_time=time.time())
                     input_packet_config = next(
                         (x for x in self.properties['userMessages']['inputPackets']
                          if x['name'] == packet_type), None)
@@ -114,4 +117,5 @@ class UartMessageParser(MessageParserBase):
 
         self.emit('continuous_message',
                   packet_type=packet_type,
-                  data=data)
+                  data=data,
+                  event_time=time.time())

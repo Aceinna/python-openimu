@@ -179,7 +179,7 @@ class Provider(OpenDeviceBase):
         '''
         Listener for getting output packet
         '''
-        self.add_output_packet('stream', packet_type, data)
+        self.add_output_packet(packet_type, data)
 
     def get_log_info(self):
         '''
@@ -521,14 +521,14 @@ class Provider(OpenDeviceBase):
             self.is_mag_align = False
 
             # TODO: reset packet rate after operation successful
-            self.add_output_packet('stream', 'mag_status', {
+            self.add_output_packet('mag_status', {
                 'status': 'complete',
                 'value': mag_value
             })
         except Exception as ex:  # pylint: disable=broad-except
             APP_CONTEXT.get_logger().error(ex)
             self.is_mag_align = False
-            self.add_output_packet('stream', 'mag_status', {
+            self.add_output_packet('mag_status', {
                 'status': 'error'
             })
 
@@ -717,7 +717,7 @@ class Provider(OpenDeviceBase):
 
         if packet_rate_result['error']:
             self.is_backup = False
-            self.add_output_packet('stream', 'backup_status', {
+            self.add_output_packet('backup_status', {
                 'status': 'fail'
             })
 
@@ -730,7 +730,7 @@ class Provider(OpenDeviceBase):
 
         if packet_rate_result['error']:
             self.is_backup = False
-            self.add_output_packet('stream', 'backup_status', {
+            self.add_output_packet('backup_status', {
                 'status': 'fail'
             })
 
@@ -756,7 +756,7 @@ class Provider(OpenDeviceBase):
 
             if result['error']:
                 self.is_backup = False
-                self.add_output_packet('stream', 'backup_status', {
+                self.add_output_packet('backup_status', {
                     'status': 'fail'
                 })
                 break
@@ -805,7 +805,6 @@ class Provider(OpenDeviceBase):
         with open(file_path, 'wb') as file_stream:
             file_stream.write(result)
 
-        stream = 'stream'
         backup_status = 'backup_status'
         status_complete = 'complete'
         status_fail = 'fail'
@@ -826,7 +825,7 @@ class Provider(OpenDeviceBase):
         except Exception as ex:
             print('azure exception', ex)
             self.is_backup = False
-            self.add_output_packet(stream, backup_status, {
+            self.add_output_packet(backup_status, {
                 'status': status_fail
             })
             return
@@ -838,13 +837,13 @@ class Provider(OpenDeviceBase):
 
         if save_result.__contains__('error'):
             self.is_backup = False
-            self.add_output_packet(stream, backup_status, {
+            self.add_output_packet(backup_status, {
                 'status': status_fail
             })
             return
 
         self.is_backup = False
-        self.add_output_packet(stream, backup_status, {
+        self.add_output_packet(backup_status, {
             'status': status_complete,
             'date': save_result['data']['lastBackupTime']
         })
@@ -951,7 +950,7 @@ class Provider(OpenDeviceBase):
         yield self._message_center.build(command=command_line)
 
         self.is_restore = False
-        self.add_output_packet('stream', 'restore_status', {
+        self.add_output_packet('restore_status', {
             'status': 'success'
         })
 
@@ -1126,6 +1125,6 @@ class Provider(OpenDeviceBase):
 
     def _restore_fail(self):
         self.is_restore = False
-        self.add_output_packet('stream', 'restore_status', {
+        self.add_output_packet('restore_status', {
             'status': 'fail'
         })

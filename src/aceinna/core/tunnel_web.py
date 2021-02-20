@@ -227,6 +227,13 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                     'data': collection_clone[packet_type]
                 })
 
+        statistics_result = APP_CONTEXT.statistics.get_result()
+        if statistics_result:
+            self.response_message('stream', {
+                'packetType': 'statistics',
+                'data': statistics_result
+            })
+
     def response_device_isnot_connected(self):
         '''
         Response device is not connected

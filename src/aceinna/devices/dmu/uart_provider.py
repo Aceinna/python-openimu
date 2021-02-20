@@ -2,7 +2,7 @@ import os
 import time
 import json
 import struct
-from ..base.provider_base import OpenDeviceBase
+from ..base import OpenDeviceBase
 from ..decorator import with_device_message
 from ...framework.utils import (helper, resource)
 from . import dmu_helper
@@ -149,7 +149,7 @@ class Provider(OpenDeviceBase):
         '''
         Listener for getting output packet
         '''
-        self.add_output_packet('stream', packet_type, data)
+        self.add_output_packet(packet_type, data)
 
     def get_upgrade_workers(self, firmware_content):
         firmware_worker = FirmwareUpgradeWorker(
