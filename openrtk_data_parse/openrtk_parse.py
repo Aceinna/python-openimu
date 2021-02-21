@@ -304,9 +304,9 @@ class InceptioParse:
             ep_sp = time.strptime(ep, "%Y-%m-%d %H:%M:%S")
 
             if math.fmod(ep_sp[5]+((ins[1]*1000)%1000)/1000+0.0005, self.inskml_rate) < 0.005:
-                if math.abs(ins[5]*ins[4]) < 0.00000001
+                if abs(ins[5]*ins[4]) < 0.00000001:
                     continue
-                
+
                 ins_track += format(ins[5]*180/2147483648, ".9f") + ',' + format(ins[4]*180/2147483648, ".9f") + ',' + format(ins[6], ".3f") + '\n'
 
         ins_track += "</coordinates>\n"\
