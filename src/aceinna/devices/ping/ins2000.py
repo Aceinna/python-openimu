@@ -17,7 +17,10 @@ def _run_command(communicator, command, size=1000, retry=10):
     if read_data is not None:
         data_buffer = bytearray(read_data)
         if data_buffer and len(data_buffer) > 0:
-            out_str = data_buffer.decode()
+            try:
+                out_str = data_buffer.decode()
+            except Exception:
+                return ""
 
     return out_str
 
