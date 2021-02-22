@@ -86,8 +86,8 @@ class DeviceManager:
             device_access = args[0]
             filter_device_type = args[1]
 
-            if filter_device_type is None or filter_device_type == 'IMU' or filter_device_type == 'RTK':
-                APP_CONTEXT.get_logger().logger.debug('Checking if is OpenRTK/OpenIMU device...')
+            if filter_device_type is None or filter_device_type in ['IMU', 'RTK', 'RTKL']:
+                APP_CONTEXT.get_logger().logger.debug('Checking if is OpenRTK/OpenIMU/RTK330L device...')
                 ping_result = ping_opendevice(
                     device_access, filter_device_type)
                 if ping_result is not None:
