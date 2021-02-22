@@ -57,8 +57,6 @@ def run_command_as_string(communicator, command, size=1000, retry=10):
 def ping(communicator, *args):
     '''OpenDevice Ping
     '''
-    APP_CONTEXT.get_logger().logger.debug('Checking if is OpenRTK/OpenIMU device...')
-
     filter_device_type = args[0]
 
     device_info_text = run_command_as_string(communicator, pG)

@@ -24,8 +24,6 @@ def _run_command(communicator, command, size=1000, retry=10):
 def ping(communicator, *args):
     '''INS2000 Device Ping
     '''
-    APP_CONTEXT.get_logger().logger.debug('Checking if is INS2000 device...')
-
     unlog_text = _run_command(communicator, unlog_cmd)
     if unlog_text != None and unlog_text != '':
         device_info_text = _run_command(communicator, version_cmd)

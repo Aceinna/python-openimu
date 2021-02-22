@@ -91,7 +91,8 @@ class DeviceManager:
             filter_device_type = args[1]
 
             if filter_device_type is None or filter_device_type in ['IMU', 'RTK', 'RTKL']:
-                APP_CONTEXT.get_logger().logger.debug('Checking if is OpenRTK/OpenIMU/RTK330L device...')
+                APP_CONTEXT.get_logger().logger.debug(
+                    'Checking if is OpenRTK/OpenIMU/RTK330L device...')
                 ping_result = ping_opendevice(
                     device_access, filter_device_type)
                 if ping_result is not None:
@@ -104,10 +105,10 @@ class DeviceManager:
                     return DeviceManager.build_provider(communicator, device_access, ping_result)
 
             if filter_device_type is None or filter_device_type == 'INS2000':
-                 APP_CONTEXT.get_logger().logger.debug('Checking if is INS2000 device...')
-                 ping_result = ping_ins2000(device_access, filter_device_type)
-                 if ping_result is not None:
-                     return DeviceManager.build_provider(communicator, device_access, ping_result)
+                APP_CONTEXT.get_logger().logger.debug('Checking if is INS2000 device...')
+                ping_result = ping_ins2000(device_access, filter_device_type)
+                if ping_result is not None:
+                    return DeviceManager.build_provider(communicator, device_access, ping_result)
 
         if communicator.type == 'lan':
             device_access = args[0]

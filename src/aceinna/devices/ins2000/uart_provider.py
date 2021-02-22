@@ -19,6 +19,7 @@ from ...framework.configuration import get_config
 from ..upgrade_workers import FirmwareUpgradeWorker
 from ..upgrade_center import UpgradeCenter
 
+
 class Provider(OpenDeviceBase):
     '''
     INS2000 UART provider
@@ -94,7 +95,7 @@ class Provider(OpenDeviceBase):
         '''
         load properties
         '''
-        #Load config from user working path
+        # Load config from user working path
         local_config_file_path = os.path.join(os.getcwd(), 'INS2000.json')
         if os.path.isfile(local_config_file_path):
             with open(local_config_file_path) as json_data:

@@ -49,8 +49,6 @@ def _need_check(limit_type, device_type):
 def ping(communicator, *args):
     '''DMU Ping
     '''
-    APP_CONTEXT.get_logger().logger.debug('Checking if is DMU device...')
-
     filter_device_type = args[0]
     is_need_check = _need_check(filter_device_type, 'DMU')
 
