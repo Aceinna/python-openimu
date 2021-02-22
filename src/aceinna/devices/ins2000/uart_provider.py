@@ -110,8 +110,7 @@ class Provider(OpenDeviceBase):
             self.properties = json.load(json_data)
 
     def after_setup(self):
-        setupcommands1 = self.properties["setupcommands1"]
-        setupcommands7 = self.properties["setupcommands7"]
+        setupcommands = self.properties["setupcommands"]
 
         if self.data_folder_path is not None:
             dir_time = time.strftime("%Y%m%d_%H%M%S", time.localtime())
@@ -123,10 +122,9 @@ class Provider(OpenDeviceBase):
                 file_name + '/' + 'raw_' + file_time + '.bin', "wb")
 
         # self.communicator.flushInput()
-        for cmd in setupcommands1:
+        for cmd in setupcommands:
             self.communicator.write(cmd.encode())
-        for cmd in setupcommands7:
-            self.communicator.write(cmd.encode())
+            time.sleep(0.01)
 
     def after_bootloader_switch(self):
         self.communicator.serial_port.baudrate = self.bootloader_baudrate
