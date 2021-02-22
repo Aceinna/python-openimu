@@ -17,7 +17,7 @@ from ...framework.utils.firmware_parser import parser as firmware_content_parser
 from ...framework.utils.print import (print_green, print_yellow, print_red)
 from ..base import OpenDeviceBase
 from ..configs.openrtk_predefine import (
-    APP_STR, get_openrtk_products
+    APP_STR, get_openrtk_products, get_configuratin_file_mapping
 )
 from ..decorator import with_device_message
 from ...models import InternalCombineAppParseRule
@@ -58,7 +58,7 @@ class RTKProviderBase(OpenDeviceBase):
         self.ntrip_client_enable = False
         self.nmea_buffer = []
         self.nmea_sync = 0
-        self.config_file_name='openrtk.json'
+        self.config_file_name = 'openrtk.json'
         self.prepare_folders()
         self.ntripClient = None
         self.rtk_log_file_name = ''
@@ -82,6 +82,7 @@ class RTKProviderBase(OpenDeviceBase):
             executor_path, setting_folder_name)
 
         all_products = get_openrtk_products()
+        config_file_mapping = get_configuratin_file_mapping()
 
         for product in all_products:
             product_folder = os.path.join(self.setting_folder_path, product)
@@ -91,13 +92,16 @@ class RTKProviderBase(OpenDeviceBase):
             for app_name in all_products[product]:
                 app_name_path = os.path.join(product_folder, app_name)
                 app_name_config_path = os.path.join(
-                    app_name_path, self.config_file_name)
+                    app_name_path, config_file_mapping[product])
 
                 if not os.path.isfile(app_name_config_path):
                     if not os.path.isdir(app_name_path):
                         os.makedirs(app_name_path)
                     app_config_content = resource.get_content_from_bundle(
-                        setting_folder_name, os.path.join(product, app_name, self.config_file_name))
+                        setting_folder_name,
+                        os.path.join(product,
+                                     app_name,
+                                     config_file_mapping[product]))
                     if app_config_content is None:
                         continue
 
@@ -158,7 +162,8 @@ class RTKProviderBase(OpenDeviceBase):
         app_name = self.app_info['app_name']
 
         # Load config from user working path
-        local_config_file_path = os.path.join(os.getcwd(), self.config_file_name)
+        local_config_file_path = os.path.join(
+            os.getcwd(), self.config_file_name)
         if os.path.isfile(local_config_file_path):
             with open(local_config_file_path) as json_data:
                 self.properties = json.load(json_data)

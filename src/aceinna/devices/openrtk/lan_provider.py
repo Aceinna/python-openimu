@@ -14,7 +14,7 @@ from ...framework.utils import (
 from ...framework.context import APP_CONTEXT
 from ..base.provider_base import OpenDeviceBase
 from ..configs.openrtk_predefine import (
-    APP_STR, get_openrtk_products
+    APP_STR, get_openrtk_products, get_configuratin_file_mapping
 )
 from ..decorator import with_device_message
 from ..parsers.open_field_parser import encode_value
@@ -59,7 +59,6 @@ class Provider(OpenDeviceBase):
         '''
         executor_path = resource.get_executor_path()
         setting_folder_name = 'setting'
-        config_file_name = 'openrtk.json'
 
         data_folder_path = os.path.join(executor_path, 'data')
         if not os.path.isdir(data_folder_path):
@@ -71,6 +70,7 @@ class Provider(OpenDeviceBase):
             executor_path, setting_folder_name, 'openrtk')
 
         all_products = get_openrtk_products()
+        config_file_mapping = get_configuratin_file_mapping()
 
         for product in all_products:
             product_folder = os.path.join(self.setting_folder_path, product)
@@ -80,13 +80,13 @@ class Provider(OpenDeviceBase):
             for app_name in all_products[product]:
                 app_name_path = os.path.join(product_folder, app_name)
                 app_name_config_path = os.path.join(
-                    app_name_path, config_file_name)
+                    app_name_path, config_file_mapping[product])
 
                 if not os.path.isfile(app_name_config_path):
                     if not os.path.isdir(app_name_path):
                         os.makedirs(app_name_path)
                     app_config_content = resource.get_content_from_bundle(
-                        setting_folder_name, os.path.join(product, app_name, config_file_name))
+                        setting_folder_name, os.path.join(product, app_name, config_file_mapping[product]))
                     if app_config_content is None:
                         continue
 
