@@ -1,3 +1,4 @@
+import os
 import sys
 import json
 import traceback
@@ -331,7 +332,8 @@ class UploadHandler(tornado.web.RequestHandler):
                 'success': True,
                 'data': uploaded_files
             })
-        except:
+        except Exception as ex:
+            print_red(ex)
             self.write({
                 'success': False
             })
