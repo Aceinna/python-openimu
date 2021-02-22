@@ -80,8 +80,13 @@ class Communicator(object):
         '''
         validate the connected device
         '''
-        device = DeviceManager.ping(self, *args)
-        if device != None and self.device == None:
+        device = None
+        try:
+            device = DeviceManager.ping(self, *args)
+        except Exception as ex:
+            APP_CONTEXT.get_logger().logger.info('Error while confirm device %s', ex)
+            device = None
+        if device and not self.device:
             self.device = device
             return True
         return False
@@ -340,9 +345,9 @@ class SerialPort(Communicator):
         if history_connection:
             port = history_connection['port']
             baud_rate = self.baudrate_list[0] if self.baudrate_assigned \
-                    else history_connection['baud']
+                else history_connection['baud']
             device_type = self.filter_device_type if self.filter_device_type_assigned \
-                    else history_connection['device_type']
+                else history_connection['device_type']
             # baud_rate = history_connection['baud']
             # device_type = history_connection['device_type']
             self.open_serial_port(port=port, baud=baud_rate, timeout=0.1)
