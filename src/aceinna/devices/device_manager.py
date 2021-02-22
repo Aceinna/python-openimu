@@ -1,10 +1,12 @@
 from .ping.dmu import ping as ping_dmu
 from .ping.open import ping as ping_opendevice
+from .ping.ins2000 import ping as ping_ins2000
 from .openimu.uart_provider import Provider as OpenIMUUartProvider
 from .openrtk.uart_provider import Provider as OpenRTKUartProvider
 from .rtkl.uart_provider import Provider as RTKLUartProvider
 from .openrtk.lan_provider import Provider as OpenRTKLANProvider
 from .dmu.uart_provider import Provider as DMUUartProvider
+from .ins2000.uart_provider import Provider as INS2000UartProvider
 from ..framework.context import APP_CONTEXT
 from ..framework.utils.print import print_green
 
@@ -19,6 +21,8 @@ def create_provider(device_type, communicator):
             return RTKLUartProvider(communicator)
         if device_type == 'DMU':
             return DMUUartProvider(communicator)
+        if device_type == 'INS2000':
+            return INS2000UartProvider(communicator)
 
     if communicator.type == 'lan':
         if device_type == 'OpenRTK':
@@ -98,6 +102,12 @@ class DeviceManager:
                 ping_result = ping_dmu(device_access, filter_device_type)
                 if ping_result is not None:
                     return DeviceManager.build_provider(communicator, device_access, ping_result)
+
+            if filter_device_type is None or filter_device_type == 'INS2000':
+                 APP_CONTEXT.get_logger().logger.debug('Checking if is INS2000 device...')
+                 ping_result = ping_ins2000(device_access, filter_device_type)
+                 if ping_result is not None:
+                     return DeviceManager.build_provider(communicator, device_access, ping_result)
 
         if communicator.type == 'lan':
             device_access = args[0]
