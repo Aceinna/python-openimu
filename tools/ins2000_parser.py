@@ -63,6 +63,17 @@ rates = [
 ]
 
 class INS2000Parser:
+    gga_nmea_file = 'ins-gga.nmea'
+    gnssposvel_txt_file = 'gnssposvel.txt'
+    gnss_txt_file = 'gnss.txt'
+    gnssvel_txt_file = 'gnssvel.txt'
+    imu_txt_file = 'imu.txt'
+    ins_txt_file = 'ins.txt'
+    heading_txt_file = 'heading.txt'
+    process_txt_file = 'process.txt'
+    gnss_kml_file = 'gnss.kml'
+    ins_kml_file = 'ins.kml'
+
     """Parse INS2000 data"""
     def __init__(self, bin_file, cfg_file):
         self.bin_file = bin_file
@@ -85,16 +96,8 @@ class INS2000Parser:
         self.gnss_vels = []
         self.inspvaxs = []
 
-        self.gga_nmea_file = ''
-        self.gnssposvel_txt_file = ''
-        self.gnss_txt_file = ''
-        self.gnssvel_txt_file = ''
-        self.imu_txt_file = ''
-        self.ins_txt_file = ''
-        self.heading_txt_file = ''
-        self.process_txt_file = ''
-        self.gnss_kml_file = ''
-        self.ins_kml_file = ''
+        self.files = {}
+        self.packets = 0
 
 
     def run(self):
@@ -103,25 +106,15 @@ class INS2000Parser:
         shortname, _ = os.path.splitext(tmpfilename)
 
         self.out_prefix = os.path.join(os.path.dirname(self.bin_file), shortname + '-')
-        self.gga_nmea_file = self.out_prefix + 'ins-gga.nmea'
-        self.gnssposvel_txt_file = self.out_prefix + 'gnssposvel.txt'
-        self.gnss_txt_file = self.out_prefix + 'gnss.txt'
-        self.gnssvel_txt_file = self.out_prefix + 'gnssvel.txt'
-        self.imu_txt_file = self.out_prefix + 'imu.txt'
-        self.ins_txt_file = self.out_prefix + 'ins.txt'
-        self.heading_txt_file = self.out_prefix + 'heading.txt'
-        self.process_txt_file = self.out_prefix + 'process.txt'
-        self.gnss_kml_file = self.out_prefix + 'gnss.kml'
-        self.ins_kml_file = self.out_prefix + 'ins.kml'
 
-        self.clear_files()
+        self.init_files()
 
         with open(self.cfg_file, 'r') as cfg_data:
             self.cfgs = json.load(cfg_data)
 
         with open(self.bin_file, 'rb') as buf_r:
             while True:
-                tmp_data = buf_r.read(100)
+                tmp_data = buf_r.read(256)
                 if tmp_data:
                     self.parse_data(tmp_data)
                 else:
@@ -130,18 +123,26 @@ class INS2000Parser:
         self.save_gnss_kml()
         self.save_ins_kml()
 
-    def clear_files(self):
-        """clear all files"""
+        self.close_files()
+
+    def init_files(self):
+        """init all files"""
+
         files = [self.gga_nmea_file, self.gnssposvel_txt_file, self.gnssposvel_txt_file,
             self.gnss_txt_file, self.gnssvel_txt_file, self.imu_txt_file, self.ins_txt_file,
             self.heading_txt_file, self.process_txt_file, self.gnss_kml_file, self.ins_kml_file]
         for filename in files:
-            with open(filename, 'w') as f_w:
-                f_w.truncate()
+            fo = open(self.out_prefix + filename, 'w')
+            self.files[filename] = fo
+
+    def close_files(self):
+        """close all files"""
+        for _, fo in self.files.items():
+            fo.close()
 
     def append_process_txt(self, data):
         """append process txt"""
-        self.append_file(self.process_txt_file, data)
+        self.write_file(self.process_txt_file, data)
 
     def parse_data(self, data):
         """parse data"""
@@ -152,7 +153,8 @@ class INS2000Parser:
                 self.buf.append(new_byte)
                 packet_len = len(self.buf)
                 if packet_len == 6:
-                    b_buf = b''.join(map(lambda x:int.to_bytes(x, 1, 'little'), self.buf))
+                    # b_buf = b''.join(map(lambda x:int.to_bytes(x, 1, 'little'), self.buf))
+                    b_buf = bytearray(self.buf)
                     self.message_id, = struct.unpack('<H', b_buf[4:6])
                     if self.message_id == 1462:
                         self.header_len = 12
@@ -165,12 +167,16 @@ class INS2000Parser:
                         self.data_len = self.buf[3]
                     else:
                         self.message_type = self.buf[6]
-                        b_buf = b''.join(map(lambda x:int.to_bytes(x, 1, 'little'), self.buf))
+                        # b_buf = b''.join(map(lambda x:int.to_bytes(x, 1, 'little'), self.buf))
+                        b_buf = bytearray(self.buf)
                         self.data_len,  = struct.unpack('<H', b_buf[8:10])
 
                 if self.data_len > 0 and packet_len == self.data_len + self.header_len + 4:
-                    self.data = b''.join(map(lambda x:int.to_bytes(x, 1, 'little'), self.buf))
-                    self.decode_packet(self.data)
+                    # self.data = b''.join(map(lambda x:int.to_bytes(x, 1, 'little'), self.buf))
+                    self.data = bytearray(self.buf)
+                    self.packets += 1
+                    if self.check_crc(self.data):
+                        self.decode_packet(self.data)
                     self.buf = []
                     self.sync_state = 0
 
@@ -179,6 +185,8 @@ class INS2000Parser:
                     self.buf = [self.sync_pattern[0], self.sync_pattern[1], self.sync_pattern[2]]
                     self.sync_state = 1
                     continue
+
+
 
     def check_crc(self, packet):
         """check packet crc"""
@@ -291,7 +299,7 @@ class INS2000Parser:
         heading_txt = "%4d,%10.4f,%10.5f,%14.5f,%14.5f,%14.5f,%14.5f,%8d,%8d\n" % (msg['header_gps_week'],
             msg['header_gps_seconds'] / 1000, msg['length'], msg['heading'], msg['pitch'],
             msg['hdgstddev'], msg['ptchstddev'], msg['sol_stat'], msg['pos_type'])
-        self.append_file(self.heading_txt_file, heading_txt)
+        self.write_file(self.heading_txt_file, heading_txt)
         self.append_process_txt('$GPHEAD2,%s' % heading_txt)
 
     def trace_gga_nmea(self, msg):
@@ -318,14 +326,14 @@ class INS2000Parser:
         self.matrix_add(pos, d_leverarm, 3, 1, pos)
         position_type = self.getpostype(msg['pos_type'])
         gga = self.output_gga_nmea(msg['header_gps_seconds'] / 1000, position_type, pos, 10, 1.0, 1.0)
-        self.append_file(self.gga_nmea_file, gga)
+        self.write_file(self.gga_nmea_file, gga)
 
     def print_ins_txt(self, msg):
         """print ins txt"""
         ins_txt = "%4d,%10.4f,%14.9f,%14.9f,%10.4f,%10.4f,%10.4f,%10.4f,%14.9f,%14.9f,%14.9f,%d,%d\n" % (msg['header_gps_week'], msg['header_gps_seconds'] / 1000,
 		    msg['lat'], msg['lon'], msg['hgt'] + msg['undulation'], msg['north_velocity'], msg['east_velocity'], msg['up_velocity'], msg['roll'], msg['pitch'],
             msg['azimuth'], msg['ins_status'], msg['pos_type'])
-        self.append_file(self.ins_txt_file, ins_txt)
+        self.write_file(self.ins_txt_file, ins_txt)
         self.append_process_txt('$GPINS,%s' % ins_txt)
 
     def trace_gnss_kml(self, msg):
@@ -345,7 +353,7 @@ class INS2000Parser:
             if pos_type >= 0:
                 gnss_txt = '%4d,%10.4f,%14.9f,%14.9f,%10.4f,%10.4f,%10.4f,%10.4f,%d\n' % (msg['header_gps_week'], msg['header_gps_seconds'] / 1000,
 				    msg['lat'], msg['lon'], msg['hgt'] + msg['undulation'], msg['lat_sigma'], msg['lon_sigma'], msg['hgt_sigma'], pos_type)
-                self.append_file(self.gnss_txt_file, gnss_txt)
+                self.write_file(self.gnss_txt_file, gnss_txt)
                 self.append_process_txt('$GPGNSS,%s' % gnss_txt)
 
     def trace_gnss_vel(self, msg):
@@ -382,7 +390,7 @@ class INS2000Parser:
 
         imu_txt = "%4d,%10.4f,%10.4f,%14.10f,%14.10f,%14.10f,%14.10f,%14.10f,%14.10f \n" % (msg['week'], msg['seconds'],
             math.floor(lctime + 0.02), x_accel, y_accel, z_accel, x_gyro, y_gyro, z_gyro)
-        self.append_file(self.imu_txt_file, imu_txt)
+        self.write_file(self.imu_txt_file, imu_txt)
         self.append_process_txt("$GPIMU,%s" % imu_txt)
 
     def print_gnsssvel_txt(self, msg):
@@ -390,7 +398,7 @@ class INS2000Parser:
         if math.fmod(msg['header_gps_seconds'] / 1000 + 0.001, 1) < 0.01:
             gnssvel_txt = "%4d,%10.4f,%14.9f,%14.9f,%10.4f,%10.4f,%8d,%8d\n" % (msg['header_gps_week'], msg['header_gps_seconds'] / 1000,
 			    msg['hor_spd'], msg['trk_gnd'], msg['vert_spd'], msg['latency'], msg['sol_status'], msg['vel_type'])
-            self.append_file(self.gnssvel_txt_file, gnssvel_txt)
+            self.write_file(self.gnssvel_txt_file, gnssvel_txt)
             self.append_process_txt('$GPVEL,%s' % gnssvel_txt)
 
     def print_gnssposvel_txt(self, pos, vel):
@@ -402,7 +410,7 @@ class INS2000Parser:
             up_velocity = vel['vert_spd']
             gnssposvel_txt = "%4d,%10.4f,%14.9f,%14.9f,%10.4f,%10.4f,%10.4f,%10.4f,%d,%10.4f,%10.4f,%10.4f,%10.4f\n" % (pos['header_gps_week'], pos['header_gps_seconds'] / 1000,
 			    pos['lat'], pos['lon'], pos['hgt'] + pos['undulation'], pos['lat_sigma'], pos['lon_sigma'], pos['hgt_sigma'], pos_type, north_velocity, east_velocity, up_velocity, vel['trk_gnd'])
-            self.append_file(self.gnssposvel_txt_file, gnssposvel_txt)
+            self.write_file(self.gnssposvel_txt_file, gnssposvel_txt)
 
     def save_gnss_kml(self):
         """save gnss kml"""
@@ -505,7 +513,7 @@ class INS2000Parser:
             + "</Document>\n"\
             + "</kml>\n"
 
-        self.write_file(self.out_prefix + 'gnss.kml', gnss_kml)
+        self.write_file(self.gnss_kml_file, gnss_kml)
 
     def save_ins_kml(self):
         """save ins kml"""
@@ -748,13 +756,9 @@ class INS2000Parser:
         elapsed = datetime.timedelta(days=(gpsweek*7),seconds=(gpsseconds+leapseconds))
         return datetime.datetime.strftime(epoch + elapsed,datetimeformat)
 
-    def append_file(self, file, data):
-        with open(file, 'a+') as fw:
-            fw.write(data)
-
     def write_file(self, file, data):
-        with open(file, 'w') as fw:
-            fw.write(data)
+        if self.files[file] is not None:
+            self.files[file].write(data)
 
 def receive_args():
     """Parse argument"""
