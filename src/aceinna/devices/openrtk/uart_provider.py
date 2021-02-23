@@ -96,7 +96,7 @@ class Provider(RTKProviderBase):
                         if uart['name'] == 'SDK':
                             sdk_port = uart["value"]
 
-            sdk_uart = serial.Serial(sdk_port, 115200, timeout=0.1)
+            sdk_uart = serial.Serial(sdk_port, self.bootloader_baudrate, timeout=0.1)
             if not sdk_uart.isOpen():
                 raise Exception('Cannot open SDK upgrade port')
 

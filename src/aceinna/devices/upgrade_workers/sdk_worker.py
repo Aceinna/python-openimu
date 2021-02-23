@@ -1,4 +1,5 @@
 import time
+import math
 from ..base.upgrade_worker_base import UpgradeWorkerBase
 
 
@@ -958,17 +959,18 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
 
     def flash_write(self, fs_len, bin_data):
         write_result = True
-        packet_num = int(fs_len / 5120)
+        block_size = 5120
+        packet_num = math.ceil(fs_len/block_size)
         current = 0
         for i in range(packet_num+1):
             if self._is_stopped:
                 return False
 
             if i == packet_num:
-                data_to_sdk = bin_data[packet_num*5120:]
+                data_to_sdk = bin_data[packet_num*block_size:]
             else:
-                data_to_sdk = bin_data[i*5120:(i+1)*5120]
-            # fs.write(bytes(data_to_sdk))
+                data_to_sdk = bin_data[i*block_size:(i+1)*block_size]
+
             current += len(data_to_sdk)
             self._uart.write(data_to_sdk)
 

@@ -1,7 +1,6 @@
 """
 Communicator
 """
-import sys
 import os
 import time
 import json
@@ -9,6 +8,7 @@ import socket
 import threading
 import serial
 import serial.tools.list_ports
+import psutil
 from ..devices import DeviceManager
 from .constants import BAUDRATE_LIST
 from .context import APP_CONTEXT
@@ -494,13 +494,18 @@ class SerialPort(Communicator):
         self.serial_port.flushOutput()
 
 
+def get_host_ip():
+    #net_address = psutil.net_if_addrs()
+    return '192.169.137.1'
+
+
 class LAN(Communicator):
     '''LAN'''
 
     def __init__(self, options=None):
         super().__init__()
         self.type = 'lan'
-        self.host = '192.168.137.1'  # TODO: predefined or configured?
+        self.host = None
         self.port = 2203  # TODO: predefined or configured?
 
         self.sock = None
@@ -513,6 +518,7 @@ class LAN(Communicator):
             self.filter_device_type_assigned = True
 
     def find_device(self, callback):
+        greeting = 'i am pc'
         self.device = None
 
         # find client by hostname
@@ -522,28 +528,18 @@ class LAN(Communicator):
         self.open()
 
         # wait for client
-        conn, addr = self.sock.accept()
+        conn, _ = self.sock.accept()
         self.device_conn = SocketConnWrapper(conn)
 
         # read the greeting message, and send feedback
-        #conn.recv(1024)
-        conn.send('i am pc'.encode())
+        # conn.recv(1024)
+        conn.send(greeting.encode())
 
         # confirm device
         self.confirm_device(self.device_conn)
 
         if self.device:
             callback(self.device)
-
-    def get_host_ip(self):
-        try:
-            s=socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
-            s.connect(('8.8.8.8',80))
-            ip=s.getsockname()[0]
-        finally:
-            s.close()
-
-        return ip
 
     def open(self):
         '''
@@ -552,9 +548,9 @@ class LAN(Communicator):
         if self.sock:
             return True
 
+        self.host = get_host_ip()
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
-            print(self.host,self.port)
             self.sock.bind((self.host, self.port))
             self.sock.listen(5)
             return True
