@@ -132,3 +132,7 @@ class Provider(OpenDeviceBase):
     def on_read_raw(self, data):
         if self.raw_log_file is not None:
             self.raw_log_file.write(data)
+
+    def on_receive_output_packet(self, packet_type, data):
+        '''receive output packet'''
+        # print(packet_type, data)
