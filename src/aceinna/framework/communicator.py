@@ -495,7 +495,7 @@ class SerialPort(Communicator):
 
 
 def get_host_ip():
-    #net_address = psutil.net_if_addrs()
+    net_address = psutil.net_if_addrs()
     return '192.169.137.1'
 
 

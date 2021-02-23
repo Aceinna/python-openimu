@@ -28,11 +28,10 @@ class Driver(EventBase):
         self._options = options
         self._communicator = None
         self._device_provider = None
-        self._protcol = DEFAULT_PROTOCOL
         self._with_exception = False
         # self._build_options(**options)
-        self.communication = self._options.protocol.lower() \
-            if self._options.protocol is not None else 'uart'
+        self._protcol = self._options.protocol.lower() \
+            if self._options.protocol is not None else DEFAULT_PROTOCOL
 
     def _device_discover_handler(self, device_provider):
         '''
