@@ -297,6 +297,18 @@ class OpenDeviceBase(EventBase):
                 self.handle_upgrade_error('cannot find firmware file')
                 return
 
+            #TODO: if the device is in bootloader, there is no need to run below JI command
+
+            # run command JI
+            command_line = helper.build_bootloader_input_packet('JI')
+            self.communicator.reset_buffer()  # clear input and output buffer
+            self.communicator.write(command_line, True)
+            time.sleep(3)
+
+            # It is used to skip streaming data with size 1000 per read
+            helper.read_untils_have_data(
+                self.communicator, 'JI', 1000, 50)
+
             workers = self.get_upgrade_workers(firmware_content)
 
             upgrade_center = UpgradeCenter()

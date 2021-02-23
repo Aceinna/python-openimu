@@ -526,7 +526,7 @@ class LAN(Communicator):
         self.device_conn = SocketConnWrapper(conn)
 
         # read the greeting message, and send feedback
-        conn.recv(1024)
+        #conn.recv(1024)
         conn.send('i am pc'.encode())
 
         # confirm device
@@ -534,6 +534,16 @@ class LAN(Communicator):
 
         if self.device:
             callback(self.device)
+
+    def get_host_ip(self):
+        try:
+            s=socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+            s.connect(('8.8.8.8',80))
+            ip=s.getsockname()[0]
+        finally:
+            s.close()
+
+        return ip
 
     def open(self):
         '''
@@ -544,6 +554,7 @@ class LAN(Communicator):
 
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
+            print(self.host,self.port)
             self.sock.bind((self.host, self.port))
             self.sock.listen(5)
             return True

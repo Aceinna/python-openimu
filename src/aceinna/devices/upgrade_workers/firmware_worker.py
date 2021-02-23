@@ -63,16 +63,6 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
             self.emit('error', self._key, 'Invalid file content')
             return
 
-        # run command JI
-        command_line = helper.build_bootloader_input_packet('JI')
-        self._communicator.reset_buffer()  # clear input and output buffer
-        self._communicator.write(command_line, True)
-        time.sleep(3)
-
-        # It is used to skip streaming data with size 1000 per read
-        helper.read_untils_have_data(
-            self._communicator, 'JI', 1000, 50)
-
         self._communicator.serial_port.baudrate = self._baudrate
         self._communicator.serial_port.reset_input_buffer()
 

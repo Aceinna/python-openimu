@@ -22,9 +22,9 @@ else:
 SERVER_UPDATE_RATE = 50
 
 OPERATION_PACKET_TYPES = [
-    'ping', 'upgrade_progress', 'upgrade_complete',
+    'ping', 'upgrade_complete',
     'mag_status', 'backup_status', 'restore_status'
-]
+]  # 'upgrade_progress'
 
 
 class WSHandler(tornado.websocket.WebSocketHandler):
@@ -97,6 +97,9 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                 'data': data
             })
 
+        if packet_type == 'upgrade_progress':
+            self._output_packet_collection[packet_type] = data
+
         if not self.is_streaming:
             return
 
@@ -104,10 +107,6 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             self._output_packet_collection[packet_type] = []
 
         self._output_packet_collection[packet_type].append(data)
-
-        # self._output_packet_queue.put({
-        #     'packet_type': packet_type, 'data': data
-        # })
 
         if self.file_logger and self.is_logging:
             self.file_logger.append(packet_type, data)
@@ -214,8 +213,6 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         '''
         Response continous data
         '''
-        if not self.is_streaming:
-            return
 
         # fetch data from output_packet_queue
         collection_clone = self._output_packet_collection.copy()
@@ -227,6 +224,9 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                     'packetType': packet_type,
                     'data': collection_clone[packet_type]
                 })
+
+        if not self.is_streaming:
+            return
 
         statistics_result = APP_CONTEXT.statistics.get_result()
         if statistics_result:

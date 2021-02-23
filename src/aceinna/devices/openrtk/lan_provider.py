@@ -221,11 +221,15 @@ class Provider(OpenDeviceBase):
                 os.mkdir(file_name)
                 self.user_logf = open(
                     file_name + '/' + 'user_' + file_time + '.bin', "wb")
+                self.debug_logf = open(
+                    file_name + '/' + 'debug_' + file_time + '.bin', "wb")
+                self.rtcm_logf = open(
+                    file_name + '/' + 'rtcm_' + file_time + '.bin', "wb")
 
             # start a thread to log data
-            data_log_thread = threading.Thread(
-                target=self.thread_data_log)
-            data_log_thread.start()
+            threading.Thread(target=self.thread_data_log).start()
+            threading.Thread(target=self.thread_debug_data_log).start()
+            threading.Thread(target=self.thread_rtcm_data_log).start()
 
         except Exception as e:
             print(e)
@@ -277,6 +281,16 @@ class Provider(OpenDeviceBase):
         self.lan_data_logger = LanDataLogger(
             self.properties, self.communicator, self.user_logf)
         self.lan_data_logger.run()
+
+    def thread_debug_data_log(self, *args, **kwargs):
+        self.lan_debug_data_logger = LanDebugDataLogger(
+            self.properties, self.communicator, self.debug_logf)
+        self.lan_debug_data_logger.run()
+
+    def thread_rtcm_data_log(self, *args, **kwargs):
+        self.lan_rtcm_data_logger = LanRTCMDataLogger(
+            self.properties, self.communicator, self.rtcm_logf)
+        self.lan_rtcm_data_logger.run()
 
     def on_receive_output_packet(self, packet_type, data, error=None):
         '''
