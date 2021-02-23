@@ -496,7 +496,13 @@ class SerialPort(Communicator):
 
 def get_host_ip():
     net_address = psutil.net_if_addrs()
-    return '192.169.137.1'
+    return '192.168.137.1'
+
+
+def get_network_interfaces():
+    host = socket.gethostname()
+    _, _, ip_addr_list = socket.gethostbyname_ex(host)
+    return ip_addr_list
 
 
 class LAN(Communicator):
@@ -525,14 +531,27 @@ class LAN(Communicator):
         self.find_client_by_hostname('OPENRTK')
 
         # establish TCP Server
-        self.open()
+        # self.open()
 
-        # wait for client
-        conn, _ = self.sock.accept()
+        # get avaliable network interface
+        ip_address_list = get_network_interfaces()
+        conn = None
+        for ip_address in ip_address_list:
+            socket_host = self.establish_host(ip_address)
+            # wait for client
+            try:
+                conn, _ = socket_host.accept()
+                self.sock = conn
+            except socket.timeout as ex:
+                print('Socket host accept error {0}', ex)
+                conn = None
+
+        if not conn:
+            print('Cannot connect with device through LAN')
+            return
+
         self.device_conn = SocketConnWrapper(conn)
 
-        # read the greeting message, and send feedback
-        # conn.recv(1024)
         conn.send(greeting.encode())
 
         # confirm device
@@ -541,27 +560,27 @@ class LAN(Communicator):
         if self.device:
             callback(self.device)
 
-    def open(self):
-        '''
-        open
-        '''
-        if self.sock:
-            return True
-
-        self.host = get_host_ip()
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    def establish_host(self, host_ip):
+        socket_host = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        socket_host.settimeout(3)
         try:
-            self.sock.bind((self.host, self.port))
-            self.sock.listen(5)
-            return True
+            socket_host.bind((host_ip, self.port))
+            socket_host.listen(5)
+            return socket_host
         except socket.error:
-            self.sock = None
+            socket_host = None
             raise
         except socket.timeout as e:
             print(e)
         except Exception as e:
-            self.sock = None
-            raise
+            socket_host = None
+
+        return socket_host
+
+    def open(self):
+        '''
+        open
+        '''
 
     def close(self):
         '''
@@ -610,7 +629,7 @@ class LAN(Communicator):
         try:
             socket.gethostbyname(name)
             is_find = True
-        except Exception:
+        except Exception as ex:
             is_find = False
 
         # continue to find the client
