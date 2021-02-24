@@ -482,4 +482,3 @@ class Provider(OpenDeviceBase):
         return {
             'packetType': 'success'
         }
-        # print(packet_type, data)
