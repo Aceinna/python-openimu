@@ -904,6 +904,40 @@
                     "unit": "",
                     "format": ""
                 }
+            ],
+            "graphs": [
+                {
+                    "name": "Acceleration",
+                    "units": "m/s^2",
+                    "xAxis": {"name":"GPS_TimeOfWeek", "unit":"s"},
+                    "yAxes": [
+                        "x_accel",
+                        "y_accel",
+                        "z_accel"
+                    ],
+                    "colors": [
+                        "#FF0000",
+                        "#00FF00",
+                        "#0000FF"
+                    ],
+                    "yMax": 20
+                },
+                {
+                    "name": "Angular-Rate",
+                    "units": "deg/s",
+                    "xAxis": {"name":"GPS_TimeOfWeek", "unit":"s"},
+                    "yAxes": [
+                        "x_gyro",
+                        "y_gyro",
+                        "z_gyro"
+                    ],
+                    "colors": [
+                        "#FF0000",
+                        "#00FF00",
+                        "#0000FF"
+                    ],
+                    "yMax": 200
+                }
             ]
         },
         "INSPVAX": {
@@ -1052,7 +1086,97 @@
         }
 	},
 	"userMessages":{
-	"inputPackets":[],
-	"outputPackets":[]
+        "inputPackets":[],
+        "outputPackets": [
+			{
+                "name": "s1",
+                "isList": 0,
+                "active": true,
+                "payload": [
+                    {
+                        "type": "uint16",
+                        "name": "GPS_Week",
+                        "unit": "",
+                        "format": ""
+                    },
+                    {
+                        "type": "uint32",
+                        "name": "GPS_TimeOfWeek",
+                        "unit": "ms",
+                        "format": "11.4f"
+                    },
+                    {
+                        "type": "float",
+                        "name": "x_accel",
+                        "unit": "m/s^2",
+                        "format": "14.10f"
+                    },
+                    {
+                        "type": "float",
+                        "name": "y_accel",
+                        "unit": "m/s^2",
+                        "format": "14.10f"
+                    },
+                    {
+                        "type": "float",
+                        "name": "z_accel",
+                        "unit": "m/s^2",
+                        "format": "14.10f"
+                    },
+                    {
+                        "type": "float",
+                        "name": "x_gyro",
+                        "unit": "deg/s",
+                        "format": "14.10f"
+                    },
+                    {
+                        "type": "float",
+                        "name": "y_gyro",
+                        "unit": "deg/s",
+                        "format": "14.10f"
+                    },
+                    {
+                        "type": "float",
+                        "name": "z_gyro",
+                        "unit": "deg/s",
+                        "format": "14.10f"
+                    }
+                ],
+                "graphs": [
+					{
+						"name": "Acceleration",
+						"units": "m/s^2",
+						"xAxis": {"name":"GPS_TimeOfWeek", "unit":"s"},
+						"yAxes": [
+							"x_accel",
+							"y_accel",
+							"z_accel"
+						],
+						"colors": [
+							"#FF0000",
+							"#00FF00",
+							"#0000FF"
+						],
+						"yMax": 20
+					},
+					{
+						"name": "Angular-Rate",
+						"units": "deg/s",
+						"xAxis": {"name":"GPS_TimeOfWeek", "unit":"s"},
+						"yAxes": [
+							"x_gyro",
+							"y_gyro",
+							"z_gyro"
+						],
+						"colors": [
+							"#FF0000",
+							"#00FF00",
+							"#0000FF"
+						],
+						"yMax": 200
+					}
+				]
+            }
+		]
 	}
 }
