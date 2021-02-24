@@ -16,6 +16,7 @@ from .utils.resource import (
     get_executor_path
 )
 from .wrapper import SocketConnWrapper
+from .utils.print import (print_red, print_yellow)
 
 
 class CommunicatorFactory:
@@ -494,11 +495,6 @@ class SerialPort(Communicator):
         self.serial_port.flushOutput()
 
 
-def get_host_ip():
-    net_address = psutil.net_if_addrs()
-    return '192.168.137.1'
-
-
 def get_network_interfaces():
     host = socket.gethostname()
     _, _, ip_addr_list = socket.gethostbyname_ex(host)
@@ -507,6 +503,7 @@ def get_network_interfaces():
 
 class LAN(Communicator):
     '''LAN'''
+    _find_client_retries = 0
 
     def __init__(self, options=None):
         super().__init__()
@@ -528,26 +525,34 @@ class LAN(Communicator):
         self.device = None
 
         # find client by hostname
-        self.find_client_by_hostname('OPENRTK')
+        can_find = self.find_client_by_hostname('Will.local')
 
-        # establish TCP Server
-        # self.open()
+        if not can_find:
+            print_red(
+                '[Error] We detected the device for a long time, please make sure the device is connected with LAN port')
+            return
 
         # get avaliable network interface
         ip_address_list = get_network_interfaces()
         conn = None
         for ip_address in ip_address_list:
+            # establish TCP Server
             socket_host = self.establish_host(ip_address)
             # wait for client
             try:
                 conn, _ = socket_host.accept()
                 self.sock = conn
-            except socket.timeout as ex:
-                print('Socket host accept error {0}', ex)
+                break
+            except socket.timeout:
                 conn = None
+                if socket_host:
+                    socket_host.close()
+                print_yellow(
+                    '[Warn] Socket host accept error on {0}'.format(ip_address))
 
         if not conn:
-            print('Cannot connect with device through LAN')
+            print_red(
+                '[Error] Cannot establish communication with device through LAN')
             return
 
         self.device_conn = SocketConnWrapper(conn)
@@ -586,6 +591,7 @@ class LAN(Communicator):
         '''
         close
         '''
+        self._find_client_retries = 0
         if self.sock:
             self.sock.close()
             self.sock = None
@@ -625,6 +631,9 @@ class LAN(Communicator):
             raise
 
     def find_client_by_hostname(self, name):
+        if self._find_client_retries > 10:
+            return False
+
         is_find = False
         try:
             socket.gethostbyname(name)
@@ -634,8 +643,11 @@ class LAN(Communicator):
 
         # continue to find the client
         if not is_find:
+            self._find_client_retries += 1
             time.sleep(1)
             self.find_client_by_hostname(name)
+
+        return is_find
 
     def reset_buffer(self):
         '''
