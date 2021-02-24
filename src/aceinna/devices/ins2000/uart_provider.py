@@ -18,6 +18,7 @@ from ..decorator import with_device_message
 from ...framework.configuration import get_config
 from ..upgrade_workers import FirmwareUpgradeWorker
 from ..upgrade_center import UpgradeCenter
+from ..parsers.open_field_parser import encode_value
 
 
 class Provider(OpenDeviceBase):
@@ -481,3 +482,4 @@ class Provider(OpenDeviceBase):
         return {
             'packetType': 'success'
         }
+        # print(packet_type, data)
