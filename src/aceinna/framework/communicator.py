@@ -525,7 +525,7 @@ class LAN(Communicator):
         self.device = None
 
         # find client by hostname
-        can_find = self.find_client_by_hostname('Will.local')
+        can_find = self.find_client_by_hostname('OPENRTK')
 
         if not can_find:
             print_red(
