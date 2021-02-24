@@ -6,7 +6,7 @@ import threading
 import math
 import re
 from ..widgets import (
-    NTRIPClient, LanDataLogger
+    NTRIPClient, LanDataLogger, LanDebugDataLogger, LanRTCMDataLogger
 )
 from ...framework.utils import (
     helper, resource

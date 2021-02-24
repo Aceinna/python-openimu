@@ -542,8 +542,9 @@ class LAN(Communicator):
             try:
                 conn, _ = socket_host.accept()
                 self.sock = conn
+                self.host = ip_address
                 break
-            except socket.timeout:
+            except:
                 conn = None
                 if socket_host:
                     socket_host.close()
@@ -631,7 +632,7 @@ class LAN(Communicator):
             raise
 
     def find_client_by_hostname(self, name):
-        if self._find_client_retries > 10:
+        if self._find_client_retries > 50:
             return False
 
         is_find = False
