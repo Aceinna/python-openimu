@@ -44,6 +44,8 @@ class Provider(OpenDeviceBase):
         self.is_app_matched = False
         self.connected = True
         self.raw_log_file = None
+        self.best_gnss_pos = None
+        self.inspvax = None
 
     def prepare_folders(self):
         '''
@@ -135,4 +137,347 @@ class Provider(OpenDeviceBase):
 
     def on_receive_output_packet(self, packet_type, data):
         '''receive output packet'''
-        # print(packet_type, data)
+        if packet_type == 1429:
+            if data['lat'] != 0.0 and data['lon'] != 0.0:
+                # print(packet_type, data)
+                self.best_gnss_pos = data
+                self.output_pos()
+
+        if packet_type == 1465:
+            # print(packet_type, data)
+            if data['lat'] != 0.0 and data['lon'] != 0.0:
+                # print(packet_type, data)
+                self.inspvax = data
+                self.output_pos()
+
+        if packet_type == 1462:
+            self.output_imu(data)
+
+    def output_pos(self):
+        '''output pos'''
+        if self.best_gnss_pos is not None and \
+            self.inspvax is not None and \
+            self.best_gnss_pos['header_gps_week'] == self.inspvax['header_gps_week'] and \
+            self.best_gnss_pos['header_gps_seconds'] == self.inspvax['header_gps_seconds']:
+            # print(self.best_gnss_pos, self.inspvax)
+            pos_data = {}
+            pos_data['GPS_Week'] = self.inspvax['header_gps_week']
+            pos_data['GPS_TimeofWeek'] = self.inspvax['header_gps_seconds'] * 0.001
+            pos_data['positionMode'] = self.getpostype(self.inspvax['pos_type'])
+            pos_data['hdop'] = 1.0
+            pos_data['age'] = self.best_gnss_pos['diff_age']
+            pos_data['numberOfSVs'] = self.best_gnss_pos['soln_svs']
+            pos_data['latitude'] = self.inspvax['lat']
+            pos_data['longitude'] = self.inspvax['lon']
+            pos_data['height'] = self.inspvax['hgt'] + self.inspvax['undulation']
+            pos_data['velocityMode'] = 1
+            if pos_data['positionMode'] != 1 and \
+                pos_data['positionMode'] != 4 and \
+                pos_data['positionMode'] != 5:
+                pos_data['velocityMode'] = 2
+            pos_data['insStatus'] = self.inspvax['ins_status']
+            pos_data['insPositionType'] = pos_data['positionMode']
+            pos_data['roll'] = self.inspvax['roll']
+            pos_data['pitch'] = self.inspvax['pitch']
+            pos_data['velocityNorth'] = self.inspvax['north_velocity']
+            pos_data['velocityEast'] = self.inspvax['east_velocity']
+            pos_data['velocityUp'] = self.inspvax['up_velocity']
+            pos_data['latitude_std'] = self.inspvax['lat_sigma']
+            pos_data['longitude_std'] = self.inspvax['lon_sigma']
+            pos_data['height_std'] = self.inspvax['hgt_sigma']
+            pos_data['north_vel_std'] = self.inspvax['north_velocity_sigma']
+            pos_data['east_vel_std'] = self.inspvax['east_velocity_sigma']
+            pos_data['up_vel_std'] = self.inspvax['up_velocity_sigma']
+            self.add_output_packet('pos', pos_data)
+
+
+    def output_imu(self, imudata):
+        '''output imu'''
+        imu_data = {}
+        imu_data['GPS_Week'] = imudata['header_gps_week']
+        imu_data['GPS_TimeOfWeek'] = imudata['header_gps_seconds'] * 0.001
+        imu_data['x_accel'] = imudata['x_accel']
+        imu_data['y_accel'] = imudata['y_accel']
+        imu_data['z_accel'] = imudata['z_accel']
+        imu_data['x_gyro'] = imudata['x_gyro']
+        imu_data['y_gyro'] = imudata['y_gyro']
+        imu_data['z_gyro'] = imudata['z_gyro']
+        self.add_output_packet('imu', imu_data)
+
+    def getpostype(self, position_type):
+        """get position type"""
+        positions = {
+            '16': 1,
+            '53': 1,
+            '17': 2,
+            '54': 2,
+            '50': 4,
+            '56': 4,
+            '55': 5,
+            '34': 5,
+        }
+        return positions.get(str(position_type), 0)
+
+
+    # command list
+    def server_status(self, *args):  # pylint: disable=invalid-name
+        '''
+        Get server connection status
+        '''
+        return {
+            'packetType': 'ping',
+            'data': {'status': '1'}
+        }
+
+    def get_device_info(self, *args):  # pylint: disable=invalid-name
+        '''
+        Get device information
+        '''
+        return {
+            'packetType': 'deviceInfo',
+            'data':  [
+                {'name': 'Product Name', 'value': 'INS2000'},
+                {'name': 'IMU', 'value': ''},
+                {'name': 'PN', 'value': ''},
+                {'name': 'Firmware Version',
+                 'value': ''},
+                {'name': 'SN', 'value': ''},
+                {'name': 'App Version', 'value': ''}
+            ]
+        }
+
+    def get_log_info(self):
+        '''
+        Build information for log
+        '''
+        return {
+        }
+
+    def get_conf(self, *args):  # pylint: disable=unused-argument
+        '''
+        Get json configuration
+        '''
+        return {
+            'packetType': 'conf',
+            'data': {
+                'outputs': self.properties['userMessages']['outputPackets'],
+                'inputParams': []
+            }
+        }
+
+
+    @with_device_message
+    def get_params(self, *args):  # pylint: disable=unused-argument
+        '''
+        Get all parameters
+        '''
+        parameter_values = []
+        yield {
+            'packetType': 'inputParams',
+            'data': parameter_values
+        }
+
+    @with_device_message
+    def get_param(self, params, *args):  # pylint: disable=unused-argument
+        '''
+        Update paramter value
+        '''
+        command_line = helper.build_input_packet(
+            'gP', properties=self.properties, param=params['paramId'])
+        # self.communicator.write(command_line)
+        # result = self.get_input_result('gP', timeout=1)
+        result = yield self._message_center.build(command=command_line)
+
+        data = result['data']
+        error = result['error']
+
+        if error:
+            yield {
+                'packetType': 'error',
+                'data': 'No Response'
+            }
+
+        if data:
+            self.parameters = data
+            yield {
+                'packetType': 'inputParam',
+                'data': data
+            }
+
+        yield {
+            'packetType': 'error',
+            'data': 'No Response'
+        }
+
+    @with_device_message
+    def set_params(self, params, *args):  # pylint: disable=unused-argument
+        '''
+        Update paramters value
+        '''
+        input_parameters = self.properties['userConfiguration']
+        grouped_parameters = {}
+
+        for parameter in params:
+            exist_parameter = next(
+                (x for x in input_parameters if x['paramId'] == parameter['paramId']), None)
+
+            if exist_parameter:
+                has_group = grouped_parameters.__contains__(
+                    exist_parameter['category'])
+                if not has_group:
+                    grouped_parameters[exist_parameter['category']] = []
+
+                current_group = grouped_parameters[exist_parameter['category']]
+
+                current_group.append(
+                    {'paramId': parameter['paramId'], 'value': parameter['value'], 'type': exist_parameter['type']})
+
+        for group in grouped_parameters.values():
+            message_bytes = []
+            for parameter in group:
+                message_bytes.extend(
+                    encode_value('int8', parameter['paramId'])
+                )
+                message_bytes.extend(
+                    encode_value(parameter['type'], parameter['value'])
+                )
+                # print('parameter type {0}, value {1}'.format(
+                #     parameter['type'], parameter['value']))
+            # result = self.set_param(parameter)
+            command_line = helper.build_packet(
+                'uB', message_bytes)
+            # for s in command_line:
+            #     print(hex(s))
+
+            result = yield self._message_center.build(command=command_line)
+
+            packet_type = result['packet_type']
+            data = result['data']
+
+            if packet_type == 'error':
+                yield {
+                    'packetType': 'error',
+                    'data': {
+                        'error': data
+                    }
+                }
+                break
+
+            if data > 0:
+                yield {
+                    'packetType': 'error',
+                    'data': {
+                        'error': data
+                    }
+                }
+                break
+
+        yield {
+            'packetType': 'success',
+            'data': {
+                'error': 0
+            }
+        }
+
+    @with_device_message
+    def set_param(self, params, *args):  # pylint: disable=unused-argument
+        '''
+        Update paramter value
+        '''
+        command_line = helper.build_input_packet(
+            'uP', properties=self.properties, param=params['paramId'], value=params['value'])
+        # self.communicator.write(command_line)
+        # result = self.get_input_result('uP', timeout=1)
+        result = yield self._message_center.build(command=command_line)
+
+        error = result['error']
+        data = result['data']
+        if error:
+            yield {
+                'packetType': 'error',
+                'data': {
+                    'error': data
+                }
+            }
+
+        yield {
+            'packetType': 'success',
+            'data': {
+                'error': data
+            }
+        }
+
+    @with_device_message
+    def save_config(self, *args):  # pylint: disable=unused-argument
+        '''
+        Save configuration
+        '''
+        command_line = helper.build_input_packet('sC')
+        # self.communicator.write(command_line)
+        # result = self.get_input_result('sC', timeout=2)
+        result = yield self._message_center.build(command=command_line, timeout=2)
+
+        data = result['data']
+        error = result['error']
+        if data:
+            yield {
+                'packetType': 'success',
+                'data': error
+            }
+
+        yield {
+            'packetType': 'success',
+            'data': error
+        }
+
+    @with_device_message
+    def reset_params(self, params, *args):  # pylint: disable=unused-argument
+        '''
+        Reset params to default
+        '''
+        command_line = helper.build_input_packet('rD')
+        result = yield self._message_center.build(command=command_line, timeout=2)
+
+        error = result['error']
+        data = result['data']
+        if error:
+            yield {
+                'packetType': 'error',
+                'data': {
+                    'error': error
+                }
+            }
+
+        yield {
+            'packetType': 'success',
+            'data': data
+        }
+
+    def upgrade_framework(self, params, *args):  # pylint: disable=unused-argument
+        '''
+        Upgrade framework
+        '''
+        file = ''
+        if isinstance(params, str):
+            file = params
+
+        if isinstance(params, dict):
+            file = params['file']
+
+        # start a thread to do upgrade
+        if not self.is_upgrading:
+            self.is_upgrading = True
+            self._message_center.pause()
+
+            if self._logger is not None:
+                self._logger.stop_user_log()
+
+            thread = threading.Thread(
+                target=self.thread_do_upgrade_framework, args=(file,))
+            thread.start()
+            # print("Upgrade OpenRTK firmware started at:[{0}].".format(
+            #     datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+
+        return {
+            'packetType': 'success'
+        }

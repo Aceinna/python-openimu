@@ -138,19 +138,7 @@ class UartMessageParser(MessageParserBase):
         self._parse_output_packet(packet_type, frame)
 
     def _parse_input_packet(self, packet_type, payload, frame):
-        payload_parser = match_command_handler(packet_type)
-        if payload_parser:
-            data, error = payload_parser(
-                payload, self.properties['userConfiguration'])
-
-            self.emit('command',
-                      packet_type=packet_type,
-                      data=data,
-                      error=error,
-                      raw=frame)
-        else:
-            print('[Warning] Unsupported command {0}'.format(
-                packet_type.encode()))
+        pass
 
     def _parse_output_packet(self, packet_type, packet):
         """parse output packet"""
