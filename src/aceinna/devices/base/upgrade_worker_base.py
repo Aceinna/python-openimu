@@ -21,6 +21,10 @@ class UpgradeWorkerBase(EventBase):
     def key(self, value):
         self._key = value
 
+    @property
+    def is_stopped(self):
+        return self._is_stopped
+
     @abstractmethod
     def get_upgrade_content_size(self):
         '''get the size of upgrade content'''

@@ -35,7 +35,6 @@ class WSHandler(tornado.websocket.WebSocketHandler):
     is_logging = False
     file_logger = None
     period_output_callback = None
-    _output_packet_queue = Queue()
     _output_packet_collection = {}
     _tunnel = None
 
