@@ -216,7 +216,9 @@ class WSHandler(tornado.websocket.WebSocketHandler):
 
         # fetch data from output_packet_queue
         collection_clone = self._output_packet_collection.copy()
-        self._output_packet_collection = {}
+        # TODO: may have object sync issue because of multi thread
+        for packet_type in self._output_packet_collection:
+            self._output_packet_collection[packet_type] = []
 
         for packet_type in collection_clone:
             if len(collection_clone[packet_type]) > 0:

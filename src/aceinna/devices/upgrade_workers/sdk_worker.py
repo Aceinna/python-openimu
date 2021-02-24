@@ -962,7 +962,7 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
         block_size = 5120
         packet_num = math.ceil(fs_len/block_size)
         current = 0
-        for i in range(packet_num+1):
+        for i in range(packet_num):
             if self._is_stopped:
                 return False
 
