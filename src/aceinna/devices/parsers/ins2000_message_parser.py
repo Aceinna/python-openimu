@@ -1,6 +1,7 @@
 import collections
 import time
 import struct
+import re
 from ..base.message_parser_base import MessageParserBase
 
 MSG_HEADER = [0x55, 0x55]
@@ -25,6 +26,8 @@ class UartMessageParser(MessageParserBase):
         self.header_len = 0
         self.data_len = 0
         self.message_type = 0
+        self.nmea_state = 0
+        self.nmea_frame = []
         # command,continuous_message
 
     def set_run_command(self, command):
@@ -60,11 +63,49 @@ class UartMessageParser(MessageParserBase):
                     self._parse_message(self.message_id, packet_len, data)
                 self.frame = []
                 self.sync_state = 0
-
         else:
             if list(self.sync_pattern) == [0xAA, 0x44, 0x12] or list(self.sync_pattern) == [0xAA, 0x44, 0x13]:
                 self.frame = [self.sync_pattern[0], self.sync_pattern[1], self.sync_pattern[2]]
                 self.sync_state = 1
+
+        if self.nmea_state == 1:
+            self.nmea_frame.append(data_block)
+            if data_block == 0x0A:
+                if len(self.nmea_frame) >= 6 and \
+                    self.nmea_frame[-5] == ord('*') and self.nmea_frame[-2] == 0x0D:
+                    nmea = ''
+                    try:
+                        buf = bytearray(self.nmea_frame)
+                        nmea = buf.decode('utf-8')
+                    except:
+                        pass
+
+                    if nmea != '':
+                        ridx = nmea.rfind('$')
+                        if ridx > 0:
+                            nmea = nmea[ridx:]
+                        try:
+                            cksum, calc_cksum = self.nmea_checksum(nmea)
+                            if cksum == calc_cksum:
+                                self._parse_nmea(nmea)
+                        except:
+                            print(nmea)
+
+                self.nmea_frame = []
+                self.nmea_state = 0
+        else:
+            if data_block == 0x24:
+                self.nmea_state = 1
+                self.nmea_frame = [data_block]
+
+
+    def nmea_checksum(self, data):
+        data = data.replace("\r", "").replace("\n", "").replace("$", "")
+        nmeadata, cksum = re.split('\*', data, maxsplit=1)
+        calc_cksum = 0
+        for s in nmeadata:
+            calc_cksum ^= ord(s)
+        return int(cksum, 16), calc_cksum
 
     def check_crc(self, packet):
         """check packet crc"""
@@ -139,6 +180,12 @@ class UartMessageParser(MessageParserBase):
 
     def _parse_input_packet(self, packet_type, payload, frame):
         pass
+
+    def _parse_nmea(self, nmea):
+        self.emit('continuous_message',
+                  packet_type='nmea',
+                  data=nmea,
+                  event_time=time.time())
 
     def _parse_output_packet(self, packet_type, packet):
         """parse output packet"""

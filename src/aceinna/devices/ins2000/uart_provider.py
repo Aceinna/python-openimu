@@ -47,6 +47,8 @@ class Provider(OpenDeviceBase):
         self.raw_log_file = None
         self.best_gnss_pos = None
         self.inspvax = None
+        self.gps_week = 0
+        self.gps_seconds = 0
 
     def prepare_folders(self):
         '''
@@ -138,6 +140,11 @@ class Provider(OpenDeviceBase):
 
     def on_receive_output_packet(self, packet_type, data):
         '''receive output packet'''
+        # print(type(packet_type))
+        if type(packet_type) == int:
+            self.gps_week = data['header_gps_week']
+            self.gps_seconds = data['header_gps_seconds']
+
         if packet_type == 1429:
             if data['lat'] != 0.0 and data['lon'] != 0.0:
                 # print(packet_type, data)
@@ -153,6 +160,9 @@ class Provider(OpenDeviceBase):
 
         if packet_type == 1462:
             self.output_imu(data)
+
+        if packet_type == 'nmea':
+            self.output_nmea(data)
 
     def output_pos(self):
         '''output pos'''
@@ -219,6 +229,44 @@ class Provider(OpenDeviceBase):
         }
         return positions.get(str(position_type), 0)
 
+
+    def output_nmea(self, data):
+        if 'GSV' in data:
+            self._output_gsv(data)
+
+    def _output_gsv(self, gsv):
+        idx = gsv.find('*')
+        if idx < 0:
+            return
+        gsv_arr = gsv[:idx].split(',')
+        snr_arr = gsv_arr[4:]
+        if len(snr_arr) % 4 != 0:
+            return
+        sys_tag = gsv_arr[0][1:3]
+        sys_tabs = {
+            'GP': 0,
+            'GL': 1,
+            'GA': 2,
+            'GQ': 3,
+            'BD': 4
+        }
+        num = int(len(snr_arr) / 4)
+        snr = []
+        for i in range(num):
+            snr.append({
+                'GPS_Week': self.gps_week,
+                'GPS_TimeOfWeek': int(self.gps_seconds * 0.001),
+                'satelliteId': snr_arr[i * 4 + 0],
+                'systemId': sys_tabs.get(sys_tag),
+                'antennaId': 0,
+                'elevation': snr_arr[i * 4 + 1],
+                'azimuth': snr_arr[i * 4 + 2],
+                'l1cn0': snr_arr[i * 4 + 3],
+                'l2cn0': 0
+            })
+
+        self.add_output_packet('snr', snr)
+        self.add_output_packet('skyview', snr)
 
     # command list
     def server_status(self, *args):  # pylint: disable=invalid-name
