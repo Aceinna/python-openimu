@@ -28,6 +28,7 @@
         "LOG heading2b ontime 1\r",
         "LOG RAWIMUSXB ONNEW\r",
         "LOG gpgga ontime 0.1\r",
+        "LOG GPGSV ONTIME 1\r",
         "LOG NCOM1 gpgga ontime 1\r",
         "SAVECONFIG\r"
     ],
