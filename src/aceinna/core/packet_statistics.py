@@ -2,17 +2,16 @@ import collections
 import time
 
 
-def calculate_collect(last_statistics, success_collection, failure_collection, key, current_time):
+def calculate_collect(packet_collection, failure_collection, key):
     ''' Calculate collect data as statistics
     '''
     received = 0
     crc_failures = 0
     rate = 0
-    event_time = current_time
 
-    if key in success_collection:
-        received = success_collection[key]['received']
-        rate = success_collection[key]['rate']
+    if key in packet_collection:
+        received = packet_collection[key]['received']
+        rate = packet_collection[key]['rate']
 
     if key in failure_collection:
         crc_failures = failure_collection[key]
@@ -88,9 +87,8 @@ class PacketStatistics:
             last_calculate_time = self._packet_collect_dict[packet_type]['last_calculate_time']
             duration = event_time - last_calculate_time
 
-            if duration > 1:
+            if duration >= 1:
                 count = 0
-                self._packet_collect_dict[packet_type]['last_calculate_time'] = event_time
 
                 try:
                     start = self._packet_collect_dict[packet_type]['sampling'].index(
@@ -100,8 +98,11 @@ class PacketStatistics:
                     count = end - start
                 except ValueError:
                     count = 0
+
                 self._packet_collect_dict[packet_type]['rate'] = round(
-                    count/duration, 2)
+                    count/duration, 1)
+
+                self._packet_collect_dict[packet_type]['last_calculate_time'] = event_time
 
         if collect_type == 'fail':
             if packet_type not in self._failure_collect_dict:
@@ -112,8 +113,13 @@ class PacketStatistics:
     def reset(self):
         ''' Reset statistics
         '''
-        self._packet_collect_dict = {}
-        self._failure_collect_dict = {}
+        for packet_type in self._packet_collect_dict:
+            self._packet_collect_dict[packet_type]['received'] = 0
+            self._packet_collect_dict[packet_type]['rate'] = 0
+
+        for packet_type in self._failure_collect_dict:
+            self._failure_collect_dict[packet_type] = 0
+
         self._last_time = None
 
     def get_result(self):
@@ -125,14 +131,11 @@ class PacketStatistics:
             return None
 
         result = {}
-        current_time = time.time()
         for key in packet_types:
             statistics_result = calculate_collect(
-                self._last_statistics,
                 self._packet_collect_dict,
                 self._failure_collect_dict,
-                key,
-                current_time
+                key
             )
             result[key] = statistics_result
 
