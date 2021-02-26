@@ -2,15 +2,15 @@
 
 ---
 
-## 2.3.0 / TBD
+## 2.3.0 / 2021-02-28
 - [OpenIMU] Support packet data statistics.
 - [OpenRTK] Support RTK330L.
 - [OpenRTK] Save predefined parameters when connected.
 - [Framework] Adjust the json file location. Different product would have single application json file.
-- [Framework] Support upgrade firmware through aceina developers site.
+- [Framework] Support upgrade firmware through aceinna developers site.
 - [Framework] Enhance the upgrade center.
-- [Framework] Restruct WebServer, consider websocket server is a message tunnel.
-- [Framework] Restruct bootstrap, to make it clear for later maintainer.
+- [Framework] Refactor WebServer, consider websocket server is a message tunnel.
+- [Framework] Refactor bootstrap, to make it clear for later maintainer.
 
 ## 2.2.4 / 2020-12-18
 - [OpenRTK] Remove console print and add print.log to save these infomation.
