@@ -65,6 +65,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
 
         if not method:
             self.response_unkonwn_method()
+            return
 
         try:
             self._handle_message(method, parameters)

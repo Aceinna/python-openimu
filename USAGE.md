@@ -43,9 +43,9 @@ detector.find(on_find_device)
 
 Host in webserver 
 ```python
-from aceinna.bootstrap import Webserver
+from aceinna.bootstrap import Default
 
-app = Webserver(
+app = Default(
     device_type='openimu',
     com_port='COM1',
     port=8001,
