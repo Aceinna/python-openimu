@@ -55,10 +55,20 @@ class OpenDeviceBase(EventBase):
         self.ans_platform = AnsPlatformAPI()
         self._pbar = None
 
+    @property
+    def is_in_bootloader(self):
+        return False
+
     @abstractmethod
     def load_properties(self):
         '''
         load configuration
+        '''
+
+    @abstractmethod
+    def bind_device_info(self, device_access, device_info, app_info):
+        '''
+        bind device info
         '''
 
     @abstractmethod
@@ -271,6 +281,7 @@ class OpenDeviceBase(EventBase):
         self.reset()
         self._message_center.stop()
         self._message_center = None
+        self.connected = False
 
     def restart(self):
         '''
@@ -286,6 +297,21 @@ class OpenDeviceBase(EventBase):
         if self.is_upgrading:
             self.emit('upgrade_restart')
 
+    def enter_bootloader(self, *args):
+        self._message_center.pause()
+
+        command_line = helper.build_bootloader_input_packet('JI')
+        self.communicator.write(command_line)
+        time.sleep(3)
+        helper.read_untils_have_data(
+            self.communicator, 'JI', 1000, 50)
+
+        # ping and update the device info
+        if self.communicator.type == 'uart':
+            self.communicator.serial_port.baudrate = self.bootloader_baudrate
+
+        # self._message_center.resume()
+
     def thread_do_upgrade_framework(self, file):
         '''
         Do upgrade firmware
@@ -297,17 +323,16 @@ class OpenDeviceBase(EventBase):
                 self.handle_upgrade_error('cannot find firmware file')
                 return
 
-            #TODO: if the device is in bootloader, there is no need to run below JI command
-
             # run command JI
-            command_line = helper.build_bootloader_input_packet('JI')
-            self.communicator.reset_buffer()  # clear input and output buffer
-            self.communicator.write(command_line, True)
-            time.sleep(3)
+            if not self.is_in_bootloader:
+                command_line = helper.build_bootloader_input_packet('JI')
+                self.communicator.reset_buffer()  # clear input and output buffer
+                self.communicator.write(command_line, True)
+                time.sleep(3)
 
-            # It is used to skip streaming data with size 1000 per read
-            helper.read_untils_have_data(
-                self.communicator, 'JI', 1000, 50)
+                # It is used to skip streaming data with size 1000 per read
+                helper.read_untils_have_data(
+                    self.communicator, 'JI', 1000, 50)
 
             workers = self.get_upgrade_workers(firmware_content)
 
@@ -440,8 +465,9 @@ class OpenDeviceBase(EventBase):
             self._pbar.close()
         self.is_upgrading = False
         self._message_center.resume()
-        self.add_output_packet('upgrade_complete', {
-                               'success': False, 'message': message})
+        self.emit('upgrade_failed', 'UPGRADE.FAILED.001', message)
+        # self.add_output_packet('upgrade_complete', {
+        #                        'success': False, 'message': message})
 
     def handle_upgrade_process(self, step, current, total):
         if self._pbar:

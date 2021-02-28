@@ -108,6 +108,21 @@ class RTKProviderBase(OpenDeviceBase):
                     with open(app_name_config_path, "wb") as code:
                         code.write(app_config_content)
 
+    @property
+    def is_in_bootloader(self):
+        ''' Check if the connected device is in bootloader mode
+        '''
+        if not self.app_info or not self.app_info.__contains__('version'):
+            return False
+
+        version = self.app_info['version']
+        version_splits = version.split(',')
+        if len(version_splits) == 1:
+            if 'bootloader' in version_splits[0].lower():
+                return True
+
+        return False
+
     def bind_device_info(self, device_access, device_info, app_info):
         self._build_device_info(device_info)
         self._build_app_info(app_info)

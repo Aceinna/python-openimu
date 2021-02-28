@@ -129,15 +129,19 @@ class WSHandler(tornado.websocket.WebSocketHandler):
 
         converted_method = helper.name_convert_camel_to_snake(method)
 
-        if device_context.connected and device_context.check_allow_method(converted_method):
-            self._tunnel.emit(TunnelEvents.Request,
-                              method,
-                              converted_method,
-                              parameters)
-        elif hasattr(self, converted_method):
+        if hasattr(self, converted_method):
             getattr(self, converted_method, None)(parameters)
         else:
-            self.response_unkonwn_method()
+            # if device_context.check_allow_method(converted_method):
+            try:
+                self._tunnel.emit(TunnelEvents.Request,
+                                  method,
+                                  converted_method,
+                                  parameters)
+            except Exception as ex:
+                if resource.is_dev_mode():
+                    traceback.print_exc()
+                self.response_unkonwn_method()
 
     def handle_device_found(self, device_context, force_response=True):
         '''
@@ -156,6 +160,14 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             'stream', {
                 'packetType': 'ping', 'data': {'status': 2}
             })
+        self.response_message('stream', {
+            'packetType': 'serverInfo',
+            'data': {
+                'version': VERSION,
+                'serverUpdateRate': 50,
+                'deviceConnected': False,
+                'clientCount': 0,
+            }})
 
     def response_invoke(self, method, result):
         self.response_message(method, result)

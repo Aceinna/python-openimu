@@ -39,7 +39,8 @@ class WebserverArgs(KeyValuesArgumentBase):
         'with_data_log': False,
         'console_log': False,
         'set_user_para': False,
-        'ntrip_client': False
+        'ntrip_client': False,
+        'force_bootloader': False
     }
 
 
