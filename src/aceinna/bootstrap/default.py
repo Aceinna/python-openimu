@@ -50,6 +50,10 @@ class Default:
     def handle_upgrade_finished(self):
         self._tunnel.notify('continous', 'upgrade_complete', {'success': True})
 
+    def handle_upgrade_fail(self, code, message):
+        self._tunnel.notify('continous', 'upgrade_complete', {
+                            'success': False, 'code': code, 'message': message})
+
     def handle_error(self, error, message):
         self._tunnel.notify('lost')
 
@@ -71,6 +75,9 @@ class Default:
 
         self._driver.on(DriverEvents.UpgradeFinished,
                         self.handle_upgrade_finished)
+
+        self._driver.on(DriverEvents.UpgradeFail,
+                        self.handle_upgrade_fail)
 
         self._driver.on(DriverEvents.Error,
                         self.handle_error)

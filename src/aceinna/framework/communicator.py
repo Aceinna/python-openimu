@@ -6,15 +6,14 @@ import time
 import json
 import socket
 import threading
+from abc import ABCMeta, abstractmethod
 import serial
 import serial.tools.list_ports
 import psutil
 from ..devices import DeviceManager
 from .constants import BAUDRATE_LIST
 from .context import APP_CONTEXT
-from .utils.resource import (
-    get_executor_path
-)
+from .utils.resource import (get_executor_path)
 from .wrapper import SocketConnWrapper
 from .utils.print import (print_red, print_yellow)
 
@@ -39,6 +38,7 @@ class CommunicatorFactory:
 class Communicator(object):
     '''Communicator base
     '''
+    __metaclass__ = ABCMeta
 
     def __init__(self):
         executor_path = get_executor_path()
@@ -51,11 +51,11 @@ class Communicator(object):
         self.device = None
         self.threadList = []
 
-    def find_device(self, callback):
+    @abstractmethod
+    def find_device(self, callback, retries=0, not_found_handler=None):
         '''
         find device, then invoke callback
         '''
-        callback()
 
     def open(self):
         '''
@@ -94,7 +94,6 @@ class Communicator(object):
 
 
 class StoppableThread(threading.Thread):
-
     def __init__(self, *args, **kwargs):
         super(StoppableThread, self).__init__(*args, **kwargs)
         self._stop_event = threading.Event()
@@ -110,6 +109,11 @@ class SerialPort(Communicator):
     '''
     Serial Port
     '''
+    _status = 'idle'
+    _is_close = False
+    _available_ports = []
+    _tried = 0
+    _find_options = None
 
     def __init__(self, options=None):
         super(SerialPort, self).__init__()
@@ -119,13 +123,11 @@ class SerialPort(Communicator):
         self.baud = None
         self.read_size = 100
         self.baudrate_assigned = False
-        # self.baudrateList = [115200]  # for test
         self.baudrate_list = BAUDRATE_LIST  # default baudrate list
         self.com_port = None
         self.com_port_assigned = False
         self.filter_device_type = None
         self.filter_device_type_assigned = False
-        self._is_close = False
         self._connection_history = None
 
         if options and options.baudrate != 'auto':
@@ -138,11 +140,27 @@ class SerialPort(Communicator):
             self.filter_device_type = options.device_type
             self.filter_device_type_assigned = True
 
-    def find_device(self, callback):
+    def pause_find(self):
+        self._status = 'pause'
+
+    def resume_find(self):
+        self._status = 'idle'
+
+    def list_ports(self):
+        return self._available_ports
+
+    def set_find_options(self, options):
+        self._find_options = options
+
+    def find_device(self, callback, retries=0, not_found_handler=None):
         ''' Finds active ports and then autobauds units
         '''
         self.device = None
         self._is_close = False
+        self._available_ports = []
+        self._status = 'idle'
+        self._tried = 0
+
         if self.com_port_assigned:
             # find device by assigned port
             self.autobaud([self.com_port])
@@ -151,16 +169,62 @@ class SerialPort(Communicator):
                     '\nCannot connect the device with serial port: {0}. \
                     \nProbable reason: \
                     \n1. The serial port is invalid. \
-                    \n2. The device response incorrect format of device info and app info.'.format(self.com_port))
+                    \n2. The device response incorrect format of device info and app info.'
+                    .format(self.com_port))
         else:
             while self.device is None:
-                if self._is_close == True:
+                if self._is_close:
                     return
 
-                if self.try_last_port():
-                    break
-                num_ports = self.find_ports()
-                self.autobaud(num_ports)
+                if self._status == 'pause':
+                    time.sleep(0.5)
+                    continue
+
+                if self._find_options:
+                    current_filter_device_type = self.filter_device_type
+                    current_filter_device_type_assigned = self.filter_device_type_assigned
+                    current_baudrate_list = self.baudrate_list
+                    current_baudrate_assigned = self.baudrate_assigned
+                    ports = self._available_ports
+
+                    if 'device_type' in self._find_options:
+                        self.filter_device_type = self._find_options[
+                            'device_type']
+                        self.filter_device_type_assigned = True
+
+                    if 'baudrate' in self._find_options:
+                        self.baudrate_list = [self._find_options['baudrate']]
+                        self.baudrate_assigned = True
+
+                    if 'com_port' in self._find_options:
+                        ports = [self._find_options['com_port']]
+
+                    self.autobaud(ports)
+
+                    if retries == 0:
+                        self._find_options = None
+
+                    self.filter_device_type = current_filter_device_type
+                    self.filter_device_type_assigned = current_filter_device_type_assigned
+                    self.baudrate_list = current_baudrate_list
+                    self.baudrate_assigned = current_baudrate_assigned
+
+                else:
+                    if self.try_last_port():
+                        break
+                    self._available_ports = self.find_ports()
+                    self.autobaud(self._available_ports)
+
+                self._tried += 1
+
+                if retries > 0 and self._tried >= retries:
+                    if self._find_options:
+                        self._find_options = None
+
+                    if not self.device and not_found_handler:
+                        not_found_handler()
+                    return
+
                 time.sleep(0.5)
         callback(self.device)
 
@@ -201,12 +265,10 @@ class SerialPort(Communicator):
                 return True
 
             for baud in self.baudrate_list:
-                # print("try {0}:{1}".format(port, baud))
                 APP_CONTEXT.get_logger().logger.info(
                     "try {0}:{1}".format(port, baud))
                 try:
-                    serial_port = serial.Serial(
-                        port, baud, timeout=0.1)
+                    serial_port = serial.Serial(port, baud, timeout=0.1)
                 except Exception as ex:
                     APP_CONTEXT.get_logger().logger.info(
                         '{0} : {1} open failed'.format(port, baud))
@@ -237,7 +299,7 @@ class SerialPort(Communicator):
                             'baud': serial_port.baudrate,
                             'device_type': self.device.type
                         })
-                        # Assume max_len of a frame is less than 300 bytes.
+
                         for td in self.threadList:
                             td.stop()
                         return True
@@ -253,23 +315,25 @@ class SerialPort(Communicator):
                 true when successful
         '''
         APP_CONTEXT.get_logger().logger.info('start to connect serial port')
-
         # print('find ports: {0}'.format(ports))
         thread_num = (len(ports) if (len(ports) < 4) else 4)
         ports_list = [[] for i in range(thread_num)]
         for i, port in enumerate(ports):
             ports_list[i % thread_num].append(port)
-
         for i in range(thread_num):
-            # print('{0} {1}'.format(i, ports_list[i]))
-            t = StoppableThread(
-                target=self.thread_for_ping, name=ports_list[i][0], args=(ports_list[i],))
+            t = StoppableThread(target=self.thread_for_ping,
+                                name=ports_list[i][0],
+                                args=(ports_list[i], ))
             t.start()
 
             self.threadList.append(t)
 
+        # make sure every thread is stopped
         while self.device is None:
-            if self._is_close == True:
+            if self._is_close:
+                return
+
+            if self._status == 'pause':
                 return
 
             is_threads_stop = True
@@ -320,8 +384,7 @@ class SerialPort(Communicator):
                 self.open_serial_port(port=port, baud=baud_rate, timeout=0.1)
 
                 if self.serial_port is not None:
-                    ret = self.confirm_device(
-                        self.serial_port, device_type)
+                    ret = self.confirm_device(self.serial_port, device_type)
                     if not ret:
                         self.serial_port.close()
                         return False
@@ -354,12 +417,11 @@ class SerialPort(Communicator):
             self.open_serial_port(port=port, baud=baud_rate, timeout=0.1)
 
             if self.serial_port is not None:
-                ret = self.confirm_device(
-                    self.serial_port, device_type)
+                ret = self.confirm_device(self.serial_port, device_type)
                 if ret:
                     # update connection history
-                    self.update_connection_history(
-                        history_connection, history_connection_index)
+                    self.update_connection_history(history_connection,
+                                                   history_connection_index)
                     return True
                 else:
                     self.serial_port.close()
@@ -381,7 +443,7 @@ class SerialPort(Communicator):
         elif index == -1:
             self._connection_history['history'].append(connection)
             self._connection_history['last'] = len(
-                self._connection_history['history'])-1
+                self._connection_history['history']) - 1
 
         try:
             with open(self.connection_file_path, 'w') as outfile:
@@ -520,7 +582,7 @@ class LAN(Communicator):
             self.filter_device_type = options.device_type
             self.filter_device_type_assigned = True
 
-    def find_device(self, callback):
+    def find_device(self, callback, retries, not_found_handler):
         greeting = 'i am pc'
         self.device = None
 

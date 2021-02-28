@@ -89,6 +89,17 @@ class Provider(OpenDeviceBase):
                     with open(app_name_config_path, "wb") as code:
                         code.write(app_config_content)
 
+    @property
+    def is_in_bootloader(self):
+        ''' Check if the connected device is in bootloader mode
+        '''
+        if not self.device_info or not self.device_info.__contains__('name'):
+            return False
+
+        if 'bootloader' in self.device_info['name'].lower():
+            return True
+        return False
+
     def bind_device_info(self, device_access, device_info, app_info):
         self._build_device_info(device_info)
         self._build_app_info(app_info)
@@ -102,7 +113,7 @@ class Provider(OpenDeviceBase):
         '''
         Build device info
         '''
-        split_text = [x for x in text.split(' ') if x != '']
+        split_text = [x for x in text.split(' ') if x != '' and x != '\x00']
         split_len = len(split_text)
 
         if split_len < 3:

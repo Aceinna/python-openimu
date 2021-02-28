@@ -17,8 +17,7 @@ def _build_args():
     """
     parser = argparse.ArgumentParser(
         description='Aceinna python driver input args command:', allow_abbrev=False)
-    # parser.add_argument("-host", type=str, help="host type", default='web')
-    # for host as web
+
     parser.add_argument("-l", "--protocol", dest="protocol",
                         help="Protocol(uart or lan)", default='uart', choices=['uart', 'lan'])
     parser.add_argument("-p", "--port", dest='port',  metavar='', type=int,
@@ -41,6 +40,9 @@ def _build_args():
                         help="enable ntrip client (OpenRTK only)", default=False)
     parser.add_argument("--cli", dest='use_cli', action='store_true',
                         help="start as cli mode", default=False)
+    parser.add_argument("-f", dest='force_bootloader', action='store_true',
+                        help="Force to bootloader", default=False)
+
 
     return parser.parse_args()
 
