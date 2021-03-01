@@ -15,6 +15,7 @@ from ...framework.utils import resource
 from ..base import OpenDeviceBase
 from ..configs.openimu_predefine import (
     APP_STR,
+    DEFAULT_PRODUCT_NAME,
     get_openimu_products
 )
 from ...framework.context import APP_CONTEXT
@@ -103,13 +104,38 @@ class Provider(OpenDeviceBase):
         '''
         split_text = [x for x in text.split(' ') if x != '']
         split_len = len(split_text)
-        pre_sn = split_text[3].split(':') if split_len == 4 else ''
+
+        if split_len < 3:
+            self.device_info = {
+                'name': split_text[0],
+                'product_name': split_text[0],
+                'pn': '-',
+                'firmware_version': '-',
+                'sn': '-'
+            }
+            return
+
+        # consier as bootloader
+        if split_len == 3:
+            pre_sn = split_text[2].split(':')
+            serial_num = pre_sn[1] if len(pre_sn) == 2 else pre_sn[0]
+            self.device_info = {
+                'name': split_text[0],
+                'product_name': split_text[0],
+                'pn': split_text[1],
+                'firmware_version': '-',
+                'sn': serial_num
+            }
+            return
+
+        pre_sn = split_text[-1].split(':')
         serial_num = pre_sn[1] if len(pre_sn) == 2 else ''
 
         self.device_info = {
-            'name': split_text[0],
-            'pn': split_text[1],
-            'firmware_version': split_text[2],
+            'name': ' '.join(split_text[0:-3]),
+            'product_name': split_text[0],
+            'pn': split_text[-3],
+            'firmware_version': split_text[-2],
             'sn': serial_num
         }
 
@@ -118,6 +144,7 @@ class Provider(OpenDeviceBase):
         Build app info
         '''
         # check if J1939 in text
+        product_name = ''
         app_version = text
         can_indicator = '_J1939'
         if can_indicator in app_version:
@@ -127,6 +154,9 @@ class Provider(OpenDeviceBase):
         app_name = next(
             (item for item in APP_STR if item in split_text), None)
 
+        if len(split_text) == 3:
+            product_name = split_text[0]
+
         if not app_name:
             app_name = 'IMU'
             self.is_app_matched = False
@@ -135,15 +165,9 @@ class Provider(OpenDeviceBase):
 
         self.app_info = {
             'app_name': app_name,
-            'version': text
+            'version': text,
+            'product_name': product_name
         }
-
-        # Change the device model name if got model name from the first split string of version
-        if len(split_text) > 0 and split_text[0] in get_openimu_products():
-            self.device_info['name'] = split_text[0]
-
-        if len(split_text) == 0:
-            self.device_info['name'] = 'OpenIMU300ZI'
 
     def load_properties(self):
         # Load config from user working path
@@ -154,10 +178,14 @@ class Provider(OpenDeviceBase):
                 return
 
         # Load the openimu.json based on its app
-        product_name = self.device_info['name']
+        product_name = self.app_info['product_name'] if self.app_info['product_name'] else self.device_info['product_name']
         app_name = self.app_info['app_name']
         app_file_path = os.path.join(
             self.setting_folder_path, product_name, app_name, 'openimu.json')
+
+        if not os.path.isfile(app_file_path):
+            app_file_path = os.path.join(
+                self.setting_folder_path, DEFAULT_PRODUCT_NAME, app_name, 'openimu.json')
 
         if not self.is_app_matched:
             print_yellow(
