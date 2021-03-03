@@ -659,7 +659,7 @@ class UserRawParse:
         '''
         '''
         # white-cyan, red, purple, light-yellow, green, yellow
-        color = ["ffffffff","ff0000ff","ffff00ff","50FF78F0","ff00ff00","ff00aaff"]
+        color = ["ffffffff","50FF78F0","ffff00ff","ff0000ff","ff00ff00","ff00aaff"]
         kml_header = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"\
                 + "<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n"\
                 + "<Document>\n"
@@ -683,6 +683,9 @@ class UserRawParse:
                 + "<LineString>\n"\
                 + "<coordinates>\n"
 
+        ins_status= ["INS_INACTIVE", "INS_ALIGNING", "INS_HIGH_VARIANCE", "INS_SOLUTION_GOOD", "INS_SOLUTION_FREE", "INS_ALIGNMENT_COMPLETE"];
+        ins_postype = ["INS_NONE", "INS_PSRSP", "INS_PSRDIFF", "INS_PROPOGATED", "INS_RTKFIXED", "INS_RTKFLOAT"]; 
+        
         for ins in self.insdata:
             ep = self.weeksecondstoutc(ins[0], ins[1]/1000, -18)
             ep_sp = time.strptime(ep, "%Y-%m-%d %H:%M:%S")
@@ -735,7 +738,7 @@ class UserRawParse:
                     + "<TR ALIGN=RIGHT><TD ALIGN=LEFT>Att(r,p,h):</TD><TD>"\
                     + "%.4f" % ins[10] + "</TD><TD>" + "%.4f" % ins[11] + "</TD><TD>" + "%.4f" % ins[12] + "</TD><TD>(deg,approx)</TD></TR>\n"\
                     + "<TR ALIGN=RIGHT><TD ALIGN=LEFT>Mode:</TD><TD>"\
-                    + str(ins[2]) + "</TD><TD>" + str(ins[3]) + "</TD><TR>\n"\
+                    + ins_status[ins[2]] + "</TD><TD>" + ins_postype[ins[3]] + "</TD><TR>\n"\
                     + "</TABLE>\n"\
                     + "]]></description>\n"
                 
