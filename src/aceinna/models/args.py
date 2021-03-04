@@ -37,7 +37,6 @@ class WebserverArgs(KeyValuesArgumentBase):
         'com_port': 'auto',
         'debug': False,
         'with_data_log': False,
-        'with_raw_log': False,
         'console_log': False,
         'set_user_para': False,
         'ntrip_client': False
