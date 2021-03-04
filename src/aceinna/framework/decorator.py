@@ -35,8 +35,6 @@ def _build_args():
                         help="Log debug information", default=False)
     parser.add_argument("--with-data-log", dest='with_data_log', action='store_true',
                         help="Contains internal data log (OpenIMU only)", default=False)
-    parser.add_argument("-r", "--with-raw-log", dest='with_raw_log', action='store_true',
-                        help="Contains raw data log (OpenRTK only)", default=False)
     parser.add_argument("-s", "--set-user-para", dest='set_user_para', action='store_true',
                         help="set user parameters (OpenRTK only)", default=False)
     parser.add_argument("-n", "--ntrip-client", dest='ntrip_client', action='store_true',

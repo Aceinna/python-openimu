@@ -1,46 +1,19 @@
-# python-openimu
+# User Manual
 
-A message communication tool for OpenIMU, OpenRTK and other devices of Aceinna
+## Contents
+- [Steps to use](#Steps-to-use)
+- [Work Mode](#Work-mode)
+- [Protocol](#Protocol)
 
-## Working Environment 
-- Windows10: python 3.7
-- Mac OS: python 3.7
 
-## Steps
+## Steps to use
 
-### 1. Start the tool
-There are 2 ways to run the tool
-
-#### Prepare
-Install the dependency library. It is better to create a virtual environment before to do it.
-
-python 3.x
+### 1. Run driver
 ```bash
-$ pip install -r requirements.txt
-```
-
-#### A. From source code
-
-##### Run
-Please use this way if you want to contribute the project.
-```bash
-$ python main.py
-```
-#### B. Work as execution file
-
-##### Build
-The executable will be generated in `dist` folder.
-```bash
-$ pyinstaller build.spec
-```
-
-##### Run
-```
-$ cd dist
 $ ./ans-devices
 ```
 
-##### Startup Arguments
+#### Startup Arguments
 You can specify some arguments while run the tool
 
 Arguments:
@@ -60,10 +33,13 @@ Arguments:
 | -l, --protocol | String | 'uart' | Value should be `uart`, `lan`. Depends on device type |
 
 
-### 2. Connect Aceinna device
+### 2. Connect Device
 Link device to your pc or mac. The tool will auto detect the linked device by default.
 
-[More Usage](USAGE.md "More Usage")
+### 3. Data Visualization
+Open the Aceina developer website, different devices correspond to different visualization pages.
+- OpenIMU https://developers.aceinna.com/devices/record-next
+- OpenRTK https://developers.aceinna.com/devices/rtk
 
 ## Work Mode
 ### Default Mode
@@ -142,8 +118,3 @@ Aceinna Device could be connected with your PC via UART or LAN. The supported pr
 | OpenIMU | `uart` | |
 | OpenRTK | `uart`, `lan` | The startup argument `-l lan` is supported |
 | RTK330L | `uart` |  |
-
-
-## Changelogs and Release Notes
-
-Please refer to [HISTORY.md](HISTORY.md "Change History")

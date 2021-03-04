@@ -23,7 +23,6 @@ def test_web_args_with_default():
         'com_port': 'auto',
         'debug': False,
         'with_data_log': False,
-        'with_raw_log': False,
         'console_log': False,
         'set_user_para': False,
         'ntrip_client': False
@@ -36,7 +35,6 @@ def test_web_args_with_default():
     assert web_args.com_port == 'auto'
     assert web_args.debug == False
     assert web_args.with_data_log == False
-    assert web_args.with_raw_log == False
     assert web_args.console_log == False
     assert web_args.set_user_para == False
     assert web_args.ntrip_client == False
