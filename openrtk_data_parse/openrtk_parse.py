@@ -558,8 +558,9 @@ class InceptioParse:
                 e_buffer = e_buffer + format(data[3], output['payload'][3]['format']) + ","
                 e_buffer = e_buffer + format(data[2], output['payload'][2]['format']) + "\n"         
                 self.f_ins.write(e_buffer)
-
-                self.insdata.append(data)
+                
+                if abs(data[5]*data[4]) > 0.00000001:
+                    self.insdata.append(data)
 
         elif output['name'] == 'd1':
             buffer = buffer + format(data[0], output['payload'][0]['format']) + ","
