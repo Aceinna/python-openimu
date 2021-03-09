@@ -56,13 +56,17 @@ class UartMessageParser(MessageParserBase):
                     APP_CONTEXT.get_logger().logger.info(
                         "crc check error! packet_type:{0}".format(packet_type))
 
-                    self.emit('crc_failure', packet_type=packet_type, event_time=time.time())
+                    self.emit('crc_failure', packet_type=packet_type,
+                              event_time=time.time())
                     input_packet_config = next(
                         (x for x in self.properties['userMessages']['inputPackets']
                          if x['name'] == packet_type), None)
                     if input_packet_config:
-                        self.emit('command', packet_type=packet_type,
-                                  data=[], error=True)
+                        self.emit('command',
+                                  packet_type=packet_type,
+                                  data=[],
+                                  error=True,
+                                  raw=self.frame)
         else:
             self.sync_pattern.append(data_block)
             if operator.eq(list(self.sync_pattern), MSG_HEADER):
