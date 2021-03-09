@@ -16,20 +16,6 @@ def calculate_collect(packet_collection, failure_collection, key):
     if key in failure_collection:
         crc_failures = failure_collection[key]
 
-    # if last_statistics and key in last_statistics:
-    #     last_received = last_statistics[key]['received']
-    #     diff_received = received - last_received
-
-    #     event_time = last_statistics[key]['event_time']
-    #     duration = current_time - event_time
-
-    #     if diff_received == 0 or duration == 0:
-    #         rate = last_statistics[key]['rate']
-
-    #     if diff_received > 0 and duration > 0:
-    #         rate = round(1 / duration * diff_received, 2)
-    #         event_time = current_time
-
     calculate_result = {
         'received': received,
         'failures': crc_failures,
@@ -55,7 +41,7 @@ class PacketStatistics:
     def _get_packet_types(self):
         packet_types_in_success = self._packet_collect_dict.keys()
         packet_types_in_failure = self._failure_collect_dict.keys()
-        packet_types = packet_types_in_success
+        packet_types = list(packet_types_in_success)
 
         for packet_type in packet_types_in_failure:
             if packet_type not in packet_types:
