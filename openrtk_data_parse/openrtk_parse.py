@@ -567,6 +567,8 @@ class UserRawParse:
                 + "</Style>\n"
         self.f_gnss_kml.write(kml_header)
 
+        gnss_postype = ["NONE", "PSRSP", "PSRDIFF", "UNDEFINED", "RTKFIXED", "RTKFLOAT"]; 
+
         gnss_track = "<Placemark>\n"\
                 + "<name>Rover Track</name>\n"\
                 + "<Style>\n"\
@@ -629,7 +631,7 @@ class UserRawParse:
                     + "<TR ALIGN=RIGHT><TD ALIGN=LEFT>Att(r,p,h):</TD><TD>"\
                     + "0" + "</TD><TD>" + "0" + "</TD><TD>" + "%.4f" % track_ground + "</TD><TD>(deg,approx)</TD></TR>\n"\
                     + "<TR ALIGN=RIGHT><TD ALIGN=LEFT>Mode:</TD><TD>"\
-                    + "0" + "</TD><TD>" + str(pos[2]) + "</TD><TR>\n"\
+                    + "0" + "</TD><TD>" + gnss_postype[pos[2]] + "</TD><TR>\n"\
                     + "</TABLE>\n"\
                     + "]]></description>\n"
                 
