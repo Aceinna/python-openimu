@@ -582,7 +582,7 @@ class LAN(Communicator):
             self.filter_device_type = options.device_type
             self.filter_device_type_assigned = True
 
-    def find_device(self, callback, retries, not_found_handler):
+    def find_device(self, callback, retries=0, not_found_handler=None):
         greeting = 'i am pc'
         self.device = None
 
