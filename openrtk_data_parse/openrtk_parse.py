@@ -529,7 +529,7 @@ class InceptioParse:
             buffer = buffer + format(data[11]/100, output['payload'][11]['format']) + ","
             buffer = buffer + format(data[12]/100, output['payload'][12]['format']) + "\n"
 
-            if (data[1]*1000) % 100 == 0:
+            if math.fmod(data[1]+0.0005, 0.1) <= 0.005:
                 ff_buffer = '$GPINS,'
                 ff_buffer = ff_buffer + format(data[0], output['payload'][0]['format']) + ","
                 ff_buffer = ff_buffer + format(data[1], output['payload'][1]['format']) + ","
