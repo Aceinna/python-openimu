@@ -291,7 +291,7 @@ class Provider(OpenDeviceBase):
                 # $GPGGA
                 gpgga = '$GPGGA'
                 # time
-                timeOfWeek = float(data['GPS_TimeofWeek'])
+                timeOfWeek = float(data['GPS_TimeofWeek']) - 18
                 dsec = int(timeOfWeek)
                 msec = timeOfWeek - dsec
                 sec = dsec % 86400
@@ -299,7 +299,7 @@ class Provider(OpenDeviceBase):
                 minute = int(sec % 3600 / 60)
                 second = sec % 60
                 gga_time = format(hour*10000 + minute*100 +
-                                  second + msec - 18, '09.2f')
+                                  second + msec, '09.2f')
                 gpgga = gpgga + ',' + gga_time
                 # latitude
                 latitude = float(data['latitude']) * 180 / 2147483648.0
