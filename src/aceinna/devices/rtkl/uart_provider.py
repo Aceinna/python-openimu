@@ -21,6 +21,7 @@ class Provider(RTKProviderBase):
         self.type = 'RTKL'
         self.bootloader_baudrate = 115200
         self.config_file_name = 'RTK330L.json'
+        self.device_category = 'RTK330LA'
 
     def thread_debug_port_receiver(self, *args, **kwargs):
         if self.debug_logf is None:

@@ -33,6 +33,7 @@ def _format_string(data_buffer):
                 formatted = str(struct.pack(
                     '{0}B'.format(len(parsed)), *parsed), 'utf-8')
         except UnicodeDecodeError:
+            APP_CONTEXT.get_logger().logger.error('Parse data as string failed')
             formatted = ''
 
     return formatted

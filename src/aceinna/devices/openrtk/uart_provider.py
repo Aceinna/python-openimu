@@ -23,6 +23,7 @@ class Provider(RTKProviderBase):
         super(Provider, self).__init__(communicator)
         self.bootloader_baudrate = 115200
         self.config_file_name = 'openrtk.json'
+        self.device_category = 'OpenRTK'
 
     def thread_debug_port_receiver(self, *args, **kwargs):
         if self.debug_logf is None:
@@ -96,7 +97,8 @@ class Provider(RTKProviderBase):
                         if uart['name'] == 'SDK':
                             sdk_port = uart["value"]
 
-            sdk_uart = serial.Serial(sdk_port, self.bootloader_baudrate, timeout=0.1)
+            sdk_uart = serial.Serial(
+                sdk_port, self.bootloader_baudrate, timeout=0.1)
             if not sdk_uart.isOpen():
                 raise Exception('Cannot open SDK upgrade port')
 

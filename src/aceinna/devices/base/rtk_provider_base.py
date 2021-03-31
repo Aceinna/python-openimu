@@ -59,6 +59,7 @@ class RTKProviderBase(OpenDeviceBase):
         self.nmea_buffer = []
         self.nmea_sync = 0
         self.config_file_name = 'openrtk.json'
+        self.device_category = 'RTK'
         self.prepare_folders()
         self.ntripClient = None
         self.rtk_log_file_name = ''
@@ -131,7 +132,7 @@ class RTKProviderBase(OpenDeviceBase):
         port_name = device_access.port
 
         return '# Connected {0} with UART on {1} #\nDevice:{2} \nFirmware:{3}'\
-            .format('OpenRTK', port_name, device_info, app_info)
+            .format(self.device_category, port_name, device_info, app_info)
 
     def _build_device_info(self, text):
         '''
@@ -232,7 +233,7 @@ class RTKProviderBase(OpenDeviceBase):
 
         try:
             self.rtk_log_file_name = os.path.join(
-                self.data_folder, 'openrtk_log_{0}'.format(formatted_dir_time))
+                self.data_folder, '{0}_log_{1}'.format(self.device_category.lower(), formatted_dir_time))
             os.mkdir(self.rtk_log_file_name)
         except:
             raise Exception(
@@ -276,7 +277,8 @@ class RTKProviderBase(OpenDeviceBase):
                 self.rtk_log_file_name, 'user_{0}.bin'.format(formatted_file_time)), "wb")
 
             if rtcm_port != '':
-                print_green('OpenRTK log GNSS UART {0}'.format(rtcm_port))
+                print_green('{0} log GNSS UART {1}'.format(
+                    self.device_category, rtcm_port))
                 self.rtcm_serial_port = serial.Serial(
                     rtcm_port, '460800', timeout=0.1)
                 if self.rtcm_serial_port.isOpen():
@@ -288,7 +290,8 @@ class RTKProviderBase(OpenDeviceBase):
                     thead.start()
 
             if debug_port != '':
-                print_green('OpenRTK log DEBUG UART {0}'.format(debug_port))
+                print_green('{0} log DEBUG UART {1}'.format(
+                    self.device_category, debug_port))
                 self.debug_serial_port = serial.Serial(
                     debug_port, '460800', timeout=0.1)
                 if self.debug_serial_port.isOpen():
