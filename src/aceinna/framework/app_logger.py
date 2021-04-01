@@ -30,9 +30,10 @@ class AppLogger(object):
                  fmt='%(asctime)s - %(levelname)s: %(message)s'):
                 #  fmt='%(asctime)s - %(pathname)s[line:%(lineno)d] - %(levelname)s: %(message)s'):
         self._store = None
-        self.logger = logging.getLogger()
+        self.logger = logging.getLogger(__file__)
         self.format_str = logging.Formatter(fmt)
         self.logger.setLevel(self.level_relations.get(level))
+        self.logger.propagate = False
         if console_log:
             console_output = logging.StreamHandler()
             console_output.setFormatter(self.format_str)
