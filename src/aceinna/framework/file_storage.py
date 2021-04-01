@@ -169,7 +169,7 @@ class FileLoger():
             self.exit_lock.acquire()
             if self.exit_thread:
                 # check for internet and text
-                if text == '' or (not self.internet_on()):
+                if text == '':
                     self.exit_lock.release()
                     break
                 else:
@@ -223,6 +223,8 @@ class FileLoger():
                     self.data_dict[log_file_name] = text + \
                         self.data_dict[log_file_name]
                     self.data_lock.release()
+
+            time.sleep(5)
 
         if bcreate_blob_ok:
             # if not self.save_to_ans_platform(packet_type, log_file_name):
@@ -389,10 +391,7 @@ class FileLoger():
             if sys.version_info[0] > 2:
                 import urllib.request
                 response = urllib.request.urlopen(url, timeout=1)
-            else:
-                import urllib2
-                response = urllib2.urlopen(url, timeout=1)
             # print(response.read())
             return True
-        except urllib2.URLError as err:
+        except Exception as err:
             return False
