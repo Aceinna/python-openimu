@@ -2,6 +2,13 @@
 
 ---
 
+## 2.3.1 / 2021-04-02
+- [OpenIMU] Update openimu.json for OpenIMU300RI
+- [OpenRTK] Update GGA parser
+- [OpenRTK] Split log name of RTK330LA from OpenRTK
+- [Framework] Optimize the device information match
+- [Framework] Support force to bootloader
+
 ## 2.3.0 / 2021-02-28
 - [OpenIMU] Support packet data statistics.
 - [OpenRTK] Support RTK330L.
