@@ -607,6 +607,9 @@ class RTKProviderBase(OpenDeviceBase):
         }
 
     def save_parameters_result(self, file_path):
+        if self.is_in_bootloader:
+            return
+
         result = self.get_params()
         if result['packetType'] == 'inputParams':
             with open(file_path, 'w') as outfile:

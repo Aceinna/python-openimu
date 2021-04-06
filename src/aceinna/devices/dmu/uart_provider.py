@@ -234,6 +234,10 @@ class Provider(OpenDeviceBase):
                 data['value']['architechture'],
                 data['value']['algorithm'],
                 data['value']['mags'])
+
+            if self.device_info['name'].__contains__('INS330BI'):
+                packet_types.append('E3')
+
             for item in input_params:
                 if item['name'] == 'Packet Type':
                     # product_configuration['continuous_packet_types']

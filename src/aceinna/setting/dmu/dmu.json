@@ -58,50 +58,11 @@
         "rate":"1260/65536",
         "mag":"2/65536",
         "temperature":"200/65536",
-        "time":"1/65535"
+        "time":"1/65535",
+		"speed":"0.001"
     },
 	"userMessages": {
 		"inputPackets": [
-			{
-				"name": "ma",
-				"description": "Magnetic alignment control commands",
-				"inputPayload": [
-					{
-						"actionID":  0,
-						"actionName": "status"
-					},
-					{
-
-						"actionID":  1,
-						"actionName": "start"
-					},
-					{
-						"actionID":  5,
-						"actionName": "save"
-					},
-					{
-						"actionID":  6,
-						"actionName": "abort"
-					},
-					{
-						"actionID": 7,
-						"actionName": "stored"
-					}
-				],
-				"responsePayload": {
-					"type": "string",
-					"name": "ma action name"
-				}
-			},
-			{
-				"name": "gV",
-				"description": "Get user app version",
-				"inputPayload": {},
-				"responsePayload": {
-					"type": "string",
-					"name": "User Version"
-				}
-			},
 			{
 				"name": "RF",
 				"description": "Get All Configuration Parameters",
@@ -110,24 +71,6 @@
 					"type": "userConfiguration",
 					"name": "Full Current Configuration"
 				}
-			},
-			{
-				"name": "gP",
-				"description": "Get a Configuration Parameter",
-				"inputPayload": {
-					"type": "paramId",
-					"name": "Request Parameter Id"
-				},
-				"responsePayload": {
-					"type": "userParameter",
-					"name": "User Parameter"
-				}
-			},
-			{
-				"name": "sC",
-				"description": "Save Conifguration Parameters to Flash",
-				"inputPayload": {},
-				"responsePayload": {}
 			},
 			{
 				"name": "SF",
@@ -643,7 +586,132 @@
 						"yMax": 200
 					}
 				]
-			}		
+			},
+			{
+				"name": "E3",
+				"description": "INS solution Data",
+				"payload": [
+					{
+						"type": "uint32",
+						"name": "counter",
+                        "unit": "packets",
+                        "offset": "0"
+					},
+					{
+						"type": "int16",
+						"name": "rollAngle",
+                        "unit": "deg",
+                        "offset": "4",
+                        "scaling":"angle"
+					},
+					{
+						"type": "int16",
+						"name": "pitchAngle",
+                        "unit": "deg",
+                        "offset": "6",
+                        "scaling":"angle"
+					},
+					{
+						"type": "int16",
+						"name": "yawAngle",
+                        "unit": "deg",
+                        "offset": "8",
+                        "scaling":"angle"
+					},
+					{
+						"type": "int16",
+						"name": "FrontWheelSteeringAngle",
+						"unit": "deg",
+						"offset": "10",
+                        "scaling":"angle"
+					},
+					{
+						"type": "int16",
+						"name": "masterAccelX",
+                        "unit": "m/s^2",
+                        "offset": "12",
+                        "scaling":"accel"
+					},
+					{
+						"type": "int16",
+						"name": "masterAccelY",
+                        "unit": "m/s^2",
+                        "offset": "14",
+                        "scaling":"accel"
+					},
+					{
+						"type": "int16",
+						"name": "masterAccelZ",
+                        "unit": "m/s^2",
+                        "offset": "16",
+                        "scaling":"accel"
+					},
+					{
+						"type": "int16",
+						"name": "mastGyroX",
+                        "unit": "deg/s",
+                        "offset": "18",
+                        "scaling":"rate"
+					},
+					{
+						"type": "int16",
+						"name": "mastGyroY",
+                        "unit": "deg/s",
+                        "offset": "20",
+                        "scaling":"rate"
+					},
+					{
+						"type": "int16",
+						"name": "mastGyroZ",
+                        "unit": "deg/s",
+                        "offset": "22",
+                        "scaling":"rate"
+					},
+					{
+						"type": "int16",
+						"name": "streeringAngleRate",
+                        "unit": "deg/s",
+                        "offset": "24",
+                        "scaling":"rate"
+					},
+					{
+						"type": "int16",
+						"name": "vehicleSpeed",
+                        "unit": "m/s",
+                        "offset": "26",
+                        "scaling":"speed"
+					},
+					{
+						"type": "int16",
+						"name": "masterAlgorithmStates",
+                        "unit": "",
+                        "offset": "28"
+					},
+					{
+						"type": "int16",
+						"name": "slavAlgorithmStates",
+                        "unit": "",
+                        "offset": "30"
+					}
+				],
+				"graphs": [{
+						"name": "Acceleration",
+						"units": "m/s^2",
+						"xAxis": {"name":"time","unit":"packets"},
+						"yAxes": ["masterAccelX", "masterAccelY", "masterAccelZ"],
+						"colors": ["#FF0000", "#00FF00", "#0000FF"],
+						"yMax": 80
+					},
+					{
+						"name": "Angular Rate",
+						"units": "deg/s",
+						"xAxis": {"name":"time","unit":"packets"},
+						"yAxes": ["mastGyroX", "mastGyroY", "mastGyroZ"],
+						"colors": ["#FF0000", "#00FF00", "#0000FF"],
+						"yMax": 400
+					}
+				]
+			}	
 		]
 	},
 	"bootloaderMessages": [{
