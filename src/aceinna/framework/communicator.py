@@ -389,6 +389,11 @@ class SerialPort(Communicator):
                         self.serial_port.close()
                         return False
                     else:
+                        self.update_connection_history({
+                            'port': port,
+                            'baud': baud_rate,
+                            'device_type': device_type
+                        })
                         return True
                 else:
                     return False
@@ -420,8 +425,11 @@ class SerialPort(Communicator):
                 ret = self.confirm_device(self.serial_port, device_type)
                 if ret:
                     # update connection history
-                    self.update_connection_history(history_connection,
-                                                   history_connection_index)
+                    self.update_connection_history({
+                        'port': port,
+                        'baud': baud_rate,
+                        'device_type': device_type
+                    }, history_connection_index)
                     return True
                 else:
                     self.serial_port.close()
