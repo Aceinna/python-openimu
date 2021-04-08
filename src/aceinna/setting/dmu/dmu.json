@@ -748,36 +748,36 @@
 					{
 						"name": "Master Algorithm States",
 						"renderType": "bits",
-						"field": {"name":"masterAlgorithmStates", "display":"Raw Data"},
+						"field": {"name": "masterAlgorithmStates", "display": "Raw Data"},
 						"bits": [
-							{"name":"Algorithm initialized","address":0, "values":["No","Yes"]},
-							{"name":"High gain mode","address":1, "values":["No","Yes"]},
-							{"name":"Attitude only","address":2, "values":["No","Yes"]},
-							{"name":"Turn switch","address":3, "values":["No","Yes"]},
-							{"name":"Linear accel","address":4, "values":["No","Yes"]},
-							{"name":"Motionless by IMU data","address":5, "values":["No","Yes"]},
-							{"name":"Motionless by GNSS data","address":6, "values":["No","Yes"]},
-							{"name":"GNSS heading valid","address":7, "values":["No","Yes"]},
-							{"name":"Heading lock","address":8, "values":["No","Yes"]},
-							{"name":"PPS available","address":9, "values":["No","Yes"]},
-							{"name":"Algorithm synced to PPS","address":10, "values":["No","Yes"]}
+							{"name": "Algorithm initialized", "address": 0, "values": ["Yes","No"]},
+							{"name": "High gain mode", "address": 1, "values": ["No","Yes"]},
+							{"name": "Attitude only", "address": 2, "values": ["No","Yes"]},
+							{"name": "Turn switch", "address": 3, "values": ["No","Yes"]},
+							{"name": "Linear accel", "address": 4, "values": ["No","Yes"]},
+							{"name": "Motionless by IMU data", "address": 5, "values": ["No","Yes"]},
+							{"name": "Motionless by GNSS data", "address": 6, "values": ["No","Yes"]},
+							{"name": "GNSS heading valid", "address": 7, "values": ["No","Yes"]},
+							{"name": "Heading lock", "address": 8, "values": ["No","Yes"]},
+							{"name": "PPS available", "address": 9, "values": ["No","Yes"]},
+							{"name": "Algorithm synced to PPS", "address": 10, "values": ["No","Yes"]}
 						]
 					},
 					{
 						"name": "Steering Angle Algorithm States",
 						"renderType": "bits",
-						"field": {"name":"slaveAlgorithmStates", "display":"Raw Data"},
+						"field": {"name": "slaveAlgorithmStates", "display": "Raw Data"},
 						"bits": [
-							{"name":"Algorithm state","address":"0:2"},
-							{"name":"Steering angle","address":"3:5"},
-							{"name":"Motionless by IMU data","address":6, "values":["No","Yes"]},
-							{"name":"Turn switch","address":7, "values":["No","Yes"]},
-							{"name":"Motionless by GNSS data","address":8, "values":["No","Yes"]},
-							{"name":"GNSS outage","address":9, "values":["No","Yes"]},
-							{"name":"Steering angle locked","address":10, "values":["No","Yes"]},
-							{"name":"Motion anomaly","address":11, "values":["No","Yes"]},
-							{"name":"GNSS heading valid","address":12, "values":["No","Yes"]},
-							{"name":"Initial gyro bias valid","address":13, "values":["No","Yes"]}
+							{"name": "Algorithm state", "address": "0:2"},
+							{"name": "Steering angle", "address": "3:5"},
+							{"name": "Motionless by IMU data", "address": 6, "values": ["No","Yes"]},
+							{"name": "Turn switch", "address": 7, "values": ["No","Yes"]},
+							{"name": "Motionless by GNSS data", "address": 8, "values": ["No","Yes"]},
+							{"name": "GNSS outage", "address": 9, "values": ["No","Yes"]},
+							{"name": "Steering angle locked", "address": 10, "values": ["No","Yes"]},
+							{"name": "Motion anomaly", "address": 11, "values": ["No","Yes"]},
+							{"name": "GNSS heading valid", "address": 12, "values": ["No","Yes"]},
+							{"name": "Initial gyro bias valid", "address": 13, "values": ["No","Yes"]}
 						]
 					}
 				]

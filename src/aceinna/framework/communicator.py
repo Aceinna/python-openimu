@@ -472,25 +472,6 @@ class SerialPort(Communicator):
 
         return exist_index
 
-        # def save_last_port(self, connection_info):
-        #     '''
-        #     save connected port info
-        #     '''
-
-        #     if not os.path.exists(self.setting_folder_path):
-        #         try:
-        #             os.mkdir(self.setting_folder_path)
-        #         except:
-        #             return
-
-        #     connection = {"port": self.serial_port.port,
-        #                   "baud": self.serial_port.baudrate}
-        #     try:
-        #         with open(self.connection_file_path, 'w') as outfile:
-        #             json.dump(connection, outfile)
-        #     except:
-        #         pass
-
     def open_serial_port(self, port=None, baud=115200, timeout=0.1):
         ''' open serial port
             returns: true when successful
