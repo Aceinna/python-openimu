@@ -24,6 +24,11 @@ class Provider(RTKProviderBase):
         self.bootloader_baudrate = 115200
         self.config_file_name = 'openrtk.json'
         self.device_category = 'OpenRTK'
+        self.port_index_define = {
+            'user': 0,
+            'rtcm': 1,
+            'debug': 2,
+        }
 
     def thread_debug_port_receiver(self, *args, **kwargs):
         if self.debug_logf is None:

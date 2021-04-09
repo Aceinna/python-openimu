@@ -63,7 +63,12 @@ class RTKProviderBase(OpenDeviceBase):
         self.prepare_folders()
         self.ntripClient = None
         self.rtk_log_file_name = ''
-        self.connected = True
+        self.connected = False
+        self.port_index_define = {
+            'user': 0,
+            'rtcm': 1,
+            'debug': 2,
+        }
 
     def prepare_folders(self):
         '''
@@ -263,8 +268,10 @@ class RTKProviderBase(OpenDeviceBase):
                 user_port_num, port_name = self.build_connected_serial_port_info()
                 if not user_port_num or not port_name:
                     return False
-                debug_port = port_name + str(int(user_port_num) + 2)
-                rtcm_port = port_name + str(int(user_port_num) + 1)
+                debug_port = port_name + \
+                    str(int(user_port_num) + self.port_index_define['debug'])
+                rtcm_port = port_name + \
+                    str(int(user_port_num) + self.port_index_define['rtcm'])
             else:
                 for x in self.properties["initial"]["uart"]:
                     if x['enable'] == 1:
