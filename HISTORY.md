@@ -1,6 +1,9 @@
 # History
 
 ---
+## 2.3.2 / 2021-04-12
+- [DMU] Support INS330BI
+- [RTK330LA] Fix the wrong GNSS port logging
 
 ## 2.3.1 / 2021-04-02
 - [OpenIMU] Update openimu.json for OpenIMU300RI
