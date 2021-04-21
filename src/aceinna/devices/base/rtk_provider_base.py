@@ -199,7 +199,7 @@ class RTKProviderBase(OpenDeviceBase):
                 'Failed to extract app version information from unit.' +
                 '\nThe supported application list is {0}.'.format(APP_STR) +
                 '\nTo keep runing, use INS configuration as default.' +
-                '\nYou can choose to place your json file under exection path if it is an unknown application.')
+                '\nYou can choose to place your json file under execution path if it is an unknown application.')
 
         with open(app_file_path) as json_data:
             self.properties = json.load(json_data)

@@ -110,11 +110,11 @@ class Provider(OpenDeviceBase):
             mode_string_len), *data_buffer[4:]).decode()
 
         split_text = model_string.split(' ')
-
+        #print(model_string)
         self.device_info = {
             'name': split_text[0],
             'pn': split_text[1],
-            # 'firmware_version': split_text[2],
+            'firmware_version': split_text[2],
             'sn': serial_num
         }
 
@@ -201,7 +201,7 @@ class Provider(OpenDeviceBase):
                  'value': self.device_info['name']},
                 {'name': 'PN', 'value': self.device_info['pn']},
                 {'name': 'Firmware Version',
-                 'value': self.app_info['version']},
+                 'value': self.device_info['firmware_version']},
                 {'name': 'SN', 'value': self.device_info['sn']}
             ]
         }
