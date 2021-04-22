@@ -56,7 +56,6 @@ def ping(communicator, *args):
         return None
 
     pk_result = _run_command(communicator, 'PK', 'PK')
-
     if pk_result == []:
         id_packet_data = _run_command(communicator, 'GP', 'ID', ID)
         vr_packet_data = _run_command(communicator, 'GP', 'VR', VR)

@@ -287,39 +287,39 @@ class FileLoger():
 
         # Loop through the items in the data dictionary and append to an output string
         #   (with precision based on the data type defined in the json properties file)
-        str = ''
+        write_str = ''
         for i, (k, v) in enumerate(data.items()):
             if not fields.__contains__(k):
                 continue
             output_packet_type = output_packet['payload'][i]['type']
 
             if output_packet['payload'][i].__contains__('scaling'):
-                str += '{0},'.format(v)
+                write_str += '{0},'.format(v)
             else:
                 if output_packet_type == 'uint32' or output_packet_type == 'int32' or \
                         output_packet_type == 'uint16' or output_packet_type == 'int16' or \
                         output_packet_type == 'uint64' or output_packet_type == 'int64':
                     # integers and unsigned integers
-                    str += '{0:d},'.format(v)
+                    write_str += '{0},'.format(v)
                 elif output_packet_type == 'double':
                     # double
-                    str += '{0:0.8f},'.format(v)  # 15.12
+                    write_str += '{0:0.8f},'.format(v)  # 15.12
                 elif output_packet_type == 'float':
-                    str += '{0:0.4f},'.format(v)  # 12.8
+                    write_str += '{0:0.4f},'.format(v)  # 12.8
                 elif output_packet_type == 'uint8':
                     # byte
-                    str += '{0:d},'.format(v)
+                    write_str += '{0:d},'.format(v)
                 elif output_packet_type == 'uchar' or output_packet_type == 'char' or output_packet_type == 'string':
                     # character
-                    str += '{:},'.format(v)
+                    write_str += '{:},'.format(v)
                 else:
                     # unknown
-                    str += '{0:3.5f},'.format(v)
+                    write_str += '{0:3.5f},'.format(v)
         #
-        str = header + str[:-1] + '\n'
+        write_str = header + write_str[:-1] + '\n'
 
         try:
-            self.log_files_obj[packet_type].write(str)
+            self.log_files_obj[packet_type].write(write_str)
             self.log_files_obj[packet_type].flush()
         except ValueError:
             APP_CONTEXT.get_logger().logger.error(
@@ -330,7 +330,7 @@ class FileLoger():
         if self.ws:
             self.data_lock.acquire()
             self.data_dict[self.log_files[packet_type]
-                           ] = self.data_dict[self.log_files[packet_type]] + str
+                           ] = self.data_dict[self.log_files[packet_type]] + write_str
             self.data_lock.release()
 
     def set_info(self, info):

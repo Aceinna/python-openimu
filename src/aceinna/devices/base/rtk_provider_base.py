@@ -136,7 +136,7 @@ class RTKProviderBase(OpenDeviceBase):
 
         port_name = device_access.port
 
-        return '# Connected {0} with UART on {1} #\nDevice:{2} \nFirmware:{3}'\
+        return '# Connected {0} with UART on {1} #\nDevice: {2} \nFirmware: {3}'\
             .format(self.device_category, port_name, device_info, app_info)
 
     def _build_device_info(self, text):

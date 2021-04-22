@@ -92,7 +92,7 @@ class Provider(OpenDeviceBase):
 
         device_string = '{0} {1} {2}'.format(
             self.device_info['name'], self.device_info['pn'], self.device_info['sn'])
-        return '# Connected {0} #\n\rDevice:{1} \n\rFirmware:{2}'\
+        return '# Connected {0} #\n\rDevice: {1} \n\rFirmware: {2}'\
             .format('DMU', device_string, self.device_info['firmware_version'])
 
     def _build_device_info(self, data_buffer):
@@ -162,6 +162,34 @@ class Provider(OpenDeviceBase):
         '''
         self.add_output_packet(packet_type, data)
 
+    def get_log_info(self):
+        '''
+        Build information for log
+        '''
+        if not self.parameters:
+            self.get_params()
+
+        input_params = self.properties['userConfiguration']
+        packet_rate = next(
+            (item['value'] for item in self.parameters if item['name'] == 'Packet Rate'), '100')
+
+        value_mapping = next(
+            (item['options'] for item in input_params if item['name'] == 'Packet Rate'), [])
+
+        packet_rate_value = next((item['value'] for item in value_mapping if item['key'] == str(packet_rate)), '0')
+
+        return {
+            "type": 'IMU',
+            "model": self.device_info['name'],
+            "logInfo": {
+                "pn": self.device_info['pn'],
+                "sn": self.device_info['sn'],
+                "sampleRate": packet_rate_value,
+                "appVersion": self.device_info['firmware_version'],
+                "imuProperties": json.dumps(self.properties)
+            }
+        }
+
     def get_upgrade_workers(self, firmware_content):
         firmware_worker = FirmwareUpgradeWorker(
             self.communicator, self.bootloader_baudrate, firmware_content)
@@ -175,7 +203,7 @@ class Provider(OpenDeviceBase):
             'deviceType': self.type,
             'serialNumber': self.device_info['sn'],
             'partNumber': self.device_info['pn'],
-            'firmware': self.app_info['version']
+            'firmware': self.device_info['firmware_version']
         }
 
     def get_operation_status(self):

@@ -198,7 +198,7 @@
 				"graphs": [{
 						"name": "Acceleration",
 						"units": "m/s^2",
-						"xAxis": "time",
+						"xAxis": "GPSITOW",
 						"yAxes": ["xAccel", "yAccel", "zAccel"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
 						"yMax": 80
@@ -206,7 +206,7 @@
 					{
 						"name": "Angular Rate",
 						"units": "deg/s",
-						"xAxis": "time",
+						"xAxis": "GPSITOW",
 						"yAxes": ["xRate", "yRate", "zRate"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
 						"yMax": 400
@@ -214,7 +214,7 @@
 					{
 						"name": "Magnetic-Field",
 						"units": "Gauss",
-						"xAxis": "time",
+						"xAxis": "GPSITOW",
 						"yAxes": ["xMag", "yMag", "zMag"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
 						"yMax": 20
@@ -222,7 +222,7 @@
                     {
 						"name": "Board-Temperature",
 						"units": "degC",
-						"xAxis": "time",
+						"xAxis": "GPSITOW",
 						"yAxes": ["boardTemp"],
 						"colors": ["#FF0000"],
 						"yMax": 100
@@ -319,7 +319,7 @@
 				"graphs": [{
 						"name": "Acceleration",
 						"units": "m/s^2",
-						"xAxis": {"name":"time","unit":"packets"},
+						"xAxis": {"name":"counter","unit":"packets"},
 						"yAxes": ["xAccel", "yAccel", "zAccel"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
 						"yMax": 5
@@ -327,7 +327,7 @@
 					{
 						"name": "Angular-Rate",
 						"units": "deg/s",
-						"xAxis": {"name":"time","unit":"packets"},
+						"xAxis": {"name":"counter","unit":"packets"},
 						"yAxes": ["xRate", "yRate", "zRate"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
 						"yMax": 200
@@ -335,7 +335,7 @@
 					{
 						"name": "Board-Temperature",
 						"units": "degC",
-						"xAxis": {"name":"time","unit":"packets"},
+						"xAxis": {"name":"counter","unit":"packets"},
 						"yAxes": ["boardTemp"],
 						"colors": ["#FF0000"],
 						"yMax": 100
@@ -453,7 +453,7 @@
 				"graphs": [{
 						"name": "Acceleration",
 						"units": "m/s^2",
-						"xAxis": {"name":"time","unit":"msec"},
+						"xAxis": {"name":"timeITOW","unit":"msec"},
 						"yAxes": ["xAccel", "yAccel", "zAccel"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
 						"yMax": 5
@@ -461,7 +461,7 @@
 					{
 						"name": "Angular-Rate",
 						"units": "deg/s",
-						"xAxis": {"name":"time","unit":"msec"},
+						"xAxis": {"name":"timeITOW","unit":"msec"},
 						"yAxes": ["xRateCorrected", "yRateCorrected", "zRateCorrected"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
 						"yMax": 200
@@ -572,7 +572,7 @@
 				"graphs": [{
 						"name": "Acceleration",
 						"units": "m/s^2",
-						"xAxis": {"name":"time","unit":"msec"},
+						"xAxis": {"name":"timeITOW","unit":"msec"},
 						"yAxes": ["xAccel", "yAccel", "zAccel"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
 						"yMax": 5
@@ -580,7 +580,7 @@
 					{
 						"name": "Angular-Rate",
 						"units": "deg/s",
-						"xAxis": {"name":"time","unit":"msec"},
+						"xAxis": {"name":"timeITOW","unit":"msec"},
 						"yAxes": ["xRateCorrected", "yRateCorrected", "zRateCorrected"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
 						"yMax": 200
@@ -697,7 +697,7 @@
 				"graphs": [{
 						"name": "Acceleration",
 						"units": "m/s^2",
-						"xAxis": {"name":"time","unit":"packets"},
+						"xAxis": {"name":"counter","unit":"packets"},
 						"yAxes": ["masterAccelX", "masterAccelY", "masterAccelZ"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
 						"yMax": 80
@@ -705,7 +705,7 @@
 					{
 						"name": "Angular Rate",
 						"units": "deg/s",
-						"xAxis": {"name":"time","unit":"packets"},
+						"xAxis": {"name":"counter","unit":"packets"},
 						"yAxes": ["mastGyroX", "mastGyroY", "mastGyroZ"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
 						"yMax": 400
@@ -713,7 +713,7 @@
 					{
 						"name": "Euler Angles (Roll and Pitch)",
 						"units": "deg",
-						"xAxis": {"name":"time","unit":"packets"},
+						"xAxis": {"name":"counter","unit":"packets"},
 						"yAxes": ["roll", "pitch"],
 						"colors": ["#FF0000", "#00FF00"],
 						"yMax": 90
@@ -721,7 +721,7 @@
                     {
 						"name": "Euler Angles (Heading)",
 						"units": "deg",
-						"xAxis": {"name":"time","unit":"packets"},
+						"xAxis": {"name":"counter","unit":"packets"},
 						"yAxes": ["yaw"],
 						"colors": ["#FF0000"],
 						"yMax": 190
