@@ -72,7 +72,6 @@ class DeviceManager:
         format_device_info = provider.bind_device_info(
             device_access, device_info, app_info)
 
-        # print(format_device_info)
         print_green(format_device_info)
 
         APP_CONTEXT.get_logger().logger.info(

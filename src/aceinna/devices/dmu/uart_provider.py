@@ -93,7 +93,7 @@ class Provider(OpenDeviceBase):
         device_string = '{0} {1} {2}'.format(
             self.device_info['name'], self.device_info['pn'], self.device_info['sn'])
         return '# Connected {0} #\n\rDevice:{1} \n\rFirmware:{2}'\
-            .format('DMU', device_string, self.app_info['version'])
+            .format('DMU', device_string, self.device_info['firmware_version'])
 
     def _build_device_info(self, data_buffer):
         '''
@@ -110,7 +110,7 @@ class Provider(OpenDeviceBase):
             mode_string_len), *data_buffer[4:]).decode()
 
         split_text = model_string.split(' ')
-        #print(model_string)
+
         self.device_info = {
             'name': split_text[0],
             'pn': split_text[1],
