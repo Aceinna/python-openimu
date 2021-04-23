@@ -52,6 +52,7 @@ class Provider(OpenDeviceBase):
         self.prepare_folders()
         self.ntripClient = None
         self.connected = True
+        self.rtk_log_file_name = ''
 
     def prepare_folders(self):
         '''
@@ -93,41 +94,15 @@ class Provider(OpenDeviceBase):
                     with open(app_name_config_path, "wb") as code:
                         code.write(app_config_content)
 
-    def ping(self):
-        '''
-        Check if the connected device is OpenRTK
-        '''
-        # print('start to check if it is openrtk')
-        device_info_text = self.internal_input_command('pG')
-        app_info_text = self.internal_input_command('gV')
-
-        APP_CONTEXT.get_logger().logger.debug('Checking if is OpenRTK device...')
-        APP_CONTEXT.get_logger().logger.debug(
-            'Device: {0}'.format(device_info_text))
-        APP_CONTEXT.get_logger().logger.debug(
-            'Firmware: {0}'.format(app_info_text))
-
-        if device_info_text.find('OpenRTK') > -1:
-            self._build_device_info(device_info_text)
-            self._build_app_info(app_info_text)
-            self.connected = True
-            print('# Connected Information #')
-            split_device_info = device_info_text.split(' ')
-            print('Device: {0} {1} {2} {3}'.format(
-                split_device_info[0], split_device_info[2], split_device_info[3], split_device_info[4]))
-            print('APP version:', app_info_text)
-            APP_CONTEXT.get_logger().logger.info(
-                'Connected {0}, {1}'.format(device_info_text, app_info_text))
-            return True
-        return False
-
     def bind_device_info(self, device_access, device_info, app_info):
         self._build_device_info(device_info)
         self._build_app_info(app_info)
         self.connected = True
 
-        return '# Connected {0} with LAN #\n\rDevice:{1} \n\rFirmware:{2}'\
+        self._device_info_string = '# Connected {0} with LAN #\n\rDevice: {1} \n\rFirmware: {2}'\
             .format('OpenRTK', device_info, app_info)
+
+        return self._device_info_string
 
     def _build_device_info(self, text):
         '''
@@ -219,6 +194,7 @@ class Provider(OpenDeviceBase):
                     "%Y_%m_%d_%H_%M_%S", time.localtime())
                 file_name = self.data_folder + '/' + 'openrtk_log_' + dir_time
                 os.mkdir(file_name)
+                self.rtk_log_file_name = file_name
                 self.user_logf = open(
                     file_name + '/' + 'user_' + file_time + '.bin', "wb")
 
@@ -226,6 +202,8 @@ class Provider(OpenDeviceBase):
             data_log_thread = threading.Thread(
                 target=self.thread_data_log)
             data_log_thread.start()
+
+            self.save_device_info()
 
         except Exception as e:
             print(e)
@@ -450,6 +428,25 @@ class Provider(OpenDeviceBase):
             'partNumber': self.device_info['pn'],
             'firmware': self.device_info['firmware_version']
         }
+
+    def get_operation_status(self):
+        if self.is_logging:
+            return 'LOGGING'
+
+        return 'IDLE'
+
+    def save_device_info(self):
+        if not self.rtk_log_file_name or not self._device_info_string:
+            return
+
+        local_time = time.localtime()
+        formatted_file_time = time.strftime("%Y_%m_%d_%H_%M_%S", local_time)
+        file_path = os.path.join(
+            self.rtk_log_file_name,
+            'device_info_{0}.txt'.format(formatted_file_time)
+        )
+        with open(file_path, 'w') as outfile:
+            outfile.write(self._device_info_string)
 
     # command list
     def server_status(self, *args):  # pylint: disable=invalid-name
