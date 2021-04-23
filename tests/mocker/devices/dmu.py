@@ -73,7 +73,7 @@ class DMUMocker(DeviceBase):
     def __init__(self, **kwargs):
         super(DMUMocker, self).__init__()
         self._sn = '2008705635'
-        self._ping_str = 'IMU381ZA-400 5020-1383-01'
+        self._ping_str = 'IMU381ZA-400 5020-1383-01 10.00.01'
         self._version = [0, 0, 0, 0, 0]
         self._data_index = 0
         self._total_data_len = 0
