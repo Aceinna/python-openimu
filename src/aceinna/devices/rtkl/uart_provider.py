@@ -20,6 +20,8 @@ class Provider(RTKProviderBase):
         super(Provider, self).__init__(communicator)
         self.type = 'RTKL'
         self.bootloader_baudrate = 115200
+        self.config_file_name = 'RTK330L.json'
+        self.device_category = 'RTK330LA'
 
     # override
     def after_bootloader_switch(self):

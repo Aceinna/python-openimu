@@ -22,6 +22,8 @@ class Provider(RTKProviderBase):
     def __init__(self, communicator, *args):
         super(Provider, self).__init__(communicator)
         self.bootloader_baudrate = 115200
+        self.config_file_name = 'openrtk.json'
+        self.device_category = 'OpenRTK'
 
     # override
     def after_bootloader_switch(self):
