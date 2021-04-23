@@ -136,8 +136,10 @@ class RTKProviderBase(OpenDeviceBase):
 
         port_name = device_access.port
 
-        return '# Connected {0} with UART on {1} #\nDevice: {2} \nFirmware: {3}'\
+        self._device_info_string = '# Connected {0} with UART on {1} #\nDevice: {2} \nFirmware: {3}'\
             .format(self.device_category, port_name, device_info, app_info)
+
+        return self._device_info_string
 
     def _build_device_info(self, text):
         '''
@@ -309,6 +311,7 @@ class RTKProviderBase(OpenDeviceBase):
                         target=self.thread_debug_port_receiver, args=(self.rtk_log_file_name,))
                     thead.start()
 
+            self.save_device_info()
         except Exception:
             if self.debug_serial_port is not None:
                 if self.debug_serial_port.isOpen():
@@ -661,6 +664,19 @@ class RTKProviderBase(OpenDeviceBase):
         if fail_count > 0:
             print_yellow(check_result)
             print_yellow('The failed parameters: {0}'.format(fail_parameters))
+
+    def save_device_info(self):
+        if not self.rtk_log_file_name:
+            return
+
+        local_time = time.localtime()
+        formatted_file_time = time.strftime("%Y_%m_%d_%H_%M_%S", local_time)
+        file_path = os.path.join(
+            self.rtk_log_file_name,
+            'device_info_{0}.txt'.format(formatted_file_time)
+        )
+        with open(file_path, 'w') as outfile:
+            outfile.write(self._device_info_string)
 
     def after_upgrade_completed(self):
         local_time = time.localtime()

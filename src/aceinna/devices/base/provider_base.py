@@ -54,6 +54,7 @@ class OpenDeviceBase(EventBase):
         self.sessionId = None
         self.ans_platform = AnsPlatformAPI()
         self._pbar = None
+        self._device_info_string = ''
 
     @property
     def is_in_bootloader(self):
