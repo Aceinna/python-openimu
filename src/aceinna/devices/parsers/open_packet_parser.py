@@ -327,6 +327,10 @@ def match_command_handler(packet_type):
         'SR': common_input_parser,
         'JI': common_input_parser,
         'JA': common_input_parser,
-        'WA': common_input_parser
+        'WA': common_input_parser,
+        'RF': common_input_parser,
+        'GF': common_input_parser,
+        'SF': common_input_parser,
+        'WF': common_input_parser,
     }
     return parser_dict.get(packet_type)

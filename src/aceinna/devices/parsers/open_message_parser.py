@@ -15,7 +15,8 @@ INPUT_PACKETS = ['pG', 'uC', 'uP', 'uA', 'uB',
                  'gC', 'gA', 'gB', 'gP', 'gV',
                  '\x15\x15', '\x00\x00', 'ma',
                  'JI', 'JA', 'WA',
-                 'RE', 'WE', 'UE', 'LE', 'SR']
+                 'RE', 'WE', 'UE', 'LE', 'SR',
+                 'SF', 'RF', 'WF', 'GF']
 OTHER_OUTPUT_PACKETS = ['CD', 'CB']
 
 

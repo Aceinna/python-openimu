@@ -28,18 +28,30 @@ def receive_args():
 
 
 def order_by_modified_date(folder_path):
-    def compare(x, y):
-        stat_x = os.stat(folder_path + "/" + x)
-        stat_y = os.stat(folder_path + "/" + y)
+    def compare(file_name_a, file_name_b):
+        stat_a = file_name_a.split('.')
+        stat_b = file_name_b.split('.')
 
-        if stat_x.st_ctime < stat_y.st_ctime:
-            return -1
+        num_a = stat_a[len(stat_a)-1]
+        num_b = stat_b[len(stat_b)-1]
 
-        elif stat_x.st_ctime > stat_y.st_ctime:
+        if num_a.isdigit() and num_b.isdigit():
+            if num_a < num_b:
+                return 1
+
+            elif num_a > num_b:
+                return -1
+
+            else:
+                return 0
+
+        if not num_a.isdigit() and num_b.isdigit():
             return 1
 
-        else:
-            return 0
+        if num_a.isdigit() and not num_b.isdigit():
+            return -1
+
+        return 0
 
     return compare
 
@@ -86,6 +98,7 @@ class CombineFiles:
         result = ParseResult()
         try:
             files = self.filter_files()
+            print(files)
             output_folder_path = os.path.join(self.root_path, self.output)
             output_file_path = os.path.join(output_folder_path, self.file_name)
 
@@ -129,7 +142,7 @@ class UserLogParser:
         user_log_file = open(prev_result, 'rb')
         dirname, _ = os.path.split(os.path.abspath(__file__))
         config_path = os.path.join(dirname, 'config.json')
-        print(output_folder_path)
+        # print(output_folder_path)
         self.initialize(user_log_file, output_folder_path, config_path, 5)
         self.start_pasre()
         return ParseResult()

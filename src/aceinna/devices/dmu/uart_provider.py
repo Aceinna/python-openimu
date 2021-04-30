@@ -1,4 +1,5 @@
 import os
+import re
 import time
 import json
 import struct
@@ -404,4 +405,31 @@ class Provider(OpenDeviceBase):
         yield {
             'packetType': 'success',
             'data': error
+        }
+
+    @with_device_message
+    def run_command(self, params, *args):
+        ''' run raw command
+        '''
+        bytes_str_in_array = re.findall('([a-f|0-9|A-F]{2})', params)
+
+        command_line = bytes([int(item, 16) for item in bytes_str_in_array])
+
+        result = yield self._message_center.build(command=command_line, timeout=2)
+
+        error = result['error']
+        raw = result['raw']
+
+        if error:
+            yield {
+                'packetType': 'error',
+                'data': {
+                    'error': 'Runtime Error',
+                    'message': 'The device cannot response the command'
+                }
+            }
+
+        yield {
+            'packetType': 'success',
+            'data': raw
         }
