@@ -6,11 +6,12 @@ import sys
 import signal
 import time
 from aceinna.bootstrap import Loader
-from aceinna.framework.decorator import (
-    receive_args, handle_application_exception)
+from aceinna.framework.decorator import (receive_args,
+                                         handle_application_exception)
+from aceinna.update import AutoUpdater
 
-IS_WINDOWS = sys.platform.__contains__(
-    'win32') or sys.platform.__contains__('win64')
+IS_WINDOWS = sys.platform.__contains__('win32') or sys.platform.__contains__(
+    'win64')
 IS_LATER_PY_38 = sys.version_info > (3, 8)
 
 
@@ -26,6 +27,7 @@ def from_command_line(**kwargs):
     '''
     Work as command line, with WebSocket and UART
     '''
+    check_update()
     application = Loader.create('cli', vars(kwargs['options']))
     application.listen()
 
@@ -36,6 +38,7 @@ def start_app(**kwargs):
     '''
     Work as a executor, with WebSocket and UART
     '''
+    check_update()
     application = None
     mode = 'default'
     if kwargs['options'].use_cli:
@@ -43,6 +46,11 @@ def start_app(**kwargs):
 
     application = Loader.create(mode, vars(kwargs['options']))
     application.listen()
+
+
+def check_update():
+    autoUpdater = AutoUpdater()
+    autoUpdater.check()
 
 
 if __name__ == '__main__':
