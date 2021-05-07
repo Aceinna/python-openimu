@@ -170,7 +170,7 @@ class TestDeviceMessageWrapper(unittest.TestCase):
         result1 = send_ping_command()
         result2 = send_get_version_timeout_command()
         # for test, wait 1s, if it is a timeout command, but we should handle the timeout error
-        time.sleep(1)
+        time.sleep(1.1)
         result3 = send_get_parameter_command()
         command_result = [
             result1['packet_type'],

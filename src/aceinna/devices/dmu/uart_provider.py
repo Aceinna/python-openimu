@@ -177,7 +177,8 @@ class Provider(OpenDeviceBase):
         value_mapping = next(
             (item['options'] for item in input_params if item['name'] == 'Packet Rate'), [])
 
-        packet_rate_value = next((item['value'] for item in value_mapping if item['key'] == str(packet_rate)), '0')
+        packet_rate_value = next(
+            (item['value'] for item in value_mapping if item['key'] == str(packet_rate)), '0')
 
         return {
             "type": 'IMU',
@@ -349,6 +350,11 @@ class Provider(OpenDeviceBase):
         '''
         configuration_field = CONFIGURATION_FIELD_DEFINES_SINGLETON.find(
             params['paramId'])
+
+        if configuration_field.name == 'Unknown':
+            yield {
+                'packetType': 'error'
+            }
 
         if configuration_field is None:
             yield {

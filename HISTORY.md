@@ -1,6 +1,12 @@
 # History
 
 ---
+## 2.4.0 / 2021-04-12
+- [DMU] Resolve firmware version from ID message.
+- [DMU] Support record data in developers site.
+- [DMU/IMU] Support GF, SF, RF, WF for uart command run tool in developers site.
+- [OpenRTK/RTK330LA] Log device info when device is connected.
+
 ## 2.3.2 / 2021-04-12
 - [DMU] Support INS330BI
 - [RTK330LA] Fix the wrong GNSS port logging
