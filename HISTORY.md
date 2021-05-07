@@ -1,7 +1,7 @@
 # History
 
 ---
-## 2.4.0 / 2021-04-12
+## 2.4.0 / 2021-05-07
 - [DMU] Resolve firmware version from ID message.
 - [DMU] Support record data in developers site.
 - [DMU/IMU] Support GF, SF, RF, WF for uart command run tool in developers site.
