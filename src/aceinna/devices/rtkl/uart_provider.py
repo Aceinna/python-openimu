@@ -53,7 +53,7 @@ class Provider(RTKProviderBase):
         message_bytes.extend(struct.pack('>I', content_len))
 
         command_line = helper.build_packet('CS', message_bytes)
-        # self.communicator.reset_buffer()  # clear input and output buffer
+        time.sleep(3) # sleep 3s, to wait for bootloader ready
         self.communicator.write(command_line, True)
         time.sleep(2)
         result = helper.read_untils_have_data(
