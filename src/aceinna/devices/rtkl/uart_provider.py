@@ -1,12 +1,16 @@
 import time
 import serial
-import serial.tools.list_ports
+import struct
+
 
 from ..base.rtk_provider_base import RTKProviderBase
 from ..upgrade_workers import (
     FirmwareUpgradeWorker,
     FIRMWARE_EVENT_TYPE,
     SDKUpgradeWorker
+)
+from ...framework.utils import (
+    helper
 )
 from ...framework.utils.print import print_red
 
@@ -44,21 +48,41 @@ class Provider(RTKProviderBase):
             else:
                 time.sleep(0.001)
 
-    # override
+    def before_write_content(self, core, content_len):
+        message_bytes = [ord('C'), ord(core)]
+        message_bytes.extend(struct.pack('>I', content_len))
 
-    def before_write_content(self):
-        time.sleep(8)
+        command_line = helper.build_packet('CS', message_bytes)
+        # self.communicator.reset_buffer()  # clear input and output buffer
+        self.communicator.write(command_line, True)
+        time.sleep(2)
+        result = helper.read_untils_have_data(
+            self.communicator, 'CS', 1000, 50)
+
+        if not result:
+            raise Exception('Cannot run set core command')
 
     # override
     def build_worker(self, rule, content):
         if rule == 'rtk':
-            firmware_worker = FirmwareUpgradeWorker(
+            rtk_upgrade_worker = FirmwareUpgradeWorker(
                 self.communicator, self.bootloader_baudrate, content, 192)
-            firmware_worker.on(
-                FIRMWARE_EVENT_TYPE.FIRST_PACKET, lambda: time.sleep(26))
-            firmware_worker.on(FIRMWARE_EVENT_TYPE.BEFORE_WRITE,
-                               self.before_write_content)
-            return firmware_worker
+            rtk_upgrade_worker.on(
+                FIRMWARE_EVENT_TYPE.FIRST_PACKET, lambda: time.sleep(15))
+            rtk_upgrade_worker.on(FIRMWARE_EVENT_TYPE.BEFORE_WRITE,
+                                  lambda: self.before_write_content('0', len(content)))
+            rtk_upgrade_worker.group = 'firmware'
+            return rtk_upgrade_worker
+
+        if rule == 'ins':
+            ins_upgrade_worker = FirmwareUpgradeWorker(
+                self.communicator, self.bootloader_baudrate, content, 192)
+            ins_upgrade_worker.on(
+                FIRMWARE_EVENT_TYPE.FIRST_PACKET, lambda: time.sleep(15))
+            ins_upgrade_worker.on(FIRMWARE_EVENT_TYPE.BEFORE_WRITE,
+                                  lambda: self.before_write_content('1', len(content)))
+            ins_upgrade_worker.group = 'firmware'
+            return ins_upgrade_worker
 
         if rule == 'sdk':
             sdk_port = ''
@@ -71,7 +95,8 @@ class Provider(RTKProviderBase):
                         if uart['name'] == 'SDK':
                             sdk_port = uart["value"]
 
-            sdk_uart = serial.Serial(sdk_port, self.bootloader_baudrate, timeout=0.1)
+            sdk_uart = serial.Serial(
+                sdk_port, self.bootloader_baudrate, timeout=0.1)
             if not sdk_uart.isOpen():
                 raise Exception('Cannot open SDK upgrade port')
 

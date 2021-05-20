@@ -595,6 +595,7 @@ class RTKProviderBase(OpenDeviceBase):
         rules = [
             InternalCombineAppParseRule('rtk', 'rtk_start:', 4),
             InternalCombineAppParseRule('sdk', 'sdk_start:', 4),
+            InternalCombineAppParseRule('ins', 'ins_start:', 4),
         ]
 
         parsed_content = firmware_content_parser(firmware_content, rules)

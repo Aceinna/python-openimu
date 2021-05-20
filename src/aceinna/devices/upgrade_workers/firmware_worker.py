@@ -47,7 +47,11 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
 
         # custom
         if current == 0:
-            self.emit(EVENT_TYPE.FIRST_PACKET)
+            try:
+                self.emit(EVENT_TYPE.FIRST_PACKET)
+            except:
+                self.emit('error', self._key, 'Fail in first packet')
+                return False
 
         response = helper.read_untils_have_data(
             self._communicator, 'WA', 50, 50)
@@ -59,15 +63,20 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
     def work(self):
         '''Upgrades firmware of connected device to file provided in argument
         '''
+        if self._is_stopped:
+            return
+
         if self.current == 0 and self.total == 0:
             self.emit('error', self._key, 'Invalid file content')
             return
 
         self._communicator.serial_port.baudrate = self._baudrate
         self._communicator.serial_port.reset_input_buffer()
-
-        self.emit(EVENT_TYPE.BEFORE_WRITE)
-
+        try:
+            self.emit(EVENT_TYPE.BEFORE_WRITE)
+        except:
+            self.emit('error', self._key, 'Fail in before write')
+            return
         while self.current < self.total:
             if self._is_stopped:
                 return
@@ -90,4 +99,8 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
         if self.total > 0 and self.current >= self.total:
             self.emit('finish', self._key)
 
-        self.emit(EVENT_TYPE.AFTER_WRITE)
+        try:
+            self.emit(EVENT_TYPE.AFTER_WRITE)
+        except:
+            self.emit('error', self._key, 'Fail in after write')
+            return

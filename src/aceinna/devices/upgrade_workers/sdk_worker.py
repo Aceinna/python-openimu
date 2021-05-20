@@ -1020,6 +1020,9 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
         '''
         Start to do upgrade
         '''
+        if self._is_stopped:
+            return
+
         fs_len = len(self._file_content)
         bin_info_list = self.get_bin_info_list(fs_len, self._file_content)
 
