@@ -49,8 +49,8 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
         if current == 0:
             try:
                 self.emit(EVENT_TYPE.FIRST_PACKET)
-            except:
-                self.emit('error', self._key, 'Fail in first packet')
+            except Exception as ex:
+                self.emit('error', self._key, 'Fail in first packet: {0}'.format(ex))
                 return False
 
         response = helper.read_untils_have_data(
@@ -74,8 +74,8 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
         self._communicator.serial_port.reset_input_buffer()
         try:
             self.emit(EVENT_TYPE.BEFORE_WRITE)
-        except:
-            self.emit('error', self._key, 'Fail in before write')
+        except Exception as ex:
+            self.emit('error', self._key, 'Fail in before write: {0}'.format(ex))
             return
         while self.current < self.total:
             if self._is_stopped:
@@ -101,6 +101,6 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
 
         try:
             self.emit(EVENT_TYPE.AFTER_WRITE)
-        except:
-            self.emit('error', self._key, 'Fail in after write')
+        except Exception as ex:
+            self.emit('error', self._key, 'Fail in after write: {0}'.format(ex))
             return

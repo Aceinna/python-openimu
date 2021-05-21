@@ -9,7 +9,7 @@ from ..base.rtk_provider_base import RTKProviderBase
 from ..upgrade_workers import (
     FirmwareUpgradeWorker,
     FIRMWARE_EVENT_TYPE,
-    SDKUpgradeWorker
+    SDK8100UpgradeWorker
 )
 from ...framework.utils.print import print_red
 
@@ -107,7 +107,7 @@ class Provider(RTKProviderBase):
             if not sdk_uart.isOpen():
                 raise Exception('Cannot open SDK upgrade port')
 
-            return SDKUpgradeWorker(sdk_uart, content)
+            return SDK8100UpgradeWorker(sdk_uart, content)
 
     # command list
     # use base methods
