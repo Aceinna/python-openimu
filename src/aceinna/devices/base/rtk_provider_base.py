@@ -187,6 +187,7 @@ class RTKProviderBase(OpenDeviceBase):
             self.properties = json.load(json_data)
 
     def ntrip_client_thread(self):
+        # print('new ntrip client')
         self.ntripClient = NTRIPClient(self.properties, self.communicator)
         self.ntripClient.run()
 
@@ -241,7 +242,7 @@ class RTKProviderBase(OpenDeviceBase):
             self.check_predefined_result()
 
         # start ntrip client
-        if self.ntrip_client_enable:
+        if self.ntrip_client_enable and not self.ntripClient:
             thead = threading.Thread(target=self.ntrip_client_thread)
             thead.start()
 
