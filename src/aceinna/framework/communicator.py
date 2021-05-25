@@ -513,6 +513,9 @@ class SerialPort(Communicator):
         except Exception as ex:
             # print(e)
             raise
+        
+    def can_write(self):
+        return self.serial_port and self.serial_port.isOpen()
 
     def read(self, size=100):
         '''
