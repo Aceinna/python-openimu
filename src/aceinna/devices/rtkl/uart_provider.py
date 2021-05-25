@@ -107,25 +107,9 @@ class Provider(RTKProviderBase):
             return ins_upgrade_worker
 
         if rule == 'sdk':
-            # if self.rtcm_serial_port.isOpen():
-            #     self.rtcm_serial_port.close()
-
-            # sdk_port = ''
-            # if (self.properties["initial"]["useDefaultUart"]):
-            #     user_port_num, port_name = self.build_connected_serial_port_info()
-            #     sdk_port = port_name + str(int(user_port_num) + 3)
-            # else:
-            #     for uart in self.properties["initial"]["uart"]:
-            #         if uart['enable'] == 1:
-            #             if uart['name'] == 'SDK':
-            #                 sdk_port = uart["value"]
-
             sdk_uart = self.rtcm_serial_port
             sdk_uart.baudrate = self.bootloader_baudrate
-            sdk_uart.reset_input_buffer()
-
-            # serial.Serial(
-            #     sdk_port, self.bootloader_baudrate, timeout=0.1)
+            # sdk_uart.reset_input_buffer()
 
             if not sdk_uart.isOpen():
                 raise Exception('Cannot open SDK upgrade port')

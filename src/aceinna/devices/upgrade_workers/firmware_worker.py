@@ -69,7 +69,6 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
         '''
         if self._is_stopped:
             return
-        print('I am working...firmware')
         if self.current == 0 and self.total == 0:
             self.emit(EVENT_TYPE.ERROR, self._key, 'Invalid file content')
             return

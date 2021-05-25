@@ -894,11 +894,21 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
             if result_len < check_data_len:
                 return False
 
-            for i in range(check_data_len):
-                if result[i] != check_data[i]:
+            for m in range(result_len):
+                is_diff = False
+
+                if m + check_data_len > result_len:
                     return False
 
-            return True
+                for n in range(check_data_len):
+                    if result[m+n] != check_data[n]:
+                        is_diff = True
+                        break
+
+                if not is_diff:
+                    return True
+
+            return False
 
         if isinstance(check_data, int):
             return result[0] == check_data
@@ -907,21 +917,11 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
         '''Calculates CRC per 380 manual
         '''
         crc32val = crc32val ^ 0xffffffff
-        # print(int(len/4))
+
         for i in range(int(data_len/4)):
             for j in range(4):
-                '''
-                print(crc32val)
-                print(bytes[j])
-                print(crc32val ^ bytes[j])
-                '''
-                #print((crc32val ^ bytes[j]) & 0xff)
                 crc32val = CRC32_TAB[(crc32val ^ bytes_hex[j+4*i])
                                      & 0xff] ^ (crc32val >> 8)
-                #print("byte[%d] = %d ,crc32val = %d" % (j,bytes[j],crc32val))
-
-                #print(crc32_tab[(crc32val ^ bytes[j]) & 0xff])
-            #print("i= %d,bytes = %02x,crc32val = %d" % (i,bytes[j+4*i],crc32val))
         return crc32val ^ 0xffffffff
 
     def get_list_from_int(self, value):
@@ -954,13 +954,20 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
             return False
 
         sync = [0xfd, 0xc6, 0x49, 0x28]
-        self._uart.write([0x00, 0x00, 0x00, 0x00])
-        self._uart.write(sync)
-        self._uart.write(sync)
-        self._uart.write(sync)
-        time.sleep(0.5)
+        retry_times = 10
+        is_matched = False
 
-        return self.read_until([0x3A, 0x54, 0x2C, 0xA6], 100)
+        for i in range(retry_times):
+            self._uart.write([0x00, 0x00, 0x00, 0x00])
+            self._uart.write(sync)
+            self._uart.write(sync)
+            time.sleep(0.5)
+
+            is_matched = self.read_until([0x3A, 0x54, 0x2C, 0xA6], 100)
+            if is_matched:
+                break
+
+        return is_matched
 
     def send_change_baud_cmd(self):
         if self._is_stopped:
@@ -969,7 +976,6 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
         change_baud_cmd = [0x71]
 
         self._uart.write(change_baud_cmd)
-        # print("wait baud")
 
         return self.read_until(0xCC, 10, 1)
 
@@ -979,9 +985,7 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
 
         baud_list = []
         baud_list = self.get_list_from_int(baud_int)
-        # print('baud_int = %d' % baud_int)
-        # print(baud_list)
-        #baud = [0x00,0x84,0x03,0x00]
+
         self._uart.write(baud_list)
 
         has_read = self.read_until(0xCC, 10)
@@ -1114,7 +1118,7 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
         bin_info_list += self.get_list_from_int(debugAddress)
         bin_info_list += self.get_list_from_int(debugSize)
         bin_info_list += self.get_list_from_int(debugData)
-        # print(bin_info_list)
+
         return bin_info_list
 
     def devinit_wait(self):
@@ -1187,13 +1191,15 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
         if self._is_stopped:
             return
 
-        print('I am working...9100')
         fs_len = len(self._file_content)
         bin_info_list = self.get_bin_info_list(fs_len, self._file_content)
 
         # if not self.connect_serail_port():
         #     return self._raise_error('Connect serial Port failed')
-        time.sleep(3) # Wait for bootloader ready
+        time.sleep(5)  # Wait for bootloader ready
+
+        self._uart.reset_input_buffer()
+
         if not self.send_sync():
             return self._raise_error('Sync failed')
 
@@ -1230,5 +1236,5 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
         if not self.flash_crc():
             return self._raise_error('CRC check fail')
         else:
-            #self._uart.close()
+            # self._uart.close()
             self.emit('finish', self._key)
