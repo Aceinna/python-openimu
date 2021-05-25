@@ -957,6 +957,7 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
         self._uart.write([0x00, 0x00, 0x00, 0x00])
         self._uart.write(sync)
         self._uart.write(sync)
+        self._uart.write(sync)
         time.sleep(0.5)
 
         return self.read_until([0x3A, 0x54, 0x2C, 0xA6], 100)
@@ -1162,8 +1163,8 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
         return self.read_until(0xCC, 500)
 
     def _raise_error(self, message):
-        if self._uart.isOpen():
-            self._uart.close()
+        # if self._uart.isOpen():
+        #     self._uart.close()
 
         # if the worker is mark as stopped, don't raise any error
         if self._is_stopped:
@@ -1186,12 +1187,13 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
         if self._is_stopped:
             return
 
+        print('I am working...9100')
         fs_len = len(self._file_content)
         bin_info_list = self.get_bin_info_list(fs_len, self._file_content)
 
         # if not self.connect_serail_port():
         #     return self._raise_error('Connect serial Port failed')
-
+        time.sleep(3) # Wait for bootloader ready
         if not self.send_sync():
             return self._raise_error('Sync failed')
 
@@ -1228,5 +1230,5 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
         if not self.flash_crc():
             return self._raise_error('CRC check fail')
         else:
-            self._uart.close()
+            #self._uart.close()
             self.emit('finish', self._key)

@@ -372,19 +372,9 @@ class RTKProviderBase(OpenDeviceBase):
     def thread_debug_port_receiver(self, *args, **kwargs):
         pass
 
+    @abstractmethod
     def thread_rtcm_port_receiver(self, *args, **kwargs):
-        if self.rtcm_logf is None:
-            return
-        while True:
-            try:
-                data = bytearray(self.rtcm_serial_port.read_all())
-            except Exception as e:
-                print_red('RTCM PORT Thread error: {0}'.format(e))
-                return  # exit thread receiver
-            if len(data):
-                self.rtcm_logf.write(data)
-            else:
-                time.sleep(0.001)
+        pass
 
     def on_receive_output_packet(self, packet_type, data, error=None):
         '''
@@ -594,8 +584,8 @@ class RTKProviderBase(OpenDeviceBase):
         workers = []
         rules = [
             InternalCombineAppParseRule('rtk', 'rtk_start:', 4),
-            InternalCombineAppParseRule('sdk', 'sdk_start:', 4),
             InternalCombineAppParseRule('ins', 'ins_start:', 4),
+            InternalCombineAppParseRule('sdk', 'sdk_start:', 4),
         ]
 
         parsed_content = firmware_content_parser(firmware_content, rules)
@@ -603,8 +593,14 @@ class RTKProviderBase(OpenDeviceBase):
         # foreach parsed content, if empty, skip register into upgrade center
         for _, rule in enumerate(parsed_content):
             content = parsed_content[rule]
-            if len(content) > 0:
-                workers.append(self.build_worker(rule, content))
+            if len(content) == 0:
+                continue
+
+            worker = self.build_worker(rule, content)
+            if not worker:
+                continue
+
+            workers.append(worker)
 
         return workers
 

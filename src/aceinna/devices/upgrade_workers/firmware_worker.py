@@ -10,6 +10,9 @@ class EVENT_TYPE:
     FIRST_PACKET = 'first_packet'
     BEFORE_WRITE = 'before_write'
     AFTER_WRITE = 'after_write'
+    FINISH = 'finish'
+    ERROR = 'error'
+    PROGRESS = 'progress'
 
 
 class FirmwareUpgradeWorker(UpgradeWorkerBase):
@@ -50,7 +53,8 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
             try:
                 self.emit(EVENT_TYPE.FIRST_PACKET)
             except Exception as ex:
-                self.emit('error', self._key, 'Fail in first packet: {0}'.format(ex))
+                self.emit(EVENT_TYPE.ERROR, self._key,
+                          'Fail in first packet: {0}'.format(ex))
                 return False
 
         response = helper.read_untils_have_data(
@@ -65,9 +69,9 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
         '''
         if self._is_stopped:
             return
-
+        print('I am working...firmware')
         if self.current == 0 and self.total == 0:
-            self.emit('error', self._key, 'Invalid file content')
+            self.emit(EVENT_TYPE.ERROR, self._key, 'Invalid file content')
             return
 
         self._communicator.serial_port.baudrate = self._baudrate
@@ -75,7 +79,8 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
         try:
             self.emit(EVENT_TYPE.BEFORE_WRITE)
         except Exception as ex:
-            self.emit('error', self._key, 'Fail in before write: {0}'.format(ex))
+            self.emit(EVENT_TYPE.ERROR, self._key,
+                      'Fail in before write: {0}'.format(ex))
             return
         while self.current < self.total:
             if self._is_stopped:
@@ -89,18 +94,19 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
                 packet_data_len, self.current, data)
 
             if not write_result:
-                self.emit('error', self._key,
+                self.emit(EVENT_TYPE.ERROR, self._key,
                           'Write firmware operation failed')
                 return
 
             self.current += packet_data_len
-            self.emit('progress', self._key, self.current, self.total)
-
-        if self.total > 0 and self.current >= self.total:
-            self.emit('finish', self._key)
+            self.emit(EVENT_TYPE.PROGRESS, self._key, self.current, self.total)
 
         try:
             self.emit(EVENT_TYPE.AFTER_WRITE)
         except Exception as ex:
-            self.emit('error', self._key, 'Fail in after write: {0}'.format(ex))
+            self.emit(EVENT_TYPE.ERROR, self._key,
+                      'Fail in after write: {0}'.format(ex))
             return
+
+        if self.total > 0 and self.current >= self.total:
+            self.emit(EVENT_TYPE.FINISH, self._key)
