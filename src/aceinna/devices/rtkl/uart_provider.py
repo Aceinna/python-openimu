@@ -6,7 +6,7 @@ import struct
 from ..base.rtk_provider_base import RTKProviderBase
 from ..upgrade_workers import (
     FirmwareUpgradeWorker,
-    FIRMWARE_EVENT_TYPE,
+    UPGRADE_EVENT,
     SDK9100UpgradeWorker
 )
 from ...framework.utils import (
@@ -90,20 +90,18 @@ class Provider(RTKProviderBase):
             rtk_upgrade_worker = FirmwareUpgradeWorker(
                 self.communicator, self.bootloader_baudrate, content, 192)
             rtk_upgrade_worker.on(
-                FIRMWARE_EVENT_TYPE.FIRST_PACKET, lambda: time.sleep(15))
-            rtk_upgrade_worker.on(FIRMWARE_EVENT_TYPE.BEFORE_WRITE,
+                UPGRADE_EVENT.FIRST_PACKET, lambda: time.sleep(15))
+            rtk_upgrade_worker.on(UPGRADE_EVENT.BEFORE_WRITE,
                                   lambda: self.before_write_content('0', len(content)))
-            rtk_upgrade_worker.group = 'firmware'
             return rtk_upgrade_worker
 
         if rule == 'ins':
             ins_upgrade_worker = FirmwareUpgradeWorker(
                 self.communicator, self.bootloader_baudrate, content, 192)
             ins_upgrade_worker.on(
-                FIRMWARE_EVENT_TYPE.FIRST_PACKET, lambda: time.sleep(15))
-            ins_upgrade_worker.on(FIRMWARE_EVENT_TYPE.BEFORE_WRITE,
+                UPGRADE_EVENT.FIRST_PACKET, lambda: time.sleep(15))
+            ins_upgrade_worker.on(UPGRADE_EVENT.BEFORE_WRITE,
                                   lambda: self.before_write_content('1', len(content)))
-            ins_upgrade_worker.group = 'firmware'
             return ins_upgrade_worker
 
         if rule == 'sdk':
@@ -115,9 +113,9 @@ class Provider(RTKProviderBase):
                 raise Exception('Cannot open SDK upgrade port')
 
             sdk_upgrade_worker = SDK9100UpgradeWorker(sdk_uart, content)
-            sdk_upgrade_worker.on(FIRMWARE_EVENT_TYPE.ERROR,
+            sdk_upgrade_worker.on(UPGRADE_EVENT.ERROR,
                                   self.reopen_rtcm_serial_port)
-            sdk_upgrade_worker.on(FIRMWARE_EVENT_TYPE.FINISH,
+            sdk_upgrade_worker.on(UPGRADE_EVENT.FINISH,
                                   self.reopen_rtcm_serial_port)
             return sdk_upgrade_worker
 

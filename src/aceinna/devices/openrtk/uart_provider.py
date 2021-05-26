@@ -8,7 +8,7 @@ from ..base.rtk_provider_base import RTKProviderBase
 
 from ..upgrade_workers import (
     FirmwareUpgradeWorker,
-    FIRMWARE_EVENT_TYPE,
+    UPGRADE_EVENT,
     SDK8100UpgradeWorker
 )
 from ...framework.utils.print import print_red
@@ -102,7 +102,7 @@ class Provider(RTKProviderBase):
             firmware_worker = FirmwareUpgradeWorker(
                 self.communicator, self.bootloader_baudrate, content)
             firmware_worker.on(
-                FIRMWARE_EVENT_TYPE.FIRST_PACKET, lambda: time.sleep(8))
+                UPGRADE_EVENT.FIRST_PACKET, lambda: time.sleep(8))
             return firmware_worker
 
         if rule == 'sdk':

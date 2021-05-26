@@ -1,6 +1,7 @@
 import time
 from ..base.upgrade_worker_base import UpgradeWorkerBase
 from ...framework.utils import helper
+from . import (UPGRADE_EVENT, UPGRADE_GROUP)
 
 
 class EVENT_TYPE:
@@ -27,6 +28,7 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
         self.total = len(file_content)
         self._baudrate = baudrate
         self.max_data_len = block_size  # custom
+        self._group = UPGRADE_GROUP.FIRMWARE
         # self._key = None
         # self._is_stopped = False
 
@@ -51,9 +53,9 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
         # custom
         if current == 0:
             try:
-                self.emit(EVENT_TYPE.FIRST_PACKET)
+                self.emit(UPGRADE_EVENT.FIRST_PACKET)
             except Exception as ex:
-                self.emit(EVENT_TYPE.ERROR, self._key,
+                self.emit(UPGRADE_EVENT.ERROR, self._key,
                           'Fail in first packet: {0}'.format(ex))
                 return False
 
@@ -70,15 +72,15 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
         if self._is_stopped:
             return
         if self.current == 0 and self.total == 0:
-            self.emit(EVENT_TYPE.ERROR, self._key, 'Invalid file content')
+            self.emit(UPGRADE_EVENT.ERROR, self._key, 'Invalid file content')
             return
 
         self._communicator.serial_port.baudrate = self._baudrate
         self._communicator.serial_port.reset_input_buffer()
         try:
-            self.emit(EVENT_TYPE.BEFORE_WRITE)
+            self.emit(UPGRADE_EVENT.BEFORE_WRITE)
         except Exception as ex:
-            self.emit(EVENT_TYPE.ERROR, self._key,
+            self.emit(UPGRADE_EVENT.ERROR, self._key,
                       'Fail in before write: {0}'.format(ex))
             return
         while self.current < self.total:
@@ -93,19 +95,19 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
                 packet_data_len, self.current, data)
 
             if not write_result:
-                self.emit(EVENT_TYPE.ERROR, self._key,
+                self.emit(UPGRADE_EVENT.ERROR, self._key,
                           'Write firmware operation failed')
                 return
 
             self.current += packet_data_len
-            self.emit(EVENT_TYPE.PROGRESS, self._key, self.current, self.total)
+            self.emit(UPGRADE_EVENT.PROGRESS, self._key, self.current, self.total)
 
         try:
-            self.emit(EVENT_TYPE.AFTER_WRITE)
+            self.emit(UPGRADE_EVENT.AFTER_WRITE)
         except Exception as ex:
-            self.emit(EVENT_TYPE.ERROR, self._key,
+            self.emit(UPGRADE_EVENT.ERROR, self._key,
                       'Fail in after write: {0}'.format(ex))
             return
 
         if self.total > 0 and self.current >= self.total:
-            self.emit(EVENT_TYPE.FINISH, self._key)
+            self.emit(UPGRADE_EVENT.FINISH, self._key)

@@ -11,7 +11,7 @@ from .configuration_field import CONFIGURATION_FIELD_DEFINES_SINGLETON
 from .eeprom_field import EEPROM_FIELD_DEFINES_SINGLETON
 from ..upgrade_workers import (
     FirmwareUpgradeWorker,
-    FIRMWARE_EVENT_TYPE
+    UPGRADE_EVENT
 )
 
 ID = [0x49, 0x44]
@@ -196,7 +196,7 @@ class Provider(OpenDeviceBase):
         firmware_worker = FirmwareUpgradeWorker(
             self.communicator, self.bootloader_baudrate, firmware_content)
         firmware_worker.on(
-            FIRMWARE_EVENT_TYPE.FIRST_PACKET, lambda: time.sleep(8))
+            UPGRADE_EVENT.FIRST_PACKET, lambda: time.sleep(8))
         return [firmware_worker]
 
     def get_device_connection_info(self):

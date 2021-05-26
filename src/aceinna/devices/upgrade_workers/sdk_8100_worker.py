@@ -1,7 +1,7 @@
 import time
 import math
 from ..base.upgrade_worker_base import UpgradeWorkerBase
-
+from . import UPGRADE_EVENT
 
 XLDR_TESEO5_BOOTLOADER_CUT2 = \
     [
@@ -977,7 +977,8 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
             has_read = self.read_until(0xCC, 100)
 
             if has_read:
-                self.emit('progress', self._key, current, packet_num)
+                self.emit(UPGRADE_EVENT.PROGRESS,
+                          self._key, current, packet_num)
             else:
                 write_result = False
                 break
@@ -999,7 +1000,7 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
             return False
         # wait a time, output data to client
         time.sleep(.5)
-        self.emit('error', self._key, message)
+        self.emit(UPGRADE_EVENT.ERROR, self._key, message)
         return False
 
     @property
@@ -1066,4 +1067,4 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
             return self._raise_error('CRC check fail')
         else:
             self._uart.close()
-            self.emit('finish', self._key)
+            self.emit(UPGRADE_EVENT.FINISH, self._key)
