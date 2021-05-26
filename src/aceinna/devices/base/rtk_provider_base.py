@@ -21,7 +21,11 @@ from ..configs.openrtk_predefine import (
 )
 from ..decorator import with_device_message
 from ...models import InternalCombineAppParseRule
-from ..upgrade_center import UpgradeCenter
+from ..upgrade_workers import (
+    FirmwareUpgradeWorker,
+    JumpApplicationWorker,
+    JumpBootloaderWorker
+)
 from ..parsers.open_field_parser import encode_value
 from abc import ABCMeta, abstractmethod
 
@@ -64,6 +68,11 @@ class RTKProviderBase(OpenDeviceBase):
         self.connected = True
         self.device_category = ''
         self.config_file_name = 'openrtk.json'
+        self.port_index_define = {
+            'user': 0,
+            'rtcm': 1,
+            'debug': 2,
+        }
 
     def prepare_folders(self):
         '''
@@ -108,6 +117,21 @@ class RTKProviderBase(OpenDeviceBase):
 
                     with open(app_name_config_path, "wb") as code:
                         code.write(app_config_content)
+
+    @property
+    def is_in_bootloader(self):
+        ''' Check if the connected device is in bootloader mode
+        '''
+        if not self.app_info or not self.app_info.__contains__('version'):
+            return False
+
+        version = self.app_info['version']
+        version_splits = version.split(',')
+        if len(version_splits) == 1:
+            if 'bootloader' in version_splits[0].lower():
+                return True
+
+        return False
 
     def bind_device_info(self, device_access, device_info, app_info):
         self._build_device_info(device_info)
@@ -251,8 +275,10 @@ class RTKProviderBase(OpenDeviceBase):
                 user_port_num, port_name = self.build_connected_serial_port_info()
                 if not user_port_num or not port_name:
                     return False
-                debug_port = port_name + str(int(user_port_num) + 2)
-                rtcm_port = port_name + str(int(user_port_num) + 1)
+                debug_port = port_name + \
+                    str(int(user_port_num) + self.port_index_define['debug'])
+                rtcm_port = port_name + \
+                    str(int(user_port_num) + self.port_index_define['rtcm'])
             else:
                 for x in self.properties["initial"]["uart"]:
                     if x['enable'] == 1:
@@ -265,7 +291,8 @@ class RTKProviderBase(OpenDeviceBase):
                 self.rtk_log_file_name, 'user_{0}.bin'.format(formatted_file_time)), "wb")
 
             if rtcm_port != '':
-                print_green('OpenRTK log GNSS UART {0}'.format(rtcm_port))
+                print_green('{0} log GNSS UART {1}'.format(
+                    self.device_category, rtcm_port))
                 self.rtcm_serial_port = serial.Serial(
                     rtcm_port, '460800', timeout=0.1)
                 if self.rtcm_serial_port.isOpen():
@@ -277,7 +304,8 @@ class RTKProviderBase(OpenDeviceBase):
                     thead.start()
 
             if debug_port != '':
-                print_green('OpenRTK log DEBUG UART {0}'.format(debug_port))
+                print_green('{0} log DEBUG UART {1}'.format(
+                    self.device_category, debug_port))
                 self.debug_serial_port = serial.Serial(
                     debug_port, '460800', timeout=0.1)
                 if self.debug_serial_port.isOpen():
@@ -566,32 +594,51 @@ class RTKProviderBase(OpenDeviceBase):
                 self.add_output_packet('stream', 'imu', data)
 
     @abstractmethod
-    def append_to_upgrade_center(self, upgrade_center, rule, content):
-        ''' Append worker to upgrade center
+    def build_worker(self, rule, content):
+        ''' Build upgarde worker by rule and content
         '''
         pass
 
     # override
-    def build_upgrade_center(self, firmware_content):
+    def get_upgrade_workers(self, firmware_content):
+        workers = []
         rules = [
             InternalCombineAppParseRule('rtk', 'rtk_start:', 4),
+            InternalCombineAppParseRule('ins', 'ins_start:', 4),
             InternalCombineAppParseRule('sdk', 'sdk_start:', 4),
         ]
 
         parsed_content = firmware_content_parser(firmware_content, rules)
 
-        upgrade_center = UpgradeCenter(mode='sync')
-
+        # foreach parsed content, if empty, skip register into upgrade center
         for _, rule in enumerate(parsed_content):
             content = parsed_content[rule]
-            if len(content) > 0:
-                self.append_to_upgrade_center(upgrade_center, rule, content)
+            if len(content) == 0:
+                continue
 
-        upgrade_center.on('progress', self.handle_upgrade_process)
-        upgrade_center.on('error', self.handle_upgrade_error)
-        upgrade_center.on('finish', self.handle_upgrade_complete)
+            worker = self.build_worker(rule, content)
+            if not worker:
+                continue
 
-        return upgrade_center
+            workers.append(worker)
+
+        # prepare jump bootloader worker and jump application workder
+        # append jump bootloader worker before the first firmware upgrade workder
+        # append jump application worker after the last firmware uprade worker
+        start_index = -1
+        end_index = -1
+        for i, worker in enumerate(workers):
+            if isinstance(worker, FirmwareUpgradeWorker):
+                start_index = i if start_index == -1 else start_index
+                end_index = i
+
+        if start_index > 0 and end_index > 0:
+            workers.insert(
+                start_index, JumpBootloaderWorker(self.communicator))
+            workers.insert(
+                end_index+1, JumpApplicationWorker(self.communicator))
+
+        return workers
 
     def get_device_connection_info(self):
         return {

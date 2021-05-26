@@ -11,6 +11,9 @@ class EVENT_TYPE:
     FIRST_PACKET = 'first_packet'
     BEFORE_WRITE = 'before_write'
     AFTER_WRITE = 'after_write'
+    FINISH = 'finish'
+    ERROR = 'error'
+    PROGRESS = 'progress'
 
 
 class FirmwareUpgradeWorker(UpgradeWorkerBase):
@@ -48,7 +51,12 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
 
         # custom
         if current == 0:
-            self.emit(EVENT_TYPE.FIRST_PACKET)
+            try:
+                self.emit(EVENT_TYPE.FIRST_PACKET)
+            except Exception as ex:
+                self.emit(EVENT_TYPE.ERROR, self._key,
+                          'Fail in first packet: {0}'.format(ex))
+                return False
 
         response = helper.read_untils_have_data(
             self._communicator, 'WA', 50, 50)
@@ -60,23 +68,32 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
     def work(self):
         '''Upgrades firmware of connected device to file provided in argument
         '''
-        if self.current == 0 and self.total == 0:
-            self.emit('error', self._key, 'Invalid file content')
+        if self._is_stopped:
             return
 
-        # run command JI
-        command_line = helper.build_bootloader_input_packet('JI')
-        self._communicator.reset_buffer()  # clear input and output buffer
-        self._communicator.write(command_line, True)
-        time.sleep(3)
+        if self.current == 0 and self.total == 0:
+            self.emit(EVENT_TYPE.ERROR, self._key, 'Invalid file content')
+            return
 
-        # It is used to skip streaming data with size 1000 per read
-        helper.read_untils_have_data(
-            self._communicator, 'JI', 1000, 50)
+        # # run command JI
+        # command_line = helper.build_bootloader_input_packet('JI')
+        # self._communicator.reset_buffer()  # clear input and output buffer
+        # self._communicator.write(command_line, True)
+        # time.sleep(3)
+
+        # # It is used to skip streaming data with size 1000 per read
+        # helper.read_untils_have_data(
+        #     self._communicator, 'JI', 1000, 50)
 
         self._communicator.serial_port.baudrate = self._baudrate
+        self._communicator.reset_buffer()
 
-        self.emit(EVENT_TYPE.BEFORE_WRITE)
+        try:
+            self.emit(EVENT_TYPE.BEFORE_WRITE)
+        except Exception as ex:
+            self.emit(EVENT_TYPE.ERROR, self._key,
+                      'Fail in before write: {0}'.format(ex))
+            return
 
         while self.current < self.total:
             if self._is_stopped:
@@ -90,28 +107,33 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
                 packet_data_len, self.current, data)
 
             if not write_result:
-                self.emit('error', self._key,
+                self.emit(EVENT_TYPE.ERROR, self._key,
                           'Write firmware operation failed')
                 return
 
             self.current += packet_data_len
-            self.emit('progress', self._key, self.current, self.total)
+            self.emit(EVENT_TYPE.PROGRESS, self._key, self.current, self.total)
 
-        # run command JA
-        command_line = helper.build_bootloader_input_packet('JA')
-        self._communicator.write(command_line, True)
-        time.sleep(5)
+        # # run command JA
+        # command_line = helper.build_bootloader_input_packet('JA')
+        # self._communicator.write(command_line, True)
+        # time.sleep(5)
 
-        # ping device
-        can_ping = False
+        # # ping device
+        # can_ping = False
 
-        while not can_ping:
-            info = ping(self._communicator, None)
-            if info:
-                can_ping = True
-            time.sleep(0.5)
+        # while not can_ping:
+        #     info = ping(self._communicator, None)
+        #     if info:
+        #         can_ping = True
+        #     time.sleep(0.5)
+
+        try:
+            self.emit(EVENT_TYPE.AFTER_WRITE)
+        except Exception as ex:
+            self.emit(EVENT_TYPE.ERROR, self._key,
+                      'Fail in after write: {0}'.format(ex))
+            return
 
         if self.total > 0 and self.current >= self.total:
-            self.emit('finish', self._key)
-
-        self.emit(EVENT_TYPE.AFTER_WRITE)
+            self.emit(EVENT_TYPE.FINISH, self._key)

@@ -9,7 +9,7 @@ from ..base.rtk_provider_base import RTKProviderBase
 from ..upgrade_workers import (
     FirmwareUpgradeWorker,
     FIRMWARE_EVENT_TYPE,
-    SDKUpgradeWorker
+    SDK8100UpgradeWorker
 )
 from ...framework.utils.print import (print_green, print_yellow, print_red)
 
@@ -24,10 +24,11 @@ class Provider(RTKProviderBase):
         self.bootloader_baudrate = 115200
         self.config_file_name = 'openrtk.json'
         self.device_category = 'OpenRTK'
-
-    # override
-    def after_bootloader_switch(self):
-        self.communicator.serial_port.baudrate = self.bootloader_baudrate
+        self.port_index_define = {
+            'user': 0,
+            'rtcm': 1,
+            'debug': 2,
+        }
 
     def thread_debug_port_receiver(self, *args, **kwargs):
         if self.debug_logf is None:
@@ -82,19 +83,20 @@ class Provider(RTKProviderBase):
                 time.sleep(0.001)
 
     # override
-    def append_to_upgrade_center(self, upgrade_center, rule, content):
+    def build_worker(self, rule, content):
         if rule == 'rtk':
             firmware_worker = FirmwareUpgradeWorker(
                 self.communicator, self.bootloader_baudrate, content)
             firmware_worker.on(
                 FIRMWARE_EVENT_TYPE.FIRST_PACKET, lambda: time.sleep(8))
-            upgrade_center.register(firmware_worker)
-            return
+            firmware_worker.group = 'firmware'
+            return firmware_worker
 
         if rule == 'sdk':
-            upgrade_center.register(
-                SDKUpgradeWorker(self.communicator, self.bootloader_baudrate, content))
-            return
+            sdk_worker = SDK8100UpgradeWorker(
+                self.communicator, self.bootloader_baudrate, content)
+            sdk_worker.group = 'firmware'
+            return sdk_worker
 
     # command list
     # use base methods

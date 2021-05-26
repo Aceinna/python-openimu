@@ -1064,6 +1064,9 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
         '''
         Start to do upgrade
         '''
+        if self._is_stopped:
+            return
+
         self._uart.baudrate = self._baudrate
 
         fs_len = len(self._file_content)

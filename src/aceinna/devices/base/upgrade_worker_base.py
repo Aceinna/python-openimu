@@ -11,6 +11,7 @@ class UpgradeWorkerBase(EventBase):
     def __init__(self):
         super(UpgradeWorkerBase, self).__init__()
         self._key = None
+        self._group = None
         self._is_stopped = False
 
     @property
@@ -20,6 +21,14 @@ class UpgradeWorkerBase(EventBase):
     @key.setter
     def key(self, value):
         self._key = value
+
+    @property
+    def group(self):
+        return self._group
+
+    @group.setter
+    def group(self, value):
+        self._group = value
 
     @abstractmethod
     def get_upgrade_content_size(self):

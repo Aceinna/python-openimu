@@ -1,10 +1,11 @@
 import time
 import threading
 from .base.event_base import EventBase
+from itertools import groupby
 
 
 class UpgradeCenter(EventBase):
-    def __init__(self, mode='async'):
+    def __init__(self):
         super(UpgradeCenter, self).__init__()
         self.workers = {}
         self.run_status = []
@@ -13,13 +14,20 @@ class UpgradeCenter(EventBase):
         self.current = 0
         self.total = 0
         self.data_lock = threading.Lock()
-        self._mode = mode
 
     def register(self, worker):
         worker_key = 'worker-' + str(len(self.workers))
         worker.key = worker_key
-        self.workers[worker_key] = {'executor': worker, 'current': 0}
+        self.workers[worker_key] = {
+            'executor': worker,
+            'group': worker.group,
+            'current': 0
+        }
         self.total += worker.get_upgrade_content_size()
+
+    def register_workers(self, workers):
+        for worker in workers:
+            self.register(worker)
 
     def start(self):
         if self.is_processing:
@@ -28,17 +36,17 @@ class UpgradeCenter(EventBase):
 
         self.is_processing = True
 
-        for worker in self.workers.values():
-            '''start thread to invoke worker's work
-            '''
-            executor = worker['executor']
-
-            if self._mode == 'async':
-                thead = threading.Thread(
-                    target=self.thread_start_worker, args=(executor,))
-                thead.start()
+        # group workers by group name if has
+        all_workers = self.workers.values()
+        worker_group = groupby(all_workers, key=lambda x: x['group'])
+        for key, group in worker_group:
+            if key:
+                # start thread to run workers in a group
+                self.start_workers_in_single_thread(list(group))
             else:
-                self.thread_start_worker(executor)
+                # start multi thread to run workers in no named group
+                self.start_workers_in_multi_thread(list(group))
+
         return True
 
     def stop(self):
@@ -47,7 +55,27 @@ class UpgradeCenter(EventBase):
 
         self.is_processing = False
 
-    def thread_start_worker(self, executor):
+    def start_workers_in_single_thread(self, workers):
+        def start_in_thread(workers):
+            for worker in workers:
+                executor = worker['executor']
+                self.start_worker(executor)
+
+        thead = threading.Thread(
+            target=start_in_thread, args=(workers,))
+        thead.start()
+
+    def start_workers_in_multi_thread(self, workers):
+        for worker in workers:
+            '''start thread to invoke worker's work
+            '''
+            executor = worker['executor']
+
+            thead = threading.Thread(
+                target=self.start_worker, args=(executor,))
+            thead.start()
+
+    def start_worker(self, executor):
         executor.on('progress', self.handle_worker_progress)
         executor.on('error', self.handle_worker_error)
         executor.on('finish', self.handle_worker_done)

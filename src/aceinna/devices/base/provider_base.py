@@ -16,6 +16,7 @@ from ...framework.ans_platform_api import AnsPlatformAPI
 from ..message_center import DeviceMessageCenter
 from ..parser_manager import ParserManager
 from ...framework.progress_bar import ProgressBar
+from ..upgrade_center import UpgradeCenter
 
 if sys.version_info[0] > 2:
     from queue import Queue
@@ -95,15 +96,9 @@ class OpenDeviceBase(EventBase):
         '''
 
     @abstractmethod
-    def do_write_firmware(self, firmware_content):
+    def get_upgrade_workers(self, firmware_content):
         '''
-        Do firmware upgrade
-        '''
-
-    @abstractmethod
-    def build_upgrade_center(self, firmware_content):
-        '''
-        Build upgrade center
+        Build upgrade workers
         '''
 
     @abstractmethod
@@ -193,7 +188,6 @@ class OpenDeviceBase(EventBase):
 
         self.sessionId = str(uuid.uuid1())
         self.after_setup()
-
 
     def on_recevie_message_center_error(self, error_type, message):
         '''
@@ -308,7 +302,14 @@ class OpenDeviceBase(EventBase):
             #     return
             # step.3 write to block, use self write from specified device
             print('Firmware upgrading...')
-            upgrade_center = self.build_upgrade_center(firmware_content)
+            workers = self.get_upgrade_workers(firmware_content)
+
+            upgrade_center = UpgradeCenter()
+            upgrade_center.register_workers(workers)
+            upgrade_center.on('progress', self.handle_upgrade_process)
+            upgrade_center.on('error', self.handle_upgrade_error)
+            upgrade_center.on('finish', self.handle_upgrade_complete)
+
             self._pbar = ProgressBar(total=upgrade_center.total)
             upgrade_center.start()
             # self.write_firmware()

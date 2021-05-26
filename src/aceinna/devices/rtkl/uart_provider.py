@@ -1,12 +1,15 @@
 import time
 import serial
-import serial.tools.list_ports
+import struct
 
 from ..base.rtk_provider_base import RTKProviderBase
 from ..upgrade_workers import (
     FirmwareUpgradeWorker,
     FIRMWARE_EVENT_TYPE,
-    SDKUpgradeWorker
+    SDK9100UpgradeWorker
+)
+from ...framework.utils import (
+    helper
 )
 from ...framework.utils.print import print_red
 
@@ -22,6 +25,11 @@ class Provider(RTKProviderBase):
         self.bootloader_baudrate = 115200
         self.config_file_name = 'RTK330L.json'
         self.device_category = 'RTK330LA'
+        self.port_index_define = {
+            'user': 0,
+            'rtcm': 3,
+            'debug': 2,
+        }
 
     # override
     def after_bootloader_switch(self):
@@ -45,34 +53,51 @@ class Provider(RTKProviderBase):
             else:
                 time.sleep(0.001)
 
+    def before_write_content(self, core, content_len):
+        message_bytes = [ord('C'), ord(core)]
+        message_bytes.extend(struct.pack('>I', content_len))
+
+        command_line = helper.build_packet('CS', message_bytes)
+        # self.communicator.reset_buffer()  # clear input and output buffer
+        self.communicator.write(command_line, True)
+        time.sleep(2)
+        result = helper.read_untils_have_data(
+            self.communicator, 'CS', 1000, 50)
+
+        if not result:
+            raise Exception('Cannot run set core command')
+
     # override
-    def append_to_upgrade_center(self, upgrade_center, rule, content):
+    def build_worker(self, rule, content):
         if rule == 'rtk':
-            firmware_worker = FirmwareUpgradeWorker(
+            rtk_upgrade_worker = FirmwareUpgradeWorker(
                 self.communicator, self.bootloader_baudrate, content, 192)
-            firmware_worker.on(
-                FIRMWARE_EVENT_TYPE.FIRST_PACKET, lambda: time.sleep(26))
-            upgrade_center.register(firmware_worker)
+            rtk_upgrade_worker.on(
+                FIRMWARE_EVENT_TYPE.FIRST_PACKET, lambda: time.sleep(15))
+            rtk_upgrade_worker.on(FIRMWARE_EVENT_TYPE.BEFORE_WRITE,
+                                  lambda: self.before_write_content('0', len(content)))
+            rtk_upgrade_worker.group = 'firmware'
             return
+
+        if rule == 'ins':
+            ins_upgrade_worker = FirmwareUpgradeWorker(
+                self.communicator, self.bootloader_baudrate, content, 192)
+            ins_upgrade_worker.on(
+                FIRMWARE_EVENT_TYPE.FIRST_PACKET, lambda: time.sleep(15))
+            ins_upgrade_worker.on(FIRMWARE_EVENT_TYPE.BEFORE_WRITE,
+                                  lambda: self.before_write_content('1', len(content)))
+            ins_upgrade_worker.group = 'firmware'
+            return ins_upgrade_worker
 
         if rule == 'sdk':
-            sdk_port = ''
-            if (self.properties["initial"]["useDefaultUart"]):
-                user_port_num, port_name = self.build_connected_serial_port_info()
-                sdk_port = port_name + str(int(user_port_num) + 3)
-            else:
-                for uart in self.properties["initial"]["uart"]:
-                    if uart['enable'] == 1:
-                        if uart['name'] == 'SDK':
-                            sdk_port = uart["value"]
-
-            sdk_uart = serial.Serial(sdk_port, 115200, timeout=0.1)
-            if not sdk_uart.isOpen():
-                raise Exception('Cannot open SDK upgrade port')
-
-            upgrade_center.register(
-                SDKUpgradeWorker(self.communicator, self.bootloader_baudrate, content))
-            return
+            sdk_upgrade_worker = SDK9100UpgradeWorker(
+                self.communicator, self.bootloader_baudrate, content)
+            sdk_upgrade_worker.on(FIRMWARE_EVENT_TYPE.ERROR,
+                                  self.reopen_rtcm_serial_port)
+            sdk_upgrade_worker.on(FIRMWARE_EVENT_TYPE.FINISH,
+                                  self.reopen_rtcm_serial_port)
+            sdk_upgrade_worker.group = 'firmware'
+            return sdk_upgrade_worker
 
     # command list
     # use base methods

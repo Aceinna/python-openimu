@@ -150,10 +150,7 @@ class Provider(OpenDeviceBase):
         '''
         self.add_output_packet('stream', packet_type, data)
 
-    def do_write_firmware(self, firmware_content):
-        raise Exception('Not implement write firmware.')
-
-    def build_upgrade_center(self, firmware_content):
+    def get_upgrade_workers(self, firmware_content):
         raise Exception('Not implement build upgrade center')
 
     def get_device_connection_info(self):

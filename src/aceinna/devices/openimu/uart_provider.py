@@ -1,4 +1,5 @@
 import os
+from os.path import join
 import re
 import sys
 import time
@@ -22,6 +23,8 @@ from ..decorator import with_device_message
 from ...framework.configuration import get_config
 from ..upgrade_workers import (
     FirmwareUpgradeWorker,
+    JumpBootloaderWorker,
+    JumpApplicationWorker,
     FIRMWARE_EVENT_TYPE
 )
 from ..upgrade_center import UpgradeCenter
@@ -203,20 +206,22 @@ class Provider(OpenDeviceBase):
             }
         }
 
-    def build_upgrade_center(self, firmware_content):
-        upgrade_center = UpgradeCenter()
-
-        firmware_worker = FirmwareUpgradeWorker(
+    def get_upgrade_workers(self, firmware_content):
+        write_firmware_worker = FirmwareUpgradeWorker(
             self.communicator, self.bootloader_baudrate, firmware_content)
-        firmware_worker.on(
+        write_firmware_worker.on(
             FIRMWARE_EVENT_TYPE.FIRST_PACKET, lambda: time.sleep(8))
 
-        upgrade_center.register(firmware_worker)
+        jump_bootloader_worker = JumpBootloaderWorker(self.communicator)
+        jump_application_worker = JumpApplicationWorker(self.communicator)
 
-        upgrade_center.on('progress', self.handle_upgrade_process)
-        upgrade_center.on('error', self.handle_upgrade_error)
-        upgrade_center.on('finish', self.handle_upgrade_complete)
-        return upgrade_center
+        workers = [
+            jump_bootloader_worker,
+            write_firmware_worker,
+            jump_application_worker,
+        ]
+
+        return workers
 
     def get_device_connection_info(self):
         return {
