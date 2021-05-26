@@ -25,7 +25,7 @@ from ..upgrade_workers import (
     FirmwareUpgradeWorker,
     JumpBootloaderWorker,
     JumpApplicationWorker,
-    FIRMWARE_EVENT_TYPE
+    UPGRADE_EVENT
 )
 from ..upgrade_center import UpgradeCenter
 from ...framework.utils.print import print_yellow
@@ -210,7 +210,7 @@ class Provider(OpenDeviceBase):
         write_firmware_worker = FirmwareUpgradeWorker(
             self.communicator, self.bootloader_baudrate, firmware_content)
         write_firmware_worker.on(
-            FIRMWARE_EVENT_TYPE.FIRST_PACKET, lambda: time.sleep(8))
+            UPGRADE_EVENT.FIRST_PACKET, lambda: time.sleep(8))
 
         jump_bootloader_worker = JumpBootloaderWorker(self.communicator)
         jump_application_worker = JumpApplicationWorker(self.communicator)

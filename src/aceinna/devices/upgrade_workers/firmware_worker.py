@@ -1,19 +1,7 @@
 import time
 from ..base.upgrade_worker_base import UpgradeWorkerBase
 from ...framework.utils import helper
-from ..ping.open import ping
-
-
-class EVENT_TYPE:
-    '''
-    Event type of Device Message Center
-    '''
-    FIRST_PACKET = 'first_packet'
-    BEFORE_WRITE = 'before_write'
-    AFTER_WRITE = 'after_write'
-    FINISH = 'finish'
-    ERROR = 'error'
-    PROGRESS = 'progress'
+from . import (UPGRADE_EVENT, UPGRADE_GROUP)
 
 
 class FirmwareUpgradeWorker(UpgradeWorkerBase):
@@ -28,6 +16,7 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
         self.total = len(file_content)
         self._baudrate = baudrate
         self.max_data_len = block_size  # custom
+        self._group = UPGRADE_GROUP.FIRMWARE
         # self._key = None
         # self._is_stopped = False
 
@@ -52,9 +41,9 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
         # custom
         if current == 0:
             try:
-                self.emit(EVENT_TYPE.FIRST_PACKET)
+                self.emit(UPGRADE_EVENT.FIRST_PACKET)
             except Exception as ex:
-                self.emit(EVENT_TYPE.ERROR, self._key,
+                self.emit(UPGRADE_EVENT.ERROR, self._key,
                           'Fail in first packet: {0}'.format(ex))
                 return False
 
@@ -72,7 +61,7 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
             return
 
         if self.current == 0 and self.total == 0:
-            self.emit(EVENT_TYPE.ERROR, self._key, 'Invalid file content')
+            self.emit(UPGRADE_EVENT.ERROR, self._key, 'Invalid file content')
             return
 
         # # run command JI
@@ -89,9 +78,9 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
         self._communicator.reset_buffer()
 
         try:
-            self.emit(EVENT_TYPE.BEFORE_WRITE)
+            self.emit(UPGRADE_EVENT.BEFORE_WRITE)
         except Exception as ex:
-            self.emit(EVENT_TYPE.ERROR, self._key,
+            self.emit(UPGRADE_EVENT.ERROR, self._key,
                       'Fail in before write: {0}'.format(ex))
             return
 
@@ -107,12 +96,12 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
                 packet_data_len, self.current, data)
 
             if not write_result:
-                self.emit(EVENT_TYPE.ERROR, self._key,
+                self.emit(UPGRADE_EVENT.ERROR, self._key,
                           'Write firmware operation failed')
                 return
 
             self.current += packet_data_len
-            self.emit(EVENT_TYPE.PROGRESS, self._key, self.current, self.total)
+            self.emit(UPGRADE_EVENT.PROGRESS, self._key, self.current, self.total)
 
         # # run command JA
         # command_line = helper.build_bootloader_input_packet('JA')
@@ -129,11 +118,11 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
         #     time.sleep(0.5)
 
         try:
-            self.emit(EVENT_TYPE.AFTER_WRITE)
+            self.emit(UPGRADE_EVENT.AFTER_WRITE)
         except Exception as ex:
-            self.emit(EVENT_TYPE.ERROR, self._key,
+            self.emit(UPGRADE_EVENT.ERROR, self._key,
                       'Fail in after write: {0}'.format(ex))
             return
 
         if self.total > 0 and self.current >= self.total:
-            self.emit(EVENT_TYPE.FINISH, self._key)
+            self.emit(UPGRADE_EVENT.FINISH, self._key)

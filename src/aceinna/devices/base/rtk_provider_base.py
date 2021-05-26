@@ -636,7 +636,7 @@ class RTKProviderBase(OpenDeviceBase):
             workers.insert(
                 start_index, JumpBootloaderWorker(self.communicator))
             workers.insert(
-                end_index+1, JumpApplicationWorker(self.communicator))
+                end_index+1,  JumpApplicationWorker(self.communicator))
 
         return workers
 

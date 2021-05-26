@@ -1,7 +1,7 @@
 import time
 from ..base.upgrade_worker_base import UpgradeWorkerBase
 from ...framework.utils import helper
-
+from . import (UPGRADE_EVENT,UPGRADE_GROUP)
 
 XLDR_TESEO5_BOOTLOADER_CUT2 = \
     [
@@ -715,9 +715,7 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
         self._file_content = file_content
 
         self._baudrate = baudrate
-        # self._key = None
-        # self._is_stopped = False
-        # self._uart = None
+        self._group = UPGRADE_GROUP.FIRMWARE
 
     def write_wrapper(self, data):
         try:
@@ -1014,7 +1012,7 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
             has_read = self.read_until(0xCC)
 
             if has_read:
-                self.emit('progress', self._key, current, packet_num)
+                self.emit(UPGRADE_EVENT.PROGRESS, self._key, current, packet_num)
             else:
                 write_result = False
                 break
@@ -1043,7 +1041,7 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
         # wait a time, output data to client
         time.sleep(.5)
         print(message)
-        self.emit('error', self._key, message)
+        self.emit(UPGRADE_EVENT.ERROR, self._key, message)
         return False
 
     @property
@@ -1135,4 +1133,4 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
             return self._raise_error('Send sdk command JG fail')
         else:
             # self._uart.close()
-            self.emit('finish', self._key)
+            self.emit(UPGRADE_EVENT.FINISH, self._key)

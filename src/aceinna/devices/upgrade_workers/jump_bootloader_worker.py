@@ -1,7 +1,7 @@
 import time
 from ..base.upgrade_worker_base import UpgradeWorkerBase
 from ...framework.utils import helper
-from . import FIRMWARE_EVENT_TYPE
+from . import (UPGRADE_EVENT,UPGRADE_GROUP)
 
 
 class JumpBootloaderWorker(UpgradeWorkerBase):
@@ -13,6 +13,7 @@ class JumpBootloaderWorker(UpgradeWorkerBase):
         self._communicator = communicator
         self.current = 0
         self.total = 0
+        self._group = UPGRADE_GROUP.FIRMWARE
 
     def stop(self):
         self._is_stopped = True
@@ -30,15 +31,9 @@ class JumpBootloaderWorker(UpgradeWorkerBase):
         command_line = helper.build_bootloader_input_packet('JI')
         self._communicator.reset_buffer()  # clear input and output buffer
         self._communicator.write(command_line, True)
-        time.sleep(3)
+        time.sleep(3)  # waiting switch to bootloader
 
         # It is used to skip streaming data with size 1000 per read
-        JI_result = helper.read_untils_have_data(
-            self._communicator, 'JI', 1000, 50)
+        helper.read_untils_have_data(self._communicator, 'JI', 1000, 50)
 
-        if not JI_result:
-            self.emit(FIRMWARE_EVENT_TYPE.ERROR, self._key, 'Cannot jump to bootloader')
-            return
-
-
-        self.emit(FIRMWARE_EVENT_TYPE.FINISH, self._key)
+        self.emit(UPGRADE_EVENT.FINISH, self._key)
