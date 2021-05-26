@@ -245,7 +245,7 @@ class RTKProviderBase(OpenDeviceBase):
 
         try:
             self.rtk_log_file_name = os.path.join(
-                self.data_folder, 'openrtk_log_{0}'.format(formatted_dir_time))
+                self.data_folder, '{0}_log_{1}'.format(self.device_category, formatted_dir_time))
             os.mkdir(self.rtk_log_file_name)
         except:
             raise Exception(
