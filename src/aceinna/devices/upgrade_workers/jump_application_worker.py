@@ -2,7 +2,8 @@ import time
 from ..base.upgrade_worker_base import UpgradeWorkerBase
 from ...framework.utils import helper
 from ..ping.open import ping
-from . import (UPGRADE_EVENT,UPGRADE_GROUP)
+from . import (UPGRADE_EVENT, UPGRADE_GROUP)
+
 
 class JumpApplicationWorker(UpgradeWorkerBase):
     '''Firmware upgrade worker
@@ -29,6 +30,8 @@ class JumpApplicationWorker(UpgradeWorkerBase):
 
         # run command JA
         command_line = helper.build_bootloader_input_packet('JA')
+        self._communicator.serial_port.baudrate = 115200
+        self._communicator.reset_buffer()  # clear input and output buffer
         self._communicator.write(command_line, True)
         time.sleep(5)
 

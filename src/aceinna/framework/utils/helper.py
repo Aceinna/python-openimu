@@ -346,7 +346,7 @@ def read_untils_have_data(communicator, packet_type, read_length=200, retry_time
 
     while trys < retry_times:
         read_data = communicator.read(read_length)
-
+        # print(packet_type, read_data)
         if read_data is None:
             trys += 1
             continue

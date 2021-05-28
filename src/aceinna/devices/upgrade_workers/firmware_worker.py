@@ -10,13 +10,17 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
 
     def __init__(self, communicator, baudrate, file_content, block_size=240):
         super(FirmwareUpgradeWorker, self).__init__()
-        self._file_content = file_content
         self._communicator = communicator
         self.current = 0
-        self.total = len(file_content)
         self._baudrate = baudrate
         self.max_data_len = block_size  # custom
         self._group = UPGRADE_GROUP.FIRMWARE
+
+        if not callable(file_content):
+            self._file_content = file_content
+        else:
+            self._file_content = file_content()
+        self.total = len(self._file_content)
         # self._key = None
         # self._is_stopped = False
 
@@ -34,6 +38,7 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
         command_line = helper.build_bootloader_input_packet(
             'WA', data_len, current, data)
         try:
+            #print('WA', command_line)
             self._communicator.write(command_line, True)
         except Exception as ex:  # pylint: disable=broad-except
             return False
@@ -48,7 +53,7 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
                 return False
 
         response = helper.read_untils_have_data(
-            self._communicator, 'WA', 50, 50)
+            self._communicator, 'WA', 12, 10)
         # wait WA end if cannot read response in defined retry times
         if response is None:
             time.sleep(0.1)
@@ -101,7 +106,8 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
                 return
 
             self.current += packet_data_len
-            self.emit(UPGRADE_EVENT.PROGRESS, self._key, self.current, self.total)
+            self.emit(UPGRADE_EVENT.PROGRESS, self._key,
+                      self.current, self.total)
 
         # # run command JA
         # command_line = helper.build_bootloader_input_packet('JA')

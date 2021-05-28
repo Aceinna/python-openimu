@@ -385,6 +385,9 @@ class RTKProviderBase(OpenDeviceBase):
         if self.rtcm_logf is None:
             return
         while True:
+            if self.is_upgrading:
+                time.sleep(0.1)
+                continue
             try:
                 data = bytearray(self.rtcm_serial_port.read_all())
             except Exception as e:
@@ -609,7 +612,6 @@ class RTKProviderBase(OpenDeviceBase):
         ]
 
         parsed_content = firmware_content_parser(firmware_content, rules)
-
         # foreach parsed content, if empty, skip register into upgrade center
         for _, rule in enumerate(parsed_content):
             content = parsed_content[rule]
@@ -632,12 +634,11 @@ class RTKProviderBase(OpenDeviceBase):
                 start_index = i if start_index == -1 else start_index
                 end_index = i
 
-        if start_index > 0 and end_index > 0:
+        if start_index > -1 and end_index > -1:
             workers.insert(
                 start_index, JumpBootloaderWorker(self.communicator))
             workers.insert(
-                end_index+1,  JumpApplicationWorker(self.communicator))
-
+                end_index+2, JumpApplicationWorker(self.communicator))
         return workers
 
     def get_device_connection_info(self):

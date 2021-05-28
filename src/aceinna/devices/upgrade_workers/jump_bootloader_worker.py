@@ -36,4 +36,6 @@ class JumpBootloaderWorker(UpgradeWorkerBase):
         # It is used to skip streaming data with size 1000 per read
         helper.read_untils_have_data(self._communicator, 'JI', 1000, 50)
 
+        time.sleep(6)
+
         self.emit(UPGRADE_EVENT.FINISH, self._key)
