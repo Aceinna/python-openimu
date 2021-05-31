@@ -9,11 +9,13 @@ class JumpApplicationWorker(UpgradeWorkerBase):
     '''Firmware upgrade worker
     '''
 
-    def __init__(self, communicator):
+    def __init__(self, communicator, bootloader_baudrate=115200):
         super(JumpApplicationWorker, self).__init__()
         self._communicator = communicator
         self.current = 0
         self.total = 0
+        self._original_baudrate = communicator.serial_port.baudrate
+        self._bootloader_baudrate = bootloader_baudrate
         self._group = UPGRADE_GROUP.FIRMWARE
 
     def stop(self):
@@ -30,13 +32,14 @@ class JumpApplicationWorker(UpgradeWorkerBase):
 
         # run command JA
         command_line = helper.build_bootloader_input_packet('JA')
-        self._communicator.serial_port.baudrate = 115200
+        self._communicator.serial_port.baudrate = self._bootloader_baudrate
         self._communicator.reset_buffer()  # clear input and output buffer
         self._communicator.write(command_line, True)
         time.sleep(5)
 
         # ping device
         can_ping = False
+        self._communicator.serial_port.baudrate = self._original_baudrate
 
         while not can_ping:
             info = ping(self._communicator, None)

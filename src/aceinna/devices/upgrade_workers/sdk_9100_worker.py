@@ -1261,8 +1261,6 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
         if self._is_stopped:
             return
 
-        self._uart.baudrate = self._baudrate
-
         fs_len = len(self._file_content)
         bin_info_list = self.get_bin_info_list(fs_len, self._file_content)
 
@@ -1272,6 +1270,7 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
             return self._raise_error('Send sdk command failed')
 
         time.sleep(2)
+        self._uart.baudrate = self._baudrate
         self._uart.reset_input_buffer()
         self._uart.close()
         time.sleep(2)

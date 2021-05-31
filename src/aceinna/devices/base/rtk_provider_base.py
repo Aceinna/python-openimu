@@ -638,7 +638,7 @@ class RTKProviderBase(OpenDeviceBase):
             workers.insert(
                 start_index, JumpBootloaderWorker(self.communicator))
             workers.insert(
-                end_index+2, JumpApplicationWorker(self.communicator))
+                end_index+2, JumpApplicationWorker(self.communicator, self.bootloader_baudrate))
         return workers
 
     def get_device_connection_info(self):
