@@ -102,10 +102,6 @@ class Provider(RTKProviderBase):
         if rule == 'sdk':
             sdk_upgrade_worker = SDK9100UpgradeWorker(
                 self.communicator, self.bootloader_baudrate, content)
-            # sdk_upgrade_worker.on(UPGRADE_EVENT.ERROR,
-            #                       self.reopen_rtcm_serial_port)
-            # sdk_upgrade_worker.on(UPGRADE_EVENT.FINISH,
-            #                       self.reopen_rtcm_serial_port)
             return sdk_upgrade_worker
 
     # command list
