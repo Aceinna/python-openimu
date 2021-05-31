@@ -42,6 +42,7 @@ class JumpApplicationWorker(UpgradeWorkerBase):
         self._communicator.serial_port.baudrate = self._original_baudrate
 
         while not can_ping:
+            self._communicator.reset_buffer()  # clear input and output buffer
             info = ping(self._communicator, None)
             if info:
                 can_ping = True
