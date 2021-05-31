@@ -1,28 +1,32 @@
 # History
-# b is a special version for INCEPTIO
+# This is a special branch for INCEPTIO
 ---
 
+## 2.2.5 / 2021-02-18 
+- [OpenRTK] Support RTK330LA firmware upgrade.
+- [OpenRTK] Fix some issues.
+
 ## 2.2.4c / 2021-02-18 
-- [OpenRTK] Update openrtk parse
-- [OpenRTK] Fix upgrade issue
+- [OpenRTK] Update openrtk parse.
+- [OpenRTK] Fix upgrade issue.
 
 ## 2.2.4b / 2021-02-07 
-- [OpenRTK] Download sdk firmware throught user com port
-- [OpenRTK] Save all parameters in a json file
+- [OpenRTK] Download sdk firmware throught user com port.
+- [OpenRTK] Save all parameters in a json file.
 - [OpenRTK] Update openrtk.json and openrtk parse for INCEPTIO.
 
 ## 2.2.4 / 2020-12-18
 - [OpenRTK] Remove console print and add print.log to save these infomation.
-- [OpenRTK] Update openrtk parse to make kml files
+- [OpenRTK] Update openrtk parse to make kml files.
 
 ## 2.2.3 / 2020-12-01
-- [OpenRTK] Update Configuration read size
-- [Framework] Fix cannot parse 'sC', 'uB' command
+- [OpenRTK] Update Configuration read size.
+- [Framework] Fix cannot parse 'sC', 'uB' command.
 
 ## 2.2.2 / 2020-11-26
-- [OpenIMU] Add exception handler when log data, although file is closed
-- [OpenIMU] Add uC,uA,gA command response
-- [OpenRTK] Fix upgrade issue through web
+- [OpenIMU] Add exception handler when log data, although file is closed.
+- [OpenIMU] Add uC,uA,gA command response.
+- [OpenRTK] Fix upgrade issue through web.
 
 ## 2.2.1 / 2020-11-17
 
