@@ -2,7 +2,6 @@ import time
 import serial
 import struct
 
-
 from ..base.rtk_provider_base import RTKProviderBase
 from ..upgrade_workers import (
     FirmwareUpgradeWorker,
@@ -13,6 +12,15 @@ from ...framework.utils import (
     helper
 )
 from ...framework.utils.print import print_red
+
+
+def build_content(content):
+    len_mod = len(content) % 16
+    if len_mod == 0:
+        return content
+
+    fill_bytes = bytes(16-len_mod)
+    return content + fill_bytes
 
 
 class Provider(RTKProviderBase):
@@ -88,7 +96,7 @@ class Provider(RTKProviderBase):
     def build_worker(self, rule, content):
         if rule == 'rtk':
             rtk_upgrade_worker = FirmwareUpgradeWorker(
-                self.communicator, self.bootloader_baudrate, content, 192)
+                self.communicator, self.bootloader_baudrate, lambda: build_content(content), 192)
             rtk_upgrade_worker.on(
                 UPGRADE_EVENT.FIRST_PACKET, lambda: time.sleep(15))
             rtk_upgrade_worker.on(UPGRADE_EVENT.BEFORE_WRITE,
@@ -97,7 +105,7 @@ class Provider(RTKProviderBase):
 
         if rule == 'ins':
             ins_upgrade_worker = FirmwareUpgradeWorker(
-                self.communicator, self.bootloader_baudrate, content, 192)
+                self.communicator, self.bootloader_baudrate, lambda: build_content(content), 192)
             ins_upgrade_worker.on(
                 UPGRADE_EVENT.FIRST_PACKET, lambda: time.sleep(15))
             ins_upgrade_worker.on(UPGRADE_EVENT.BEFORE_WRITE,
@@ -105,6 +113,10 @@ class Provider(RTKProviderBase):
             return ins_upgrade_worker
 
         if rule == 'sdk':
+            if not self.rtcm_serial_port:
+                raise Exception(
+                    'SDK upgrade serial port is not ready, please try again.')
+
             sdk_uart = self.rtcm_serial_port
             sdk_uart.baudrate = self.bootloader_baudrate
             # sdk_uart.reset_input_buffer()

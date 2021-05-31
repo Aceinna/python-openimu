@@ -22,15 +22,17 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
 
     def __init__(self, communicator, baudrate, file_content, block_size=240):
         super(FirmwareUpgradeWorker, self).__init__()
-        self._file_content = file_content
         self._communicator = communicator
         self.current = 0
-        self.total = len(file_content)
         self._baudrate = baudrate
         self.max_data_len = block_size  # custom
         self._group = UPGRADE_GROUP.FIRMWARE
-        # self._key = None
-        # self._is_stopped = False
+
+        if not callable(file_content):
+            self._file_content = file_content
+        else:
+            self._file_content = file_content()
+        self.total = len(self._file_content)
 
     def stop(self):
         self._is_stopped = True
@@ -60,7 +62,7 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
                 return False
 
         response = helper.read_untils_have_data(
-            self._communicator, 'WA', 50, 50)
+            self._communicator, 'WA', 12, 10)
         # wait WA end if cannot read response in defined retry times
         if response is None:
             time.sleep(0.1)
