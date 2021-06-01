@@ -2,7 +2,7 @@
 # This is a special branch for INCEPTIO
 ---
 
-## 2.2.5 / 2021-02-18 
+## 2.2.5 / 2021-05-31 
 - [OpenRTK] Support RTK330LA firmware upgrade.
 - [OpenRTK] Fix some issues.
 
