@@ -137,25 +137,30 @@ class SerialPort(Communicator):
         '''
         self.device = None
         self._is_close = False
-        if self.com_port_assigned:
-            # find device by assigned port
-            self.autobaud([self.com_port])
-            if self.device is None:
+        retry_times = 0
+        limit_retries = 5
+
+        while self.device is None:
+            if self._is_close == True:
+                return
+
+            if retry_times >= limit_retries and self.com_port_assigned:
                 raise Exception(
                     '\nCannot connect the device with serial port: {0}. \
                     \nProbable reason: \
                     \n1. The serial port is invalid. \
                     \n2. The device response incorrect format of device info and app info.'.format(self.com_port))
-        else:
-            while self.device is None:
-                if self._is_close == True:
-                    return
 
+            if self.com_port_assigned:
+                num_ports = [self.com_port]
+            else:
                 if self.try_last_port():
                     break
                 num_ports = self.find_ports()
-                self.autobaud(num_ports)
-                time.sleep(0.5)
+            self.autobaud(num_ports)
+            retry_times += 1
+            time.sleep(0.5)
+
         callback(self.device)
 
     def find_ports(self):
@@ -340,9 +345,9 @@ class SerialPort(Communicator):
         if history_connection:
             port = history_connection['port']
             baud_rate = self.baudrate_list[0] if self.baudrate_assigned \
-                    else history_connection['baud']
+                else history_connection['baud']
             device_type = self.filter_device_type if self.filter_device_type_assigned \
-                    else history_connection['device_type']
+                else history_connection['device_type']
             # baud_rate = history_connection['baud']
             # device_type = history_connection['device_type']
             self.open_serial_port(port=port, baud=baud_rate, timeout=0.1)
@@ -456,7 +461,7 @@ class SerialPort(Communicator):
         except Exception as ex:
             # print(e)
             raise
-    
+
     def can_write(self):
         return self.serial_port and self.serial_port.isOpen()
 
