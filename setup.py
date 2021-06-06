@@ -22,7 +22,8 @@ INSTALL_REQUIRES = [
     "pathlib",
     "psutil",
     "azure-storage-blob==2.1.0",
-    "tornado"
+    "tornado",
+    'windows-curses; platform_system=="Windows"'
 ]
 
 setup(

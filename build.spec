@@ -6,21 +6,7 @@ sys.setrecursionlimit(5000)
 block_cipher = None
 root_path = os.path.join(os.getcwd(),'src')
 
-a = Analysis([os.path.join(root_path,'aceinna','executor.py'),
-            # os.path.join(os.getcwd(), 'src', 'bootstrap/base.py'),
-            # os.path.join(os.getcwd(), 'src', 'bootstrap/cli.py'),
-            # os.path.join(os.getcwd(), 'src', 'bootstrap/loader.py'),
-            # os.path.join(os.getcwd(), 'src', 'bootstrap/web.py'),
-            # os.path.join(os.getcwd(), 'src','devices', 'base/uart_base.py'),
-            # os.path.join(os.getcwd(), 'src','devices', 'configs/openimu_predefine.py'),
-            # os.path.join(os.getcwd(), 'src','devices', 'configs/openrtk_predefine.py'),
-            # os.path.join(os.getcwd(), 'src','devices', 'openimu/uart_provider.py'),
-            # os.path.join(os.getcwd(), 'src','devices', 'openrtk/uart_provider.py'),
-            # os.path.join(os.getcwd(), 'src','devices', 'device_manager.py'),
-            # os.path.join(os.getcwd(), 'src','framework', 'communicator.py'),
-            # os.path.join(os.getcwd(), 'src','framework', 'context.py'),
-            # os.path.join(os.getcwd(), 'src','framework', 'file_storage.py'),
-            # os.path.join(os.getcwd(), 'src','framework', 'utils/helper.py'),
+a = Analysis([os.path.join(root_path,'aceinna','executor.py')
          ],
          pathex=[root_path],
          binaries=[],
