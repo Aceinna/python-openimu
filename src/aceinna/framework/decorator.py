@@ -2,6 +2,7 @@ import os
 import sys
 import argparse
 import traceback
+from datetime import datetime, timedelta
 from functools import wraps
 from typing import TypeVar
 from .constants import (DEVICE_TYPES, BAUDRATE_LIST)
@@ -35,14 +36,13 @@ def _build_args():
     parser.add_argument("--with-data-log", dest='with_data_log', action='store_true',
                         help="Contains internal data log (OpenIMU only)", default=False)
     parser.add_argument("-s", "--set-user-para", dest='set_user_para', action='store_true',
-                        help="set user parameters (OpenRTK only)", default=False)
+                        help="Set user parameters (OpenRTK only)", default=False)
     parser.add_argument("-n", "--ntrip-client", dest='ntrip_client', action='store_true',
-                        help="enable ntrip client (OpenRTK only)", default=False)
-    parser.add_argument("--cli", dest='use_cli', action='store_true',
-                        help="start as cli mode", default=False)
-    parser.add_argument("-f", dest='force_bootloader', action='store_true',
-                        help="Force to bootloader", default=False)
-
+                        help="Enable ntrip client (OpenRTK only)", default=False)
+    parser.add_argument("-m", "--mode", dest='mode',
+                        help="Startup mode", default='default', choices=['default', 'cli', 'receiver'])
+    # parser.add_argument("-f", dest='force_bootloader', action='store_true',
+    #                     help="Force to bootloader", default=False)
 
     return parser.parse_args()
 
@@ -93,3 +93,18 @@ def skip_error(T: type):
                 pass
         return decorated
     return outer
+
+
+def throttle(seconds=0, minutes=0, hours=0):
+    throttle_period = timedelta(seconds=seconds, minutes=minutes, hours=hours)
+    def throttle_decorator(fn):
+        time_of_last_call = datetime.min
+        @wraps(fn)
+        def wrapper(*args, **kwargs):
+            nonlocal time_of_last_call
+            now = datetime.now()
+            if now - time_of_last_call > throttle_period:
+                time_of_last_call = now
+                return fn(*args, **kwargs)
+        return wrapper
+    return throttle_decorator

@@ -183,9 +183,9 @@ class Provider(OpenDeviceBase):
             if result['packetType'] == 'success':
                 self.save_config()
 
-        if self.ntrip_client_enable:
-            t = threading.Thread(target=self.ntrip_client_thread)
-            t.start()
+        # if self.ntrip_client_enable:
+        #     t = threading.Thread(target=self.ntrip_client_thread)
+        #     t.start()
 
         try:
             if self.data_folder is not None:
@@ -240,12 +240,8 @@ class Provider(OpenDeviceBase):
                                 str_nmea)
                             if cksum == calc_cksum:
                                 if str_nmea.find("$GPGGA") != -1:
-                                    if self.ntrip_client_enable and self.ntripClient != None:
-                                        self.ntripClient.send(str_nmea)
-                                print(str_nmea, end='')
-
-                                # else:
-                                #     print("nmea checksum wrong {0} {1}".format(cksum, calc_cksum))
+                                    self.add_output_packet('gga',str_nmea)
+                            APP_CONTEXT.get_print_logger().info(str_nmea.replace('\r\n', ''))
                         except Exception as e:
                             # print('NMEA fault:{0}'.format(e))
                             pass

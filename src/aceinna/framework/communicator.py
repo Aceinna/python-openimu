@@ -513,7 +513,7 @@ class SerialPort(Communicator):
         except Exception as ex:
             # print(e)
             raise
-        
+
     def can_write(self):
         return self.serial_port and self.serial_port.isOpen()
 
@@ -650,6 +650,9 @@ class LAN(Communicator):
         if self.sock:
             self.sock.close()
             self.sock = None
+
+    def can_write(self):
+        return self.device_conn != None
 
     def write(self, data, is_flush=False):
         '''

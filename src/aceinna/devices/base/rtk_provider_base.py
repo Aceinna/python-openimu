@@ -262,9 +262,9 @@ class RTKProviderBase(OpenDeviceBase):
             self.check_predefined_result()
 
         # start ntrip client
-        if self.ntrip_client_enable and not self.ntripClient:
-            thead = threading.Thread(target=self.ntrip_client_thread)
-            thead.start()
+        # if self.ntrip_client_enable and not self.ntripClient:
+        #     thead = threading.Thread(target=self.ntrip_client_thread)
+        #     thead.start()
 
         try:
             if (self.properties["initial"]["useDefaultUart"]):
@@ -354,8 +354,9 @@ class RTKProviderBase(OpenDeviceBase):
                             if cksum == calc_cksum:
                                 if str_nmea.find("$GPGGA") != -1:
                                     # print()
-                                    if self.ntrip_client_enable and self.ntripClient != None:
-                                        self.ntripClient.send(str_nmea)
+                                    # if self.ntrip_client_enable and self.ntripClient != None:
+                                    #     self.ntripClient.send(str_nmea)
+                                    self.add_output_packet('gga',str_nmea)
                                 # print(str_nmea, end='')
                                 APP_CONTEXT.get_print_logger().info(str_nmea.replace('\r\n', ''))
                                 # else:

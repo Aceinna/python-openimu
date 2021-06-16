@@ -47,7 +47,7 @@ Arguments:
 
 | Name | Type | Default | Description |
 | - | :-: | :-: | - |
-| --cli | Boolean | False | Work as command line mode |
+| -m, --mode | String | 'default' | Switch work mode. Value should be one of `default`,`cli`,`receiver` |
 | -p, --port | Number | '8000' | Value should be an available port |
 | --device-type | String | 'auto' | Value should be one of `IMU`, `RTK`, `DMU` |
 | -b, --baudrate | String | None | Value should be a valid baudrate. The valid value should be one of `38400`, `57600`, `115200`, `230400`, `460800` |
@@ -56,7 +56,6 @@ Arguments:
 | --debug | Boolean | False | Log debug information |
 | --with-data-log | Boolean | False | Contains internal data log (OpenIMU only) |
 | -s, --set-user-para | Boolean | False | Set uesr parameters (OpenRTK only) |
-| -n, --ntrip-client | Boolean | False | Enable ntrip client (OpenRTK only) |
 | -l, --protocol | String | 'uart' | Value should be `uart`, `lan`. Depends on device type |
 
 
@@ -70,7 +69,7 @@ Link device to your pc or mac. The tool will auto detect the linked device by de
 Normally, python-openimu works as default mode. It will establish a websocket server, then exchange messages through the websocket protocol. And it should work with [aceinna developers site](https://developers.aceinna.com "Aceinna Developers Site"), it allows user to do data monitor, configuration and firmware management.
 
 ### Command Line Mode
-You can specify the startup argument `--cli` to switch to Command Line Mode. Command Line Mode helps you interact with device directly. And it also supply command to start a websocket server, so that you can use the full features of Default Mode. 
+You can specify the startup argument `-m cli` to switch to Command Line Mode. Command Line Mode helps you interact with device directly. And it also supply command to start a websocket server, so that you can use the full features of Default Mode. 
 
 Command Line Mode supports some commands for using, below is a list of commands description,
 
@@ -133,6 +132,10 @@ Quit from Command Line Mode
 ```bash
 $ exit
 ```
+
+### Receiver Mode
+You can specify the startup argument `-m receiver` to switch to Receiver Mode. Receiver mode could receive external signal, and do some data interactive. We integrated singal from Ntrip Server and Odometer now. You can read more source code for reference in `src/aceinna/bootstrap/receiver.py`.
+
 
 ## Protocol
 Aceinna Device could be connected with your PC via UART or LAN. The supported protocol is depended on the device type.

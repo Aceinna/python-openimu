@@ -37,9 +37,8 @@ def start_app(**kwargs):
     Work as a executor, with WebSocket and UART
     '''
     application = None
-    mode = 'default'
-    if kwargs['options'].use_cli:
-        mode = 'cli'
+    option_mode = kwargs['options'].mode
+    mode = option_mode if option_mode else 'default'
 
     application = Loader.create(mode, vars(kwargs['options']))
     application.listen()
