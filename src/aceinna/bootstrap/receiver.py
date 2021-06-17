@@ -13,8 +13,14 @@ from ..framework.decorator import throttle
 class Receiver:
     options = None
     _driver = None
+    _ntrip_client = None
+    _odometer_listener = None
 
     def __init__(self, **kwargs) -> None:
+        self.options = None
+        self._driver = None
+        self._ntrip_client = None
+        self._odometer_listener = None
         self._build_options(**kwargs)
 
     def listen(self):
@@ -42,17 +48,18 @@ class Receiver:
         APP_CONTEXT.device_context = device_context
 
         # prepare ntrip client
-        threading.Thread(target=self._prepare_ntrip_client).start()
+        if not self._ntrip_client:
+            threading.Thread(target=self._prepare_ntrip_client).start()
 
         # prepare odometer listener
-        threading.Thread(target=self._prepare_odometer_listener).start()
+        if not self._odometer_listener:
+            threading.Thread(target=self._prepare_odometer_listener).start()
 
     def handle_receive_continous_data(self, packet_type, data):
         if packet_type == 'gga':
             self._ntrip_client.send(data)
 
     def _prepare_ntrip_client(self):
-        # TODO: ntrip client constructor parameter? seems done
         self._ntrip_client = NTRIPClient(
             APP_CONTEXT.device_context._provider.properties,
             APP_CONTEXT.device_context._provider.communicator
