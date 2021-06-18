@@ -147,6 +147,22 @@ Aceinna Device could be connected with your PC via UART or LAN. The supported pr
 | RTK330L | `uart` |  |
 
 
+## Parse Tool
+There is a log parse tool integrated in. It could parse OpenRTK and RTK330LA log from data folder. Assgin `parse` to start it.
+
+Example
+```bash
+$ ans-devices parse
+```
+
+Arguments:
+
+| Name | Type | Default | Description |
+| - | :-: | :-: | - |
+| -t | String | 'default' | Switch work mode. Value should be one of `openrtk`,`rtkl` |
+| -p | String | '.' | Value should be a valid path. It could be the container folder of log files |
+| -i | Number | 5 | INS kml rate(hz) |
+
 ## Changelogs and Release Notes
 
 Please refer to [HISTORY.md](HISTORY.md "Change History")

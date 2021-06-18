@@ -53,3 +53,14 @@ class DetectorArgs(KeyValuesArgumentBase):
         'baudrate': 'auto',
         'com_port': 'auto'
     }
+
+
+class LogParserArgs(KeyValuesArgumentBase):
+    '''
+    Argument define for log parser
+    '''
+    default_values = {
+        'log_type': 'openrtk',
+        'path': '.',
+        'kml_rate': 5
+    }

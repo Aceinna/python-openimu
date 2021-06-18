@@ -12,6 +12,11 @@ from .utils.resource import is_dev_mode
 
 T = TypeVar('T')
 
+PROTOCOLS = ['uart', 'lan']
+MODES = ['default', 'cli', 'receiver']
+TYPES_OF_LOG = ['openrtk', 'rtkl']
+KML_RATES = [1, 2, 5, 10]
+
 
 def _build_args():
     """parse input arguments
@@ -19,14 +24,14 @@ def _build_args():
     parser = argparse.ArgumentParser(
         description='Aceinna python driver input args command:', allow_abbrev=False)
 
-    parser.add_argument("-l", "--protocol", dest="protocol",
-                        help="Protocol(uart or lan)", default='uart', choices=['uart', 'lan'])
+    parser.add_argument("-l", "--protocol", dest="protocol",  metavar='',
+                        help="Protocol. Allowed one of values: {0}".format(PROTOCOLS), default='uart', choices=PROTOCOLS)
     parser.add_argument("-p", "--port", dest='port',  metavar='', type=int,
                         help="Webserver port")
     parser.add_argument("--device-type", dest="device_type", type=str,
-                        help="Open Device Type", choices=DEVICE_TYPES)
-    parser.add_argument("-b", "--baudrate", dest="baudrate", type=int,
-                        help="Baudrate for uart", choices=BAUDRATE_LIST)
+                        help="Open Device Type. Allowed one of values: {0}".format(DEVICE_TYPES), choices=DEVICE_TYPES, metavar='')
+    parser.add_argument("-b", "--baudrate", dest="baudrate", type=int, metavar='',
+                        help="Baudrate for uart. Allowed one of values: {0}".format(BAUDRATE_LIST), choices=BAUDRATE_LIST)
     parser.add_argument("-c", "--com-port", dest="com_port", metavar='', type=str,
                         help="COM Port")
     parser.add_argument("--console-log", dest='console_log', action='store_true',
@@ -37,12 +42,21 @@ def _build_args():
                         help="Contains internal data log (OpenIMU only)", default=False)
     parser.add_argument("-s", "--set-user-para", dest='set_user_para', action='store_true',
                         help="Set user parameters (OpenRTK only)", default=False)
-    parser.add_argument("-n", "--ntrip-client", dest='ntrip_client', action='store_true',
-                        help="Enable ntrip client (OpenRTK only)", default=False)
-    parser.add_argument("-m", "--mode", dest='mode',
-                        help="Startup mode", default='default', choices=['default', 'cli', 'receiver'])
-    # parser.add_argument("-f", dest='force_bootloader', action='store_true',
-    #                     help="Force to bootloader", default=False)
+    parser.add_argument("-m", "--mode", dest='mode', metavar='',
+                        help="Startup mode. Allowed one of values: {0}".format(MODES), default='default', choices=MODES)
+
+    subparsers = parser.add_subparsers(
+        title='Sub commands', help='use `<command> -h` to get sub command help', dest="sub_command")
+    parse_log_action = subparsers.add_parser(
+        'parse', help='A parse log command')
+    parse_log_action.add_argument("-t", metavar='', type=str,
+                                  help="Type of logs, Allowed one of values: {0}".format(
+                                      TYPES_OF_LOG),
+                                  default='openrtk',  dest="log_type", choices=TYPES_OF_LOG)
+    parse_log_action.add_argument(
+        "-p", type=str, help="The folder path of logs", default='./data', metavar='', dest="path")
+    parse_log_action.add_argument(
+        "-i", type=int, help="Ins kml rate(hz). Allowed one of values: {0}".format(KML_RATES), default=5, metavar='', dest="kml_rate", choices=KML_RATES)
 
     return parser.parse_args()
 
@@ -97,8 +111,10 @@ def skip_error(T: type):
 
 def throttle(seconds=0, minutes=0, hours=0):
     throttle_period = timedelta(seconds=seconds, minutes=minutes, hours=hours)
+
     def throttle_decorator(fn):
         time_of_last_call = datetime.min
+
         @wraps(fn)
         def wrapper(*args, **kwargs):
             nonlocal time_of_last_call

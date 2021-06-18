@@ -1,13 +1,6 @@
-''' Tool Description
-    1. accept input parameters
-    2. combine files
-    3. do operation
-'''
-import argparse
-import sys
 import os
-import functools
-import traceback
+import sys
+import argparse
 import time
 from time import sleep
 import datetime
@@ -15,143 +8,411 @@ import collections
 import struct
 import json
 import math
+from ..framework.utils import resource
+from ..framework.utils.print import (print_green, print_red)
+
+is_later_py_3 = sys.version_info > (3, 0)
 
 
-def receive_args():
-    parser = argparse.ArgumentParser(
-        description='Aceinna OpenRTK Log Parse Tool')
-    parser.add_argument("-p", dest='root_path', type=str,
-                        help="the folder path contains files", default='.')
-    parser.add_argument("-i", dest='ins_rate', type=int,
-                        help="ins kml rate(hz): 1 2 5 10", choices=[1, 2, 5, 10], default=5)
-    return parser.parse_args()
+class ZouParse:
+    def __init__(self, data_file, path, json_setting):
+        self.zoudata = []
+        if is_later_py_3:
+            self.zoudata = data_file.read()
+        else:
+            self.filedata = data_file.read()
+            for c in self.filedata:
+                self.zoudata.append(ord(c))
+        self.path = path
 
+        self.packet_buffer = []
+        self.sync_state = 0
+        self.sync_pattern = collections.deque(4*[0], 4)
+        self.zouPacketsTypeList = []
 
-def order_by_modified_date(folder_path):
-    def compare(file_name_a, file_name_b):
-        stat_a = file_name_a.split('.')
-        stat_b = file_name_b.split('.')
+        self.log_files = {}
+        self.fp_all = None
 
-        num_a = stat_a[len(stat_a)-1]
-        num_b = stat_b[len(stat_b)-1]
+        self.time_tag = None  # in packet's head
 
-        if num_a.isdigit() and num_b.isdigit():
-            if num_a < num_b:
-                return 1
+        self.err_count = 0
 
-            elif num_a > num_b:
-                return -1
+        with open(json_setting) as json_data:
+            self.rtk_properties = json.load(json_data)
 
+    def start_pasre(self):
+        self.zouPacketsTypeList = self.rtk_properties['zouPacketsTypeList']
+        for i, new_byte in enumerate(self.zoudata):
+            self.sync_pattern.append(new_byte)
+            if self.sync_state == 1:
+                self.packet_buffer.append(new_byte)
+                if (self.cur_message_id == 'fmim' and len(self.packet_buffer) == 52) or\
+                    (self.cur_message_id == 'fmig' and len(self.packet_buffer) == 95) or\
+                        (self.cur_message_id == 'fmin' and len(self.packet_buffer) == 100):
+                    if (self.packet_buffer[-1]) == ord('d') and self.packet_buffer[-2] == ord('e'):
+                        head_time = self.packet_buffer[5:13]
+                        len_fmt = '{0}B'.format(8)
+                        pack_fmt = 'd'
+                        b = struct.pack(len_fmt, *head_time)
+                        self.time_tag = struct.unpack(pack_fmt, b)
+                        self.parse_output_packet_payload(packet_type)
+
+                        self.packet_buffer = []
+                        self.sync_state = 0
+                    else:
+                        self.err_count = self.err_count + 1
+                        #print('debug data crc err. type {0} count{1}'.format(packet_type, self.err_count))
+                        self.sync_state = 0  # CRC did not match
             else:
-                return 0
+                for message_id in self.zouPacketsTypeList:
+                    message_id_list = []
+                    message_id_list = list(message_id)
+                    self.cur_message_id = message_id
+                    message_id_list_int = []
+                    for ele in message_id_list:
+                        message_id_list_int.append(ord(ele))
+                    if list(self.sync_pattern) == message_id_list_int:  # packet type
+                        packet_type = message_id
+                        self.packet_buffer = message_id_list_int
+                        self.sync_state = 1
+                        break
+                    #test = input()
+        for i, (k, v) in enumerate(self.log_files.items()):
+            v.close()
+        self.log_files.clear()
+        if self.fp_all is not None:
+            self.fp_all.close()
 
-        if not num_a.isdigit() and num_b.isdigit():
-            return 1
+    def start_log(self, output):
+        if self.fp_all is None:
+            self.fp_all = open(self.path + "all.txt", 'w')
+        if output['name'] not in self.log_files.keys():
+            self.log_files[output['name']] = open(
+                self.path + output['name'] + '.csv', 'w')
+            self.write_titlebar(self.log_files[output['name']], output)
 
-        if num_a.isdigit() and not num_b.isdigit():
-            return -1
+    def write_data(self, name, data):
+        self.log_files[name].write(data.__str__())
+        self.fp_all.write(data.__str__())
 
-        return 0
+    def write_data_fm(self, name, data, fm):
+        self.log_files[name].write(format(data, fm))
+        self.fp_all.write(format(data, fm))
 
-    return compare
+    def write_data_output(self, name, data):
+        pass
 
-  # return user_files
+    def log(self, output, data):
+        name = output['name']
+        payload = output['payload']
 
+        if name == 'imu':
+            self.fp_all.write("$imu,")
+            for i in range(len(data)):
+                if payload[i]['need']:
+                    if i == 1:
+                        self.write_data_fm(name, data[i], payload[i]['format'])
+                    elif payload[i]['name'] == 'time':
+                        time_ms = data[i] - int(data[i])
+                        time_h = int(int(data[i]) / 10000)
+                        time_m = int((int(data[i]) - time_h*10000) / 100)
+                        time_s = (int(data[i]) - time_h*10000 - time_m*100)
+                        time_useful = time_h*3600 + time_m*60 + time_s + time_ms
+                        self.write_data_fm(
+                            name, time_useful, payload[i]['format'])
+                    else:
+                        self.write_data_fm(name, data[i], payload[i]['format'])
+                    if payload[i]['need'] == 1:
+                        self.write_data(name, ",")
+        elif name == 'gnss':
+            self.fp_all.write("$gnss,")
+            for i in range(len(data)):
+                if payload[i]['need']:
+                    if (payload[i]['name'] == 'latitude') or (payload[i]['name'] == 'longitude'):
+                        value_int = int(data[i])
+                        value_float = data[i] - value_int
+                        value_two_float = int(value_float*100)
+                        value_rest_float = (
+                            data[i] - value_int - value_two_float/100) * 10000
+                        value_useful = value_int + value_two_float/60 + value_rest_float/3600
 
-def omit(source: dict, ignore_fields):
-    '''Omit no need fields
-    '''
-    output = source.copy()
-    for field in ignore_fields:
-        del output[field]
-    return output
+                        self.write_data_fm(
+                            name, value_useful, payload[i]['format'])
+                    elif payload[i]['name'] == 'time':
+                        time_ms = data[i] - int(data[i])
+                        time_h = int(int(data[i]) / 10000)
+                        time_m = int((int(data[i]) - time_h*10000) / 100)
+                        time_s = (int(data[i]) - time_h*10000 - time_m*100)
+                        time_useful = time_h*3600 + time_m*60 + time_s + time_ms
+                        self.write_data_fm(
+                            name, time_useful, payload[i]['format'])
+                    else:
+                        self.write_data_fm(name, data[i], payload[i]['format'])
+                    if payload[i]['need'] == 1:
+                        self.write_data(name, ",")
+        elif name == 'navi':
+            self.fp_all.write("$gnss,")
+            for i in range(len(data)):
+                if payload[i]['need']:
+                    if (payload[i]['name'] == 'latitude') or (payload[i]['name'] == 'longitude'):
+                        value_int = int(data[i])
+                        value_float = data[i] - value_int
+                        value_two_float = int(value_float*100)
+                        value_rest_float = (
+                            data[i] - value_int - value_two_float/100) * 10000
+                        value_useful = value_int + value_two_float/60 + value_rest_float/3600
 
+                        self.write_data_fm(
+                            name, value_useful, payload[i]['format'])
+                    elif payload[i]['name'] == 'time':
+                        time_ms = data[i] - int(data[i])
+                        time_h = int(int(data[i]) / 10000)
+                        time_m = int((int(data[i]) - time_h*10000) / 100)
+                        time_s = (int(data[i]) - time_h*10000 - time_m*100)
+                        time_useful = time_h*3600 + time_m*60 + time_s + time_ms
+                        self.write_data_fm(
+                            name, time_useful, payload[i]['format'])
+                    else:
+                        self.write_data_fm(name, data[i], payload[i]['format'])
+                    if payload[i]['need'] == 1:
+                        self.write_data(name, ",")
+            pass
 
-class ParseResult:
-    success = True
-    messages = []
-    data = None
+        self.write_data(name, "\n")
 
+    def parse_output_packet_payload(self, message_id):
+        '''zou packet'''
+        if message_id == 'fmim':
+            payload = self.packet_buffer[len(message_id):48]
+        elif message_id == 'fmig':
+            #print('het fmig')
+            payload = self.packet_buffer[len(message_id):91]
+        elif message_id == "fmin":
+            #print('get fmin')
+            payload = self.packet_buffer[len(message_id):96]
+        output = next(
+            (x for x in self.rtk_properties['zouOutputPackets'] if x['messageId'] == str(message_id)), None)
+        if output != None:
+            self.start_log(output)
+            data = self.openrtk_unpack_output_packet(output, payload)
 
-class CombineFiles:
-    '''Combine files to a single file
-    '''
+            if data != None:
+                self.log(output, data)
+        else:
+            print('no packet type {0} in json'.format(str(message_id)))
 
-    def filter_files(self):
-        all_files = os.listdir(self.root_path)
-        filtered_files = []
-        for item in all_files:
-            try:
-                index_of_user = item.index(self.file_name)
-                if index_of_user == 0:
-                    filtered_files.append(item)
-            except ValueError:
-                continue
+    def openrtk_unpack_output_packet(self, output, payload):
+        length = 0
+        pack_fmt = '<'
+        if self.cur_message_id == "fmim":
+            for value in output['payload']:
+                if value['type'] == 'double':
+                    pack_fmt += 'd'
+                    length += 8
+                elif value['type'] == 'float':
+                    pack_fmt += 'f'
+                    length += 4
+                elif value['type'] == 'float':
+                    pack_fmt += 'f'
+                    length += 4
+                elif value['type'] == 'float':
+                    pack_fmt += 'f'
+                    length += 4
+                elif value['type'] == 'float':
+                    pack_fmt += 'f'
+                    length += 4
+                elif value['type'] == 'float':
+                    pack_fmt += 'f'
+                    length += 4
+                elif value['type'] == 'float':
+                    pack_fmt += 'f'
+                    length += 4
+                elif value['type'] == 'float':
+                    pack_fmt += 'f'
+                    length += 4
+                elif value['type'] == 'float':
+                    pack_fmt += 'f'
+                    length += 4
+                elif value['type'] == 'float':
+                    pack_fmt += 'f'
+                    length += 4
+        elif self.cur_message_id == "fmig":
+            for value in output['payload']:
+                if value['type'] == 'double':
+                    pack_fmt += 'd'
+                    length += 8
+                elif value['type'] == 'double':
+                    pack_fmt += 'd'
+                    length += 8
+                elif value['type'] == 'double':
+                    pack_fmt += 'd'
+                    length += 8
+                elif value['type'] == 'double':
+                    pack_fmt += 'd'
+                    length += 8
+                elif value['type'] == 'float':
+                    pack_fmt += 'f'
+                    length += 4
+                elif value['type'] == 'float':
+                    pack_fmt += 'f'
+                    length += 4
+                elif value['type'] == 'float':
+                    pack_fmt += 'f'
+                    length += 4
+                elif value['type'] == 'float':
+                    pack_fmt += 'f'
+                    length += 4
+                elif value['type'] == 'float':
+                    pack_fmt += 'f'
+                    length += 4
+                elif value['type'] == 'float':
+                    pack_fmt += 'f'
+                    length += 4
+                elif value['type'] == 'float':
+                    pack_fmt += 'f'
+                    length += 4
+                elif value['type'] == 'float':
+                    pack_fmt += 'f'
+                    length += 4
+                elif value['type'] == 'float':
+                    pack_fmt += 'f'
+                    length += 4
+                elif value['type'] == 'float':
+                    pack_fmt += 'f'
+                    length += 4
+                elif value['type'] == 'float':
+                    pack_fmt += 'f'
+                    length += 4
+                elif value['type'] == 'float':
+                    pack_fmt += 'f'
+                    length += 4
+                elif value['type'] == 'float':
+                    pack_fmt += 'f'
+                    length += 4
+                elif value['type'] == 'uint8':
+                    pack_fmt += 'B'
+                    length += 1
+                elif value['type'] == 'uint8':
+                    pack_fmt += 'B'
+                    length += 1
+                elif value['type'] == 'uint8':
+                    pack_fmt += 'B'
+                    length += 1
+        elif self.cur_message_id == "fmin":
+            for value in output['payload']:
+                if value['type'] == 'double':
+                    pack_fmt += 'd'
+                    length += 8
+                elif value['type'] == 'double':
+                    pack_fmt += 'd'
+                    length += 8
+                elif value['type'] == 'double':
+                    pack_fmt += 'd'
+                    length += 8
+                elif value['type'] == 'double':
+                    pack_fmt += 'd'
+                    length += 8
+                elif value['type'] == 'float':
+                    pack_fmt += 'f'
+                    length += 4
+                elif value['type'] == 'float':
+                    pack_fmt += 'f'
+                    length += 4
+                elif value['type'] == 'float':
+                    pack_fmt += 'f'
+                    length += 4
+                elif value['type'] == 'float':
+                    pack_fmt += 'f'
+                    length += 4
+                elif value['type'] == 'float':
+                    pack_fmt += 'f'
+                    length += 4
+                elif value['type'] == 'float':
+                    pack_fmt += 'f'
+                    length += 4
+                elif value['type'] == 'float':
+                    pack_fmt += 'f'
+                    length += 4
+                elif value['type'] == 'float':
+                    pack_fmt += 'f'
+                    length += 4
+                elif value['type'] == 'float':
+                    pack_fmt += 'f'
+                    length += 4
+                elif value['type'] == 'float':
+                    pack_fmt += 'f'
+                    length += 4
+                elif value['type'] == 'float':
+                    pack_fmt += 'f'
+                    length += 4
+                elif value['type'] == 'float':
+                    pack_fmt += 'f'
+                    length += 4
+                elif value['type'] == 'float':
+                    pack_fmt += 'f'
+                    length += 4
+                elif value['type'] == 'float':
+                    pack_fmt += 'f'
+                    length += 4
+                elif value['type'] == 'uint32':
+                    pack_fmt += 'I'
+                    length += 4
+        len_fmt = '{0}B'.format(length)
 
-        return sorted(filtered_files, key=functools.cmp_to_key(order_by_modified_date(self.root_path)))
-
-    def work(self, prev_result, **kwargs) -> ParseResult:
-        self.root_path = kwargs.get('root_path')
-        self.file_name = kwargs.get('file_name')
-        self.output = kwargs.get('output')
-
-        result = ParseResult()
         try:
-            files = self.filter_files()
-            print(files)
-            output_folder_path = os.path.join(self.root_path, self.output)
-            output_file_path = os.path.join(output_folder_path, self.file_name)
-
-            if not os.path.exists(output_folder_path):
-                os.mkdir(output_folder_path)
-
-            if os.path.exists(output_file_path):
-                os.unlink(output_file_path)
-
-            with open(output_file_path, 'wb') as file_writer:
-                for file_item in files:
-                    content = open(os.path.join(
-                        self.root_path, file_item), 'rb').read()
-                    file_writer.write(content)
-
-            result.data = output_file_path
+            b = struct.pack(len_fmt, *payload)
+            data = struct.unpack(pack_fmt, b)
+            return data
         except Exception as e:
-            traceback.print_exc()
-            result.success = False
-            result.messages = [e]
-        return result
+            print(
+                "error happened when decode the payload, pls restart IMU firmware: {0}".format(e))
+
+    def write_titlebar(self, file, output):
+        if output['name'] == 'gnss':
+            for value in output['payload']:
+                if value['need'] and value['name'] != 'position_type':
+                    file.write(value['name'])
+                    file.write(",")
+            file.write(",")
+        elif output['name'] == 'imu':
+            for value in output['payload']:
+                if value['need']:
+                    file.write(value['name'])
+                    file.write(",")
+        elif output['name'] == 'navi':
+            for value in output['payload']:
+                if value['need']:
+                    file.write(value['name'])
+                    file.write(",")
+        file.write("\n")
+
+    def calc_32value(self, value):
+        ulCRC = value
+        for j in range(0, 8):
+            if (ulCRC & 1):
+                ulCRC = (ulCRC >> 1) ^ 0xEDB88320
+            else:
+                ulCRC = ulCRC >> 1
+        return ulCRC
+
+    def calc_block_crc32(self, payload):
+        ulCRC = 0
+        for bytedata in payload:
+            ulTemp1 = (ulCRC >> 8) & 0x00FFFFFF
+            ulTemp2 = self.calc_32value((ulCRC ^ bytedata) & 0xff)
+            ulCRC = ulTemp1 ^ ulTemp2
+        return ulCRC
 
 
-class UserLogParser:
-    '''Parse user log file to a batch of result
-    '''
-
-    def work(self, prev_result, **kwargs) -> ParseResult:
-        result = ParseResult()
-        self.root_path = kwargs.get('root_path')
-        self.file_name = kwargs.get('file_name')
-        self.output = kwargs.get('output')
-
-        if not prev_result:
-            result.success = False
-            result.messages = ['No input file']
-            return result
-
-        print('processing {0}'.format(prev_result))
-        output_folder_path = os.path.join(self.root_path, self.output, 'user')
-        user_log_file = open(prev_result, 'rb')
-        dirname, _ = os.path.split(os.path.abspath(__file__))
-        config_path = os.path.join(dirname, 'config.json')
-        # print(output_folder_path)
-        self.initialize(user_log_file, output_folder_path, config_path, 5)
-        self.start_pasre()
-        return ParseResult()
-
-    def initialize(self, data_file, path, json_setting, inskml_rate):
+class UserRawParse:
+    def __init__(self, data_file, path, inskml_rate, json_setting):
         self.rawdata = []
-
-        self.rawdata = data_file.read()
-
+        if is_later_py_3:
+            self.rawdata = data_file.read()
+        else:
+            self.filedata = data_file.read()
+            for c in self.filedata:
+                self.rawdata.append(ord(c))
         self.path = path
         self.inskml_rate = 1/inskml_rate
         self.packet_buffer = []
@@ -226,14 +487,14 @@ class UserLogParser:
             fmt_dic['pack'] = pack_fmt
             self.pkfmt[x['name']] = fmt_dic
 
-        self.f_process = open(self.path + '-process', 'w')
-        self.f_gnssposvel = open(self.path + '-gnssposvel.txt', 'w')
-        self.f_imu = open(self.path + '-imu.txt', 'w')
-        self.f_odo = open(self.path + '-odo.txt', 'w')
-        self.f_ins = open(self.path + '-ins.txt', 'w')
-        self.f_nmea = open(self.path + '-nmea', 'wb')
-        self.f_gnss_kml = open(self.path + '-gnss.kml', 'w')
-        self.f_ins_kml = open(self.path + '-ins.kml', 'w')
+        self.f_process = open(self.path[0:-1] + '-process', 'w')
+        self.f_gnssposvel = open(self.path[0:-1] + '-gnssposvel.txt', 'w')
+        self.f_imu = open(self.path[0:-1] + '-imu.txt', 'w')
+        self.f_odo = open(self.path[0:-1] + '-odo.txt', 'w')
+        self.f_ins = open(self.path[0:-1] + '-ins.txt', 'w')
+        self.f_nmea = open(self.path[0:-1] + '-nmea', 'wb')
+        self.f_gnss_kml = open(self.path[0:-1] + '-gnss.kml', 'w')
+        self.f_ins_kml = open(self.path[0:-1] + '-ins.kml', 'w')
 
         packet_type = ''
         nmea_header_len = 0
@@ -323,6 +584,9 @@ class UserLogParser:
                 + "</Style>\n"
         self.f_gnss_kml.write(kml_header)
 
+        gnss_postype = ["NONE", "PSRSP", "PSRDIFF",
+                        "UNDEFINED", "RTKFIXED", "RTKFLOAT"]
+
         gnss_track = "<Placemark>\n"\
             + "<name>Rover Track</name>\n"\
             + "<Style>\n"\
@@ -387,7 +651,7 @@ class UserLogParser:
                     + "<TR ALIGN=RIGHT><TD ALIGN=LEFT>Att(r,p,h):</TD><TD>"\
                     + "0" + "</TD><TD>" + "0" + "</TD><TD>" + "%.4f" % track_ground + "</TD><TD>(deg,approx)</TD></TR>\n"\
                     + "<TR ALIGN=RIGHT><TD ALIGN=LEFT>Mode:</TD><TD>"\
-                    + "0" + "</TD><TD>" + str(pos[2]) + "</TD><TR>\n"\
+                    + "0" + "</TD><TD>" + gnss_postype[pos[2]] + "</TD><TR>\n"\
                     + "</TABLE>\n"\
                     + "]]></description>\n"
 
@@ -414,8 +678,8 @@ class UserLogParser:
         '''
         '''
         # white-cyan, red, purple, light-yellow, green, yellow
-        color = ["ffffffff", "ff0000ff", "ffff00ff",
-                 "50FF78F0", "ff00ff00", "ff00aaff"]
+        color = ["ffffffff", "50FF78F0", "ffff00ff",
+                 "ff0000ff", "ff00ff00", "ff00aaff"]
         kml_header = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"\
             + "<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n"\
             + "<Document>\n"
@@ -438,6 +702,11 @@ class UserLogParser:
             + "</Style>\n"\
             + "<LineString>\n"\
             + "<coordinates>\n"
+
+        ins_status = ["INS_INACTIVE", "INS_ALIGNING", "INS_HIGH_VARIANCE",
+                      "INS_SOLUTION_GOOD", "INS_SOLUTION_FREE", "INS_ALIGNMENT_COMPLETE"]
+        ins_postype = ["INS_NONE", "INS_PSRSP", "INS_PSRDIFF",
+                       "INS_PROPOGATED", "INS_RTKFIXED", "INS_RTKFLOAT"]
 
         for ins in self.insdata:
             ep = self.weeksecondstoutc(ins[0], ins[1]/1000, -18)
@@ -492,7 +761,7 @@ class UserLogParser:
                     + "<TR ALIGN=RIGHT><TD ALIGN=LEFT>Att(r,p,h):</TD><TD>"\
                     + "%.4f" % ins[10] + "</TD><TD>" + "%.4f" % ins[11] + "</TD><TD>" + "%.4f" % ins[12] + "</TD><TD>(deg,approx)</TD></TR>\n"\
                     + "<TR ALIGN=RIGHT><TD ALIGN=LEFT>Mode:</TD><TD>"\
-                    + str(ins[2]) + "</TD><TD>" + str(ins[3]) + "</TD><TR>\n"\
+                    + ins_status[ins[2]] + "</TD><TD>" + ins_postype[ins[3]] + "</TD><TR>\n"\
                     + "</TABLE>\n"\
                     + "]]></description>\n"
 
@@ -546,7 +815,7 @@ class UserLogParser:
     def log(self, output, data):
         if output['name'] not in self.log_files.keys():
             self.log_files[output['name']] = open(
-                self.path + '-' + output['name'] + '.csv', 'w')
+                self.path + output['name'] + '.csv', 'w')
             self.write_titlebar(self.log_files[output['name']], output)
         buffer = ''
         for i in range(len(data)):
@@ -828,86 +1097,65 @@ class UserLogParser:
         return crc
 
 
-class ParserManager:
-    _handlers = {}
-
-    def create_handler(name):
-        '''Small handler factory
-        '''
-        handler_instance = None
-        if not ParserManager._handlers.__contains__(name):
-            if name == 'CombineFiles':
-                handler_instance = CombineFiles()
-
-            if name == 'UserLogParser':
-                handler_instance = UserLogParser()
-
-            ParserManager._handlers[name] = handler_instance
-
-        if ParserManager._handlers[name]:
-            handler_instance = ParserManager._handlers[name]
-
-        return handler_instance
-
-    def handle(opts: dict):
-        handlers = opts['handlers']
-        handler_instances = []
-        result = ParseResult()
-        next_context = None
-
-        for handler_name in handlers:
-            instance = ParserManager.create_handler(handler_name)
-            handler_instances.append(instance)
-
-        for instance in handler_instances:
-            handle_result = instance.work(
-                next_context, **omit(opts, ['handlers']))
-            if handle_result.success:
-                next_context = handle_result.data
-            else:
-                result.success = result.success and handle_result.success
-                result.messages.extend(handle_result.messages)
-                break
-        return result
+def mkdir(file_path):
+    path = file_path.strip()
+    path = path.rstrip("\\")
+    path = path[:-4]
+    path = path + '_p'
+    if not os.path.exists(path):
+        os.makedirs(path)
+    return path
 
 
-class LoggerParseManager:
-    parser_definations = [
-        {'file_name': 'user.bin',
-         'handlers': ['CombineFiles', 'UserLogParser']},
-        {'file_name': 'rtcm_base.bin', 'handlers': ['CombineFiles']},
-        {'file_name': 'rtcm_rover.bin', 'handlers': ['CombineFiles']},
-    ]
+def prepare_setting_folder(setting_file):
+    '''
+    Prepare folders for data storage and configuration
+    '''
+    executor_path = resource.get_executor_path()
+    setting_folder_name = 'setting'
 
-    file_root_path = None
-    output_folder = None
+    # copy contents of setting file under executor path
+    setting_folder_path = os.path.join(
+        executor_path, setting_folder_name)
 
-    def __init__(self, file_path, ins_rate, output_folder='output'):
-        self.file_root_path = file_path
-        self.output_folder = output_folder
+    product = 'OpenRTK330L'
+    product_folder = os.path.join(setting_folder_path, product)
+    if not os.path.isdir(product_folder):
+        os.makedirs(product_folder)
 
-    def run(self):
-        result = ParseResult()
-        for options in self.parser_definations:
-            options['root_path'] = self.file_root_path
-            options['output'] = self.output_folder
-            parser_result = ParserManager.handle(options)
-            result.success = result.success and parser_result.success
-            result.messages.extend(parser_result.messages)
+    config_path = os.path.join(
+        product_folder, setting_file)
 
-        return result
+    if not os.path.isfile(config_path):
+        config_content = resource.get_content_from_bundle(
+            setting_folder_name, os.path.join(product, setting_file))
+        if config_content is None:
+            raise ValueError('Setting file content is empty')
+
+        with open(config_path, "wb") as code:
+            code.write(config_content)
+
+    return config_path
 
 
-if __name__ == '__main__':
-    ARGS = receive_args()
-
-    MANAGER = LoggerParseManager(
-        file_path=ARGS.root_path,
-        ins_rate=ARGS.ins_rate)
-    RESULT = MANAGER.run()
-    if RESULT.success:
-        print('Log files parse succeed.')
-    else:
-        print('Log files parse failed.')
-        for msg in RESULT.messages:
-            print(msg)
+def do_parse(folder_path, kml_rate, setting_file):
+    setting_path = prepare_setting_folder(setting_file)
+    for root, _, file_name in os.walk(folder_path):
+        for fname in file_name:
+            if (fname.startswith('user') or fname.startswith('debug')) and fname.endswith('.bin') or (fname.startswith('IMU')) or (fname.endswith('.log')):
+                file_path = os.path.join(root, fname)
+                print_green(
+                    'Parse is started. File path: {0}'.format(file_path))
+                path = mkdir(file_path)
+                try:
+                    with open(file_path, 'rb') as fp_rawdata:
+                        if fname.startswith('user'):
+                            parse = UserRawParse(
+                                fp_rawdata, path + '/' + fname[:-4] + '_', kml_rate, setting_path)
+                        elif fname.endswith('.log'):
+                            parse = ZouParse(
+                                fp_rawdata, path + '/' + fname.rstrip(".log") + '_', setting_path)
+                        parse.start_pasre()
+                        print_green('Parse done.')
+                except Exception as e:
+                    print_red(e)
