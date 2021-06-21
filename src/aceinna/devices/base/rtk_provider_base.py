@@ -15,7 +15,7 @@ from ...framework.utils import (
 from ...framework.context import APP_CONTEXT
 from ...framework.utils.firmware_parser import parser as firmware_content_parser
 from ...framework.utils.print import (print_green, print_yellow, print_red)
-from ..base.provider_base import OpenDeviceBase
+from ..base import OpenDeviceBase
 from ..configs.openrtk_predefine import (
     APP_STR, get_openrtk_products, get_configuratin_file_mapping
 )
@@ -62,12 +62,12 @@ class RTKProviderBase(OpenDeviceBase):
         self.ntrip_client_enable = False
         self.nmea_buffer = []
         self.nmea_sync = 0
+        self.config_file_name = 'openrtk.json'
+        self.device_category = 'RTK'
         self.prepare_folders()
         self.ntripClient = None
         self.rtk_log_file_name = ''
-        self.connected = True
-        self.device_category = ''
-        self.config_file_name = 'openrtk.json'
+        self.connected = False
         self.port_index_define = {
             'user': 0,
             'rtcm': 1,
@@ -205,7 +205,7 @@ class RTKProviderBase(OpenDeviceBase):
                 'Failed to extract app version information from unit.' +
                 '\nThe supported application list is {0}.'.format(APP_STR) +
                 '\nTo keep runing, use INS configuration as default.' +
-                '\nYou can choose to place your json file under exection path if it is an unknown application.')
+                '\nYou can choose to place your json file under execution path if it is an unknown application.')
 
         with open(app_file_path) as json_data:
             self.properties = json.load(json_data)
@@ -245,7 +245,7 @@ class RTKProviderBase(OpenDeviceBase):
 
         try:
             self.rtk_log_file_name = os.path.join(
-                self.data_folder, '{0}_log_{1}'.format(self.device_category, formatted_dir_time))
+                self.data_folder, '{0}_log_{1}'.format(self.device_category.lower(), formatted_dir_time))
             os.mkdir(self.rtk_log_file_name)
         except:
             raise Exception(
@@ -266,9 +266,9 @@ class RTKProviderBase(OpenDeviceBase):
             self.check_predefined_result()
 
         # start ntrip client
-        if self.ntrip_client_enable and not self.ntripClient:
-            thead = threading.Thread(target=self.ntrip_client_thread)
-            thead.start()
+        # if self.ntrip_client_enable and not self.ntripClient:
+        #     thead = threading.Thread(target=self.ntrip_client_thread)
+        #     thead.start()
 
         try:
             if (self.properties["initial"]["useDefaultUart"]):
@@ -330,10 +330,6 @@ class RTKProviderBase(OpenDeviceBase):
                 'Can not log GNSS UART or DEBUG UART, pls check uart driver and connection!')
             return False
 
-    @abstractmethod
-    def after_bootloader_switch(self):
-        pass
-
     def nmea_checksum(self, data):
         data = data.replace("\r", "").replace("\n", "").replace("$", "")
         nmeadata, cksum = re.split('\*', data)
@@ -362,8 +358,9 @@ class RTKProviderBase(OpenDeviceBase):
                             if cksum == calc_cksum:
                                 if str_nmea.find("$GPGGA") != -1:
                                     # print()
-                                    if self.ntrip_client_enable and self.ntripClient != None:
-                                        self.ntripClient.send(str_nmea)
+                                    # if self.ntrip_client_enable and self.ntripClient != None:
+                                    #     self.ntripClient.send(str_nmea)
+                                    self.add_output_packet('gga',str_nmea)
                                 # print(str_nmea, end='')
                                 APP_CONTEXT.get_print_logger().info(str_nmea.replace('\r\n', ''))
                                 # else:
@@ -381,22 +378,9 @@ class RTKProviderBase(OpenDeviceBase):
     def thread_debug_port_receiver(self, *args, **kwargs):
         pass
 
+    @abstractmethod
     def thread_rtcm_port_receiver(self, *args, **kwargs):
-        if self.rtcm_logf is None:
-            return
-        while True:
-            if self.is_upgrading:
-                time.sleep(0.1)
-                continue
-            try:
-                data = bytearray(self.rtcm_serial_port.read_all())
-            except Exception as e:
-                print_red('RTCM PORT Thread error: {0}'.format(e))
-                return  # exit thread receiver
-            if len(data):
-                self.rtcm_logf.write(data)
-            else:
-                time.sleep(0.001)
+        pass
 
     def on_receive_output_packet(self, packet_type, data, error=None):
         '''
@@ -473,7 +457,7 @@ class RTKProviderBase(OpenDeviceBase):
                     if self.pS_data:
                         if self.pS_data['GPS_Week'] == data['GPS_Week']:
                             if data['GPS_TimeofWeek'] - self.pS_data['GPS_TimeofWeek'] >= 0.2:
-                                self.add_output_packet('stream', 'pos', data)
+                                self.add_output_packet('pos', data)
                                 self.pS_data = data
 
                                 if data['insStatus'] >= 3 and data['insStatus'] <= 5:
@@ -500,10 +484,10 @@ class RTKProviderBase(OpenDeviceBase):
                                          data['roll'], data['pitch'], data['heading'])
                                     APP_CONTEXT.get_print_logger().info(inspva)
                         else:
-                            self.add_output_packet('stream', 'pos', data)
+                            self.add_output_packet('pos', data)
                             self.pS_data = data
                     else:
-                        self.add_output_packet('stream', 'pos', data)
+                        self.add_output_packet('pos', data)
                         self.pS_data = data
             except Exception as e:
                 pass
@@ -513,8 +497,8 @@ class RTKProviderBase(OpenDeviceBase):
                 if self.sky_data[0]['timeOfWeek'] == data[0]['timeOfWeek']:
                     self.sky_data.extend(data)
                 else:
-                    self.add_output_packet('stream', 'skyview', self.sky_data)
-                    self.add_output_packet('stream', 'snr', self.sky_data)
+                    self.add_output_packet('skyview', self.sky_data)
+                    self.add_output_packet('snr', self.sky_data)
                     self.sky_data = []
                     self.sky_data.extend(data)
             else:
@@ -541,7 +525,7 @@ class RTKProviderBase(OpenDeviceBase):
                 self.ps_dic['north_vel_std'] = data['north_vel_standard_deviation']
                 self.ps_dic['east_vel_std'] = data['east_vel_standard_deviation']
                 self.ps_dic['up_vel_std'] = data['up_vel_standard_deviation']
-                self.add_output_packet('stream', 'pos', self.ps_dic)
+                self.add_output_packet('pos', self.ps_dic)
 
         elif packet_type == 'i1':
             self.inspva_flag = 1
@@ -572,15 +556,15 @@ class RTKProviderBase(OpenDeviceBase):
                 self.ps_dic['roll_std'] = data['roll_std']
                 self.ps_dic['pitch_std'] = data['pitch_std']
                 self.ps_dic['heading_std'] = data['heading_std']
-                self.add_output_packet('stream', 'pos', self.ps_dic)
+                self.add_output_packet('pos', self.ps_dic)
 
         elif packet_type == 'y1':
             if self.sky_data:
                 if self.sky_data[0]['GPS_TimeOfWeek'] == data[0]['GPS_TimeOfWeek']:
                     self.sky_data.extend(data)
                 else:
-                    self.add_output_packet('stream', 'skyview', self.sky_data)
-                    self.add_output_packet('stream', 'snr', self.sky_data)
+                    self.add_output_packet('skyview', self.sky_data)
+                    self.add_output_packet('snr', self.sky_data)
                     self.sky_data = []
                     self.sky_data.extend(data)
             else:
@@ -594,7 +578,7 @@ class RTKProviderBase(OpenDeviceBase):
                     and output_packet_config['active']:
                 timeOfWeek = int(data['GPS_TimeOfWeek']) % 60480000
                 data['GPS_TimeOfWeek'] = timeOfWeek / 1000
-                self.add_output_packet('stream', 'imu', data)
+                self.add_output_packet('imu', data)
 
     @abstractmethod
     def build_worker(self, rule, content):
@@ -651,6 +635,9 @@ class RTKProviderBase(OpenDeviceBase):
         }
 
     def save_parameters_result(self, file_path):
+        if self.is_in_bootloader:
+            return
+
         result = self.get_params()
         if result['packetType'] == 'inputParams':
             with open(file_path, 'w') as outfile:
@@ -715,6 +702,12 @@ class RTKProviderBase(OpenDeviceBase):
         file_path = os.path.join(
             self.rtk_log_file_name, 'parameters_{0}.json'.format(formatted_file_time))
         self.save_parameters_result(file_path)
+
+    def get_operation_status(self):
+        if self.is_logging:
+            return 'LOGGING'
+
+        return 'IDLE'
 
     # command list
     def server_status(self, *args):  # pylint: disable=invalid-name

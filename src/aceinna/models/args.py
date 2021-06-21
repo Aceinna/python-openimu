@@ -37,10 +37,10 @@ class WebserverArgs(KeyValuesArgumentBase):
         'com_port': 'auto',
         'debug': False,
         'with_data_log': False,
-        'with_raw_log': False,
         'console_log': False,
         'set_user_para': False,
-        'ntrip_client': False
+        'ntrip_client': False,
+        'force_bootloader': False
     }
 
 
@@ -52,4 +52,15 @@ class DetectorArgs(KeyValuesArgumentBase):
         'device_type': 'auto',
         'baudrate': 'auto',
         'com_port': 'auto'
+    }
+
+
+class LogParserArgs(KeyValuesArgumentBase):
+    '''
+    Argument define for log parser
+    '''
+    default_values = {
+        'log_type': 'openrtk',
+        'path': '.',
+        'kml_rate': 5
     }

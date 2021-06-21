@@ -2,9 +2,18 @@
 """
 Application Loader
 """
-from .cli import CommandLine
-from .web import Webserver
-#from ..framework.context import APP_CONTEXT
+from .receiver import Receiver as ReceiverApp
+from .cli import CommandLine as CommandLineApp
+from .default import Default as DefaultApp
+from .log_parser import LogParser as LogParserApp
+from .. import VERSION
+
+
+class APP_TYPE:
+    DEFAULT = 'default'
+    CLI = 'cli'
+    RECEIVER = 'receiver'
+    LOG_PARSER = 'log-parser'
 
 
 class Loader:
@@ -14,16 +23,22 @@ class Loader:
     def create(platform, options):
         '''Initial bootstrap instance
         '''
-        active_app = None
-        if platform == 'web':
-            active_app = Webserver(**options)
+        print("[Info] Python driver version: {0} ".format(VERSION))
 
-        if platform == 'cli':
-            active_app = CommandLine(**options)
+        active_app = None
+        if platform == APP_TYPE.DEFAULT:
+            active_app = DefaultApp(**options)
+
+        if platform == APP_TYPE.CLI:
+            active_app = CommandLineApp(**options)
+
+        if platform == APP_TYPE.RECEIVER:
+            active_app = ReceiverApp(**options)
+
+        if platform == APP_TYPE.LOG_PARSER:
+            active_app = LogParserApp(**options)
 
         if active_app is None:
             raise ValueError('no matched bootstrap')
-
-        # APP_CONTEXT.set_app(active_app)
 
         return active_app

@@ -1,8 +1,8 @@
 import time
 import threading
-from .base.event_base import EventBase
+from .base import EventBase
 from itertools import groupby
-
+from .upgrade_workers import UPGRADE_EVENT
 
 class UpgradeCenter(EventBase):
     def __init__(self):
@@ -76,9 +76,9 @@ class UpgradeCenter(EventBase):
             thead.start()
 
     def start_worker(self, executor):
-        executor.on('progress', self.handle_worker_progress)
-        executor.on('error', self.handle_worker_error)
-        executor.on('finish', self.handle_worker_done)
+        executor.on(UPGRADE_EVENT.PROGRESS, self.handle_worker_progress)
+        executor.on(UPGRADE_EVENT.ERROR, self.handle_worker_error)
+        executor.on(UPGRADE_EVENT.FINISH, self.handle_worker_done)
         executor.work()
 
     def handle_worker_progress(self, worker_key, current, total):
@@ -96,7 +96,7 @@ class UpgradeCenter(EventBase):
         self.data_lock.release()
         step = self.current-last_current
 
-        self.emit('progress', step, self.current, self.total)
+        self.emit(UPGRADE_EVENT.PROGRESS, step, self.current, self.total)
 
     def handle_worker_error(self, worker_key, message):
         ''' on worker error
@@ -105,7 +105,7 @@ class UpgradeCenter(EventBase):
         for worker in self.workers.values():
             worker['executor'].stop()
 
-        self.emit('error', message)
+        self.emit(UPGRADE_EVENT.ERROR, message)
 
     def handle_worker_done(self, worker_key):
         ''' on worker progress
@@ -117,4 +117,4 @@ class UpgradeCenter(EventBase):
         if len(self.run_status) == len(self.workers):
             # wait a time, output data to client
             time.sleep(.5)
-            self.emit('finish')
+            self.emit(UPGRADE_EVENT.FINISH)

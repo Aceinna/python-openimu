@@ -1,66 +1,145 @@
 """
 Command line entry
 """
-#import asyncio
+import os
+import sys
+import time
 import threading
 from os import getpid
 import psutil
-from .web import Webserver
+# from .web import Webserver
 from ..models import WebserverArgs
-from ..framework.communicator import CommunicatorFactory
+
+from ..core.driver import (Driver, DriverEvents)
+from ..core.device_context import DeviceContext
+from ..core.tunnel_web import WebServer
+from ..core.tunnel_base import TunnelEvents
+
+from ..framework import AppLogger
+from ..framework.utils import resource
+from ..framework.context import APP_CONTEXT
 
 
 class CommandLine:
     '''Command line entry class
     '''
+    options = None
+    _tunnel = None
+    _driver = None
+    webserver_running = False
+    supported_commands = []
+    input_string = None
+    current_command = None
 
     def __init__(self, **kwargs):
-        self.communication = 'uart'
-        self.device_provider = None
-        self.communicator = None
-        self.supported_commands = []
-        self.input_string = None
-        self.current_command = None
         self._build_options(**kwargs)
-        self.webserver = Webserver(**kwargs)
-        self.webserver_running = False
+
+        # self.communication = 'uart'
+        # self.device_provider = None
+        # self.communicator = None
+
+        # self.webserver = Webserver(**kwargs)
 
     def listen(self):
-        # find device
         '''
-        Start to find device
+        Prepare components, initialize the application
         '''
-        self.detect_device(self.device_discover_handler)
+        # prepare driver
+        threading.Thread(target=self._prepare_driver).start()
+        # prepage logger
+        self._prepare_logger()
 
-    def detect_device(self, callback):
-        '''find if there is a connected device'''
-        if self.communicator is None:
-            self.communicator = CommunicatorFactory.create(
-                self.communication, self.options)
+    def handle_discovered(self, device_provider):
+        device_context = DeviceContext(device_provider)
+        APP_CONTEXT.device_context = device_context
 
-        self.communicator.find_device(callback)
+        if self._tunnel:
+            self._tunnel.notify('discovered')
 
-    def device_discover_handler(self, device_provider):
-        '''
-        Handler after device discovered
-        '''
-        # check if device is in bootloader
-        # TODO: if in bootloader, only allow upgrade
+    def handle_lost(self):
+        if self._tunnel:
+            self._tunnel.notify('lost')
 
-        # TODO: if a normal device, allow other commands
+    def handle_upgrade_finished(self):
+        if self._tunnel:
+            self._tunnel.notify(
+                'continous', 'upgrade_complete', {'success': True})
 
-        # load device provider
-        self.webserver.set_communicator(self.communicator)
-        self.webserver.load_device_provider(device_provider)
-        # setup command
-        #self.device_provider = device_provider
+    def handle_upgrade_fail(self, code, message):
+        if self._tunnel:
+            self._tunnel.notify('continous', 'upgrade_complete', {
+                                'success': False, 'code': code, 'message': message})
+
+    def handle_error(self, error, message):
+        if self._tunnel:
+            self._tunnel.notify('lost')
+
+    def handle_request(self, method, converted_method, parameters):
+        result = self._driver.execute(converted_method, parameters)
+        if self._tunnel:
+            self._tunnel.notify('invoke', method, result)
+
+    def handle_receive_continous_data(self, packet_type, data):
+        if self._tunnel:
+            self._tunnel.notify('continous', packet_type, data)
+
+    def _prepare_driver(self):
+        self._driver = Driver(self.options)
+
+        self._driver.on(DriverEvents.Discovered,
+                        self.handle_discovered)
+
+        self._driver.on(DriverEvents.Lost,
+                        self.handle_lost)
+
+        self._driver.on(DriverEvents.UpgradeFinished,
+                        self.handle_upgrade_finished)
+
+        self._driver.on(DriverEvents.UpgradeFail,
+                        self.handle_upgrade_fail)
+
+        self._driver.on(DriverEvents.Error,
+                        self.handle_error)
+
+        self._driver.on(DriverEvents.Continous,
+                        self.handle_receive_continous_data)
+
+        self._driver.detect()
+
         self.setup_command_handler()
+
+    def _prepare_logger(self):
+        '''
+        Set default log handler: console logger, file logger
+        '''
+        executor_path = resource.get_executor_path()
+        log_level = 'info'
+        if self.options.debug:
+            log_level = 'debug'
+
+        console_log = self.options.console_log
+
+        APP_CONTEXT.set_logger(
+            AppLogger(
+                filename=os.path.join(executor_path, 'loggers', 'trace.log'),
+                gen_file=True,
+                level=log_level,
+                console_log=console_log
+            ))
+
+        APP_CONTEXT.set_print_logger(
+            AppLogger(
+                filename=os.path.join(
+                    executor_path, 'loggers', 'print_' + time.strftime('%Y%m%d_%H%M%S') + '.log'),
+                gen_file=True,
+                level=log_level
+            ))
 
     def setup_command_handler(self):
         '''
         Prepare command
         '''
-        self.supported_commands = self.webserver.device_provider.get_command_lines()
+        self.supported_commands = self._driver.execute('get_command_lines')
 
         while True:
             token = input(">>")
@@ -84,15 +163,20 @@ class CommandLine:
         self.exit_handler()
         return True
 
-    def start_webserver(self, current_loop):
+    def start_webserver(self):
         '''
         Start websocket server
         '''
-        # asyncio.set_event_loop(asyncio.new_event_loop())
-        self.webserver.start_webserver(current_loop)
+        import tornado.ioloop
+        if sys.version_info[0] > 2:
+            import asyncio
+            asyncio.set_event_loop(asyncio.new_event_loop())
 
-        # if not current_loop.is_running():
-        #     current_loop.run_forever()
+        event_loop = tornado.ioloop.IOLoop.current()
+
+        self._tunnel = WebServer(self.options, event_loop)
+        self._tunnel.on(TunnelEvents.Request, self.handle_request)
+        self._tunnel.setup()
 
     def _build_options(self, **kwargs):
         self.options = WebserverArgs(**kwargs)
@@ -113,7 +197,7 @@ class CommandLine:
         '''
         Connect to device, may no need it later
         '''
-        print(self.webserver.device_provider.get_device_info())
+        print(self._driver.execute('get_device_info'))
 
     def upgrade_handler(self):
         '''upgrade command is used for firmware upgrade and followed by file name
@@ -125,26 +209,26 @@ class CommandLine:
         else:
             file_name = self.input_string[1]
             # TODO: check device is idel
-            self.webserver.device_provider.upgrade_framework(file_name)
+            self._driver.execute('upgrade_framework', file_name)
         return True
 
     def record_handler(self):
         '''record command is used to save the outputs into local machine
         '''
         # TODO: check device is idel
-        if not self.webserver.device_provider.is_logging:
-            self.webserver.device_provider.start_data_log()
+        if APP_CONTEXT.device_context.runtime_status != 'LOGGING':
+            self._driver.execute('start_data_log')
         return True
 
     def stop_handler(self):
         '''record command is used to save the outputs into local machine
         '''
         # TODO: check device is idel
-        if self.webserver.device_provider.is_logging:
-            self.webserver.device_provider.stop_data_log()
+        if APP_CONTEXT.device_context.runtime_status == 'LOGGING':
+            self._driver.execute('stop_data_log')
 
         if self.webserver_running:
-            self.webserver.stop_ws_server()
+            self._tunnel.stop_ws_server()
             self.webserver_running = False
         return True
 
@@ -153,7 +237,8 @@ class CommandLine:
         Get parameter of device
         '''
         input_args = len(self.input_string)
-        conf = self.webserver.device_provider.get_conf()
+        conf = self._driver.execute('get_conf')
+
         input_params_properties = conf['data']['inputParams']
         select_param = None
         if (input_args == 1):
@@ -180,8 +265,8 @@ class CommandLine:
                         i += 1
                     return True
 
-        param = self.webserver.device_provider.get_param(
-            {'paramId': select_param['paramId']})
+        param = self._driver.execute(
+            'get_param', {'paramId': select_param['paramId']})
         print(param['data']['value'])
         return True
 
@@ -190,7 +275,7 @@ class CommandLine:
         Set parameter of device
         '''
         input_args = len(self.input_string)
-        conf = self.webserver.device_provider.get_conf()
+        conf = self._driver.execute('get_conf')
         input_params_properties = conf['data']['inputParams']
         select_param = None
         not_in_options = False
@@ -247,7 +332,7 @@ class CommandLine:
             print(select_param['options'])
             return True
 
-        self.webserver.device_provider.set_param({
+        conf = self._driver.execute('set_param', {
             'paramId': select_param['paramId'],
             'value': self.input_string[2]
         })
@@ -260,18 +345,14 @@ class CommandLine:
         '''
         Save device configuration
         '''
-        self.webserver.device_provider.save_config()
+        self._driver.execute('save_config')
         return True
 
     def server_start_handler(self):
         '''
         start a websocket server
         '''
-        # self.webserver.start_websocket_server()
-        loop = None #asyncio.get_event_loop()
-        webserver_thread = threading.Thread(
-            target=self.start_webserver, args=(loop,))
-        webserver_thread.start()
+        threading.Thread(target=self.start_webserver).start()
         self.webserver_running = True
         return True
 
@@ -280,7 +361,7 @@ class CommandLine:
         Exit current process
         '''
         # self.webserver.stop()
-        #self.webserver_running = False
+        # self.webserver_running = False
         pid = getpid()
         process = psutil.Process(pid)
         process.kill()

@@ -1,5 +1,5 @@
-import math
 import struct
+from . import filter_nan
 
 IIR_50HZ_LPF = 50
 IIR_40HZ_LPF = 40
@@ -187,13 +187,7 @@ def do_decode_value(data_type, data):
 def decode_value(data_type, data):
     ret_value = do_decode_value(data_type, data)
 
-    if not isinstance(ret_value, float):
-        return ret_value
-
-    if math.isnan(ret_value):
-        return 0
-    else:
-        return ret_value
+    return filter_nan(ret_value)
 
 
 def encode_value(data_type, data):

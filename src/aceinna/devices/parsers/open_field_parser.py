@@ -1,6 +1,7 @@
 import math
 import struct
 import decimal
+from . import filter_nan
 
 
 def do_decode_value(data_type, data, conf):
@@ -45,7 +46,10 @@ def do_decode_value(data_type, data, conf):
         if conf and conf['value_accuracy']:
             precision = conf['value_accuracy']
             decimal_wrapped = decimal.Decimal(unpack_value)
-            unpack_value = float(round(decimal_wrapped, precision))
+            try:
+                unpack_value = float(round(decimal_wrapped, precision))
+            except:
+                unpack_value = 0
         return unpack_value
     elif data_type == 'uint16':
         try:
@@ -115,13 +119,7 @@ def do_decode_value(data_type, data, conf):
 def decode_value(data_type, data, conf=None):
     ret_value = do_decode_value(data_type, data, conf)
 
-    if not isinstance(ret_value, float):
-        return ret_value
-
-    if math.isnan(ret_value):
-        return 0
-    else:
-        return ret_value
+    return filter_nan(ret_value)
 
 
 def encode_value(data_type, data):

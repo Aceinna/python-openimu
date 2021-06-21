@@ -6,6 +6,7 @@ try:
     from aceinna.devices.base.provider_base import OpenDeviceBase
     from aceinna.devices.openimu.uart_provider import Provider as OpenIMUUartProvider
     from aceinna.devices.openrtk.uart_provider import Provider as OpenRTKUartProvider
+    from aceinna.devices.rtkl.uart_provider import Provider as RTKLUartProvider
     from aceinna.devices.dmu.uart_provider import Provider as OpenDMUUartProvider
     from mocker.communicator import MockCommunicator
 except:  # pylint: disable=bare-except
@@ -15,6 +16,7 @@ except:  # pylint: disable=bare-except
     from aceinna.devices.base.provider_base import OpenDeviceBase
     from aceinna.devices.openimu.uart_provider import Provider as OpenIMUUartProvider
     from aceinna.devices.openrtk.uart_provider import Provider as OpenRTKUartProvider
+    from aceinna.devices.rtkl.uart_provider import Provider as RTKLUartProvider
     from aceinna.devices.dmu.uart_provider import Provider as OpenDMUUartProvider
     from mocker.communicator import MockCommunicator
 
@@ -60,6 +62,11 @@ class TestDeviceManager(unittest.TestCase):
         provider = build_provider('DMU', 'DMU')
         self.assertTrue(isinstance(provider, OpenDMUUartProvider),
                         'DMU UART Provider')
+
+    def test_ping_rtkl_with_specified_device_type(self):
+        provider = build_provider('RTK', 'RTKL')
+        self.assertTrue(isinstance(provider, RTKLUartProvider),
+                        'RTKL UART Provider')
 
     def test_ping_device_with_unmatched_device_type(self):
         provider = build_provider('IMU', 'RTK')

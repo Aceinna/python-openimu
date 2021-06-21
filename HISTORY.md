@@ -1,6 +1,32 @@
 # History
 # This is a special branch for INCEPTIO
 ---
+## 2.4.0 / 2021-05-07
+- [DMU] Resolve firmware version from ID message.
+- [DMU] Support record data in developers site.
+- [DMU/IMU] Support GF, SF, RF, WF for uart command run tool in developers site.
+- [OpenRTK/RTK330LA] Log device info when device is connected.
+
+## 2.3.2 / 2021-04-12
+- [DMU] Support INS330BI
+- [RTK330LA] Fix the wrong GNSS port logging
+
+## 2.3.1 / 2021-04-02
+- [OpenIMU] Update openimu.json for OpenIMU300RI
+- [OpenRTK] Update GGA parser
+- [OpenRTK] Split log name of RTK330LA from OpenRTK
+- [Framework] Optimize the device information match
+- [Framework] Support force to bootloader
+
+## 2.3.0 / 2021-02-28
+- [OpenIMU] Support packet data statistics.
+- [OpenRTK] Support RTK330L.
+- [OpenRTK] Save predefined parameters when connected.
+- [Framework] Adjust the json file location. Different product would have single application json file.
+- [Framework] Support upgrade firmware through aceinna developers site.
+- [Framework] Enhance the upgrade center.
+- [Framework] Refactor WebServer, consider websocket server is a message tunnel.
+- [Framework] Refactor bootstrap, to make it clear for later maintainer.
 
 ## 2.2.5 / 2021-05-31 
 - [OpenRTK] Support RTK330LA firmware upgrade.

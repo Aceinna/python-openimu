@@ -4,7 +4,7 @@ import uuid
 import threading
 import datetime
 import time
-from .base.event_base import EventBase
+from .base import EventBase
 from ..framework.utils import helper
 if sys.version_info[0] > 2:
     from queue import Queue
@@ -19,6 +19,7 @@ class EVENT_TYPE:
     ERROR = 'error'
     READ_BLOCK = 'read_block'
     CONTINUOUS_MESSAGE = 'continuous_message'
+    CRC_FAILURE = 'crc_failure'
 
 
 class DeviceMessage(EventBase):
@@ -93,6 +94,7 @@ class DeviceMessageCenter(EventBase):
 
     def set_parser(self, parser):
         self._parser = parser
+        self._parser.on('crc_failure', self.on_crc_failure)
         self._parser.on('command', self.on_command_receive)
         self._parser.on('continuous_message',
                         self.on_continuous_messageReceive)
@@ -184,10 +186,10 @@ class DeviceMessageCenter(EventBase):
         '''
         Check running status
         '''
-        if sys.version_info[0] > 2:
-            import asyncio
-            self.loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(self.loop)
+        # if sys.version_info[0] > 2:
+        #     import asyncio
+        #     self.loop = asyncio.new_event_loop()
+        #     asyncio.set_event_loop(self.loop)
 
         while True:
             self.exception_lock.acquire()
@@ -280,4 +282,8 @@ class DeviceMessageCenter(EventBase):
         self.run_post()
 
     def on_continuous_messageReceive(self, *args, **kwargs):
+        # save data
         self.emit(EVENT_TYPE.CONTINUOUS_MESSAGE, **kwargs)
+
+    def on_crc_failure(self, *args, **kwargs):
+        self.emit(EVENT_TYPE.CRC_FAILURE, **kwargs)

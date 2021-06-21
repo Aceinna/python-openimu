@@ -1,6 +1,7 @@
 import collections
 import operator
-from ..base.event_base import EventBase
+import time
+from ..base.message_parser_base import MessageParserBase
 from ...framework.utils import helper
 from .dum_packet_parser import (
     match_command_handler, match_continuous_handler)
@@ -17,20 +18,18 @@ INPUT_PACKETS = ['PK', 'CH', 'RE', 'WE', 'UE', 'GP',
 OUTPUT_PACKETS = ['ID', 'VR', 'VA', 'KC', 'KT', 'KS']
 
 
-class UartMessageParser(EventBase):
+class UartMessageParser(MessageParserBase):
+    '''
+    DMU message parser
+    '''
     def __init__(self, configuration):
-        super(UartMessageParser, self).__init__()
+        super(UartMessageParser, self).__init__(configuration)
         self.frame = []
         self.payload_len_idx = 5
         self.sync_pattern = collections.deque(2*[0], 2)
         self.find_header = False
         self.payload_len = 0
-        self.properties = configuration
-        self.run_command = ''
         # command,continuous_message
-
-    def set_configuration(self, configuration):
-        self.properties = configuration
 
     def set_run_command(self, command):
         self.run_command = ''.join(['%c' % x for x in command[2:4]])
@@ -58,6 +57,8 @@ class UartMessageParser(EventBase):
                 else:
                     APP_CONTEXT.get_logger().logger.info(
                         "crc check error! packet_type:{0}".format(packet_type))
+                    self.emit('crc_failure', packet_type=packet_type, event_time=time.time())
+
                     input_packet_config = next(
                         (x for x in self.properties['userMessages']['inputPackets']
                          if x['name'] == packet_type), None)
@@ -70,14 +71,6 @@ class UartMessageParser(EventBase):
             if operator.eq(list(self.sync_pattern), MSG_HEADER):
                 self.frame = MSG_HEADER[:]  # header_tp.copy()
                 self.find_header = True
-
-    def get_packet_info(self, raw_command):
-        packet_type, payload, _ = helper.parse_command_packet(raw_command)
-        return {
-            'packet_type': packet_type,
-            'data': payload,
-            'raw': raw_command
-        }
 
     def _parse_message(self, packet_type, payload_len, frame):
         payload = frame[5:payload_len+5]
@@ -127,4 +120,5 @@ class UartMessageParser(EventBase):
         else:
             self.emit('continuous_message',
                       packet_type=packet_type,
-                      data=data)
+                      data=data,
+                      event_time=time.time())

@@ -3,9 +3,16 @@ import concurrent.futures as futures
 import time
 import base64
 from ...framework.context import APP_CONTEXT
+from ...core.gnss import RTCMParser
+from ...core.event_base import EventBase
 
-class NTRIPClient:
+
+class NTRIPClient(EventBase):
     def __init__(self, properties, communicator):
+        super(NTRIPClient, self).__init__()
+
+        self.parser = RTCMParser()
+        self.parser.on('parsed', self.handle_parsed_data)
         self.communicator = communicator
         self.isConnected = 0
         for x in properties["initial"]["ntrip"]:
@@ -19,7 +26,7 @@ class NTRIPClient:
                 self.username = x["value"]
             elif x['name'] == 'password':
                 self.password = x["value"]
-        
+
     def run(self):
         APP_CONTEXT.get_print_logger().info('NTRIP run..')
         while True:
@@ -43,13 +50,15 @@ class NTRIPClient:
                 print('NTRIP:[request] fail')
                 APP_CONTEXT.get_print_logger().info('NTRIP:[request] fail')
                 self.tcpClientSocket.close()
-                
+
     def doConnect(self):
         self.isConnected = 0
         self.tcpClientSocket = socket(AF_INET, SOCK_STREAM)
         try:
-            print('NTRIP:[connect] {0}:{1} start...'.format(self.ip, self.port))
-            APP_CONTEXT.get_print_logger().info('NTRIP:[connect] {0}:{1} start...'.format(self.ip, self.port))
+            print('NTRIP:[connect] {0}:{1} start...'.format(
+                self.ip, self.port))
+            APP_CONTEXT.get_print_logger().info(
+                'NTRIP:[connect] {0}:{1} start...'.format(self.ip, self.port))
 
             self.tcpClientSocket.connect((self.ip, self.port))
             print('NTRIP:[connect] ok')
@@ -58,7 +67,8 @@ class NTRIPClient:
             self.isConnected = 1
         except Exception as e:
             print('NTRIP:[connect] {0}'.format(e))
-            APP_CONTEXT.get_print_logger().info('NTRIP:[connect] {0}'.format(e))
+            APP_CONTEXT.get_print_logger().info(
+                'NTRIP:[connect] {0}'.format(e))
 
         if self.isConnected == 1:
             # send ntrip request
@@ -67,7 +77,8 @@ class NTRIPClient:
             ntripRequestStr = ntripRequestStr + 'Authorization: Basic '
             apikey = self.username + ':' + self.password
             apikeyBytes = apikey.encode("utf-8")
-            ntripRequestStr = ntripRequestStr + base64.b64encode(apikeyBytes).decode("utf-8")
+            ntripRequestStr = ntripRequestStr + \
+                base64.b64encode(apikeyBytes).decode("utf-8")
             ntripRequestStr = ntripRequestStr + '\r\n\r\n'
             # print(ntripRequestStr)
             self.send(ntripRequestStr)
@@ -83,7 +94,8 @@ class NTRIPClient:
             except Exception as e:
                 print('NTRIP:[send] error occur {0}'.format(e))
 
-                APP_CONTEXT.get_print_logger().info('NTRIP:[send] {0}'.format(e))
+                APP_CONTEXT.get_print_logger().info(
+                    'NTRIP:[send] {0}'.format(e))
 
         else:
             return
@@ -94,24 +106,28 @@ class NTRIPClient:
             try:
                 data = self.tcpClientSocket.recv(1024)
                 if data:
-                    APP_CONTEXT.get_print_logger().info('NTRIP:[recv] rxdata {0}'.format(len(data)))
+                    APP_CONTEXT.get_print_logger().info(
+                        'NTRIP:[recv] rxdata {0}'.format(len(data)))
                     # print('NTRIP:[recv] rxdata {0}'.format(len(data)))
-                    if self.communicator.can_write():
-                        self.communicator.write(data)
-                    else:
-                        print('NTRIP:[recv] uart error occur')
-                        APP_CONTEXT.get_print_logger().info('NTRIP:[recv] uart error occur')
-                        self.tcpClientSocket.close()
-                        return
+                    self.parser.receive(data)
+                    # if self.communicator.can_write():
+                    #     self.communicator.write(data)
+                    # else:
+                    #     print('NTRIP:[recv] uart error occur')
+                    #     APP_CONTEXT.get_print_logger().info('NTRIP:[recv] uart error occur')
+                    #     self.tcpClientSocket.close()
+                    #     return
                 else:
                     print('NTRIP:[recv] no data error')
-                    APP_CONTEXT.get_print_logger().info('NTRIP:[recv] no data error')
+                    APP_CONTEXT.get_print_logger().info(
+                        'NTRIP:[recv] no data error')
                     self.tcpClientSocket.close()
                     return
 
             except Exception as e:
                 print('NTRIP:[recv] error occur {0}'.format(e))
-                APP_CONTEXT.get_print_logger().info('NTRIP:[recv] error occur {0}'.format(e))
+                APP_CONTEXT.get_print_logger().info(
+                    'NTRIP:[recv] error occur {0}'.format(e))
                 self.tcpClientSocket.close()
                 return
 
@@ -127,6 +143,13 @@ class NTRIPClient:
                     return
             except Exception as e:
                 print('NTRIP:[recvR] error occur {0}'.format(e))
-                APP_CONTEXT.get_print_logger().info('NTRIP:[recvR] error occur {0}'.format(e))
+                print('NTRIP:[recvR] data:{0}'.format(data))
+                APP_CONTEXT.get_print_logger().info(
+                    'NTRIP:[recvR] error occur {0}'.format(e))
                 return
-                
+
+    def handle_parsed_data(self, data):
+        combined_data = []
+        for item in data:
+            combined_data += item
+        self.emit('parsed', combined_data)

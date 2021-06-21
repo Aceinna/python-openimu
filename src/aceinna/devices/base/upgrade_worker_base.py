@@ -1,5 +1,5 @@
 from abc import ABCMeta, abstractmethod
-from .event_base import EventBase
+from . import EventBase
 
 
 class UpgradeWorkerBase(EventBase):
@@ -29,6 +29,10 @@ class UpgradeWorkerBase(EventBase):
     @group.setter
     def group(self, value):
         self._group = value
+
+    @property
+    def is_stopped(self):
+        return self._is_stopped
 
     @abstractmethod
     def get_upgrade_content_size(self):

@@ -16,7 +16,8 @@ def _extract_time_field(configuration):
         'S0': 'GPSITOW',
         'S1': 'counter',
         'A1': 'timeITOW',
-        'A2': 'timeITOW'
+        'A2': 'timeITOW',
+        'E3': 'counter'
     }
 
     field_name = time_field_dict.get(configuration['name'])
@@ -36,11 +37,11 @@ def _calculate_time_value(packet_type, payload, field):
     prev = 0.0
     offset = int(field['offset'])
 
-    if packet_type == 'S0' or packet_type == 'S1':
+    if ['S0', 'S1'].__contains__(packet_type):
         now = struct.unpack('>H', struct.pack(
             '>2B', *payload[offset:offset+2]))[0]
 
-    if packet_type == 'A1' or packet_type == 'A2':
+    if ['A1', 'A2', 'E3'].__contains__(packet_type):
         now = struct.unpack('>I', struct.pack(
             '>4B', *payload[offset:offset+4]))[0]
 
@@ -192,27 +193,34 @@ def common_continuous_parser(payload, configuration, scaling):
             length += 1
     len_fmt = '{0}B'.format(length)
 
+    format_data = None
     try:
         pack_item = struct.pack(len_fmt, *payload)
         data = struct.unpack(pack_fmt, pack_item)
         out = []
 
-        for idx, item in enumerate(configuration['payload']):
-            scaling_setting = None
-            scaling_value = 1
-            if item.__contains__('scaling'):
-                scaling_setting = scaling[item['scaling']]
-            if scaling_setting:
-                scaling_value = eval(scaling_setting)
+        time_field = _extract_time_field(configuration)
 
-            format_value = data[idx]*scaling_value
+        for idx, item in enumerate(configuration['payload']):
+            if item == time_field:
+                format_value = _calculate_time_value(
+                    configuration['name'], payload, time_field)
+            else:
+                scaling_setting = None
+                scaling_value = 1
+                if item.__contains__('scaling'):
+                    scaling_setting = scaling[item['scaling']]
+                if scaling_setting:
+                    scaling_value = eval(scaling_setting)
+                format_value = data[idx]*scaling_value
+
             out.append((item['name'], format_value))
 
-        time_field = _extract_time_field(configuration)
-        if time_field:
-            time_value = _calculate_time_value(
-                configuration['name'], payload, time_field)
-            out.append(('time', time_value))
+        # time_field = _extract_time_field(configuration)
+        # if time_field:
+        #     time_value = _calculate_time_value(
+        #         configuration['name'], payload, time_field)
+        #     out.append(('time', time_value))
 
         format_data = collections.OrderedDict(out)
 

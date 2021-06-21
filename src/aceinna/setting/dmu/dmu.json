@@ -58,50 +58,11 @@
         "rate":"1260/65536",
         "mag":"2/65536",
         "temperature":"200/65536",
-        "time":"1/65535"
+        "time":"1/65535",
+		"speed":"0.001"
     },
 	"userMessages": {
 		"inputPackets": [
-			{
-				"name": "ma",
-				"description": "Magnetic alignment control commands",
-				"inputPayload": [
-					{
-						"actionID":  0,
-						"actionName": "status"
-					},
-					{
-
-						"actionID":  1,
-						"actionName": "start"
-					},
-					{
-						"actionID":  5,
-						"actionName": "save"
-					},
-					{
-						"actionID":  6,
-						"actionName": "abort"
-					},
-					{
-						"actionID": 7,
-						"actionName": "stored"
-					}
-				],
-				"responsePayload": {
-					"type": "string",
-					"name": "ma action name"
-				}
-			},
-			{
-				"name": "gV",
-				"description": "Get user app version",
-				"inputPayload": {},
-				"responsePayload": {
-					"type": "string",
-					"name": "User Version"
-				}
-			},
 			{
 				"name": "RF",
 				"description": "Get All Configuration Parameters",
@@ -110,24 +71,6 @@
 					"type": "userConfiguration",
 					"name": "Full Current Configuration"
 				}
-			},
-			{
-				"name": "gP",
-				"description": "Get a Configuration Parameter",
-				"inputPayload": {
-					"type": "paramId",
-					"name": "Request Parameter Id"
-				},
-				"responsePayload": {
-					"type": "userParameter",
-					"name": "User Parameter"
-				}
-			},
-			{
-				"name": "sC",
-				"description": "Save Conifguration Parameters to Flash",
-				"inputPayload": {},
-				"responsePayload": {}
 			},
 			{
 				"name": "SF",
@@ -255,7 +198,7 @@
 				"graphs": [{
 						"name": "Acceleration",
 						"units": "m/s^2",
-						"xAxis": "time",
+						"xAxis": "GPSITOW",
 						"yAxes": ["xAccel", "yAccel", "zAccel"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
 						"yMax": 80
@@ -263,7 +206,7 @@
 					{
 						"name": "Angular Rate",
 						"units": "deg/s",
-						"xAxis": "time",
+						"xAxis": "GPSITOW",
 						"yAxes": ["xRate", "yRate", "zRate"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
 						"yMax": 400
@@ -271,7 +214,7 @@
 					{
 						"name": "Magnetic-Field",
 						"units": "Gauss",
-						"xAxis": "time",
+						"xAxis": "GPSITOW",
 						"yAxes": ["xMag", "yMag", "zMag"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
 						"yMax": 20
@@ -279,7 +222,7 @@
                     {
 						"name": "Board-Temperature",
 						"units": "degC",
-						"xAxis": "time",
+						"xAxis": "GPSITOW",
 						"yAxes": ["boardTemp"],
 						"colors": ["#FF0000"],
 						"yMax": 100
@@ -376,7 +319,7 @@
 				"graphs": [{
 						"name": "Acceleration",
 						"units": "m/s^2",
-						"xAxis": {"name":"time","unit":"packets"},
+						"xAxis": {"name":"counter","unit":"packets"},
 						"yAxes": ["xAccel", "yAccel", "zAccel"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
 						"yMax": 5
@@ -384,7 +327,7 @@
 					{
 						"name": "Angular-Rate",
 						"units": "deg/s",
-						"xAxis": {"name":"time","unit":"packets"},
+						"xAxis": {"name":"counter","unit":"packets"},
 						"yAxes": ["xRate", "yRate", "zRate"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
 						"yMax": 200
@@ -392,7 +335,7 @@
 					{
 						"name": "Board-Temperature",
 						"units": "degC",
-						"xAxis": {"name":"time","unit":"packets"},
+						"xAxis": {"name":"counter","unit":"packets"},
 						"yAxes": ["boardTemp"],
 						"colors": ["#FF0000"],
 						"yMax": 100
@@ -510,7 +453,7 @@
 				"graphs": [{
 						"name": "Acceleration",
 						"units": "m/s^2",
-						"xAxis": {"name":"time","unit":"msec"},
+						"xAxis": {"name":"timeITOW","unit":"msec"},
 						"yAxes": ["xAccel", "yAccel", "zAccel"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
 						"yMax": 5
@@ -518,7 +461,7 @@
 					{
 						"name": "Angular-Rate",
 						"units": "deg/s",
-						"xAxis": {"name":"time","unit":"msec"},
+						"xAxis": {"name":"timeITOW","unit":"msec"},
 						"yAxes": ["xRateCorrected", "yRateCorrected", "zRateCorrected"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
 						"yMax": 200
@@ -629,7 +572,7 @@
 				"graphs": [{
 						"name": "Acceleration",
 						"units": "m/s^2",
-						"xAxis": {"name":"time","unit":"msec"},
+						"xAxis": {"name":"timeITOW","unit":"msec"},
 						"yAxes": ["xAccel", "yAccel", "zAccel"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
 						"yMax": 5
@@ -637,13 +580,208 @@
 					{
 						"name": "Angular-Rate",
 						"units": "deg/s",
-						"xAxis": {"name":"time","unit":"msec"},
+						"xAxis": {"name":"timeITOW","unit":"msec"},
 						"yAxes": ["xRateCorrected", "yRateCorrected", "zRateCorrected"],
 						"colors": ["#FF0000", "#00FF00", "#0000FF"],
 						"yMax": 200
 					}
 				]
-			}		
+			},
+			{
+				"name": "E3",
+				"description": "INS solution Data",
+				"payload": [
+					{
+						"type": "uint32",
+						"name": "counter",
+                        "unit": "packets",
+                        "offset": "0"
+					},
+					{
+						"type": "int16",
+						"name": "roll",
+                        "unit": "deg",
+                        "offset": "4",
+                        "scaling":"angle"
+					},
+					{
+						"type": "int16",
+						"name": "pitch",
+                        "unit": "deg",
+                        "offset": "6",
+                        "scaling":"angle"
+					},
+					{
+						"type": "int16",
+						"name": "yaw",
+                        "unit": "deg",
+                        "offset": "8",
+                        "scaling":"angle"
+					},
+					{
+						"type": "int16",
+						"name": "frontWheelSteeringAngle",
+						"unit": "deg",
+						"offset": "10",
+                        "scaling":"angle"
+					},
+					{
+						"type": "int16",
+						"name": "masterAccelX",
+                        "unit": "m/s^2",
+                        "offset": "12",
+                        "scaling":"accel"
+					},
+					{
+						"type": "int16",
+						"name": "masterAccelY",
+                        "unit": "m/s^2",
+                        "offset": "14",
+                        "scaling":"accel"
+					},
+					{
+						"type": "int16",
+						"name": "masterAccelZ",
+                        "unit": "m/s^2",
+                        "offset": "16",
+                        "scaling":"accel"
+					},
+					{
+						"type": "int16",
+						"name": "mastGyroX",
+                        "unit": "deg/s",
+                        "offset": "18",
+                        "scaling":"rate"
+					},
+					{
+						"type": "int16",
+						"name": "mastGyroY",
+                        "unit": "deg/s",
+                        "offset": "20",
+                        "scaling":"rate"
+					},
+					{
+						"type": "int16",
+						"name": "mastGyroZ",
+                        "unit": "deg/s",
+                        "offset": "22",
+                        "scaling":"rate"
+					},
+					{
+						"type": "int16",
+						"name": "steeringAngleRate",
+                        "unit": "deg/s",
+                        "offset": "24",
+                        "scaling":"rate"
+					},
+					{
+						"type": "int16",
+						"name": "vehicleSpeed",
+                        "unit": "m/s",
+                        "offset": "26",
+                        "scaling":"speed"
+					},
+					{
+						"type": "int16",
+						"name": "masterAlgorithmStates",
+                        "unit": "",
+                        "offset": "28"
+					},
+					{
+						"type": "int16",
+						"name": "slaveAlgorithmStates",
+                        "unit": "",
+                        "offset": "30"
+					}
+				],
+				"graphs": [{
+						"name": "Acceleration",
+						"units": "m/s^2",
+						"xAxis": {"name":"counter","unit":"packets"},
+						"yAxes": ["masterAccelX", "masterAccelY", "masterAccelZ"],
+						"colors": ["#FF0000", "#00FF00", "#0000FF"],
+						"yMax": 80
+					},
+					{
+						"name": "Angular Rate",
+						"units": "deg/s",
+						"xAxis": {"name":"counter","unit":"packets"},
+						"yAxes": ["mastGyroX", "mastGyroY", "mastGyroZ"],
+						"colors": ["#FF0000", "#00FF00", "#0000FF"],
+						"yMax": 400
+					},
+					{
+						"name": "Euler Angles (Roll and Pitch)",
+						"units": "deg",
+						"xAxis": {"name":"counter","unit":"packets"},
+						"yAxes": ["roll", "pitch"],
+						"colors": ["#FF0000", "#00FF00"],
+						"yMax": 90
+					},
+                    {
+						"name": "Euler Angles (Heading)",
+						"units": "deg",
+						"xAxis": {"name":"counter","unit":"packets"},
+						"yAxes": ["yaw"],
+						"colors": ["#FF0000"],
+						"yMax": 190
+				    },
+					{
+						"name": "Attitude and DG Indicators",
+						"units": "deg",
+						"renderType": "indicator",
+						"yAxes": {
+							"roll": "roll", 
+							"pitch": "pitch",
+							"heading": "yaw"
+						}
+					},
+					{
+						"name": "Steering",
+						"renderType": "list",
+						"fields": [
+							{"name": "frontWheelSteeringAngle", "display": "Steering angle"},
+							{"name": "steeringAngleRate", "display": "Steering angle rate"},
+							{"name": "vehicleSpeed", "display": "Vehicle speed"}
+						]
+					},
+					{
+						"name": "Master Algorithm States",
+						"renderType": "bits",
+						"field": {"name": "masterAlgorithmStates", "display": "Raw Data"},
+						"bits": [
+							{"name": "Algorithm initialized", "address": 0, "values": ["Yes","No"]},
+							{"name": "High gain mode", "address": 1, "values": ["No","Yes"]},
+							{"name": "Attitude only", "address": 2, "values": ["No","Yes"]},
+							{"name": "Turn switch", "address": 3, "values": ["No","Yes"]},
+							{"name": "Linear accel", "address": 4, "values": ["No","Yes"]},
+							{"name": "Motionless by IMU data", "address": 5, "values": ["No","Yes"]},
+							{"name": "Motionless by GNSS data", "address": 6, "values": ["No","Yes"]},
+							{"name": "GNSS heading valid", "address": 7, "values": ["No","Yes"]},
+							{"name": "Heading lock", "address": 8, "values": ["No","Yes"]},
+							{"name": "PPS available", "address": 9, "values": ["No","Yes"]},
+							{"name": "Algorithm synced to PPS", "address": 10, "values": ["No","Yes"]}
+						]
+					},
+					{
+						"name": "Steering Angle Algorithm States",
+						"renderType": "bits",
+						"field": {"name": "slaveAlgorithmStates", "display": "Raw Data"},
+						"bits": [
+							{"name": "Algorithm state", "address": "0:2"},
+							{"name": "Steering angle", "address": "3:5"},
+							{"name": "Motionless by IMU data", "address": 6, "values": ["No","Yes"]},
+							{"name": "Turn switch", "address": 7, "values": ["No","Yes"]},
+							{"name": "Motionless by GNSS data", "address": 8, "values": ["No","Yes"]},
+							{"name": "GNSS outage", "address": 9, "values": ["No","Yes"]},
+							{"name": "Steering angle locked", "address": 10, "values": ["No","Yes"]},
+							{"name": "Motion anomaly", "address": 11, "values": ["No","Yes"]},
+							{"name": "GNSS heading valid", "address": 12, "values": ["No","Yes"]},
+							{"name": "Initial gyro bias valid", "address": 13, "values": ["No","Yes"]}
+						]
+					}
+				]
+			}	
 		]
 	},
 	"bootloaderMessages": [{

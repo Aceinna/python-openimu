@@ -1,0 +1,1183 @@
+{
+	"name": "INS2000_RAWDATA",
+	"app_version": "INS2000 RAWDATA 1.2.1",
+	"appName": "INS2000 RAWDATA 1.2.1",
+	"type": "INS2000",
+    "description": "6-axis INS2000 with INS application",
+    "setupcommands":[
+        "unlogall\r",
+        "NTRIPCONFIG NCOM1 client V1 47.116.1.17:2201 WX02 INS2000 SIGEMZOOMQ1JDJI3\r",
+        "SETINSTRANSLATION ANT1 -0.28 1.43 1.0 0.20 0.20 0.20\r",
+        "SETINSTRANSLATION DUALANT 0.7 0.0 0.0 0.20 0.20 0.20\r",
+        "SETINSROTATION RBV 0.0 0.0 0.0 0.5 0.5 1.0\r",
+        "SETINSTRANSLATION USER -0.28 1.43 1.0 0.20 0.20 0.20\r",
+        "INSCOMMAND ENABLE\r",
+		"LOG RANGECMPB ONTIME 1\r",
+        "LOG RAWEPHEMB ONCHANGED\r",
+        "LOG GLOEPHEMERISB ONCHANGED\r",
+        "LOG GALEPHEMERISB ONCHANGED\r",
+        "LOG BDSEPHEMERISB ONCHANGED\r",
+        "LOG QZSSEPHEMERISB ONCHANGED\r",
+        "LOG INSCONFIGB ONCHANGED\r",
+        "LOG versionb once\r",
+        "LOG rxstatusb once\r",
+        "LOG inspvaxb ontime 0.1\r",
+        "LOG bestgnssposb ontime 0.1\r",
+        "LOG bestgnssvelb ontime 0.1\r",
+        "LOG headingb ontime 0.1\r",
+        "LOG heading2b ontime 1\r",
+        "LOG RAWIMUSXB ONNEW\r",
+        "LOG gpgga ontime 0.1\r",
+        "LOG GPGSV ONTIME 1\r",
+        "LOG NCOM1 gpgga ontime 1\r",
+        "SAVECONFIG\r"
+    ],
+    "packetsTypeList": {
+        "99": "BESTVEL",
+        "241": "BESTXYZ",
+        "263": "INSATT",
+        "265": "INSPOS",
+        "507": "INSPVA",
+        "971": "HEADING",
+        "1335": "HEADING2",
+        "1429": "BESTGNSSPOS",
+        "1430": "BESTGNSSVEL",
+        "1462": "RAWIMUSX",
+        "1465": "INSPVAX"
+    },
+	"outputPackets": {
+        "BESTVEL": {
+            "name": "BESTVEL",
+            "messageId": "99",
+            "payload": [
+                {
+                    "type": "uint32",
+                    "name": "sol_status",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+					"type": "uint32",
+					"name": "vel_type",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+					"type": "float",
+					"name": "latency",
+                    "unit": "s",
+                    "format": "11.7f"
+                },
+                {
+					"type": "float",
+					"name": "age",
+                    "unit": "s",
+                    "format": "11.7f"
+                },
+                {
+					"type": "double",
+					"name": "hor_spd",
+                    "unit": "m/s",
+                    "format": "11.7f"
+                },
+                {
+					"type": "double",
+					"name": "trk_gnd",
+                    "unit": "deg",
+                    "format": "11.7f"
+                },
+                {
+					"type": "float",
+					"name": "reserve",
+                    "unit": "",
+                    "format": "11.7f"
+                }
+            ]
+        },
+        "BESTXYZ": {
+            "name": "BESTXYZ",
+            "messageId": "241",
+            "payload": [
+                {
+					"type": "uint32",
+					"name": "p_sol_status",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+					"type": "uint32",
+					"name": "pos_type",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+					"type": "double",
+					"name": "p_x",
+                    "unit": "m",
+                    "format": "11.7f"
+                },
+                {
+					"type": "double",
+					"name": "p_y",
+                    "unit": "m",
+                    "format": "11.7f"
+                },
+                {
+					"type": "double",
+					"name": "p_z",
+                    "unit": "m",
+                    "format": "11.7f"
+                },
+                {
+					"type": "float",
+					"name": "p_x_s",
+                    "unit": "m",
+                    "format": "11.7f"
+                },
+                {
+					"type": "float",
+					"name": "p_y_s",
+                    "unit": "m",
+                    "format": "11.7f"
+                },
+                {
+					"type": "float",
+					"name": "p_z_s",
+                    "unit": "m",
+                    "format": "11.7f"
+                },
+                {
+					"type": "uint32",
+					"name": "v_sol_status",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+					"type": "uint32",
+					"name": "vel_type",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+					"type": "double",
+					"name": "v_x",
+                    "unit": "m/s",
+                    "format": "11.7f"
+                },
+                {
+					"type": "double",
+					"name": "v_y",
+                    "unit": "m/s",
+                    "format": "11.7f"
+                },
+                {
+					"type": "double",
+					"name": "v_z",
+                    "unit": "m/s",
+                    "format": "11.7f"
+                },
+                {
+					"type": "float",
+					"name": "v_x_s",
+                    "unit": "m/s",
+                    "format": "11.7f"
+                },
+                {
+					"type": "float",
+					"name": "v_y_s",
+                    "unit": "m/s",
+                    "format": "11.7f"
+                },
+                {
+					"type": "float",
+					"name": "v_z_s",
+                    "unit": "m/s",
+                    "format": "11.7f"
+                },
+                {
+					"type": "int32",
+					"name": "stn_id",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+					"type": "float",
+					"name": "v_latency",
+                    "unit": "s",
+                    "format": "11.7f"
+                },
+                {
+					"type": "float",
+					"name": "diff_age",
+                    "unit": "s",
+                    "format": "11.7f"
+                },
+                {
+					"type": "uint8",
+					"name": "svs",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+					"type": "uint8",
+					"name": "soln_svs",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+					"type": "uint8",
+					"name": "gg_l1",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+					"type": "uint8",
+					"name": "soln_multi_svs",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+					"type": "int8",
+					"name": "reserve1",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+					"type": "int8",
+					"name": "ext_sol_stat",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+					"type": "int8",
+					"name": "reserve2",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+					"type": "int8",
+					"name": "sig_mask",
+                    "unit": "",
+                    "format": ""
+				}
+            ]
+        },
+        "INSATT": {
+            "name": "INSATT",
+            "messageId": "263",
+            "payload": [
+                {
+                    "type": "uint32",
+                    "name": "week",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+                    "type": "double",
+                    "name": "seconds_in_week",
+                    "unit": "s",
+                    "format": "11.7f"
+                },
+                {
+                    "type": "double",
+                    "name": "roll",
+                    "unit": "deg",
+                    "format": "11.7f"
+                },
+                {
+                    "type": "double",
+                    "name": "pitch",
+                    "unit": "deg",
+                    "format": "11.7f"
+                },
+                {
+                    "type": "double",
+                    "name": "azimuth",
+                    "unit": "deg",
+                    "format": "11.7f"
+                },
+                {
+                    "type": "int32",
+                    "name": "status",
+                    "unit": "",
+                    "format": ""
+                }
+            ]
+        },
+        "INSPOS": {
+            "name": "INSPOS",
+            "messageId": "265",
+            "payload": [
+                {
+                    "type": "uint32",
+                    "name": "week",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+                    "type": "double",
+                    "name": "seconds_in_week",
+                    "unit": "s",
+                    "format": "11.7f"
+                },
+                {
+                    "type": "double",
+                    "name": "lat",
+                    "unit": "deg",
+                    "format": "11.7f"
+                },
+                {
+                    "type": "double",
+                    "name": "lon",
+                    "unit": "deg",
+                    "format": "11.7f"
+                },
+                {
+                    "type": "double",
+                    "name": "hgt",
+                    "unit": "m",
+                    "format": "11.7f"
+                },
+                {
+                    "type": "int32",
+                    "name": "status",
+                    "unit": "",
+                    "format": ""
+                }
+            ]
+        },
+        "INSPVA": {
+            "name": "INSPVA",
+            "messageId": "507",
+            "payload": [
+                {
+                    "type": "uint32",
+                    "name": "week",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+                    "type": "double",
+                    "name": "seconds_in_week",
+                    "unit": "s",
+                    "format": "11.7f"
+                },
+                {
+                    "type": "double",
+                    "name": "lat",
+                    "unit": "deg",
+                    "format": "11.7f"
+                },
+                {
+                    "type": "double",
+                    "name": "lon",
+                    "unit": "deg",
+                    "format": "11.7f"
+                },
+                {
+                    "type": "double",
+                    "name": "hgt",
+                    "unit": "deg",
+                    "format": "11.7f"
+                },
+                {
+                    "type": "double",
+                    "name": "north_velocity",
+                    "unit": "m/s",
+                    "format": "11.7f"
+                },
+                {
+                    "type": "double",
+                    "name": "east_velocity",
+                    "unit": "m/s",
+                    "format": "11.7f"
+                },
+                {
+                    "type": "double",
+                    "name": "up_velocity",
+                    "unit": "m/s",
+                    "format": "11.7f"
+                },
+                {
+                    "type": "double",
+                    "name": "roll",
+                    "unit": "deg",
+                    "format": "11.7f"
+                },
+                {
+                    "type": "double",
+                    "name": "pitch",
+                    "unit": "deg",
+                    "format": "11.7f"
+                },
+                {
+                    "type": "double",
+                    "name": "azimuth",
+                    "unit": "deg",
+                    "format": "11.7f"
+                },
+                {
+                    "type": "int32",
+                    "name": "status",
+                    "unit": "",
+                    "format": ""
+                }
+            ]
+        },
+        "HEADING": {
+            "name": "HEADING",
+            "messageId": "971",
+            "payload": [
+                {
+                    "type": "int32",
+                    "name": "sol_stat",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+                    "type": "int32",
+                    "name": "pos_type",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+                    "type": "float",
+                    "name": "length",
+                    "unit": "m",
+                    "format": "11.7f"
+                },
+                {
+                    "type": "float",
+                    "name": "heading",
+                    "unit": "deg",
+                    "format": "11.7f"
+                },
+                {
+                    "type": "float",
+                    "name": "pitch",
+                    "unit": "deg",
+                    "format": "11.7f"
+                },
+                {
+                    "type": "float",
+                    "name": "reserve1",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+                    "type": "float",
+                    "name": "hdgstddev",
+                    "unit": "deg",
+                    "format": "11.7f"
+                },
+                {
+                    "type": "float",
+                    "name": "ptchstddev",
+                    "unit": "deg",
+                    "format": "11.7f"
+                },
+                {
+                    "type": "string",
+                    "name": "stn_id",
+                    "unit": "",
+                    "format": "",
+                    "length": "4"
+                },
+                {
+                    "type": "uint8",
+                    "name": "svs",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+                    "type": "uint8",
+                    "name": "soln_svs",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+                    "type": "uint8",
+                    "name": "obs",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+                    "type": "uint8",
+                    "name": "multi",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+                    "type": "uint8",
+                    "name": "reserve2",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+                    "type": "uint8",
+                    "name": "ext_sol_stat",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+                    "type": "uint8",
+                    "name": "reserve3",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+                    "type": "uint8",
+                    "name": "sig_mask",
+                    "unit": "",
+                    "format": ""
+                }
+            ]
+        },
+        "HEADING2": {
+            "name": "HEADING2",
+            "messageId": "1335",
+            "payload": [
+                {
+                    "type": "int32",
+                    "name": "sol_stat",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+                    "type": "int32",
+                    "name": "pos_type",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+                    "type": "float",
+                    "name": "length",
+                    "unit": "m",
+                    "format": "11.7f"
+                },
+                {
+                    "type": "float",
+                    "name": "heading",
+                    "unit": "deg",
+                    "format": "11.7f"
+                },
+                {
+                    "type": "float",
+                    "name": "pitch",
+                    "unit": "deg",
+                    "format": "11.7f"
+                },
+                {
+                    "type": "float",
+                    "name": "reserve1",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+                    "type": "float",
+                    "name": "hdgstddev",
+                    "unit": "deg",
+                    "format": "11.7f"
+                },
+                {
+                    "type": "float",
+                    "name": "ptchstddev",
+                    "unit": "deg",
+                    "format": "11.7f"
+                },
+                {
+                    "type": "string",
+                    "name": "rover_stn_id",
+                    "unit": "",
+                    "format": "",
+                    "length": "4"
+                },
+                {
+                    "type": "string",
+                    "name": "base_stn_id",
+                    "unit": "",
+                    "format": "",
+                    "length": "4"
+                },
+                {
+                    "type": "uint8",
+                    "name": "svs",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+                    "type": "uint8",
+                    "name": "soln_svs",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+                    "type": "uint8",
+                    "name": "obs",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+                    "type": "uint8",
+                    "name": "multi",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+                    "type": "uint8",
+                    "name": "reserve2",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+                    "type": "uint8",
+                    "name": "ext_sol_stat",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+                    "type": "uint8",
+                    "name": "reserve3",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+                    "type": "uint8",
+                    "name": "sig_mask",
+                    "unit": "",
+                    "format": ""
+                }
+            ]
+        },
+        "BESTGNSSPOS": {
+            "name": "BESTGNSSPOS",
+            "messageId": "1429",
+            "payload": [
+                {
+					"type": "uint32",
+					"name": "sol_status",
+                    "unit": "",
+                    "format": ""
+				},
+				{
+					"type": "uint32",
+					"name": "pos_type",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+					"type": "double",
+					"name": "lat",
+                    "unit": "deg",
+                    "format": "11.7f"
+				},
+				{
+					"type": "double",
+					"name": "lon",
+                    "unit": "deg",
+                    "format": "11.7f"
+				},
+				{
+					"type": "double",
+					"name": "hgt",
+                    "unit": "m",
+                    "format": "11.7f"
+				},
+				{
+					"type": "float",
+					"name": "undulation",
+                    "unit": "m",
+                    "format": "11.7f"
+                },
+                {
+					"type": "float",
+					"name": "datum_id",
+                    "unit": "",
+                    "format": "11.7f"
+				},
+				{
+					"type": "float",
+					"name": "lat_sigma",
+                    "unit": "m",
+                    "format": "11.7f"
+				},
+				{
+					"type": "float",
+					"name": "lon_sigma",
+                    "unit": "m",
+                    "format": "11.7f"
+                },
+                {
+					"type": "float",
+					"name": "hgt_sigma",
+                    "unit": "m",
+                    "format": "11.7f"
+                },
+                {
+					"type": "int32",
+					"name": "stn_id",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+					"type": "float",
+					"name": "diff_age",
+                    "unit": "s",
+                    "format": "11.7f"
+                },
+                {
+					"type": "float",
+					"name": "sol_age",
+                    "unit": "s",
+                    "format": "11.7f"
+                },
+                {
+					"type": "uint8",
+					"name": "svs",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+					"type": "uint8",
+					"name": "soln_svs",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+					"type": "int8",
+					"name": "reserved1",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+					"type": "int8",
+					"name": "reserved2",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+					"type": "int8",
+					"name": "reserved3",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+					"type": "int8",
+					"name": "ext_sol_stat",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+					"type": "int8",
+					"name": "reserved4",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+					"type": "int8",
+					"name": "sig_mask",
+                    "unit": "",
+                    "format": ""
+				}
+			]
+        },
+        "BESTGNSSVEL": {
+			"name": "BESTGNSSVEL",
+			"messageId": "1430",
+			"payload": [
+                {
+					"type": "uint32",
+					"name": "sol_status",
+                    "unit": "",
+                    "format": ""
+				},
+				{
+					"type": "uint32",
+					"name": "vel_type",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+					"type": "float",
+					"name": "latency",
+                    "unit": "s",
+                    "format": "11.7f"
+				},
+				{
+					"type": "float",
+					"name": "age",
+                    "unit": "s",
+                    "format": "11.7f"
+				},
+				{
+					"type": "double",
+					"name": "hor_spd",
+                    "unit": "m/s",
+                    "format": "11.7f"
+				},
+				{
+					"type": "double",
+					"name": "trk_gnd",
+                    "unit": "deg",
+                    "format": "11.7f"
+				},
+				{
+					"type": "double",
+					"name": "vert_spd",
+                    "unit": "m/s",
+                    "format": "11.7f"
+				},
+				{
+					"type": "float",
+					"name": "reserved",
+                    "unit": "",
+                    "format": "11.7f"
+				}
+			]
+        },
+        "RAWIMUSX": {
+            "name": "RAWIMUSX",
+            "messageId": "1462",
+            "payload": [
+                {
+                    "type": "int8",
+                    "name": "imuinfo",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+                    "type": "int8",
+                    "name": "imutype",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+                    "type": "uint16",
+                    "name": "week",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+                    "type": "double",
+                    "name": "seconds",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+                    "type": "uint32",
+                    "name": "imu_status",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+                    "type": "int32",
+                    "name": "z_accel",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+                    "type": "int32",
+                    "name": "y_accel",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+                    "type": "int32",
+                    "name": "x_accel",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+                    "type": "int32",
+                    "name": "z_gyro",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+                    "type": "int32",
+                    "name": "y_gyro",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+                    "type": "int32",
+                    "name": "x_gyro",
+                    "unit": "",
+                    "format": ""
+                }
+            ],
+            "graphs": [
+                {
+                    "name": "Acceleration",
+                    "units": "m/s^2",
+                    "xAxis": {"name":"GPS_TimeOfWeek", "unit":"s"},
+                    "yAxes": [
+                        "x_accel",
+                        "y_accel",
+                        "z_accel"
+                    ],
+                    "colors": [
+                        "#FF0000",
+                        "#00FF00",
+                        "#0000FF"
+                    ],
+                    "yMax": 20
+                },
+                {
+                    "name": "Angular-Rate",
+                    "units": "deg/s",
+                    "xAxis": {"name":"GPS_TimeOfWeek", "unit":"s"},
+                    "yAxes": [
+                        "x_gyro",
+                        "y_gyro",
+                        "z_gyro"
+                    ],
+                    "colors": [
+                        "#FF0000",
+                        "#00FF00",
+                        "#0000FF"
+                    ],
+                    "yMax": 200
+                }
+            ]
+        },
+        "INSPVAX": {
+            "name": "INSPVAX",
+            "messageId": "1465",
+            "payload": [
+                {
+					"type": "int32",
+					"name": "ins_status",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+					"type": "int32",
+					"name": "pos_type",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+					"type": "double",
+					"name": "lat",
+                    "unit": "deg",
+                    "format": "11.7f"
+                },
+                {
+					"type": "double",
+					"name": "lon",
+                    "unit": "deg",
+                    "format": "11.7f"
+                },
+                {
+					"type": "double",
+					"name": "hgt",
+                    "unit": "m",
+                    "format": "11.7f"
+                },
+                {
+					"type": "float",
+					"name": "undulation",
+                    "unit": "m",
+                    "format": "11.7f"
+                },
+                {
+					"type": "double",
+					"name": "north_velocity",
+                    "unit": "m/s",
+                    "format": "11.7f"
+                },
+                {
+					"type": "double",
+					"name": "east_velocity",
+                    "unit": "m/s",
+                    "format": "11.7f"
+                },
+                {
+					"type": "double",
+					"name": "up_velocity",
+                    "unit": "m/s",
+                    "format": "11.7f"
+                },
+                {
+					"type": "double",
+					"name": "roll",
+                    "unit": "deg",
+                    "format": "11.7f"
+                },
+                {
+					"type": "double",
+					"name": "pitch",
+                    "unit": "deg",
+                    "format": "11.7f"
+                },
+                {
+					"type": "double",
+					"name": "azimuth",
+                    "unit": "deg",
+                    "format": "11.7f"
+                },
+                {
+					"type": "float",
+					"name": "lat_sigma",
+                    "unit": "m",
+                    "format": "11.7f"
+                },
+                {
+					"type": "float",
+					"name": "lon_sigma",
+                    "unit": "m",
+                    "format": "11.7f"
+                },
+                {
+					"type": "float",
+					"name": "hgt_sigma",
+                    "unit": "m",
+                    "format": "11.7f"
+                },
+                {
+					"type": "float",
+					"name": "north_velocity_sigma",
+                    "unit": "m/s",
+                    "format": "11.7f"
+                },
+                {
+					"type": "float",
+					"name": "east_velocity_sigma",
+                    "unit": "m/s",
+                    "format": "11.7f"
+                },
+                {
+					"type": "float",
+					"name": "up_velocity_sigma",
+                    "unit": "m/s",
+                    "format": "11.7f"
+                },
+                {
+					"type": "float",
+					"name": "roll_sigma",
+                    "unit": "m",
+                    "format": "11.7f"
+                },
+                {
+					"type": "float",
+					"name": "pitch_sigma",
+                    "unit": "m",
+                    "format": "11.7f"
+                },
+                {
+					"type": "float",
+					"name": "azimuth_sigma",
+                    "unit": "m",
+                    "format": "11.7f"
+                },
+                {
+					"type": "int32",
+					"name": "ext_sol_stat",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+					"type": "uint16",
+					"name": "time_since_update",
+                    "unit": "",
+                    "format": ""
+                }
+            ]
+        }
+	},
+	"userMessages":{
+        "inputPackets":[],
+        "outputPackets": [
+			{
+                "name": "s1",
+                "isList": 0,
+                "active": true,
+                "payload": [
+                    {
+                        "type": "uint16",
+                        "name": "GPS_Week",
+                        "unit": "",
+                        "format": ""
+                    },
+                    {
+                        "type": "uint32",
+                        "name": "GPS_TimeOfWeek",
+                        "unit": "ms",
+                        "format": "11.4f"
+                    },
+                    {
+                        "type": "float",
+                        "name": "x_accel",
+                        "unit": "m/s^2",
+                        "format": "14.10f"
+                    },
+                    {
+                        "type": "float",
+                        "name": "y_accel",
+                        "unit": "m/s^2",
+                        "format": "14.10f"
+                    },
+                    {
+                        "type": "float",
+                        "name": "z_accel",
+                        "unit": "m/s^2",
+                        "format": "14.10f"
+                    },
+                    {
+                        "type": "float",
+                        "name": "x_gyro",
+                        "unit": "deg/s",
+                        "format": "14.10f"
+                    },
+                    {
+                        "type": "float",
+                        "name": "y_gyro",
+                        "unit": "deg/s",
+                        "format": "14.10f"
+                    },
+                    {
+                        "type": "float",
+                        "name": "z_gyro",
+                        "unit": "deg/s",
+                        "format": "14.10f"
+                    }
+                ],
+                "graphs": [
+					{
+						"name": "Acceleration",
+						"units": "m/s^2",
+						"xAxis": {"name":"GPS_TimeOfWeek", "unit":"s"},
+						"yAxes": [
+							"x_accel",
+							"y_accel",
+							"z_accel"
+						],
+						"colors": [
+							"#FF0000",
+							"#00FF00",
+							"#0000FF"
+						],
+						"yMax": 20
+					},
+					{
+						"name": "Angular-Rate",
+						"units": "deg/s",
+						"xAxis": {"name":"GPS_TimeOfWeek", "unit":"s"},
+						"yAxes": [
+							"x_gyro",
+							"y_gyro",
+							"z_gyro"
+						],
+						"colors": [
+							"#FF0000",
+							"#00FF00",
+							"#0000FF"
+						],
+						"yMax": 200
+					}
+				]
+            }
+		]
+	}
+}

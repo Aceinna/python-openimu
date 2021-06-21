@@ -1,6 +1,6 @@
 from typing import List
 from ..parsers.dmu_field_parser import (encode_value, decode_value)
-
+from ...framework.utils.print import print_yellow
 
 class ConfigurationField(object):
     '''
@@ -44,8 +44,13 @@ class ConfigruationFieldDefines:
     def get_fields(self) -> List[ConfigurationField]:
         return self._list.values()
 
-    def find(self, paramId: int) -> ConfigurationField:
-        return self._list.get(paramId)
+    def find(self, param_id: int) -> ConfigurationField:
+        exist_field = self._list.get(param_id)
+        if exist_field:
+            return exist_field
+
+        print_yellow('Cannot find field {0}, because the field is not defined in configuration file'.format(param_id))
+        return ConfigurationField('Unknown', param_id, 'Unknown')
 
 
 CONFIGURATION_FIELD_DEFINES_SINGLETON = ConfigruationFieldDefines()

@@ -43,7 +43,7 @@ class TestUpgradeCenter(unittest.TestCase):
         upgrade_center.start()
         upgrade_center.stop()
 
-        self.assertTrue(normal_worker._is_stopped, 'Worker is stopped')
+        self.assertTrue(normal_worker.is_stopped, 'Worker is stopped')
 
     def test_more_workers(self):
         upgrade_center = UpgradeCenter()
@@ -61,7 +61,7 @@ class TestUpgradeCenter(unittest.TestCase):
         upgrade_center.start()
         upgrade_center.stop()
         self.assertEqual(
-            [normal_worker1._is_stopped, normal_worker2._is_stopped],
+            [normal_worker1.is_stopped, normal_worker2.is_stopped],
             [True, True])
 
     def test_with_error_worker(self):

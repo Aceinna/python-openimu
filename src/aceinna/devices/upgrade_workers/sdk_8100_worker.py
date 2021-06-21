@@ -1,4 +1,5 @@
 import time
+import math
 from ..base.upgrade_worker_base import UpgradeWorkerBase
 from ...framework.utils import helper
 from . import (UPGRADE_EVENT,UPGRADE_GROUP)
@@ -996,17 +997,18 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
 
     def flash_write(self, fs_len, bin_data):
         write_result = True
-        packet_num = int(fs_len / 5120)
+        block_size = 5120
+        packet_num = math.ceil(fs_len/block_size)
         current = 0
         for i in range(2, packet_num+1):
             if self._is_stopped:
                 return False
 
             if i == packet_num:
-                data_to_sdk = bin_data[packet_num*5120:]
+                data_to_sdk = bin_data[packet_num*block_size:]
             else:
-                data_to_sdk = bin_data[i*5120:(i+1)*5120]
-            # fs.write(bytes(data_to_sdk))
+                data_to_sdk = bin_data[i*block_size:(i+1)*block_size]
+
             current += len(data_to_sdk)
             self.send_packet(data_to_sdk)
             has_read = self.read_until(0xCC)
@@ -1040,7 +1042,6 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
             return False
         # wait a time, output data to client
         time.sleep(.5)
-        print(message)
         self.emit(UPGRADE_EVENT.ERROR, self._key, message)
         return False
 

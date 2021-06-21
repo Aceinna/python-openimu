@@ -3,6 +3,7 @@ predefined params for openimu
 """
 JSON_FILE_NAME = 'openimu.json'
 
+DEFAULT_PRODUCT_NAME = 'OpenIMU300ZI'
 
 def get_openimu_products():
     return {

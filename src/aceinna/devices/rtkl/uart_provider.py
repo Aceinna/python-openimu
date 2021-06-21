@@ -40,12 +40,6 @@ class Provider(RTKProviderBase):
             'debug': 2,
         }
 
-    # override
-    def after_bootloader_switch(self):
-        self.communicator.serial_port.baudrate = self.bootloader_baudrate
-        self.communicator.serial_port.reset_input_buffer()
-        time.sleep(8)
-
     def thread_debug_port_receiver(self, *args, **kwargs):
         if self.debug_logf is None:
             return
@@ -62,6 +56,24 @@ class Provider(RTKProviderBase):
                 return  # exit thread receiver
             if data and len(data) > 0:
                 self.debug_logf.write(data)
+            else:
+                time.sleep(0.001)
+
+    def thread_rtcm_port_receiver(self, *args, **kwargs):
+        if self.rtcm_logf is None:
+            return
+        while True:
+            try:
+                if self.is_upgrading:
+                    time.sleep(0.1)
+                    continue
+
+                data = bytearray(self.rtcm_serial_port.read_all())
+            except Exception as e:
+                print_red('RTCM PORT Thread error: {0}'.format(e))
+                return  # exit thread receiver
+            if len(data):
+                self.rtcm_logf.write(data)
             else:
                 time.sleep(0.001)
 

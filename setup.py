@@ -11,9 +11,24 @@
 # BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
 # or implied. See the License for the specific language governing
 # permissions and limitations under the License.
-
+import json
+import os
 from setuptools import find_packages, setup
 from src.aceinna import (PACKAGE_NAME, VERSION)
+
+
+def load_json_file_path_under_setting_folder():
+    json_file_paths = []
+    setting_root_path = os.path.join(os.getcwd(), 'src', 'aceinna', 'setting')
+    for root, dirs, files in os.walk(setting_root_path):
+        json_file = next((item for item in files if item.__contains__('.json')), None)
+        if not json_file:
+            continue
+
+        json_file_path = os.path.join(root.replace(setting_root_path,'setting'), json_file)
+        json_file_paths.append(json_file_path)
+
+    return json_file_paths
 
 PACKAGE_DESCRIPTION = "Aceinna Navigation System Open Devices Library"
 
@@ -40,7 +55,7 @@ setup(
     packages=find_packages("src", exclude=['test', 'tests']),
     package_dir={"": "src"},
     package_data={
-        'aceinna': ['setting/openrtk/*/*.json', 'setting/openimu/*/*.json', 'setting/dmu/*.json']
+        'aceinna': load_json_file_path_under_setting_folder()
     },
     classifiers=[
         "Environment :: Console",

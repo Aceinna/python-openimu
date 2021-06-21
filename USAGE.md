@@ -1,21 +1,22 @@
-# Work as command
-start cli: `./ans-device`
+# Work as executable
+```bash
+$ `./ans-device [parameters]`
+```
 
 parameters:
 
 | Name | Type | Default | Description |
 | - | :-: | :-: | - |
+| -m, --mode | String | 'default' | Switch work mode. Value should be one of `default`,`cli`,`receiver` |
 | -p, --port | Number | '8000' | Value should be an available port |
-| --device-type | String | 'auto' | Value should be `IMU`, `RTK` |
-| -b, --baudrate | String | None | Value should be baudrate |
+| --device-type | String | 'auto' | Value should be `IMU`, `RTK`, `DMU` |
+| -b, --baudrate | String | None | Value should be a valid baudrate. The valid value should be one of `38400`, `57600`, `115200`, `230400`, `460800` |
 | -c, --com-port | String | 'auto' | Value should be a COM port |
 | --console-log | Boolean | False | Output log on console |
 | --debug | Boolean | False | Log debug information |
 | --with-data-log | Boolean | False | Contains internal data log (OpenIMU only) |
-| -r, --with-raw-log | Boolean | False | Contains raw data log (OpenRTK only) |
 | -s, --set-user-para | Boolean | False | Set uesr parameters (OpenRTK only) |
-| -n, --ntrip-client | Boolean | False | Enable ntrip client (OpenRTK only) |
-| --cli | Boolean | False | Work as command line mode |
+| -l, --protocol | String | 'uart' | Value should be `uart`, `lan`. Depends on device type |
 
 # Work as sdk
 Detect device
@@ -43,9 +44,9 @@ detector.find(on_find_device)
 
 Host in webserver 
 ```python
-from aceinna.bootstrap import Webserver
+from aceinna.bootstrap import Default
 
-app = Webserver(
+app = Default(
     device_type='openimu',
     com_port='COM1',
     port=8001,

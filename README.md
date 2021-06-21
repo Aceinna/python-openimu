@@ -1,10 +1,10 @@
 # python-openimu
 
-Python driver for OpenIMU and OpenRTK
+A message communication tool for OpenIMU, OpenRTK and other devices of Aceinna
 
 ## Working Environment 
-- Windows10: python2.7 and python 3.7
-- Mac OS: python2.7 and python 3.7
+- Windows10: python 3.7
+- Mac OS: python 3.7
 
 ## Steps
 
@@ -12,82 +12,156 @@ Python driver for OpenIMU and OpenRTK
 There are 2 ways to run the tool
 
 #### Prepare
-Install the dependency library. It is better to create a virtual environments before to do it.
+Install the dependency library. It is better to create a virtual environment before to do it.
 
 python 3.x
-```
-pip install -r requirements.txt
-```
-
-python 2.x
-```
-pip install -r requirements-2.x.txt
+```bash
+$ pip install -r requirements.txt
 ```
 
 #### A. From source code
 
 ##### Run
-Please use this way if you want to develop the project.
-```
-python main.py
+Please use this way if you want to contribute the project.
+```bash
+$ python main.py
 ```
 #### B. Work as execution file
 
 ##### Build
-It will be generated in `dist` folder.
-```
-pyinstaller build.spec
+The executable will be generated in `dist` folder.
+```bash
+$ pyinstaller build.spec
 ```
 
-##### Run it
+##### Run
 ```
-./ans-devices
+$ cd dist
+$ ./ans-devices
 ```
 
 ##### Startup Arguments
 You can specify some arguments while run the tool
 
-parameters:
+Arguments:
 
 | Name | Type | Default | Description |
 | - | :-: | :-: | - |
+| -m, --mode | String | 'default' | Switch work mode. Value should be one of `default`,`cli`,`receiver` |
 | -p, --port | Number | '8000' | Value should be an available port |
-| --device-type | String | 'auto' | Value should be `IMU`, `RTK` |
-| -b, --baudrate | String | None | Value should be baudrate |
+| --device-type | String | 'auto' | Value should be one of `IMU`, `RTK`, `DMU` |
+| -b, --baudrate | String | None | Value should be a valid baudrate. The valid value should be one of `38400`, `57600`, `115200`, `230400`, `460800` |
 | -c, --com-port | String | 'auto' | Value should be a COM port |
 | --console-log | Boolean | False | Output log on console |
 | --debug | Boolean | False | Log debug information |
 | --with-data-log | Boolean | False | Contains internal data log (OpenIMU only) |
-| -r, --with-raw-log | Boolean | False | Contains raw data log (OpenRTK only) |
 | -s, --set-user-para | Boolean | False | Set uesr parameters (OpenRTK only) |
-| -n, --ntrip-client | Boolean | False | Enable ntrip client (OpenRTK only) |
-| --cli | Boolean | False | Work as command line mode |
+| -l, --protocol | String | 'uart' | Value should be `uart`, `lan`. Depends on device type |
+
 
 ### 2. Connect Aceinna device
-Link device to your pc or mac. And the tool will auto detect the linked device.
+Link device to your pc or mac. The tool will auto detect the linked device by default.
 
 [More Usage](USAGE.md "More Usage")
 
 ## Work Mode
-Normally, python-openimu works as Web mode. It will auto start a websocket server after device is detected. And it can works with [aceinna developers site](https://developers.aceinna.com "Aceinna Developers Site") to do monitor and set configuration of connected device.
+### Default Mode
+Normally, python-openimu works as default mode. It will establish a websocket server, then exchange messages through the websocket protocol. And it should work with [aceinna developers site](https://developers.aceinna.com "Aceinna Developers Site"), it allows user to do data monitor, configuration and firmware management.
 
-You can specify the startup parameter `--cli` to switch to Command Line Mode. Command Line Mode helps you to interact with device without open the brower. 
+### Command Line Mode
+You can specify the startup argument `-m cli` to switch to Command Line Mode. Command Line Mode helps you interact with device directly. And it also supply command to start a websocket server, so that you can use the full features of Default Mode. 
 
-Commnad List:
-| Name  | Description |
-| - | - |
-| help | CLI help menu |
-| exit | Exit Command Line Mode |
-| run | Operations defined by users |
-| save | Save thee configuration into EEPROM |
-| connect | Show information of connected device |
-| upgrade | Upgrade firmware |
-| record | Record output data of device |
-| stop | Stop recording outputs |
-| server_start | Start server thread and must use `exit` command to quit |
-| get | Read the current configuration and output data |
-| set | Write parameters to device |
+Command Line Mode supports some commands for using, below is a list of commands description,
 
+#### Help
+Show help menu. It would show a list of description for all supported commands.
+```bash
+$ help
+```
+
+#### Get Device Info
+Show information of connected device.
+```bash
+$ connect
+```
+
+#### Get Parameter (OpenIMU Only)
+Retrieve current value of specified parameter.
+```bash
+$ get param_name
+```
+
+#### Set Parameter (OpenIMU Only)
+Update the value of specified parameter. The value would be recoverd after device power off.
+```bash
+$ set param_name param_value
+```
+
+#### Save Configuration
+Save the configuration into EEPROM. The value would be permanently saved.
+```bash
+$ save
+```
+
+#### Record Data (OpenIMU Only)
+Log the device output data in path /data. It is not supported for OpenRTK, because OpenRTK device will automatically log data when it is connected. 
+```bash
+$ record
+```
+
+#### Upgrade Firmware
+Upgrade firmware from a specified path. The binary file should match with the device. This is a high risk command.
+```bash
+$ upgrade path/to/bin
+```
+
+#### Start Server
+Establish a websocket server.
+```bash
+$ server_start
+```
+
+#### Stop Server
+Stop the websocket server. If there is websocket server runing, it has to stop it when you want to use other command.
+```bash
+$ stop
+```
+
+#### Exit
+Quit from Command Line Mode
+```bash
+$ exit
+```
+
+### Receiver Mode
+You can specify the startup argument `-m receiver` to switch to Receiver Mode. Receiver mode could receive external signal, and do some data interactive. We integrated singal from Ntrip Server and Odometer now. You can read more source code for reference in `src/aceinna/bootstrap/receiver.py`.
+
+
+## Protocol
+Aceinna Device could be connected with your PC via UART or LAN. The supported protocol is depended on the device type.
+| Device Type | Supported Protocols | Description |
+| - | - | - |
+| DMU | `uart` | |
+| OpenIMU | `uart` | |
+| OpenRTK | `uart`, `lan` | The startup argument `-l lan` is supported |
+| RTK330L | `uart` |  |
+
+
+## Parse Tool
+There is a log parse tool integrated in. It could parse OpenRTK and RTK330LA log from data folder. Assgin `parse` to start it.
+
+Example
+```bash
+$ ans-devices parse
+```
+
+Arguments:
+
+| Name | Type | Default | Description |
+| - | :-: | :-: | - |
+| -t | String | 'default' | Switch work mode. Value should be one of `openrtk`,`rtkl` |
+| -p | String | '.' | Value should be a valid path. It could be the container folder of log files |
+| -i | Number | 5 | INS kml rate(hz) |
 
 ## Changelogs and Release Notes
 

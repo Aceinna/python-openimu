@@ -16,6 +16,7 @@ from ...framework.utils import resource
 from ..base import OpenDeviceBase
 from ..configs.openimu_predefine import (
     APP_STR,
+    DEFAULT_PRODUCT_NAME,
     get_openimu_products
 )
 from ...framework.context import APP_CONTEXT
@@ -27,7 +28,6 @@ from ..upgrade_workers import (
     JumpApplicationWorker,
     UPGRADE_EVENT
 )
-from ..upgrade_center import UpgradeCenter
 from ...framework.utils.print import print_yellow
 
 
@@ -92,28 +92,64 @@ class Provider(OpenDeviceBase):
                     with open(app_name_config_path, "wb") as code:
                         code.write(app_config_content)
 
+    @property
+    def is_in_bootloader(self):
+        ''' Check if the connected device is in bootloader mode
+        '''
+        if not self.device_info or not self.device_info.__contains__('name'):
+            return False
+
+        if 'bootloader' in self.device_info['name'].lower():
+            return True
+        return False
+
     def bind_device_info(self, device_access, device_info, app_info):
         self._build_device_info(device_info)
         self._build_app_info(app_info)
 
         self.connected = True
 
-        return '# Connected {0} #\n\rDevice:{1} \n\rFirmware:{2}'\
+        return '# Connected {0} #\n\rDevice: {1} \n\rFirmware: {2}'\
             .format('OpenIMU', device_info, app_info)
 
     def _build_device_info(self, text):
         '''
         Build device info
         '''
-        split_text = [x for x in text.split(' ') if x != '']
+        split_text = [x for x in text.split(' ') if x != '' and x != '\x00']
         split_len = len(split_text)
-        pre_sn = split_text[3].split(':') if split_len == 4 else ''
+
+        if split_len < 3:
+            self.device_info = {
+                'name': split_text[0],
+                'product_name': split_text[0],
+                'pn': '-',
+                'firmware_version': '-',
+                'sn': '-'
+            }
+            return
+
+        # consier as bootloader
+        if split_len == 3:
+            pre_sn = split_text[2].split(':')
+            serial_num = pre_sn[1] if len(pre_sn) == 2 else pre_sn[0]
+            self.device_info = {
+                'name': split_text[0],
+                'product_name': split_text[0],
+                'pn': split_text[1],
+                'firmware_version': '-',
+                'sn': serial_num
+            }
+            return
+
+        pre_sn = split_text[-1].split(':')
         serial_num = pre_sn[1] if len(pre_sn) == 2 else ''
 
         self.device_info = {
-            'name': split_text[0],
-            'pn': split_text[1],
-            'firmware_version': split_text[2],
+            'name': ' '.join(split_text[0:-3]),
+            'product_name': split_text[0],
+            'pn': split_text[-3],
+            'firmware_version': split_text[-2],
             'sn': serial_num
         }
 
@@ -122,6 +158,7 @@ class Provider(OpenDeviceBase):
         Build app info
         '''
         # check if J1939 in text
+        product_name = ''
         app_version = text
         can_indicator = '_J1939'
         if can_indicator in app_version:
@@ -131,6 +168,9 @@ class Provider(OpenDeviceBase):
         app_name = next(
             (item for item in APP_STR if item in split_text), None)
 
+        if len(split_text) == 3:
+            product_name = split_text[0]
+
         if not app_name:
             app_name = 'IMU'
             self.is_app_matched = False
@@ -139,15 +179,9 @@ class Provider(OpenDeviceBase):
 
         self.app_info = {
             'app_name': app_name,
-            'version': text
+            'version': text,
+            'product_name': product_name
         }
-
-        # Change the device model name if got model name from the first split string of version
-        if len(split_text) > 0 and split_text[0] in get_openimu_products():
-            self.device_info['name'] = split_text[0]
-
-        if len(split_text) == 0:
-            self.device_info['name'] = 'OpenIMU300ZI'
 
     def load_properties(self):
         # Load config from user working path
@@ -158,26 +192,27 @@ class Provider(OpenDeviceBase):
                 return
 
         # Load the openimu.json based on its app
-        product_name = self.device_info['name']
+        product_name = self.app_info['product_name'] if self.app_info['product_name'] else self.device_info['product_name']
         app_name = self.app_info['app_name']
         app_file_path = os.path.join(
             self.setting_folder_path, product_name, app_name, 'openimu.json')
+
+        if not os.path.isfile(app_file_path):
+            app_file_path = os.path.join(
+                self.setting_folder_path, DEFAULT_PRODUCT_NAME, app_name, 'openimu.json')
 
         if not self.is_app_matched:
             print_yellow(
                 'Failed to extract app version information from unit.' +
                 '\nThe supported application list is {0}.'.format(APP_STR) +
                 '\nTo keep runing, use IMU configuration as default.' +
-                '\nYou can choose to place your json file under exection path if it is an unknown application.')
+                '\nYou can choose to place your json file under execution path if it is an unknown application.')
 
         with open(app_file_path) as json_data:
             self.properties = json.load(json_data)
 
     def after_setup(self):
         pass
-
-    def after_bootloader_switch(self):
-        self.communicator.serial_port.baudrate = self.bootloader_baudrate
 
     def on_read_raw(self, data):
         pass
@@ -186,7 +221,7 @@ class Provider(OpenDeviceBase):
         '''
         Listener for getting output packet
         '''
-        self.add_output_packet('stream', packet_type, data)
+        self.add_output_packet(packet_type, data)
 
     def get_log_info(self):
         '''
@@ -213,7 +248,7 @@ class Provider(OpenDeviceBase):
             UPGRADE_EVENT.FIRST_PACKET, lambda: time.sleep(8))
 
         jump_bootloader_worker = JumpBootloaderWorker(self.communicator)
-        jump_application_worker = JumpApplicationWorker(self.communicator)
+        jump_application_worker = JumpApplicationWorker(self.communicator,bootloader_baudrate=self.bootloader_baudrate)
 
         workers = [
             jump_bootloader_worker,
@@ -231,6 +266,25 @@ class Provider(OpenDeviceBase):
             'partNumber': self.device_info['pn'],
             'firmware': self.device_info['firmware_version']
         }
+
+    def get_operation_status(self):
+        if self.is_logging:
+            return 'LOGGING'
+
+        if self.is_upgrading:
+            return 'UPGRADING'
+
+        if self.is_mag_align:
+            return 'MAG_ALIGN'
+
+        if self.is_backup:
+            return 'BACKUP'
+
+        if self.is_restore:
+            return 'RESTORE'
+
+        return 'IDLE'
+
     # command list
 
     def get_device_info(self, *args):  # pylint: disable=invalid-name
@@ -519,14 +573,14 @@ class Provider(OpenDeviceBase):
             self.is_mag_align = False
 
             # TODO: reset packet rate after operation successful
-            self.add_output_packet('stream', 'mag_status', {
+            self.add_output_packet('mag_status', {
                 'status': 'complete',
                 'value': mag_value
             })
         except Exception as ex:  # pylint: disable=broad-except
             APP_CONTEXT.get_logger().error(ex)
             self.is_mag_align = False
-            self.add_output_packet('stream', 'mag_status', {
+            self.add_output_packet('mag_status', {
                 'status': 'error'
             })
 
@@ -715,7 +769,7 @@ class Provider(OpenDeviceBase):
 
         if packet_rate_result['error']:
             self.is_backup = False
-            self.add_output_packet('stream', 'backup_status', {
+            self.add_output_packet('backup_status', {
                 'status': 'fail'
             })
 
@@ -728,7 +782,7 @@ class Provider(OpenDeviceBase):
 
         if packet_rate_result['error']:
             self.is_backup = False
-            self.add_output_packet('stream', 'backup_status', {
+            self.add_output_packet('backup_status', {
                 'status': 'fail'
             })
 
@@ -754,7 +808,7 @@ class Provider(OpenDeviceBase):
 
             if result['error']:
                 self.is_backup = False
-                self.add_output_packet('stream', 'backup_status', {
+                self.add_output_packet('backup_status', {
                     'status': 'fail'
                 })
                 break
@@ -803,7 +857,6 @@ class Provider(OpenDeviceBase):
         with open(file_path, 'wb') as file_stream:
             file_stream.write(result)
 
-        stream = 'stream'
         backup_status = 'backup_status'
         status_complete = 'complete'
         status_fail = 'fail'
@@ -824,7 +877,7 @@ class Provider(OpenDeviceBase):
         except Exception as ex:
             print('azure exception', ex)
             self.is_backup = False
-            self.add_output_packet(stream, backup_status, {
+            self.add_output_packet(backup_status, {
                 'status': status_fail
             })
             return
@@ -836,13 +889,13 @@ class Provider(OpenDeviceBase):
 
         if save_result.__contains__('error'):
             self.is_backup = False
-            self.add_output_packet(stream, backup_status, {
+            self.add_output_packet(backup_status, {
                 'status': status_fail
             })
             return
 
         self.is_backup = False
-        self.add_output_packet(stream, backup_status, {
+        self.add_output_packet(backup_status, {
             'status': status_complete,
             'date': save_result['data']['lastBackupTime']
         })
@@ -949,7 +1002,7 @@ class Provider(OpenDeviceBase):
         yield self._message_center.build(command=command_line)
 
         self.is_restore = False
-        self.add_output_packet('stream', 'restore_status', {
+        self.add_output_packet('restore_status', {
             'status': 'success'
         })
 
@@ -1124,6 +1177,6 @@ class Provider(OpenDeviceBase):
 
     def _restore_fail(self):
         self.is_restore = False
-        self.add_output_packet('stream', 'restore_status', {
+        self.add_output_packet('restore_status', {
             'status': 'fail'
         })

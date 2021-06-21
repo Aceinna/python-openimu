@@ -82,6 +82,20 @@ class Provider(RTKProviderBase):
             else:
                 time.sleep(0.001)
 
+    def thread_rtcm_port_receiver(self, *args, **kwargs):
+        if self.rtcm_logf is None:
+            return
+        while True:
+            try:
+                data = bytearray(self.rtcm_serial_port.read_all())
+            except Exception as e:
+                print_red('RTCM PORT Thread error: {0}'.format(e))
+                return  # exit thread receiver
+            if len(data):
+                self.rtcm_logf.write(data)
+            else:
+                time.sleep(0.001)
+
     # override
     def build_worker(self, rule, content):
         if rule == 'rtk':

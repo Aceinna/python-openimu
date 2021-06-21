@@ -34,12 +34,16 @@ def from_command_line(**kwargs):
 @receive_args
 def start_app(**kwargs):
     '''
-    Work as a executor, with WebSocket and UART
+    Start the application with specified parameters
     '''
     application = None
-    mode = 'web'
-    if kwargs['options'].use_cli:
-        mode = 'cli'
+    sub_command = kwargs['options'].sub_command
+    option_mode = kwargs['options'].mode
+
+    if sub_command == 'parse':
+        option_mode = 'log-parser'
+
+    mode = option_mode if option_mode else 'default'
 
     application = Loader.create(mode, vars(kwargs['options']))
     application.listen()

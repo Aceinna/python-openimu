@@ -64,7 +64,6 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
         '''
         if self._is_stopped:
             return
-
         if self.current == 0 and self.total == 0:
             self.emit(UPGRADE_EVENT.ERROR, self._key, 'Invalid file content')
             return
@@ -88,7 +87,6 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
             self.emit(UPGRADE_EVENT.ERROR, self._key,
                       'Fail in before write: {0}'.format(ex))
             return
-
         while self.current < self.total:
             if self._is_stopped:
                 return
