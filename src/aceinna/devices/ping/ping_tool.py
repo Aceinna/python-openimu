@@ -26,7 +26,7 @@ def do_ping(communicator_type, device_access, filter_device_type):
             if ping_result:
                 return ping_result
 
-    if communicator_type == 'lan':
+    if communicator_type == 'eth':
         APP_CONTEXT.get_logger().logger.debug('Checking if is OpenRTK device...')
         ping_result = ping_opendevice(device_access, None)
         if ping_result:
