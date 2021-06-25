@@ -64,7 +64,7 @@ class TestDeviceManager(unittest.TestCase):
                         'DMU UART Provider')
 
     def test_ping_rtkl_with_specified_device_type(self):
-        provider = build_provider('RTK', 'RTKL')
+        provider = build_provider('RTKL', 'RTKL')
         self.assertTrue(isinstance(provider, RTKLUartProvider),
                         'RTKL UART Provider')
 

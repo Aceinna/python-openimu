@@ -15,6 +15,7 @@ class NTRIPClient(EventBase):
         self.parser.on('parsed', self.handle_parsed_data)
         self.is_connected = 0
         self.tcp_client_socket = None
+        self.is_close = False
 
         for x in properties["initial"]["ntrip"]:
             if x['name'] == 'ip':
@@ -31,6 +32,12 @@ class NTRIPClient(EventBase):
     def run(self):
         APP_CONTEXT.get_print_logger().info('NTRIP run..')
         while True:
+            if self.is_close:
+                if self.tcp_client_socket:
+                    self.tcp_client_socket.close()
+                self.is_connected = 0
+                return
+
             while True:
                 # if self.communicator.can_write():
                 time.sleep(3)
@@ -101,6 +108,8 @@ class NTRIPClient(EventBase):
     def recv(self):
         self.tcp_client_socket.settimeout(10)
         while True:
+            if self.is_close:
+                return
             try:
                 data = self.tcp_client_socket.recv(1024)
                 if data:
@@ -136,6 +145,9 @@ class NTRIPClient(EventBase):
                 APP_CONTEXT.get_print_logger().info(
                     'NTRIP:[recvR] error occur {0}'.format(e))
                 return None
+
+    def close(self):
+        self.is_close = True
 
     def handle_parsed_data(self, data):
         combined_data = []

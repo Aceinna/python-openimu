@@ -83,6 +83,9 @@ class DeviceAccess(object):
         elif app_name == 'RTK':
             from mocker.devices.openrtk import OpenRTKMocker
             cls = OpenRTKMocker
+        elif app_name == 'RTKL':
+            from mocker.devices.rtkl import RTKLMocker
+            cls = RTKLMocker
         elif app_name == 'DMU':
             from mocker.devices.dmu import DMUMocker
             cls = DMUMocker
