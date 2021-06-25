@@ -25,7 +25,7 @@ def create_provider(device_type, communicator):
         if device_type == 'INS2000':
             return INS2000UartProvider(communicator)
 
-    if communicator.type == 'lan':
+    if communicator.type == 'eth':
         if device_type == 'OpenRTK':
             return OpenRTKLANProvider(communicator)
 
@@ -115,7 +115,7 @@ class DeviceManager:
             #     if ping_result is not None:
             #         return DeviceManager.build_provider(communicator, device_access, ping_result)
 
-        if communicator.type == 'lan':
+        if communicator.type == 'eth':
             device_access = args[0]
 
             ping_result = ping_tool.do_ping(communicator.type, device_access,

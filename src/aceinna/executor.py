@@ -38,7 +38,10 @@ def start_app(**kwargs):
     '''
     application = None
     sub_command = kwargs['options'].sub_command
-    option_mode = kwargs['options'].mode
+    option_mode = None
+
+    if kwargs['options'].use_cli:
+        option_mode = 'cli'
 
     if sub_command == 'parse':
         option_mode = 'log-parser'

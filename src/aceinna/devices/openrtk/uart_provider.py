@@ -34,39 +34,6 @@ class Provider(RTKProviderBase):
         if self.debug_logf is None:
             return
 
-        # is_get_configuration = 0
-        # file_name = args[0]
-        # self.debug_c_f = open(file_name + '/' + 'configuration.json', "w")
-
-        # while True:
-        #     if is_get_configuration:
-        #         break
-        #     cmd_configuration = 'get configuration\r\n'
-        #     self.debug_serial_port.write(cmd_configuration.encode())
-        #     try_times = 20
-        #     for i in range(try_times):
-        #         data_buffer = self.debug_serial_port.read(700)
-        #         if len(data_buffer):
-        #             try:
-        #                 # print('len = {0}'.format(len(data_buffer)))
-        #                 str_data = bytes.decode(data_buffer)
-        #                 # print('{0}'.format(str_data))
-        #                 json_data = json.loads(str_data)
-        #                 for key in json_data.keys():
-        #                     if key == 'openrtk configuration':
-        #                         APP_CONTEXT.get_print_logger().info(
-        #                             '{0}'.format(json_data))
-        #                         if self.debug_c_f:
-        #                             self.debug_c_f.write(str_data)
-        #                             self.debug_c_f.close()
-        #                         is_get_configuration = 1
-        #                 if is_get_configuration:
-        #                     break
-        #             except Exception as e:
-        #                 # print('DEBUG PORT Thread:json error:', e)
-        #                 # the json will not be completed
-        #                 pass
-
         cmd_log = 'log debug on\r\n'
         self.debug_serial_port.write(cmd_log.encode())
 

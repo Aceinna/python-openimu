@@ -29,7 +29,7 @@ class CommunicatorFactory:
         '''
         if method == 'uart':
             return SerialPort(options)
-        elif method == 'lan':
+        elif method == 'eth':
             return LAN(options)
         else:
             raise Exception('no matched communicator')
@@ -561,7 +561,7 @@ class LAN(Communicator):
 
     def __init__(self, options=None):
         super().__init__()
-        self.type = 'lan'
+        self.type = 'eth'
         self.host = None
         self.port = 2203  # TODO: predefined or configured?
 

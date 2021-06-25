@@ -61,15 +61,14 @@ class Receiver:
 
     def _prepare_ntrip_client(self):
         self._ntrip_client = NTRIPClient(
-            APP_CONTEXT.device_context._provider.properties,
-            APP_CONTEXT.device_context._provider.communicator
+            APP_CONTEXT.device_context._provider.properties
         )
         self._ntrip_client.on('parsed', self._handle_data_parsed)
         self._ntrip_client.run()
 
     def _handle_data_parsed(self, data):
-        # TODO:add write lock for communicator
-        self._driver._communicator.write(data)
+        if self._driver._communicator.can_write():
+            self._driver._communicator.write(data)
 
     def _prepare_odometer_listener(self):
         self._odometer_listener = OdometerListener(CanOptions('can0', 500000))
@@ -81,5 +80,4 @@ class Receiver:
         speed = avg_speed / 3600 * 1000
         command = helper.build_packet('cA', list(
             struct.unpack("4B", struct.pack("<f", speed))))
-        # TODO:add write lock for communicator
         self._driver._communicator.write(command)

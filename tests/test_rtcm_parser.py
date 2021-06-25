@@ -23,7 +23,7 @@ def handle_parsed_data(data):
 rtcm_parser = RTCMParser()
 rtcm_parser.on('parsed', handle_parsed_data)
 
-rtcm_file_path = os.path.join(os.getcwd(), 'data', 'collect', 'rtcm_base_2021_05_29_09_23_54.bin')
+rtcm_file_path = '/Users/songyiwei/projects/runtime-log/app/server/data/OpenRTK330L-1975000205/1624346077621/rtcm_rover.bin' #os.path.join(os.getcwd(), 'data', 'collect', 'rtcm_base_2021_05_29_09_23_54.bin')
 
 with open(rtcm_file_path, 'rb') as buf_r:
     s = 0

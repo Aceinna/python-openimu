@@ -12,7 +12,7 @@ from .utils.resource import is_dev_mode
 
 T = TypeVar('T')
 
-PROTOCOLS = ['uart', 'lan']
+INTERFACES = ['uart', 'eth']
 MODES = ['default', 'cli', 'receiver']
 TYPES_OF_LOG = ['openrtk', 'rtkl']
 KML_RATES = [1, 2, 5, 10]
@@ -24,8 +24,8 @@ def _build_args():
     parser = argparse.ArgumentParser(
         description='Aceinna python driver input args command:', allow_abbrev=False)
 
-    parser.add_argument("-l", "--protocol", dest="protocol",  metavar='',
-                        help="Protocol. Allowed one of values: {0}".format(PROTOCOLS), default='uart', choices=PROTOCOLS)
+    parser.add_argument("-i", "--interface", dest="interface",  metavar='',
+                        help="Interface. Allowed one of values: {0}".format(INTERFACES), default='uart', choices=INTERFACES)
     parser.add_argument("-p", "--port", dest='port',  metavar='', type=int,
                         help="Webserver port")
     parser.add_argument("--device-type", dest="device_type", type=str,
@@ -42,8 +42,8 @@ def _build_args():
                         help="Contains internal data log (OpenIMU only)", default=False)
     parser.add_argument("-s", "--set-user-para", dest='set_user_para', action='store_true',
                         help="Set user parameters (OpenRTK only)", default=False)
-    parser.add_argument("-m", "--mode", dest='mode', metavar='',
-                        help="Startup mode. Allowed one of values: {0}".format(MODES), default='default', choices=MODES)
+    parser.add_argument("--cli", dest='use_cli', action='store_true',
+                        help="start as cli mode", default=False)
 
     subparsers = parser.add_subparsers(
         title='Sub commands', help='use `<command> -h` to get sub command help', dest="sub_command")

@@ -75,7 +75,8 @@ def ping(communicator, *args):
             'app_info': app_info_text
         }
 
-    if _need_check(filter_device_type, 'RTKL') and device_info_text.find('RTK330L') > -1:
+    # a bad check, to distinguish RTK330L or OpenRTK330L
+    if _need_check(filter_device_type, 'RTKL') and device_info_text.find('RTK330L') > -1  and device_info_text.find('OpenRTK') == -1 :
         return {
             'device_type': 'RTKL',
             'device_info': device_info_text,

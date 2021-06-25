@@ -16,7 +16,7 @@ def test_web_args():
 
 def test_web_args_with_default():
     '''
-        'protocol': 'uart',
+        'interface': 'uart',
         'device_type': 'auto',
         'port': 'auto',
         'baudrate': 'auto',
@@ -29,7 +29,7 @@ def test_web_args_with_default():
     '''
     web_args = WebserverArgs()
     assert web_args is not None
-    assert web_args.protocol == 'uart'
+    assert web_args.interface == 'uart'
     assert web_args.port == 'auto'
     assert web_args.baudrate == 'auto'
     assert web_args.com_port == 'auto'

@@ -5,7 +5,7 @@ from ..framework.communicator import CommunicatorFactory
 from ..devices import DeviceManager
 from ..framework.utils.print import print_red
 
-DEFAULT_PROTOCOL = 'uart'
+DEFAULT_INTERFACE = 'uart'
 
 BAUDRATE_MAPPING = {'IMU': 57600}
 
@@ -33,8 +33,8 @@ class Driver(EventBase):
         self._communicator = None
         self._device_provider = None
         self._with_exception = False
-        self._protcol = self._options.protocol.lower() \
-            if self._options.protocol is not None else DEFAULT_PROTOCOL
+        self._interface = self._options.interface.lower() \
+            if self._options.interface is not None else DEFAULT_INTERFACE
 
         # self._handler_manager = HandlerManager()
         # self._handler_manager.setup()
@@ -117,7 +117,7 @@ class Driver(EventBase):
         '''find if there is a connected device'''
         if self._communicator is None:
             self._communicator = CommunicatorFactory.create(
-                self._protcol, self._options)
+                self._interface, self._options)
 
         self._communicator.find_device(self._device_discover_handler)
 
