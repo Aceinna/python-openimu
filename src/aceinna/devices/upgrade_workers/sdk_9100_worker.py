@@ -1194,11 +1194,11 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
 
         fs_len = len(self._file_content)
         bin_info_list = self.get_bin_info_list(fs_len, self._file_content)
-
+        self._uart.close()
         # if not self.connect_serail_port():
         #     return self._raise_error('Connect serial Port failed')
         time.sleep(5)  # Wait for bootloader ready
-
+        self._uart.open()
         self._uart.reset_input_buffer()
 
         if not self.send_sync():
