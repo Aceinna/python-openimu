@@ -4,10 +4,13 @@ import threading
 from ..models import WebserverArgs
 from ..core.driver import (Driver, DriverEvents)
 from ..core.device_context import DeviceContext
+
+from ..framework.constants import APP_TYPE
 from ..framework.context import APP_CONTEXT
 from ..framework.utils import helper
-from ..devices.widgets import(NTRIPClient, OdometerListener, CanOptions)
 from ..framework.decorator import throttle
+
+from ..devices.widgets import(NTRIPClient, OdometerListener, CanOptions)
 
 
 class Receiver:
@@ -22,6 +25,7 @@ class Receiver:
         self._ntrip_client = None
         self._odometer_listener = None
         self._build_options(**kwargs)
+        APP_CONTEXT.mode = APP_TYPE.RECEIVER
 
     def listen(self):
         '''

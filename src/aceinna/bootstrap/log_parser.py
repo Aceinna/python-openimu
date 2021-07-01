@@ -2,7 +2,8 @@ import os
 from ..tools.openrtk_parse import do_parse as do_parse_openrtk_logs
 from ..tools.rtkl_parse import do_parse as do_parse_rtkl_logs
 from ..models import LogParserArgs
-
+from ..framework.constants import APP_TYPE
+from ..framework.context import APP_CONTEXT
 
 class LogParser:
     _options = None
@@ -11,6 +12,7 @@ class LogParser:
 
     def __init__(self, **kwargs):
         self._build_options(**kwargs)
+        APP_CONTEXT.mode = APP_TYPE.DEFAULT
 
     def listen(self):
         '''Start to do parse

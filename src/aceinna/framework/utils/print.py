@@ -1,4 +1,6 @@
 import platform
+from ..constants import APP_TYPE
+from ..context import APP_CONTEXT
 
 if 'Windows' in platform.system():
     import sys
@@ -16,7 +18,8 @@ if 'Windows' in platform.system():
         return ctypes.windll.kernel32.SetConsoleTextAttribute(handle, color)
 
     def reset_cmd_color():
-        set_cmd_color(__fore_ground_RED | __fore_ground_GREEN | __fore_ground_BLUE)
+        set_cmd_color(__fore_ground_RED |
+                      __fore_ground_GREEN | __fore_ground_BLUE)
 
     def print_blue(msg):
         set_cmd_color(__fore_ground_BLUE)
@@ -66,3 +69,14 @@ else:
 
     def print_blue(msg):
         print(use_style(msg, fore='blue'))
+
+
+def print_on_console(msg, skip_modes=None, *args):
+    if not skip_modes:
+        print(msg, *args)
+        return
+
+    current_mode_in_skip = next((item for item in skip_modes if item == APP_CONTEXT.mode), None)
+
+    if not current_mode_in_skip:
+        print(msg, *args)

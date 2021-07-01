@@ -4,6 +4,7 @@ Context
 from .app_logger import AppLogger
 from ..core.packet_statistics import PacketStatistics
 
+
 class AppContext:
     '''
     App Context
@@ -12,6 +13,7 @@ class AppContext:
     _print_logger = None
     _device_context = None
     _statistics = None
+    _mode = None
 
     def __init__(self):
         pass
@@ -56,6 +58,16 @@ class AppContext:
             self._statistics = PacketStatistics()
 
         return self._statistics
+
+    @property
+    def mode(self):
+        ''' Retrieve application mode. `default`, `cli` or `log_parser`
+        '''
+        return self._mode
+
+    @mode.setter
+    def mode(self, value):
+        self._mode = value
 
 
 APP_CONTEXT = AppContext()

@@ -17,6 +17,7 @@ from ..core.tunnel_base import TunnelEvents
 
 from ..framework import AppLogger
 from ..framework.utils import resource
+from ..framework.constants import APP_TYPE
 from ..framework.context import APP_CONTEXT
 
 
@@ -33,6 +34,7 @@ class CommandLine:
 
     def __init__(self, **kwargs):
         self._build_options(**kwargs)
+        APP_CONTEXT.mode = APP_TYPE.CLI
 
         # self.communication = 'uart'
         # self.device_provider = None
