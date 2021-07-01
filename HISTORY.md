@@ -1,6 +1,14 @@
 # History
 # This is a special branch for INCEPTIO
 ---
+## 2.5.0 / 2021-07-02
+- [DMU] Support firmware upgrade.
+- [OpenRTK/RTK330LA] Support ST9100 chip upgrade.
+- [Framework] Fix NTRIP client disconnect issue.
+- [Framework] Refactor upgrade worker.
+- [Framework] Integrate rtk log parser.
+- [Framework] Update startup parameters.
+
 ## 2.4.0 / 2021-05-07
 - [DMU] Resolve firmware version from ID message.
 - [DMU] Support record data in developers site.

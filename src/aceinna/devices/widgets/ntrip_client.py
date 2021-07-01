@@ -2,6 +2,9 @@ from socket import *
 import concurrent.futures as futures
 import time
 import base64
+
+from ...framework.utils import print as print_helper
+from ...framework.constants import APP_TYPE
 from ...framework.context import APP_CONTEXT
 from ...core.gnss import RTCMParser
 from ...core.event_base import EventBase
@@ -51,11 +54,11 @@ class NTRIPClient(EventBase):
             recvData = self.recvResponse()
 
             if recvData != None and recvData.find(b'ICY 200 OK') != -1:
-                print('NTRIP:[request] ok')
+                print_helper.print_on_console('NTRIP:[request] ok', skip_modes=[APP_TYPE.CLI])
                 APP_CONTEXT.get_print_logger().info('NTRIP:[request] ok')
                 self.recv()
             else:
-                print('NTRIP:[request] fail')
+                print_helper.print_on_console('NTRIP:[request] fail', skip_modes=[APP_TYPE.CLI])
                 APP_CONTEXT.get_print_logger().info('NTRIP:[request] fail')
                 self.tcp_client_socket.close()
 
@@ -63,18 +66,18 @@ class NTRIPClient(EventBase):
         self.is_connected = 0
         self.tcp_client_socket = socket(AF_INET, SOCK_STREAM)
         try:
-            print('NTRIP:[connect] {0}:{1} start...'.format(
-                self.ip, self.port))
+            print_helper.print_on_console('NTRIP:[connect] {0}:{1} start...'.format(
+                self.ip, self.port), skip_modes=[APP_TYPE.CLI])
             APP_CONTEXT.get_print_logger().info(
                 'NTRIP:[connect] {0}:{1} start...'.format(self.ip, self.port))
 
             self.tcp_client_socket.connect((self.ip, self.port))
-            print('NTRIP:[connect] ok')
+            print_helper.print_on_console('NTRIP:[connect] ok', skip_modes=[APP_TYPE.CLI])
             APP_CONTEXT.get_print_logger().info('NTRIP:[connect] ok')
 
             self.is_connected = 1
         except Exception as e:
-            print('NTRIP:[connect] {0}'.format(e))
+            print_helper.print_on_console('NTRIP:[connect] {0}'.format(e), skip_modes=[APP_TYPE.CLI])
             APP_CONTEXT.get_print_logger().info(
                 'NTRIP:[connect] {0}'.format(e))
 
@@ -100,8 +103,7 @@ class NTRIPClient(EventBase):
                 else:
                     self.tcp_client_socket.send(bytes(data))
             except Exception as e:
-                print('NTRIP:[send] error occur {0}'.format(e))
-
+                print_helper.print_on_console('NTRIP:[send] error occur {0}'.format(e), skip_modes=[APP_TYPE.CLI])
                 APP_CONTEXT.get_print_logger().info(
                     'NTRIP:[send] {0}'.format(e))
 
@@ -118,14 +120,14 @@ class NTRIPClient(EventBase):
                     # print('NTRIP:[recv] rxdata {0}'.format(len(data)))
                     self.parser.receive(data)
                 else:
-                    print('NTRIP:[recv] no data error')
+                    print_helper.print_on_console('NTRIP:[recv] no data error', skip_modes=[APP_TYPE.CLI])
                     APP_CONTEXT.get_print_logger().info(
                         'NTRIP:[recv] no data error')
                     self.tcp_client_socket.close()
                     return
 
             except Exception as e:
-                print('NTRIP:[recv] error occur {0}'.format(e))
+                print_helper.print_on_console('NTRIP:[recv] error occur {0}'.format(e), skip_modes=[APP_TYPE.CLI])
                 APP_CONTEXT.get_print_logger().info(
                     'NTRIP:[recv] error occur {0}'.format(e))
                 self.tcp_client_socket.close()
@@ -137,7 +139,7 @@ class NTRIPClient(EventBase):
             try:
                 data = self.tcp_client_socket.recv(1024)
                 if not data or len(data) == 0:
-                    print('NTRIP:[recvR] no data')
+                    print_helper.print_on_console('NTRIP:[recvR] no data', skip_modes=[APP_TYPE.CLI])
                     return None
 
                 return data

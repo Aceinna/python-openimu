@@ -7,14 +7,7 @@ from .cli import CommandLine as CommandLineApp
 from .default import Default as DefaultApp
 from .log_parser import LogParser as LogParserApp
 from .. import VERSION
-
-
-class APP_TYPE:
-    DEFAULT = 'default'
-    CLI = 'cli'
-    RECEIVER = 'receiver'
-    LOG_PARSER = 'log-parser'
-
+from ..framework.constants import APP_TYPE
 
 class Loader:
     '''Bootstrap Factory
