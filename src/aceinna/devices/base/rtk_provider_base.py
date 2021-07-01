@@ -217,7 +217,7 @@ class RTKProviderBase(OpenDeviceBase):
         self.ntrip_client.run()
 
     def handle_rtcm_data_parsed(self, data):
-        if self.communicator.can_write():
+        if self.communicator.can_write() and not self.is_upgrading:
             self.communicator.write(data)
 
     def build_connected_serial_port_info(self):
