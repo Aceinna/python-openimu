@@ -21,7 +21,7 @@ def get_executor_path():
         else:
             path = os.path.join(os.path.expanduser('~'), PACKAGE_NAME)
             if not os.path.isdir(path):
-                os.makedirs(path)
+                os.makedirs(path,exist_ok=True)
     return path
 
 
