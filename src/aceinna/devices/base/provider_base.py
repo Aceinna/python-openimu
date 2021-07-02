@@ -346,8 +346,8 @@ class OpenDeviceBase(EventBase):
             self._pbar = ProgressBar(total=upgrade_center.total)
             upgrade_center.start()
 
-        except Exception:  # pylint:disable=broad-except
-            self.handle_upgrade_error('Upgrade Failed')
+        except Exception as ex:  # pylint:disable=broad-except
+            self.handle_upgrade_error(ex)
             traceback.print_exc()
 
     def _do_download_firmware(self, file):

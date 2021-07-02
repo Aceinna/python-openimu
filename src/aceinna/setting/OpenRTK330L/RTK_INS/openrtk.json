@@ -88,7 +88,7 @@
 		"ntrip":[
 			{
                 "name": "ip",
-                "value": "47.116.1.17"
+                "value": "58.215.20.43"
             },
             {
                 "name": "port",
@@ -96,7 +96,7 @@
 			},
 			{
                 "name": "mountPoint",
-                "value": "RTK"
+                "value": "WX02"
             },
             {
                 "name": "username",

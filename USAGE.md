@@ -7,7 +7,7 @@ parameters:
 
 | Name | Type | Default | Description |
 | - | :-: | :-: | - |
-| --cli | Boolean | False | Work as command line mode |
+| -i, --interface | String | 'default' | Value should be `uart`, `eth`. Depends on device type |
 | -p, --port | Number | '8000' | Value should be an available port |
 | --device-type | String | 'auto' | Value should be `IMU`, `RTK`, `DMU` |
 | -b, --baudrate | String | None | Value should be a valid baudrate. The valid value should be one of `38400`, `57600`, `115200`, `230400`, `460800` |
@@ -16,8 +16,6 @@ parameters:
 | --debug | Boolean | False | Log debug information |
 | --with-data-log | Boolean | False | Contains internal data log (OpenIMU only) |
 | -s, --set-user-para | Boolean | False | Set uesr parameters (OpenRTK only) |
-| -n, --ntrip-client | Boolean | False | Enable ntrip client (OpenRTK only) |
-| -l, --protocol | String | 'uart' | Value should be `uart`, `lan`. Depends on device type |
 
 # Work as sdk
 Detect device

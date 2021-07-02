@@ -61,7 +61,7 @@ class RTKProviderBase(OpenDeviceBase):
         self.config_file_name = 'openrtk.json'
         self.device_category = 'RTK'
         self.prepare_folders()
-        self.ntripClient = None
+        self.ntrip_client = None
         self.rtk_log_file_name = ''
         self.connected = False
         self.port_index_define = {
@@ -207,8 +207,14 @@ class RTKProviderBase(OpenDeviceBase):
             self.properties = json.load(json_data)
 
     def ntrip_client_thread(self):
-        self.ntripClient = NTRIPClient(self.properties, self.communicator)
-        self.ntripClient.run()
+        # print('new ntrip client')
+        self.ntrip_client = NTRIPClient(self.properties)
+        self.ntrip_client.on('parsed', self.handle_rtcm_data_parsed)
+        self.ntrip_client.run()
+
+    def handle_rtcm_data_parsed(self, data):
+        if self.communicator.can_write() and not self.is_upgrading:
+            self.communicator.write(data)
 
     def build_connected_serial_port_info(self):
         if not self.communicator.serial_port:
@@ -232,7 +238,6 @@ class RTKProviderBase(OpenDeviceBase):
         debug_port = ''
         rtcm_port = ''
         set_user_para = self.cli_options and self.cli_options.set_user_para
-        self.ntrip_client_enable = self.cli_options and self.cli_options.ntrip_client
 
         if self.data_folder is None:
             raise Exception(
@@ -246,10 +251,6 @@ class RTKProviderBase(OpenDeviceBase):
             raise Exception(
                 'Cannot create log folder, please check if the application has create folder permission')
 
-        # save parameters to data log folder after device is successfully detected
-        self.save_parameters_result(os.path.join(
-            self.rtk_log_file_name, 'parameters_{0}.json'.format(formatted_file_time)))
-
         # set parameters from predefined parameters
         if set_user_para:
             result = self.set_params(
@@ -261,7 +262,7 @@ class RTKProviderBase(OpenDeviceBase):
             self.check_predefined_result()
 
         # start ntrip client
-        if self.ntrip_client_enable:
+        if self.properties["initial"].__contains__("ntrip") and not self.ntrip_client and not self.is_in_bootloader:
             thead = threading.Thread(target=self.ntrip_client_thread)
             thead.start()
 
@@ -352,9 +353,9 @@ class RTKProviderBase(OpenDeviceBase):
                                 str_nmea)
                             if cksum == calc_cksum:
                                 if str_nmea.find("$GPGGA") != -1:
-                                    # print()
-                                    if self.ntrip_client_enable and self.ntripClient != None:
-                                        self.ntripClient.send(str_nmea)
+                                    if self.ntrip_client:
+                                        self.ntrip_client.send(str_nmea)
+                                    #self.add_output_packet('gga', str_nmea)
                                 # print(str_nmea, end='')
                                 APP_CONTEXT.get_print_logger().info(str_nmea.replace('\r\n', ''))
                                 # else:
@@ -372,19 +373,9 @@ class RTKProviderBase(OpenDeviceBase):
     def thread_debug_port_receiver(self, *args, **kwargs):
         pass
 
+    @abstractmethod
     def thread_rtcm_port_receiver(self, *args, **kwargs):
-        if self.rtcm_logf is None:
-            return
-        while True:
-            try:
-                data = bytearray(self.rtcm_serial_port.read_all())
-            except Exception as e:
-                print_red('RTCM PORT Thread error: {0}'.format(e))
-                return  # exit thread receiver
-            if len(data):
-                self.rtcm_logf.write(data)
-            else:
-                time.sleep(0.001)
+        pass
 
     def on_receive_output_packet(self, packet_type, data, error=None):
         '''
@@ -392,7 +383,7 @@ class RTKProviderBase(OpenDeviceBase):
         '''
         # $GPGGA,080319.00,3130.4858508,N,12024.0998832,E,4,25,0.5,12.459,M,0.000,M,2.0,*46
         if packet_type == 'gN':
-            if self.ntrip_client_enable:
+            if self.ntrip_client:
                 # $GPGGA
                 gpgga = '$GPGGA'
                 # time
@@ -451,8 +442,7 @@ class RTKProviderBase(OpenDeviceBase):
                     str_checksum = str_checksum[2:]
                 gpgga = gpgga + '*' + str_checksum + '\r\n'
                 APP_CONTEXT.get_print_logger().info(gpgga)
-                if self.ntripClient != None:
-                    self.ntripClient.send(gpgga)
+                self.ntrip_client.send(gpgga)
                 return
 
         elif packet_type == 'pS':
@@ -594,6 +584,7 @@ class RTKProviderBase(OpenDeviceBase):
         workers = []
         rules = [
             InternalCombineAppParseRule('rtk', 'rtk_start:', 4),
+            InternalCombineAppParseRule('ins', 'ins_start:', 4),
             InternalCombineAppParseRule('sdk', 'sdk_start:', 4),
         ]
 
@@ -602,8 +593,14 @@ class RTKProviderBase(OpenDeviceBase):
         # foreach parsed content, if empty, skip register into upgrade center
         for _, rule in enumerate(parsed_content):
             content = parsed_content[rule]
-            if len(content) > 0:
-                workers.append(self.build_worker(rule, content))
+            if len(content) == 0:
+                continue
+
+            worker = self.build_worker(rule, content)
+            if not worker:
+                continue
+
+            workers.append(worker)
 
         return workers
 
@@ -615,15 +612,6 @@ class RTKProviderBase(OpenDeviceBase):
             'partNumber': self.device_info['pn'],
             'firmware': self.device_info['firmware_version']
         }
-
-    def save_parameters_result(self, file_path):
-        if self.is_in_bootloader:
-            return
-
-        result = self.get_params()
-        if result['packetType'] == 'inputParams':
-            with open(file_path, 'w') as outfile:
-                json.dump(result['data'], outfile)
 
     def check_predefined_result(self):
         local_time = time.localtime()
@@ -666,24 +654,53 @@ class RTKProviderBase(OpenDeviceBase):
             print_yellow('The failed parameters: {0}'.format(fail_parameters))
 
     def save_device_info(self):
-        if not self.rtk_log_file_name:
+        ''' Save device configuration
+            File name: configuration.json
+        '''
+        if self.is_in_bootloader:
             return
 
-        local_time = time.localtime()
-        formatted_file_time = time.strftime("%Y_%m_%d_%H_%M_%S", local_time)
+        result = self.get_params()
+
+        device_configuration = None
         file_path = os.path.join(
-            self.rtk_log_file_name,
-            'device_info_{0}.txt'.format(formatted_file_time)
-        )
-        with open(file_path, 'w') as outfile:
-            outfile.write(self._device_info_string)
+            self.data_folder, self.rtk_log_file_name, 'configuration.json')
+
+        if not os.path.exists(file_path):
+            device_configuration = []
+        else:
+            with open(file_path) as json_data:
+                device_configuration = (list)(json.load(json_data))
+
+        if result['packetType'] == 'inputParams':
+            session_info = dict()
+            session_info['time'] = time.strftime(
+                "%Y-%m-%d %H:%M:%S", time.localtime())
+            session_info['device'] = self.device_info
+            session_info['app'] = self.app_info
+            session_info['interface'] = self.cli_options.interface
+            if session_info['interface'] == 'uart':
+                session_info['path'] = self.communicator.serial_port.port
+            parameters_configuration = dict()
+            for item in result['data']:
+                param_name = item['name']
+                param_value = item['value']
+                parameters_configuration[param_name] = param_value
+
+            session_info['parameters'] = parameters_configuration
+            device_configuration.append(session_info)
+
+            with open(file_path, 'w') as outfile:
+                json.dump(device_configuration, outfile,
+                          indent=4, ensure_ascii=False)
 
     def after_upgrade_completed(self):
-        local_time = time.localtime()
-        formatted_file_time = time.strftime("%Y_%m_%d_%H_%M_%S", local_time)
-        file_path = os.path.join(
-            self.rtk_log_file_name, 'parameters_{0}.json'.format(formatted_file_time))
-        self.save_parameters_result(file_path)
+        # start ntrip client
+        if self.properties["initial"].__contains__("ntrip") and not self.ntrip_client and not self.is_in_bootloader:
+            thead = threading.Thread(target=self.ntrip_client_thread)
+            thead.start()
+
+        self.save_device_info()
 
     def get_operation_status(self):
         if self.is_logging:

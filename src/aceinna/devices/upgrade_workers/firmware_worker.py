@@ -1,6 +1,7 @@
 import time
 from ..base.upgrade_worker_base import UpgradeWorkerBase
 from ...framework.utils import helper
+from . import (UPGRADE_EVENT, UPGRADE_GROUP)
 
 
 class EVENT_TYPE:
@@ -10,6 +11,9 @@ class EVENT_TYPE:
     FIRST_PACKET = 'first_packet'
     BEFORE_WRITE = 'before_write'
     AFTER_WRITE = 'after_write'
+    FINISH = 'finish'
+    ERROR = 'error'
+    PROGRESS = 'progress'
 
 
 class FirmwareUpgradeWorker(UpgradeWorkerBase):
@@ -18,14 +22,17 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
 
     def __init__(self, communicator, baudrate, file_content, block_size=240):
         super(FirmwareUpgradeWorker, self).__init__()
-        self._file_content = file_content
         self._communicator = communicator
         self.current = 0
-        self.total = len(file_content)
         self._baudrate = baudrate
         self.max_data_len = block_size  # custom
-        # self._key = None
-        # self._is_stopped = False
+        self._group = UPGRADE_GROUP.FIRMWARE
+
+        if not callable(file_content):
+            self._file_content = file_content
+        else:
+            self._file_content = file_content()
+        self.total = len(self._file_content)
 
     def stop(self):
         self._is_stopped = True
@@ -47,10 +54,15 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
 
         # custom
         if current == 0:
-            self.emit(EVENT_TYPE.FIRST_PACKET)
+            try:
+                self.emit(UPGRADE_EVENT.FIRST_PACKET)
+            except Exception as ex:
+                self.emit(UPGRADE_EVENT.ERROR, self._key,
+                          'Fail in first packet: {0}'.format(ex))
+                return False
 
         response = helper.read_untils_have_data(
-            self._communicator, 'WA', 50, 50)
+            self._communicator, 'WA', 12, 10)
         # wait WA end if cannot read response in defined retry times
         if response is None:
             time.sleep(0.1)
@@ -59,15 +71,20 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
     def work(self):
         '''Upgrades firmware of connected device to file provided in argument
         '''
+        if self._is_stopped:
+            return
         if self.current == 0 and self.total == 0:
-            self.emit('error', self._key, 'Invalid file content')
+            self.emit(UPGRADE_EVENT.ERROR, self._key, 'Invalid file content')
             return
 
         self._communicator.serial_port.baudrate = self._baudrate
         self._communicator.serial_port.reset_input_buffer()
-
-        self.emit(EVENT_TYPE.BEFORE_WRITE)
-
+        try:
+            self.emit(UPGRADE_EVENT.BEFORE_WRITE)
+        except Exception as ex:
+            self.emit(UPGRADE_EVENT.ERROR, self._key,
+                      'Fail in before write: {0}'.format(ex))
+            return
         while self.current < self.total:
             if self._is_stopped:
                 return
@@ -80,14 +97,19 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
                 packet_data_len, self.current, data)
 
             if not write_result:
-                self.emit('error', self._key,
+                self.emit(UPGRADE_EVENT.ERROR, self._key,
                           'Write firmware operation failed')
                 return
 
             self.current += packet_data_len
-            self.emit('progress', self._key, self.current, self.total)
+            self.emit(UPGRADE_EVENT.PROGRESS, self._key, self.current, self.total)
+
+        try:
+            self.emit(UPGRADE_EVENT.AFTER_WRITE)
+        except Exception as ex:
+            self.emit(UPGRADE_EVENT.ERROR, self._key,
+                      'Fail in after write: {0}'.format(ex))
+            return
 
         if self.total > 0 and self.current >= self.total:
-            self.emit('finish', self._key)
-
-        self.emit(EVENT_TYPE.AFTER_WRITE)
+            self.emit(UPGRADE_EVENT.FINISH, self._key)

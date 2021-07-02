@@ -47,7 +47,7 @@ Arguments:
 
 | Name | Type | Default | Description |
 | - | :-: | :-: | - |
-| --cli | Boolean | False | Work as command line mode |
+| -i, --interface | String | 'default' | Value should be `uart`, `eth` |
 | -p, --port | Number | '8000' | Value should be an available port |
 | --device-type | String | 'auto' | Value should be one of `IMU`, `RTK`, `DMU` |
 | -b, --baudrate | String | None | Value should be a valid baudrate. The valid value should be one of `38400`, `57600`, `115200`, `230400`, `460800` |
@@ -56,8 +56,6 @@ Arguments:
 | --debug | Boolean | False | Log debug information |
 | --with-data-log | Boolean | False | Contains internal data log (OpenIMU only) |
 | -s, --set-user-para | Boolean | False | Set uesr parameters (OpenRTK only) |
-| -n, --ntrip-client | Boolean | False | Enable ntrip client (OpenRTK only) |
-| -l, --protocol | String | 'uart' | Value should be `uart`, `lan`. Depends on device type |
 
 
 ### 2. Connect Aceinna device
@@ -134,15 +132,32 @@ Quit from Command Line Mode
 $ exit
 ```
 
-## Protocol
-Aceinna Device could be connected with your PC via UART or LAN. The supported protocol is depended on the device type.
+
+## Interface
+Aceinna Device could be connected with your PC via UART or LAN. The supported interface is depended on the device type.
 | Device Type | Supported Protocols | Description |
 | - | - | - |
 | DMU | `uart` | |
 | OpenIMU | `uart` | |
-| OpenRTK | `uart`, `lan` | The startup argument `-l lan` is supported |
+| OpenRTK | `uart`, `eth` | The startup argument `-i eth` is supported |
 | RTK330L | `uart` |  |
 
+
+## Parse Tool
+There is a log parse tool integrated in. It could parse OpenRTK and RTK330LA log from data folder. Assgin `parse` to start it.
+
+Example
+```bash
+$ ans-devices parse
+```
+
+Arguments:
+
+| Name | Type | Default | Description |
+| - | :-: | :-: | - |
+| -t | String | 'openrtk' | Switch work mode. Value should be one of `openrtk`,`rtkl` |
+| -p | String | '.' | Value should be a valid path. It could be the container folder of log files |
+| -i | Number | 5 | INS kml rate(hz) |
 
 ## Changelogs and Release Notes
 

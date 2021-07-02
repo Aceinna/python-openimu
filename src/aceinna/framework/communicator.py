@@ -29,7 +29,7 @@ class CommunicatorFactory:
         '''
         if method == 'uart':
             return SerialPort(options)
-        elif method == 'lan':
+        elif method == 'eth':
             return LAN(options)
         else:
             raise Exception('no matched communicator')
@@ -514,6 +514,9 @@ class SerialPort(Communicator):
             # print(e)
             raise
 
+    def can_write(self):
+        return self.serial_port and self.serial_port.isOpen()
+
     def read(self, size=100):
         '''
         read size bytes from the serial port.
@@ -558,7 +561,7 @@ class LAN(Communicator):
 
     def __init__(self, options=None):
         super().__init__()
-        self.type = 'lan'
+        self.type = 'eth'
         self.host = None
         self.port = 2203  # TODO: predefined or configured?
 
@@ -647,6 +650,9 @@ class LAN(Communicator):
         if self.sock:
             self.sock.close()
             self.sock = None
+
+    def can_write(self):
+        return self.device_conn != None
 
     def write(self, data, is_flush=False):
         '''

@@ -30,7 +30,7 @@ class WebserverArgs(KeyValuesArgumentBase):
     Argument define for start webserver
     '''
     default_values = {
-        'protocol': 'uart',
+        'interface': 'uart',
         'device_type': 'auto',
         'port': 'auto',
         'baudrate': 'auto',
@@ -52,4 +52,15 @@ class DetectorArgs(KeyValuesArgumentBase):
         'device_type': 'auto',
         'baudrate': 'auto',
         'com_port': 'auto'
+    }
+
+
+class LogParserArgs(KeyValuesArgumentBase):
+    '''
+    Argument define for log parser
+    '''
+    default_values = {
+        'log_type': 'openrtk',
+        'path': '.',
+        'kml_rate': 5
     }

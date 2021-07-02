@@ -3,6 +3,8 @@ import re
 import time
 import json
 import struct
+import datetime
+import threading
 from ..base import OpenDeviceBase
 from ..decorator import with_device_message
 from ...framework.utils import (helper, resource)
@@ -11,7 +13,7 @@ from .configuration_field import CONFIGURATION_FIELD_DEFINES_SINGLETON
 from .eeprom_field import EEPROM_FIELD_DEFINES_SINGLETON
 from ..upgrade_workers import (
     FirmwareUpgradeWorker,
-    FIRMWARE_EVENT_TYPE
+    UPGRADE_EVENT
 )
 
 ID = [0x49, 0x44]
@@ -196,7 +198,7 @@ class Provider(OpenDeviceBase):
         firmware_worker = FirmwareUpgradeWorker(
             self.communicator, self.bootloader_baudrate, firmware_content)
         firmware_worker.on(
-            FIRMWARE_EVENT_TYPE.FIRST_PACKET, lambda: time.sleep(8))
+            UPGRADE_EVENT.FIRST_PACKET, lambda: time.sleep(8))
         return [firmware_worker]
 
     def get_device_connection_info(self):
@@ -438,4 +440,32 @@ class Provider(OpenDeviceBase):
         yield {
             'packetType': 'success',
             'data': raw
+        }
+
+    def upgrade_framework(self, params, *args):  # pylint: disable=invalid-name
+        '''
+        upgrade framework
+        '''
+        file = ''
+        if isinstance(params, str):
+            file = params
+
+        if isinstance(params, dict):
+            file = params['file']
+
+        # start a thread to do upgrade
+        if not self.is_upgrading:
+            self.is_upgrading = True
+            self._message_center.pause()
+
+            if self._logger is not None:
+                self._logger.stop_user_log()
+
+            thead = threading.Thread(
+                target=self.thread_do_upgrade_framework, args=(file,))
+            thead.start()
+            print("Upgrade DMU firmware started at:[{0}].".format(
+                datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+        return {
+            'packetType': 'success'
         }

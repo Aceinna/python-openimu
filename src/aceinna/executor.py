@@ -26,7 +26,13 @@ def from_command_line(**kwargs):
     '''
     Work as command line, with WebSocket and UART
     '''
-    application = Loader.create('cli', vars(kwargs['options']))
+    sub_command = kwargs['options'].sub_command
+    option_mode = 'cli'
+
+    if sub_command == 'parse':
+        option_mode = 'log-parser'
+
+    application = Loader.create(option_mode, vars(kwargs['options']))
     application.listen()
 
 
@@ -34,14 +40,18 @@ def from_command_line(**kwargs):
 @receive_args
 def start_app(**kwargs):
     '''
-    Work as a executor, with WebSocket and UART
+    Start the application with specified parameters
     '''
-    application = None
-    mode = 'default'
-    if kwargs['options'].use_cli:
-        mode = 'cli'
+    sub_command = kwargs['options'].sub_command
+    option_mode = 'default'
 
-    application = Loader.create(mode, vars(kwargs['options']))
+    if kwargs['options'].use_cli:
+        option_mode = 'cli'
+
+    if sub_command == 'parse':
+        option_mode = 'log-parser'
+
+    application = Loader.create(option_mode, vars(kwargs['options']))
     application.listen()
 
 

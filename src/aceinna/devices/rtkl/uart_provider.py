@@ -1,14 +1,26 @@
 import time
 import serial
-import serial.tools.list_ports
+import struct
 
 from ..base.rtk_provider_base import RTKProviderBase
 from ..upgrade_workers import (
     FirmwareUpgradeWorker,
-    FIRMWARE_EVENT_TYPE,
-    SDKUpgradeWorker
+    UPGRADE_EVENT,
+    SDK9100UpgradeWorker
+)
+from ...framework.utils import (
+    helper
 )
 from ...framework.utils.print import print_red
+
+
+def build_content(content):
+    len_mod = len(content) % 16
+    if len_mod == 0:
+        return content
+
+    fill_bytes = bytes(16-len_mod)
+    return content + fill_bytes
 
 
 class Provider(RTKProviderBase):
@@ -44,38 +56,80 @@ class Provider(RTKProviderBase):
             else:
                 time.sleep(0.001)
 
-    # override
+    def thread_rtcm_port_receiver(self, *args, **kwargs):
+        if self.rtcm_logf is None:
+            return
+        while True:
+            try:
+                if self.is_upgrading:
+                    time.sleep(0.1)
+                    continue
 
-    def before_write_content(self):
-        time.sleep(8)
+                data = bytearray(self.rtcm_serial_port.read_all())
+            except Exception as e:
+                print_red('RTCM PORT Thread error: {0}'.format(e))
+                return  # exit thread receiver
+            if len(data):
+                self.rtcm_logf.write(data)
+            else:
+                time.sleep(0.001)
+
+    def before_write_content(self, core, content_len):
+        message_bytes = [ord('C'), ord(core)]
+        message_bytes.extend(struct.pack('>I', content_len))
+
+        command_line = helper.build_packet('CS', message_bytes)
+        time.sleep(3)  # sleep 3s, to wait for bootloader ready
+        self.communicator.write(command_line, True)
+        time.sleep(2)
+        result = helper.read_untils_have_data(
+            self.communicator, 'CS', 1000, 50)
+
+        if not result:
+            raise Exception('Cannot run set core command')
+
+    def reopen_rtcm_serial_port(self, *args):
+        # self.rtcm_serial_port.open()
+        self.rtcm_serial_port.baudrate = 460800
 
     # override
     def build_worker(self, rule, content):
         if rule == 'rtk':
-            firmware_worker = FirmwareUpgradeWorker(
-                self.communicator, self.bootloader_baudrate, content, 192)
-            firmware_worker.on(
-                FIRMWARE_EVENT_TYPE.FIRST_PACKET, lambda: time.sleep(26))
-            firmware_worker.on(FIRMWARE_EVENT_TYPE.BEFORE_WRITE,
-                               self.before_write_content)
-            return firmware_worker
+            rtk_upgrade_worker = FirmwareUpgradeWorker(
+                self.communicator, self.bootloader_baudrate, lambda: build_content(content), 192)
+            rtk_upgrade_worker.on(
+                UPGRADE_EVENT.FIRST_PACKET, lambda: time.sleep(15))
+            rtk_upgrade_worker.on(UPGRADE_EVENT.BEFORE_WRITE,
+                                  lambda: self.before_write_content('0', len(content)))
+            return rtk_upgrade_worker
+
+        if rule == 'ins':
+            ins_upgrade_worker = FirmwareUpgradeWorker(
+                self.communicator, self.bootloader_baudrate, lambda: build_content(content), 192)
+            ins_upgrade_worker.on(
+                UPGRADE_EVENT.FIRST_PACKET, lambda: time.sleep(15))
+            ins_upgrade_worker.on(UPGRADE_EVENT.BEFORE_WRITE,
+                                  lambda: self.before_write_content('1', len(content)))
+            return ins_upgrade_worker
 
         if rule == 'sdk':
-            sdk_port = ''
-            if (self.properties["initial"]["useDefaultUart"]):
-                user_port_num, port_name = self.build_connected_serial_port_info()
-                sdk_port = port_name + str(int(user_port_num) + 3)
-            else:
-                for uart in self.properties["initial"]["uart"]:
-                    if uart['enable'] == 1:
-                        if uart['name'] == 'SDK':
-                            sdk_port = uart["value"]
+            if not self.rtcm_serial_port:
+                raise Exception(
+                    'SDK upgrade serial port is not ready, please try again.')
 
-            sdk_uart = serial.Serial(sdk_port, self.bootloader_baudrate, timeout=0.1)
+            sdk_uart = self.rtcm_serial_port
+            sdk_uart.baudrate = self.bootloader_baudrate
+            # sdk_uart.reset_input_buffer()
+
             if not sdk_uart.isOpen():
                 raise Exception('Cannot open SDK upgrade port')
 
-            return SDKUpgradeWorker(sdk_uart, content)
+            sdk_upgrade_worker = SDK9100UpgradeWorker(sdk_uart, content)
+            sdk_upgrade_worker.on(UPGRADE_EVENT.ERROR,
+                                  self.reopen_rtcm_serial_port)
+            sdk_upgrade_worker.on(UPGRADE_EVENT.FINISH,
+                                  self.reopen_rtcm_serial_port)
+            return sdk_upgrade_worker
 
     # command list
     # use base methods
