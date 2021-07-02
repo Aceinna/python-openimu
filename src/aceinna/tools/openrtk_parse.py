@@ -404,8 +404,8 @@ class ZouParse:
         return ulCRC
 
 
-class UserRawParse:
-    def __init__(self, data_file, path, inskml_rate, json_setting):
+class InceptioParse:
+    def __init__(self, data_file, path, json_setting, inskml_rate):
         self.rawdata = []
         if is_later_py_3:
             self.rawdata = data_file.read()
@@ -427,7 +427,6 @@ class UserRawParse:
         self.f_nmea = None
         self.f_process = None
         self.f_imu = None
-        self.f_odo = None
         self.f_gnssposvel = None
         self.f_ins = None
         self.f_gnss_kml = None
@@ -490,7 +489,6 @@ class UserRawParse:
         self.f_process = open(self.path[0:-1] + '-process', 'w')
         self.f_gnssposvel = open(self.path[0:-1] + '-gnssposvel.txt', 'w')
         self.f_imu = open(self.path[0:-1] + '-imu.txt', 'w')
-        self.f_odo = open(self.path[0:-1] + '-odo.txt', 'w')
         self.f_ins = open(self.path[0:-1] + '-ins.txt', 'w')
         self.f_nmea = open(self.path[0:-1] + '-nmea', 'wb')
         self.f_gnss_kml = open(self.path[0:-1] + '-gnss.kml', 'w')
@@ -569,6 +567,7 @@ class UserRawParse:
         return datetime.datetime.strftime(epoch + elapsed, datetimeformat)
 
     def save_gnss_kml(self):
+        # white-cyan, red, purple, light-yellow, green, yellow
         color = ["ffffffff", "ff0000ff", "ffff00ff",
                  "50FF78F0", "ff00ff00", "ff00aaff"]
         kml_header = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"\
@@ -601,8 +600,8 @@ class UserRawParse:
             if pos[2] == 0:
                 continue
 
-            gnss_track += format(pos[4], ".9f") + ',' + format(pos[3],
-                                                               ".9f") + ',' + format(pos[5], ".3f") + '\n'
+            gnss_track += format(pos[4]*180/2147483648, ".9f") + ',' + format(
+                pos[3]*180/2147483648, ".9f") + ',' + format(pos[5], ".3f") + '\n'
 
         gnss_track += "</coordinates>\n"\
             + "</LineString>\n"\
@@ -612,14 +611,14 @@ class UserRawParse:
             + "<name>Rover Position</name>\n"
 
         for i, pos in enumerate(self.gnssdata):
-            ep = self.weeksecondstoutc(pos[0], pos[1]/1000, -18)
+            ep = self.weeksecondstoutc(pos[0], pos[1]*1000/1000, -18)
             ep_sp = time.strptime(ep, "%Y-%m-%d %H:%M:%S")
 
             if pos[2] == 0:
                 pass
             else:
                 track_ground = math.atan2(
-                    pos[14], pos[13]) * (57.295779513082320)
+                    pos[10]/100, pos[9]/100) * (57.295779513082320)
 
                 gnss_track += "<Placemark>\n"
                 if i <= 1:
@@ -627,27 +626,27 @@ class UserRawParse:
                 elif i == len(self.gnssdata)-1:
                     gnss_track += "<name>End</name>\n"
                 else:
-                    if math.fmod(ep_sp[5]+(pos[1] % 1000)/1000+0.025, 30) < 0.05:
+                    if math.fmod(ep_sp[5]+((pos[1]*1000) % 1000)/1000+0.025, 30) < 0.05:
                         gnss_track += "<name>"\
                             + "%02d" % ep_sp[3] + "%02d" % ep_sp[4] + "%02d" % ep_sp[5]\
                             + "</name>\n"
 
                 gnss_track += "<TimeStamp><when>"\
                     + time.strftime("%Y-%m-%dT%H:%M:%S.", ep_sp)\
-                    + "%02dZ" % ((pos[1] % 1000)/10)\
+                    + "%02dZ" % (((pos[1]*1000) % 1000)/10)\
                     + "</when></TimeStamp>\n"
 
                 gnss_track += "<description><![CDATA[\n"\
                     + "<TABLE border=\"1\" width=\"100%\" Align=\"center\">\n"\
                     + "<TR ALIGN=RIGHT>\n"\
                     + "<TR ALIGN=RIGHT><TD ALIGN=LEFT>Time:</TD><TD>"\
-                    + str(pos[0]) + "</TD><TD>" + "%.3f" % (pos[1]/1000) + "</TD><TD>"\
-                    + "%2d:%2d:%7.4f" % (ep_sp[3], ep_sp[4], ep_sp[5]+(pos[1] % 1000)/1000) + "</TD><TD>"\
+                    + str(pos[0]) + "</TD><TD>" + "%.3f" % ((pos[1]*1000)/1000) + "</TD><TD>"\
+                    + "%2d:%2d:%7.4f" % (ep_sp[3], ep_sp[4], ep_sp[5]+((pos[1]*1000) % 1000)/1000) + "</TD><TD>"\
                     + "%4d/%2d/%2d" % (ep_sp[0], ep_sp[1], ep_sp[2]) + "</TD></TR>\n"\
                     + "<TR ALIGN=RIGHT><TD ALIGN=LEFT>Position:</TD><TD>"\
-                    + "%.8f" % pos[3] + "</TD><TD>" + "%.8f" % pos[4] + "</TD><TD>" + "%.4f" % pos[5] + "</TD><TD>(DMS,m)</TD></TR>\n"\
+                    + "%.8f" % (pos[3]*180/2147483648) + "</TD><TD>" + "%.8f" % (pos[4]*180/2147483648) + "</TD><TD>" + "%.4f" % pos[5] + "</TD><TD>(DMS,m)</TD></TR>\n"\
                     + "<TR ALIGN=RIGHT><TD ALIGN=LEFT>Vel(N,E,D):</TD><TD>"\
-                    + "%.4f" % pos[13] + "</TD><TD>" + "%.4f" % pos[14] + "</TD><TD>" + "%.4f" % (-pos[15]) + "</TD><TD>(m/s)</TD></TR>\n"\
+                    + "%.4f" % (pos[9]/100) + "</TD><TD>" + "%.4f" % (pos[10]/100) + "</TD><TD>" + "%.4f" % (-pos[11]/100) + "</TD><TD>(m/s)</TD></TR>\n"\
                     + "<TR ALIGN=RIGHT><TD ALIGN=LEFT>Att(r,p,h):</TD><TD>"\
                     + "0" + "</TD><TD>" + "0" + "</TD><TD>" + "%.4f" % track_ground + "</TD><TD>(deg,approx)</TD></TR>\n"\
                     + "<TR ALIGN=RIGHT><TD ALIGN=LEFT>Mode:</TD><TD>"\
@@ -663,7 +662,7 @@ class UserRawParse:
                     + "</Style>\n"
 
                 gnss_track += "<Point>\n"\
-                    + "<coordinates>" + "%.9f,%.9f,%.3f" % (pos[4], pos[3], pos[5]) + "</coordinates>\n"\
+                    + "<coordinates>" + "%.9f,%.9f,%.3f" % (pos[4]*180/2147483648, pos[3]*180/2147483648, pos[5]) + "</coordinates>\n"\
                     + "</Point>\n"
 
                 gnss_track += "</Placemark>\n"
@@ -709,15 +708,15 @@ class UserRawParse:
                        "INS_PROPOGATED", "INS_RTKFIXED", "INS_RTKFLOAT"]
 
         for ins in self.insdata:
-            ep = self.weeksecondstoutc(ins[0], ins[1]/1000, -18)
+            ep = self.weeksecondstoutc(ins[0], ins[1]*1000/1000, -18)
             ep_sp = time.strptime(ep, "%Y-%m-%d %H:%M:%S")
 
-            if math.fmod(ep_sp[5]+(ins[1] % 1000)/1000+0.0005, self.inskml_rate) < 0.005:
+            if math.fmod(ep_sp[5]+((ins[1]*1000) % 1000)/1000+0.0005, self.inskml_rate) < 0.005:
                 if abs(ins[5]*ins[4]) < 0.00000001:
                     continue
 
-                ins_track += format(ins[5], ".9f") + ',' + format(ins[4],
-                                                                  ".9f") + ',' + format(ins[6], ".3f") + '\n'
+                ins_track += format(ins[5]*180/2147483648, ".9f") + ',' + format(
+                    ins[4]*180/2147483648, ".9f") + ',' + format(ins[6], ".3f") + '\n'
 
         ins_track += "</coordinates>\n"\
             + "</LineString>\n"\
@@ -727,39 +726,39 @@ class UserRawParse:
             + "<name>Rover Position</name>\n"
 
         for i, ins in enumerate(self.insdata):
-            ep = self.weeksecondstoutc(ins[0], ins[1]/1000, -18)
+            ep = self.weeksecondstoutc(ins[0], ins[1]*1000/1000, -18)
             ep_sp = time.strptime(ep, "%Y-%m-%d %H:%M:%S")
 
-            if i == 0 or i == len(self.insdata)-1 or math.fmod(ins[1]/1000 + 0.0005, self.inskml_rate) < 0.005:
+            if i == 0 or i == len(self.insdata)-1 or math.fmod(ins[1]*1000/1000 + 0.0005, self.inskml_rate) < 0.005:
                 ins_track += "<Placemark>\n"
                 if i <= 1:
                     ins_track += "<name>Start</name>\n"
                 elif i == len(self.insdata)-1:
                     ins_track += "<name>End</name>\n"
                 else:
-                    if math.fmod(ep_sp[5]+(ins[1] % 1000)/1000+0.025, 30) < 0.05:
+                    if math.fmod(ep_sp[5]+((ins[1]*1000) % 1000)/1000+0.025, 30) < 0.05:
                         ins_track += "<name>"\
                             + "%02d" % ep_sp[3] + "%02d" % ep_sp[4] + "%02d" % ep_sp[5]\
                             + "</name>\n"
 
                 ins_track += "<TimeStamp><when>"\
                     + time.strftime("%Y-%m-%dT%H:%M:%S.", ep_sp)\
-                    + "%02dZ" % ((ins[1] % 1000)/10)\
+                    + "%02dZ" % (((ins[1]*1000) % 1000)/10)\
                     + "</when></TimeStamp>\n"
 
                 ins_track += "<description><![CDATA[\n"\
                     + "<TABLE border=\"1\" width=\"100%\" Align=\"center\">\n"\
                     + "<TR ALIGN=RIGHT>\n"\
                     + "<TR ALIGN=RIGHT><TD ALIGN=LEFT>Time:</TD><TD>"\
-                    + str(ins[0]) + "</TD><TD>" + "%.3f" % (ins[1]/1000) + "</TD><TD>"\
-                    + "%2d:%2d:%7.4f" % (ep_sp[3], ep_sp[4], ep_sp[5]+(ins[1] % 1000)/1000) + "</TD><TD>"\
+                    + str(ins[0]) + "</TD><TD>" + "%.3f" % (ins[1]*1000/1000) + "</TD><TD>"\
+                    + "%2d:%2d:%7.4f" % (ep_sp[3], ep_sp[4], ep_sp[5]+((ins[1]*1000) % 1000)/1000) + "</TD><TD>"\
                     + "%4d/%2d/%2d" % (ep_sp[0], ep_sp[1], ep_sp[2]) + "</TD></TR>\n"\
                     + "<TR ALIGN=RIGHT><TD ALIGN=LEFT>Position:</TD><TD>"\
-                    + "%.8f" % ins[4] + "</TD><TD>" + "%.8f" % ins[5] + "</TD><TD>" + "%.4f" % ins[6] + "</TD><TD>(DMS,m)</TD></TR>\n"\
+                    + "%.8f" % (ins[4]*180/2147483648) + "</TD><TD>" + "%.8f" % (ins[5]*180/2147483648) + "</TD><TD>" + "%.4f" % ins[6] + "</TD><TD>(DMS,m)</TD></TR>\n"\
                     + "<TR ALIGN=RIGHT><TD ALIGN=LEFT>Vel(N,E,D):</TD><TD>"\
-                    + "%.4f" % ins[7] + "</TD><TD>" + "%.4f" % ins[8] + "</TD><TD>" + "%.4f" % (-ins[9]) + "</TD><TD>(m/s)</TD></TR>\n"\
+                    + "%.4f" % (ins[7]/100) + "</TD><TD>" + "%.4f" % (ins[8]/100) + "</TD><TD>" + "%.4f" % (-ins[9]/100) + "</TD><TD>(m/s)</TD></TR>\n"\
                     + "<TR ALIGN=RIGHT><TD ALIGN=LEFT>Att(r,p,h):</TD><TD>"\
-                    + "%.4f" % ins[10] + "</TD><TD>" + "%.4f" % ins[11] + "</TD><TD>" + "%.4f" % ins[12] + "</TD><TD>(deg,approx)</TD></TR>\n"\
+                    + "%.4f" % (ins[10]/100) + "</TD><TD>" + "%.4f" % (ins[11]/100) + "</TD><TD>" + "%.4f" % (ins[12]/100) + "</TD><TD>(deg,approx)</TD></TR>\n"\
                     + "<TR ALIGN=RIGHT><TD ALIGN=LEFT>Mode:</TD><TD>"\
                     + ins_status[ins[2]] + "</TD><TD>" + ins_postype[ins[3]] + "</TD><TR>\n"\
                     + "</TABLE>\n"\
@@ -783,12 +782,12 @@ class UserRawParse:
                 ins_track += "<styleUrl>#P" + str(pcolor) + "</styleUrl>\n"\
                     + "<Style>\n"\
                     + "<IconStyle>\n"\
-                    + "<heading>" + "%.4f" % ins[12] + "</heading>\n"\
+                    + "<heading>" + "%.4f" % (ins[12]/100) + "</heading>\n"\
                     + "</IconStyle>\n"\
                     + "</Style>\n"
 
                 ins_track += "<Point>\n"\
-                    + "<coordinates>" + "%.9f,%.9f,%.3f" % (ins[5], ins[4], ins[6]) + "</coordinates>\n"\
+                    + "<coordinates>" + "%.9f,%.9f,%.3f" % (ins[5]*180/2147483648, ins[4]*180/2147483648, ins[6]) + "</coordinates>\n"\
                     + "</Point>\n"
 
                 ins_track += "</Placemark>\n"
@@ -806,7 +805,6 @@ class UserRawParse:
         self.f_process.close()
         self.f_gnssposvel.close()
         self.f_imu.close()
-        self.f_odo.close()
         self.f_ins.close()
         self.f_gnss_kml.close()
         self.f_ins_kml.close()
@@ -818,25 +816,11 @@ class UserRawParse:
                 self.path + output['name'] + '.csv', 'w')
             self.write_titlebar(self.log_files[output['name']], output)
         buffer = ''
-        for i in range(len(data)):
-            if i == 1:
-                buffer = buffer + \
-                    format(data[i]/1000, output['payload'][i]['format'])
-            else:
-                buffer = buffer + \
-                    format(data[i], output['payload'][i]['format'])
-            if i < len(data)-1:
-                buffer = buffer + ","
-        buffer = buffer + "\n"
-        self.log_files[output['name']].write(buffer)
-
         if output['name'] == 's1':
-            buffer = '$GPIMU,'
             buffer = buffer + \
                 format(data[0], output['payload'][0]['format']) + ","
             buffer = buffer + \
-                format(data[1]/1000, output['payload']
-                       [1]['format']) + "," + "    ,"
+                format(data[1], output['payload'][1]['format']) + ","
             buffer = buffer + \
                 format(data[2], output['payload'][2]['format']) + ","
             buffer = buffer + \
@@ -849,46 +833,58 @@ class UserRawParse:
                 format(data[6], output['payload'][6]['format']) + ","
             buffer = buffer + \
                 format(data[7], output['payload'][7]['format']) + "\n"
-            self.f_process.write(buffer)
 
-            buffer = ''
+            ff_buffer = '$GPIMU,'
+            ff_buffer = ff_buffer + \
+                format(data[0], output['payload'][0]['format']) + ","
+            ff_buffer = ff_buffer + \
+                format(data[1], output['payload'][1]['format']) + "," + "    ,"
+            ff_buffer = ff_buffer + \
+                format(data[2], output['payload'][2]['format']) + ","
+            ff_buffer = ff_buffer + \
+                format(data[3], output['payload'][3]['format']) + ","
+            ff_buffer = ff_buffer + \
+                format(data[4], output['payload'][4]['format']) + ","
+            ff_buffer = ff_buffer + \
+                format(data[5], output['payload'][5]['format']) + ","
+            ff_buffer = ff_buffer + \
+                format(data[6], output['payload'][6]['format']) + ","
+            ff_buffer = ff_buffer + \
+                format(data[7], output['payload'][7]['format']) + "\n"
+            self.f_process.write(ff_buffer)
+
+            e_buffer = ''
+            e_buffer = e_buffer + \
+                format(data[0], output['payload'][0]['format']) + ","
+            e_buffer = e_buffer + \
+                format(data[1], output['payload'][1]['format']) + "," + "    ,"
+            e_buffer = e_buffer + \
+                format(data[2], output['payload'][2]['format']) + ","
+            e_buffer = e_buffer + \
+                format(data[3], output['payload'][3]['format']) + ","
+            e_buffer = e_buffer + \
+                format(data[4], output['payload'][4]['format']) + ","
+            e_buffer = e_buffer + \
+                format(data[5], output['payload'][5]['format']) + ","
+            e_buffer = e_buffer + \
+                format(data[6], output['payload'][6]['format']) + ","
+            e_buffer = e_buffer + \
+                format(data[7], output['payload'][7]['format']) + "\n"
+            self.f_imu.write(e_buffer)
+
+        elif output['name'] == 'gN':
             buffer = buffer + \
                 format(data[0], output['payload'][0]['format']) + ","
             buffer = buffer + \
-                format(data[1]/1000, output['payload']
-                       [1]['format']) + "," + "    ,"
+                format(data[1], output['payload'][1]['format']) + ","
             buffer = buffer + \
                 format(data[2], output['payload'][2]['format']) + ","
             buffer = buffer + \
-                format(data[3], output['payload'][3]['format']) + ","
+                format(data[3]*180/2147483648,
+                       output['payload'][3]['format']) + ","
             buffer = buffer + \
-                format(data[4], output['payload'][4]['format']) + ","
-            buffer = buffer + \
-                format(data[5], output['payload'][5]['format']) + ","
-            buffer = buffer + \
-                format(data[6], output['payload'][6]['format']) + ","
-            buffer = buffer + \
-                format(data[7], output['payload'][7]['format']) + "\n"
-            self.f_imu.write(buffer)
-
-            # if self.last_time != 0:
-            #     now_time = data[0] * 604800 * 1000 + data[1]
-            #     if now_time - self.last_time > 10:
-            #         print('{0} time err {1}'.format(now_time, now_time - self.last_time))
-            #     self.last_time = now_time
-            # else:
-            #     self.last_time = data[0] * 604800 * 1000 + data[1]
-
-        elif output['name'] == 'g1':
-            buffer = '$GPGNSS,'
-            buffer = buffer + \
-                format(data[0], output['payload'][0]['format']) + ","
-            buffer = buffer + \
-                format(data[1]/1000, output['payload'][1]['format']) + ","
-            buffer = buffer + \
-                format(data[3], output['payload'][3]['format']) + ","
-            buffer = buffer + \
-                format(data[4], output['payload'][4]['format']) + ","
+                format(data[4]*180/2147483648,
+                       output['payload'][4]['format']) + ","
             buffer = buffer + \
                 format(data[5], output['payload'][5]['format']) + ","
             buffer = buffer + \
@@ -898,31 +894,228 @@ class UserRawParse:
             buffer = buffer + \
                 format(data[8], output['payload'][8]['format']) + ","
             buffer = buffer + \
+                format(data[9]/100, output['payload'][9]['format']) + ","
+            buffer = buffer + \
+                format(data[10]/100, output['payload'][10]['format']) + ","
+            buffer = buffer + \
+                format(data[11]/100, output['payload'][11]['format']) + "\n"
+            #buffer = buffer + format(data[12]/100, output['payload'][12]['format']) + ","
+            #buffer = buffer + format(data[13]/100, output['payload'][13]['format']) + ","
+            #buffer = buffer + format(data[14]/100, output['payload'][14]['format']) + "\n"
+
+            ff_buffer = '$GPGNSS,'
+            ff_buffer = ff_buffer + \
+                format(data[0], output['payload'][0]['format']) + ","
+            ff_buffer = ff_buffer + \
+                format(data[1], output['payload'][1]['format']) + ","
+            ff_buffer = ff_buffer + \
+                format(data[3]*180/2147483648,
+                       output['payload'][3]['format']) + ","
+            ff_buffer = ff_buffer + \
+                format(data[4]*180/2147483648,
+                       output['payload'][4]['format']) + ","
+            ff_buffer = ff_buffer + \
+                format(data[5], output['payload'][5]['format']) + ","
+            #ff_buffer = ff_buffer + format(data[12]/100, output['payload'][12]['format']) + ","
+            #ff_buffer = ff_buffer + format(data[13]/100, output['payload'][13]['format']) + ","
+            #ff_buffer = ff_buffer + format(data[14]/100, output['payload'][14]['format']) + ","
+
+            std = 100
+            if data[2] == 1:
+                std = 5
+            elif data[2] == 5:
+                std = 0.3
+            elif data[2] == 4:
+                std = 0.01
+            ff_buffer = ff_buffer + \
+                format(std, output['payload'][5]['format']) + ","
+            ff_buffer = ff_buffer + \
+                format(std, output['payload'][5]['format']) + ","
+            ff_buffer = ff_buffer + \
+                format(std * 2, output['payload'][5]['format']) + ","
+            ff_buffer = ff_buffer + \
                 format(data[2], output['payload'][2]['format']) + "\n"
-            self.f_process.write(buffer)
+            self.f_process.write(ff_buffer)
 
-            buffer = '$GPVEL,'
-            buffer = buffer + \
+            ff_buffer = '$GPVEL,'
+            ff_buffer = ff_buffer + \
                 format(data[0], output['payload'][0]['format']) + ","
-            buffer = buffer + \
-                format(data[1]/1000, output['payload'][1]['format']) + ","
+            ff_buffer = ff_buffer + \
+                format(data[1], output['payload'][1]['format']) + ","
+            north_vel = data[9]/100
+            east_vel = data[10]/100
+            up_vel = data[11]/100
             horizontal_speed = math.sqrt(
-                data[13] * data[13] + data[14] * data[14])
+                north_vel * north_vel + east_vel * east_vel)
             track_over_ground = math.atan2(
-                data[14], data[13]) * (57.295779513082320)
-            buffer = buffer + format(horizontal_speed,
-                                     output['payload'][13]['format']) + ","
-            buffer = buffer + format(track_over_ground,
-                                     output['payload'][14]['format']) + ","
-            buffer = buffer + \
-                format(data[15], output['payload'][15]['format']) + "\n"
-            self.f_process.write(buffer)
+                east_vel, north_vel) * (57.295779513082320)
+            ff_buffer = ff_buffer + \
+                format(horizontal_speed, output['payload'][9]['format']) + ","
+            ff_buffer = ff_buffer + \
+                format(track_over_ground,
+                       output['payload'][10]['format']) + ","
+            ff_buffer = ff_buffer + \
+                format(up_vel, output['payload'][11]['format']) + "\n"
+            self.f_process.write(ff_buffer)
 
-            buffer = ''
+            e_buffer = ''
+            e_buffer = e_buffer + \
+                format(data[0], output['payload'][0]['format']) + ","
+            e_buffer = e_buffer + \
+                format(data[1], output['payload'][1]['format']) + ","
+            e_buffer = e_buffer + \
+                format(data[3]*180/2147483648,
+                       output['payload'][3]['format']) + ","
+            e_buffer = e_buffer + \
+                format(data[4]*180/2147483648,
+                       output['payload'][4]['format']) + ","
+            e_buffer = e_buffer + \
+                format(data[5], output['payload'][5]['format']) + ","
+            e_buffer = e_buffer + \
+                format(std, output['payload'][5]['format']) + ","
+            e_buffer = e_buffer + \
+                format(std, output['payload'][5]['format']) + ","
+            e_buffer = e_buffer + \
+                format(std * 2, output['payload'][5]['format']) + ","
+            e_buffer = e_buffer + \
+                format(data[2], output['payload'][2]['format']) + ","
+            e_buffer = e_buffer + \
+                format(north_vel, output['payload'][9]['format']) + ","
+            e_buffer = e_buffer + \
+                format(east_vel, output['payload'][10]['format']) + ","
+            e_buffer = e_buffer + \
+                format(up_vel, output['payload'][11]['format']) + ","
+            e_buffer = e_buffer + \
+                format(track_over_ground,
+                       output['payload'][10]['format']) + "\n"
+            self.f_gnssposvel.write(e_buffer)
+
+            self.gnssdata.append(data)
+
+        elif output['name'] == 'iN':
             buffer = buffer + \
                 format(data[0], output['payload'][0]['format']) + ","
             buffer = buffer + \
-                format(data[1]/1000, output['payload'][1]['format']) + ","
+                format(data[1], output['payload'][1]['format']) + ","
+            buffer = buffer + \
+                format(data[2], output['payload'][2]['format']) + ","
+            buffer = buffer + \
+                format(data[3], output['payload'][3]['format']) + ","
+            buffer = buffer + \
+                format(data[4]*180/2147483648,
+                       output['payload'][4]['format']) + ","
+            buffer = buffer + \
+                format(data[5]*180/2147483648,
+                       output['payload'][5]['format']) + ","
+            buffer = buffer + \
+                format(data[6], output['payload'][6]['format']) + ","
+            buffer = buffer + \
+                format(data[7]/100, output['payload'][7]['format']) + ","
+            buffer = buffer + \
+                format(data[8]/100, output['payload'][8]['format']) + ","
+            buffer = buffer + \
+                format(data[9]/100, output['payload'][9]['format']) + ","
+            buffer = buffer + \
+                format(data[10]/100, output['payload'][10]['format']) + ","
+            buffer = buffer + \
+                format(data[11]/100, output['payload'][11]['format']) + ","
+            buffer = buffer + \
+                format(data[12]/100, output['payload'][12]['format']) + "\n"
+
+            if math.fmod(data[1]+0.0005, 0.1) <= 0.005:
+                ff_buffer = '$GPINS,'
+                ff_buffer = ff_buffer + \
+                    format(data[0], output['payload'][0]['format']) + ","
+                ff_buffer = ff_buffer + \
+                    format(data[1], output['payload'][1]['format']) + ","
+                ff_buffer = ff_buffer + \
+                    format(data[4]*180/2147483648,
+                           output['payload'][4]['format']) + ","
+                ff_buffer = ff_buffer + \
+                    format(data[5]*180/2147483648,
+                           output['payload'][5]['format']) + ","
+                ff_buffer = ff_buffer + \
+                    format(data[6], output['payload'][6]['format']) + ","
+                ff_buffer = ff_buffer + \
+                    format(data[7]/100, output['payload'][7]['format']) + ","
+                ff_buffer = ff_buffer + \
+                    format(data[8]/100, output['payload'][8]['format']) + ","
+                ff_buffer = ff_buffer + \
+                    format(data[9]/100, output['payload'][9]['format']) + ","
+                ff_buffer = ff_buffer + \
+                    format(data[10]/100, output['payload'][10]['format']) + ","
+                ff_buffer = ff_buffer + \
+                    format(data[11]/100, output['payload'][11]['format']) + ","
+                ff_buffer = ff_buffer + \
+                    format(data[12]/100, output['payload'][12]['format']) + ","
+                ff_buffer = ff_buffer + \
+                    format(data[3], output['payload'][3]['format']) + "\n"
+                self.f_process.write(ff_buffer)
+
+                e_buffer = ''
+                e_buffer = e_buffer + \
+                    format(data[0], output['payload'][0]['format']) + ","
+                e_buffer = e_buffer + \
+                    format(data[1], output['payload'][1]['format']) + ","
+                e_buffer = e_buffer + \
+                    format(data[4]*180/2147483648,
+                           output['payload'][4]['format']) + ","
+                e_buffer = e_buffer + \
+                    format(data[5]*180/2147483648,
+                           output['payload'][5]['format']) + ","
+                e_buffer = e_buffer + \
+                    format(data[6], output['payload'][6]['format']) + ","
+                e_buffer = e_buffer + \
+                    format(data[7]/100, output['payload'][7]['format']) + ","
+                e_buffer = e_buffer + \
+                    format(data[8]/100, output['payload'][8]['format']) + ","
+                e_buffer = e_buffer + \
+                    format(data[9]/100, output['payload'][9]['format']) + ","
+                e_buffer = e_buffer + \
+                    format(data[10]/100, output['payload'][10]['format']) + ","
+                e_buffer = e_buffer + \
+                    format(data[11]/100, output['payload'][11]['format']) + ","
+                e_buffer = e_buffer + \
+                    format(data[12]/100, output['payload'][12]['format']) + ","
+                e_buffer = e_buffer + \
+                    format(data[3], output['payload'][3]['format']) + ","
+                e_buffer = e_buffer + \
+                    format(data[2], output['payload'][2]['format']) + "\n"
+                self.f_ins.write(e_buffer)
+
+                if abs(data[5]*data[4]) > 0.00000001:
+                    self.insdata.append(data)
+
+        elif output['name'] == 'd1':
+            buffer = buffer + \
+                format(data[0], output['payload'][0]['format']) + ","
+            buffer = buffer + \
+                format(data[1], output['payload'][1]['format']) + ","
+            buffer = buffer + \
+                format(data[2]/100, output['payload'][2]['format']) + ","
+            buffer = buffer + \
+                format(data[3]/100, output['payload'][3]['format']) + ","
+            buffer = buffer + \
+                format(data[4]/100, output['payload'][4]['format']) + ","
+            buffer = buffer + \
+                format(data[5]/100, output['payload'][5]['format']) + ","
+            buffer = buffer + \
+                format(data[6]/100, output['payload'][6]['format']) + ","
+            buffer = buffer + \
+                format(data[7]/100, output['payload'][7]['format']) + ","
+            buffer = buffer + \
+                format(data[8]/100, output['payload'][8]['format']) + ","
+            buffer = buffer + \
+                format(data[9]/100, output['payload'][9]['format']) + ","
+            buffer = buffer + \
+                format(data[10]/100, output['payload'][10]['format']) + "\n"
+        elif output['name'] == 'sT':
+            buffer = buffer + \
+                format(data[0], output['payload'][0]['format']) + ","
+            buffer = buffer + \
+                format(data[1], output['payload'][1]['format']) + ","
+            buffer = buffer + \
+                format(data[2], output['payload'][2]['format']) + ","
             buffer = buffer + \
                 format(data[3], output['payload'][3]['format']) + ","
             buffer = buffer + \
@@ -936,112 +1129,61 @@ class UserRawParse:
             buffer = buffer + \
                 format(data[8], output['payload'][8]['format']) + ","
             buffer = buffer + \
+                format(data[9], output['payload'][9]['format']) + ","
+            buffer = buffer + \
+                format(data[10], output['payload'][10]['format']) + "\n"
+
+        elif output['name'] == 'fM':
+            buffer = buffer + \
+                format(data[0], output['payload'][0]['format']) + ","
+            buffer = buffer + \
+                format(data[1], output['payload'][1]['format']) + ","
+            buffer = buffer + \
                 format(data[2], output['payload'][2]['format']) + ","
+            buffer = buffer + \
+                format(data[3], output['payload'][3]['format']) + ","
+            buffer = buffer + \
+                format(data[4], output['payload'][4]['format']) + ","
+            buffer = buffer + \
+                format(data[5], output['payload'][5]['format']) + ","
+            buffer = buffer + \
+                format(data[6], output['payload'][6]['format']) + ","
+            buffer = buffer + \
+                format(data[7], output['payload'][7]['format']) + ","
+            buffer = buffer + \
+                format(data[8], output['payload'][8]['format']) + ","
+            buffer = buffer + \
+                format(data[9], output['payload'][9]['format']) + ","
+            buffer = buffer + \
+                format(data[10], output['payload'][10]['format']) + ","
+            buffer = buffer + \
+                format(data[11], output['payload'][11]['format']) + ","
+            buffer = buffer + \
+                format(data[12], output['payload'][12]['format']) + ","
             buffer = buffer + \
                 format(data[13], output['payload'][13]['format']) + ","
             buffer = buffer + \
                 format(data[14], output['payload'][14]['format']) + ","
             buffer = buffer + \
                 format(data[15], output['payload'][15]['format']) + ","
-            track_over_ground = math.atan2(
-                data[14], data[13]) * (57.295779513082320)
-            buffer = buffer + format(track_over_ground,
-                                     output['payload'][14]['format']) + "\n"
-            self.f_gnssposvel.write(buffer)
+            buffer = buffer + \
+                format(data[16], output['payload'][16]['format']) + ","
+            buffer = buffer + \
+                format(data[17], output['payload'][17]['format']) + ","
+            buffer = buffer + \
+                format(data[18], output['payload'][18]['format']) + ","
+            buffer = buffer + \
+                format(data[19], output['payload'][19]['format']) + ","
+            buffer = buffer + \
+                format(data[20], output['payload'][20]['format']) + ","
+            buffer = buffer + \
+                format(data[21], output['payload'][21]['format']) + ","
+            buffer = buffer + \
+                format(data[22], output['payload'][22]['format']) + ","
+            buffer = buffer + \
+                format(data[23], output['payload'][23]['format']) + "\n"
 
-            self.gnssdata.append(data)
-
-        elif output['name'] == 'o1':
-            buffer = '$GPODO,'
-            buffer = buffer + \
-                format(data[0], output['payload'][0]['format']) + ","
-            buffer = buffer + \
-                format(data[1]/1000, output['payload'][1]['format']) + ","
-            buffer = buffer + \
-                format(data[2], output['payload'][2]['format']) + ","
-            buffer = buffer + \
-                format(data[3], output['payload'][3]['format']) + ","
-            buffer = buffer + \
-                format(data[4], output['payload'][4]['format']) + ","
-            buffer = buffer + \
-                format(data[5], output['payload'][5]['format']) + "\n"
-            self.f_process.write(buffer)
-
-            buffer = ''
-            buffer = buffer + \
-                format(data[0], output['payload'][0]['format']) + ","
-            buffer = buffer + \
-                format(data[1]/1000, output['payload'][1]['format']) + ","
-            buffer = buffer + \
-                format(data[2], output['payload'][2]['format']) + ","
-            buffer = buffer + \
-                format(data[3], output['payload'][3]['format']) + ","
-            buffer = buffer + \
-                format(data[4], output['payload'][4]['format']) + ","
-            buffer = buffer + \
-                format(data[5], output['payload'][5]['format']) + "\n"
-            self.f_odo.write(buffer)
-
-        elif output['name'] == 'i1':
-            if data[1] % 100 == 0:
-                buffer = '$GPINS,'
-                buffer = buffer + \
-                    format(data[0], output['payload'][0]['format']) + ","
-                buffer = buffer + \
-                    format(data[1]/1000, output['payload'][1]['format']) + ","
-                buffer = buffer + \
-                    format(data[4], output['payload'][4]['format']) + ","
-                buffer = buffer + \
-                    format(data[5], output['payload'][5]['format']) + ","
-                buffer = buffer + \
-                    format(data[6], output['payload'][6]['format']) + ","
-                buffer = buffer + \
-                    format(data[7], output['payload'][7]['format']) + ","
-                buffer = buffer + \
-                    format(data[8], output['payload'][8]['format']) + ","
-                buffer = buffer + \
-                    format(data[9], output['payload'][9]['format']) + ","
-                buffer = buffer + \
-                    format(data[10], output['payload'][10]['format']) + ","
-                buffer = buffer + \
-                    format(data[11], output['payload'][11]['format']) + ","
-                buffer = buffer + \
-                    format(data[12], output['payload'][12]['format']) + ","
-                buffer = buffer + \
-                    format(data[3], output['payload'][3]['format']) + "\n"
-                self.f_process.write(buffer)
-
-                buffer = ''
-                buffer = buffer + \
-                    format(data[0], output['payload'][0]['format']) + ","
-                buffer = buffer + \
-                    format(data[1]/1000, output['payload'][1]['format']) + ","
-                buffer = buffer + \
-                    format(data[4], output['payload'][4]['format']) + ","
-                buffer = buffer + \
-                    format(data[5], output['payload'][5]['format']) + ","
-                buffer = buffer + \
-                    format(data[6], output['payload'][6]['format']) + ","
-                buffer = buffer + \
-                    format(data[7], output['payload'][7]['format']) + ","
-                buffer = buffer + \
-                    format(data[8], output['payload'][8]['format']) + ","
-                buffer = buffer + \
-                    format(data[9], output['payload'][9]['format']) + ","
-                buffer = buffer + \
-                    format(data[10], output['payload'][10]['format']) + ","
-                buffer = buffer + \
-                    format(data[11], output['payload'][11]['format']) + ","
-                buffer = buffer + \
-                    format(data[12], output['payload'][12]['format']) + ","
-                buffer = buffer + \
-                    format(data[3], output['payload'][3]['format']) + ","
-                buffer = buffer + \
-                    format(data[2], output['payload'][2]['format']) + "\n"
-                self.f_ins.write(buffer)
-
-                if abs(data[5]*data[4]) > 0.00000001:
-                    self.insdata.append(data)
+        self.log_files[output['name']].write(buffer)
 
     def parse_output_packet_payload(self, packet_type):
         payload_lenth = self.packet_buffer[2]
@@ -1067,15 +1209,16 @@ class UserRawParse:
                     data = struct.unpack(pack_fmt, b)
                     self.log(output, data)
                 except Exception as e:
-                    print(
-                        "error happened when decode the payload {0}".format(e))
+                    print("error happened when decode the {0} {1}".format(
+                        output['name'], e))
         else:
             try:
                 b = struct.pack(len_fmt, *payload)
                 data = struct.unpack(pack_fmt, b)
                 self.log(output, data)
             except Exception as e:
-                print("error happened when decode the payload {0}".format(e))
+                print("error happened when decode the {0} {1}".format(
+                    output['name'], e))
 
     def write_titlebar(self, file, output):
         for value in output['payload']:
@@ -1150,11 +1293,8 @@ def do_parse(folder_path, kml_rate, setting_file):
                 try:
                     with open(file_path, 'rb') as fp_rawdata:
                         if fname.startswith('user'):
-                            parse = UserRawParse(
-                                fp_rawdata, path + '/' + fname[:-4] + '_', kml_rate, setting_path)
-                        elif fname.endswith('.log'):
-                            parse = ZouParse(
-                                fp_rawdata, path + '/' + fname.rstrip(".log") + '_', setting_path)
+                            parse = InceptioParse(
+                                fp_rawdata, path + '/' + fname[:-4] + '_', setting_path, kml_rate)
                         parse.start_pasre()
                         print_green('Parse done.')
                 except Exception as e:
