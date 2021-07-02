@@ -357,7 +357,7 @@ class RTKProviderBase(OpenDeviceBase):
                                 str_nmea)
                             if cksum == calc_cksum:
                                 if str_nmea.find("$GPGGA") != -1:
-                                    if self.ntrip_client != None:
+                                    if self.ntrip_client:
                                         self.ntrip_client.send(str_nmea)
                                     #self.add_output_packet('gga', str_nmea)
                                 # print(str_nmea, end='')
@@ -387,7 +387,7 @@ class RTKProviderBase(OpenDeviceBase):
         '''
         # $GPGGA,080319.00,3130.4858508,N,12024.0998832,E,4,25,0.5,12.459,M,0.000,M,2.0,*46
         if packet_type == 'gN':
-            if self.ntrip_client_enable:
+            if self.ntrip_client:
                 # $GPGGA
                 gpgga = '$GPGGA'
                 # time
@@ -446,8 +446,7 @@ class RTKProviderBase(OpenDeviceBase):
                     str_checksum = str_checksum[2:]
                 gpgga = gpgga + '*' + str_checksum + '\r\n'
                 APP_CONTEXT.get_print_logger().info(gpgga)
-                if self.ntrip_client != None:
-                    self.ntrip_client.send(gpgga)
+                self.ntrip_client.send(gpgga)
                 return
 
         elif packet_type == 'pS':
