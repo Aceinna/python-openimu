@@ -1,388 +1,171 @@
 {
-    "version": "23.01",
-    "userNMEAList": ["$GPGGA", "$GPRMC", "$GPGSV", "$GLGSV", "$GAGSV", "$BDGSV", "$GPGSA", "$GLGSA", "$GAGSA", "$BDGSA", "$GPZDA", "$GPVTG", "$PASHR", "$GNINS"],
-	"userPacketsTypeList": ["s1", "g1", "i1", "o1", "y1"],
-	"zouPacketsTypeList": ["fmim", "fmig","fmin"],
-	"zouOutputPackets": [
-		{
-			"name": "imu",
-			"messageId": "fmim",
-			"needHeadTime": 2,
-			"payload": [
-                {
-					"type": "double",
-					"name": "time",
-                    "unit": "",
-                    "need": 1,
-                    "format": ""
-				},
-				{
-					"type": "float",
-					"name": "accx",
-                    "unit": "s",
-                    "need": 1,
-                    "format": "11.7f"
-                },
-                {
-					"type": "float",
-					"name": "accy",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.7f"
-				},
-				{
-					"type": "float",
-					"name": "accz",
-                    "unit": "m/s",
-                    "need": 1,
-                    "format": "11.7f"
-				},
-				{
-					"type": "float",
-					"name": "gyrox",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.7f"
-				},
-				{
-					"type": "float",
-					"name": "gyroy",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.7f"
-				},
-				{
-					"type": "float",
-					"name": "gyroz",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.7f"
-				},
-				{
-					"type": "float",
-					"name": "magx",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.7f"
-				},
-				{
-					"type": "float",
-					"name": "magy",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.7f"
-				},
-				{
-					"type": "float",
-					"name": "magz",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.7f"
-				}
-			]
-		},
-		{
-			"name": "gnss",
-			"messageId": "fmig",
-			"needHeadTime": 2,
-			"payload": [
-                {
-					"type": "double",
-					"name": "time",
-                    "unit": "",
-                    "need": 1,
-                    "format": ""
-				},
-                {
-					"type": "double",
-					"name": "latitude",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.9f"
-				},
-                {
-					"type": "double",
-					"name": "longitude",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.9f"
-				},
-				{
-					"type": "double",
-					"name": "height",
-                    "unit": "s",
-                    "need": 1,
-                    "format": "11.8f"
-                },
-                {
-					"type": "float",
-					"name": "north_speed",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.7f"
-				},
-				{
-					"type": "float",
-					"name": "east_speed",
-                    "unit": "m/s",
-                    "need": 1,
-                    "format": "11.7f"
-				},
-				{
-					"type": "float",
-					"name": "down_speed",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.7f"
-				},
-				{
-					"type": "float",
-					"name": "north_variance",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.7f"
-				},
-				{
-					"type": "float",
-					"name": "east_variance",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.7f"
-				},
-				{
-					"type": "float",
-					"name": "height_variance",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.7f"
-				},
-				{
-					"type": "float",
-					"name": "reverse",
-                    "unit": "",
-                    "need": 0,
-                    "format": "11.7f"
-				},
-				{
-					"type": "float",
-					"name": "reverse",
-                    "unit": "",
-                    "need": 0,
-                    "format": "11.7f"
-				},
-				{
-					"type": "float",
-					"name": "course",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.7f"
-				},
-				{
-					"type": "float",
-					"name": "HRMS",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.7f"
-				},
-				{
-					"type": "float",
-					"name": "VRMS",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.7f"
-				},
-				{
-					"type": "float",
-					"name": "HDOP",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.7f"
-				},
-				{
-					"type": "float",
-					"name": "VDOP",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.7f"
-				},				
-				{
-					"type": "uint8",
-					"name": "satellites",
-                    "unit": "",
-                    "need": 1,
-                    "format": ""
-				},				
-				{
-					"type": "uint8",
-					"name": "fix",
-                    "unit": "",
-                    "need": 1,
-                    "format": ""
-				},				
-				{
-					"type": "uint8",
-					"name": "age",
-                    "unit": "",
-                    "need": 1,
-                    "format": ""
-				}
-			]
-		},
-		{
-			"name": "navi",
-			"messageId": "fmin",
-			"needHeadTime": 2,
-			"payload": [
-                {
-					"type": "double",
-					"name": "time",
-                    "unit": "",
-                    "need": 1,
-                    "format": ""
-				},
-                {
-					"type": "double",
-					"name": "latitude",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.9f"
-				},
-                {
-					"type": "double",
-					"name": "longitude",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.9f"
-				},
-				{
-					"type": "double",
-					"name": "height",
-                    "unit": "s",
-                    "need": 1,
-                    "format": "11.8f"
-                },
-                {
-					"type": "float",
-					"name": "north_speed",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.4f"
-				},
-				{
-					"type": "float",
-					"name": "east_speed",
-                    "unit": "m/s",
-                    "need": 1,
-                    "format": "11.4f"
-				},
-				{
-					"type": "float",
-					"name": "down_speed",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.4f"
-				},
-				{
-					"type": "float",
-					"name": "roll_angle",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.4f"
-				},
-				{
-					"type": "float",
-					"name": "pitch_angle",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.4f"
-				},
-				{
-					"type": "float",
-					"name": "heading_angle",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.4f"
-				},
-				{
-					"type": "float",
-					"name": "steering_angle",
-                    "unit": "",
-                    "need": 0,
-                    "format": "11.4f"
-				},
-				{
-					"type": "float",
-					"name": "accx_offset",
-                    "unit": "",
-                    "need": 0,
-                    "format": "11.4f"
-				},
-				{
-					"type": "float",
-					"name": "accy_offset",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.4f"
-				},
-				{
-					"type": "float",
-					"name": "accz_offset",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.4f"
-				},
-				{
-					"type": "float",
-					"name": "groyx_offset",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.4f"
-				},
-				{
-					"type": "float",
-					"name": "groyy_offset",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.4f"
-				},
-				{
-					"type": "float",
-					"name": "groyz_offset",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.4f"
-				},				
-				{
-					"type": "float",
-					"name": "steering_angle_offset",
-                    "unit": "",
-                    "need": 1,
-                    "format": ""
-				},				
-				{
-					"type": "uint32",
-					"name": "status",
-                    "unit": "",
-                    "need": 1,
-                    "format": ""
-				}
-			]
-		}
-	],
+    "version": "2.0.5",
+    "userNMEAList": ["$GPGGA", "$GPRMC", "$GPGSV", "$GLGSV", "$GAGSV", "$BDGSV", "$GPGSA", "$GLGSA", "$GAGSA", "$BDGSA"],
+	"userPacketsTypeList": ["s1", "gN", "iN", "d1", "sT", "fM"],
 	"userOutputPackets": [
         {
-            "name": "s1",
-            "isList": 0,
-            "payload": [
+			"name": "fM",
+			"isList": 0,
+			"payload":  [
                 {
-                    "type": "uint16",
+                    "type": "uint32",
                     "name": "GPS_Week",
                     "unit": "",
                     "format": ""
                 },
                 {
+                    "type": "double",
+                    "name": "GPS_TimeofWeek",
+                    "unit": "s",
+                    "format": "11.4f"
+                },
+				{
+					"type": "int32",
+					"name": "xAccelCounts1",
+					"unit": "",
+                    "format": "8"
+				},
+				{
+					"type": "int32",
+					"name": "yAccelCounts1",
+					"unit": "",
+                    "format": "8"
+                },
+				{
+					"type": "int32",
+					"name": "zAccelCounts1",
+					"unit": "",
+                    "format": "8"
+                },
+                {
+					"type": "int32",
+					"name": "xRateCounts1",
+					"unit": "",
+                    "format": "8"
+                },
+                {
+					"type": "int32",
+					"name": "yRateCounts1",
+					"unit": "",
+                    "format": "8"
+                },
+                {
+					"type": "int32",
+					"name": "zRateCounts1",
+					"unit": "",
+                    "format": "8"
+                },
+                {
+					"type": "int32",
+					"name": "TempCounts1",
+					"unit": "",
+                    "format": "8"
+                },
+                {
+					"type": "int32",
+					"name": "xAccelCounts2",
+					"unit": "",
+                    "format": "8"
+				},
+				{
+					"type": "int32",
+					"name": "yAccelCounts2",
+					"unit": "",
+                    "format": "8"
+                },
+				{
+					"type": "int32",
+					"name": "zAccelCounts2",
+					"unit": "",
+                    "format": "8"
+                },
+                {
+					"type": "int32",
+					"name": "xRateCounts2",
+					"unit": "",
+                    "format": "8"
+                },
+                {
+					"type": "int32",
+					"name": "yRateCounts2",
+					"unit": "",
+                    "format": "8"
+                },
+                {
+					"type": "int32",
+					"name": "zRateCounts2",
+					"unit": "",
+                    "format": "8"
+                },
+                {
+					"type": "int32",
+					"name": "TempCounts2",
+					"unit": "",
+                    "format": "8"
+                },
+                {
+					"type": "int32",
+					"name": "xAccelCounts3",
+					"unit": "",
+                    "format": "8"
+				},
+				{
+					"type": "int32",
+					"name": "yAccelCounts3",
+					"unit": "",
+                    "format": "8"
+                },
+				{
+					"type": "int32",
+					"name": "zAccelCounts3",
+					"unit": "",
+                    "format": "8"
+                },
+                {
+					"type": "int32",
+					"name": "xRateCounts3",
+					"unit": "",
+                    "format": "8"
+                },
+                {
+					"type": "int32",
+					"name": "yRateCounts3",
+					"unit": "",
+                    "format": "8"
+                },
+                {
+					"type": "int32",
+					"name": "zRateCounts3",
+					"unit": "",
+                    "format": "8"
+                },
+                {
+					"type": "int32",
+					"name": "TempCounts3",
+					"unit": "",
+                    "format": "8"
+                },
+                {
+					"type": "uint16",
+					"name": "index",
+					"unit": "",
+                    "format": ""
+				}
+			]
+		},
+        {
+            "name": "s1",
+            "isList": 0,
+            "payload": [
+                {
                     "type": "uint32",
-                    "name": "GPS_TimeOfWeek",
+                    "name": "GPS_Week",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+                    "type": "double",
+                    "name": "GPS_TimeofWeek",
                     "unit": "s",
                     "format": "11.4f"
                 },
@@ -406,91 +189,67 @@
                 },
                 {
                     "type": "float",
-                    "name": "x_gyro",
+                    "name": "x_rate",
                     "unit": "deg/s",
                     "format": "14.10f"
                 },
                 {
                     "type": "float",
-                    "name": "y_gyro",
+                    "name": "y_rate",
                     "unit": "deg/s",
                     "format": "14.10f"
                 },
                 {
                     "type": "float",
-                    "name": "z_gyro",
+                    "name": "z_rate",
                     "unit": "deg/s",
                     "format": "14.10f"
                 }
             ]
         },
         {
-            "name": "g1",
+            "name": "gN",
             "isList": 0,
             "payload": [
                 {
-                    "type": "uint16",
+                    "type": "uint32",
                     "name": "GPS_Week",
                     "unit": "",
                     "format": ""
                 },
                 {
-                    "type": "uint32",
-                    "name": "GPS_TimeOfWeek",
+                    "type": "double",
+                    "name": "GPS_TimeofWeek",
                     "unit": "s",
                     "format": "11.4f"
                 },
                 {
                     "type": "uint8",
-                    "name": "position_type",
+                    "name": "positionMode",
                     "unit": "",
                     "format": "3"
                 },
                 {
-                    "type": "double",
+                    "type": "int32",
                     "name": "latitude",
                     "unit": "deg",
                     "format": "14.9f"
                 },
                 {
-                    "type": "double",
+                    "type": "int32",
                     "name": "longitude",
                     "unit": "deg",
                     "format": "14.9f"
                 },
                 {
-                    "type": "double",
+                    "type": "float",
                     "name": "height",
                     "unit": "m",
                     "format": "10.4f"
                 },
                 {
-                    "type": "float",
-                    "name": "latitude_standard_deviation",
-                    "unit": "m",
-                    "format": "10.4f"
-                },
-                {
-                    "type": "float",
-                    "name": "longitude_standard_deviation",
-                    "unit": "m",
-                    "format": "10.4f"
-                },
-                {
-                    "type": "float",
-                    "name": "height_standard_deviation",
-                    "unit": "m",
-                    "format": "10.4f"
-                },
-                {
                     "type": "uint8",
-                    "name": "number_of_satellites",
-                    "unit": "",
-                    "format": "3"
-                },
-                {
-                    "type": "uint8",
-                    "name": "number_of_satellites_in_solution",
+                    "name": "numberOfSVs",
                     "unit": "",
                     "format": "3"
                 },
@@ -501,286 +260,256 @@
                     "format": "5.1f"
                 },
                 {
-                    "type": "float",
+                    "type": "uint16",
                     "name": "diffage",
-                    "unit": "s",
+                    "unit": "",
                     "format": "5.1f"
                 },
                 {
-                    "type": "float",
-                    "name": "north_vel",
+                    "type": "int16",
+                    "name": "velocityNorth",
                     "unit": "m/s",
                     "format": "10.4f"
                 },
                 {
-                    "type": "float",
-                    "name": "east_vel",
+                    "type": "int16",
+                    "name": "velocityEast",
                     "unit": "m/s",
                     "format": "10.4f"
                 },
                 {
-                    "type": "float",
-                    "name": "up_vel",
-                    "unit": "m/s",
-                    "format": "10.4f"
-                },
-                {
-                    "type": "float",
-                    "name": "north_vel_standard_deviation",
-                    "unit": "m/s",
-                    "format": "10.4f"
-                },
-                {
-                    "type": "float",
-                    "name": "east_vel_standard_deviation",
-                    "unit": "m/s",
-                    "format": "10.4f"
-                },
-                {
-                    "type": "float",
-                    "name": "up_vel_standard_deviation",
+                    "type": "int16",
+                    "name": "velocityUp",
                     "unit": "m/s",
                     "format": "10.4f"
                 }
             ]
         },
         {
-            "name": "i1",
+            "name": "iN",
             "isList": 0,
             "payload": [
                 {
-                    "type": "uint16",
+                    "type": "uint32",
                     "name": "GPS_Week",
                     "unit": "",
                     "format": ""
                 },
                 {
-                    "type": "uint32",
-                    "name": "GPS_TimeOfWeek",
+                    "type": "double",
+                    "name": "GPS_TimeofWeek",
                     "unit": "s",
                     "format": "11.4f"
                 },
                 {
                     "type": "uint8",
-                    "name": "ins_status",
+                    "name": "insStatus",
                     "unit": "",
                     "format": "3"
                 },
                 {
                     "type": "uint8",
-                    "name": "ins_position_type",
+                    "name": "insPositionType",
                     "unit": "",
                     "format": "3"
                 },
                 {
-                    "type": "double",
+                    "type": "int32",
                     "name": "latitude",
                     "unit": "deg",
                     "format": "14.9f"
                 },
                 {
-                    "type": "double",
+                    "type": "int32",
                     "name": "longitude",
                     "unit": "deg",
                     "format": "14.9f"
                 },
                 {
-                    "type": "double",
+                    "type": "float",
                     "name": "height",
                     "unit": "m",
                     "format": "10.4f"
                 },
                 {
-                    "type": "double",
-                    "name": "north_velocity",
+                    "type": "int16",
+                    "name": "velocityNorth",
                     "unit": "m/s",
                     "format": "10.4f"
                 },
                 {
-                    "type": "double",
-                    "name": "east_velocity",
+                    "type": "int16",
+                    "name": "velocityEast",
                     "unit": "m/s",
                     "format": "10.4f"
                 },
                 {
-                    "type": "double",
-                    "name": "up_velocity",
+                    "type": "int16",
+                    "name": "velocityUp",
                     "unit": "m/s",
                     "format": "10.4f"
                 },
                 {
-                    "type": "double",
+                    "type": "int16",
                     "name": "roll",
                     "unit": "deg",
                     "format": "14.9f"
                 },
                 {
-                    "type": "double",
+                    "type": "int16",
                     "name": "pitch",
                     "unit": "deg",
                     "format": "14.9f"
                 },
                 {
-                    "type": "double",
+                    "type": "int16",
                     "name": "heading",
                     "unit": "deg",
                     "format": "14.9f"
-                },
-                {
-                    "type": "float",
-                    "name": "latitude_std",
-                    "unit": "m",
-                    "format": "8.3f"
-                },
-                {
-                    "type": "float",
-                    "name": "longitude_std",
-                    "unit": "m",
-                    "format": "8.3f"
-                },
-                {
-                    "type": "float",
-                    "name": "height_std",
-                    "unit": "m",
-                    "format": "8.3f"
-                },
-                {
-                    "type": "float",
-                    "name": "north_velocity_std",
-                    "unit": "m/s",
-                    "format": "8.3f"
-                },
-                {
-                    "type": "float",
-                    "name": "east_velocity_std",
-                    "unit": "m/s",
-                    "format": "8.3f"
-                },
-                {
-                    "type": "float",
-                    "name": "up_velocity_std",
-                    "unit": "m/s",
-                    "format": "8.3f"
-                },
-                {
-                    "type": "float",
-                    "name": "roll_std",
-                    "unit": "deg",
-                    "format": "8.3f"
-                },
-                {
-                    "type": "float",
-                    "name": "pitch_std",
-                    "unit": "deg",
-                    "format": "8.3f"
-                },
-                {
-                    "type": "float",
-                    "name": "heading_std",
-                    "unit": "deg",
-                    "format": "8.3f"
                 }
             ]
         },
         {
-            "name": "o1",
+            "name": "d1",
             "isList": 0,
             "payload": [
                 {
-                    "type": "uint16",
+                    "type": "uint32",
                     "name": "GPS_Week",
                     "unit": "",
                     "format": ""
                 },
                 {
-                    "type": "uint32",
-                    "name": "GPS_TimeOfWeek",
+                    "type": "double",
+                    "name": "GPS_TimeofWeek",
                     "unit": "s",
                     "format": "11.4f"
                 },
                 {
-                    "type": "uint8",
-                    "name": "mode",
+                    "type": "int16",
+                    "name": "latitude_std",
                     "unit": "",
-                    "format": "3"
+                    "format": "8.3f"
                 },
                 {
-                    "type": "double",
-                    "name": "speed",
-                    "unit": "m/s",
-                    "format": "10.4f"
+                    "type": "int16",
+                    "name": "longitude_std",
+                    "unit": "",
+                    "format": "8.3f"
                 },
                 {
-                    "type": "uint8",
-                    "name": "fwd",
+                    "type": "int16",
+                    "name": "height_std",
                     "unit": "",
-                    "format": "3"
+                    "format": "8.3f"
                 },
                 {
-                    "type": "uint64",
-                    "name": "wheel_tick",
+                    "type": "int16",
+                    "name": "north_vel_std",
                     "unit": "",
-                    "format": "16"
+                    "format": "8.3f"
+                },
+                {
+                    "type": "int16",
+                    "name": "east_vel_std",
+                    "unit": "",
+                    "format": "8.3f"
+                },
+                {
+                    "type": "int16",
+                    "name": "up_vel_std",
+                    "unit": "",
+                    "format": "8.3f"
+                },
+                {
+                    "type": "int16",
+                    "name": "roll_std",
+                    "unit": "",
+                    "format": "8.3f"
+                },
+                {
+                    "type": "int16",
+                    "name": "pitch_std",
+                    "unit": "",
+                    "format": "8.3f"
+                },
+                {
+                    "type": "int16",
+                    "name": "heading_std",
+                    "unit": "",
+                    "format": "8.3f"
                 }
             ]
         },
         {
-            "name": "y1",
-            "isList": 1,
+            "name": "sT",
+            "isList": 0,
             "payload": [
-                {
-                    "type": "uint16",
+				{
+                    "type": "uint32",
                     "name": "GPS_Week",
                     "unit": "",
                     "format": ""
                 },
-                {
-                    "type": "uint32",
-                    "name": "GPS_TimeOfWeek",
+				{
+                    "type": "double",
+                    "name": "GPS_TimeofWeek",
                     "unit": "s",
                     "format": "11.4f"
                 },
-                {
-                    "type": "uint8",
-                    "name": "satelliteId",
-                    "unit": "",
-                    "format": "4"
-                },
-                {
-                    "type": "uint8",
-                    "name": "systemId",
-                    "unit": "",
-                    "format": "4"
-                },
-                {
-                    "type": "uint8",
-                    "name": "antennaId",
+				{
+                    "type": "uint16",
+                    "name": "year",
                     "unit": "",
                     "format": "5"
                 },
                 {
                     "type": "uint8",
-                    "name": "l1cn0",
+                    "name": "mouth",
                     "unit": "",
-                    "format": "4"
+                    "format": "5"
                 },
                 {
                     "type": "uint8",
-                    "name": "l2cn0",
+                    "name": "day",
                     "unit": "",
-                    "format": "4"
+                    "format": "5"
+                },
+                {
+                    "type": "uint8",
+                    "name": "hour",
+                    "unit": "",
+                    "format": "5"
+                },
+                {
+                    "type": "uint8",
+                    "name": "min",
+                    "unit": "",
+                    "format": "5"
+                },
+                {
+                    "type": "uint8",
+                    "name": "sec",
+                    "unit": "",
+                    "format": "5"
+                },
+                {
+                    "type": "uint32",
+                    "name": "imu_status",
+                    "unit": "",
+                    "format": "5"
                 },
                 {
                     "type": "float",
-                    "name": "azimuth",
-                    "unit": "deg",
-                    "format": "10.3f"
+                    "name": "imu_temperature",
+                    "unit": "",
+                    "format": "8.3"
                 },
                 {
                     "type": "float",
-                    "name": "elevation",
-                    "unit": "deg",
-                    "format": "10.3f"
+                    "name": "mcu_temperature",
+                    "unit": "",
+                    "format": "8.3"
                 }
             ]
         }
