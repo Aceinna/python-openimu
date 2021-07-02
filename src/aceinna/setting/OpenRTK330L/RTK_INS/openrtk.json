@@ -866,13 +866,13 @@
 				"active": true,
 				"payload": [
 					{
-						"type": "uint16",
+						"type": "uint32",
 						"name": "GPS_Week",
 						"unit": "",
 						"format": ""
 					},
 					{
-						"type": "uint32",
+						"type": "double",
 						"name": "GPS_TimeOfWeek",
 						"unit": "ms",
 						"format": "11.4f"
