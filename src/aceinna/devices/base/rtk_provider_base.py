@@ -326,7 +326,7 @@ class RTKProviderBase(OpenDeviceBase):
                     self.rtcm_serial_port.close()
             self.debug_serial_port = None
             self.rtcm_serial_port = None
-            APP_CONTEXT.get_logger().info(ex)
+            APP_CONTEXT.get_logger().logger.error(ex)
             print_red(
                 'Can not log GNSS UART or DEBUG UART, pls check uart driver and connection!')
             return False
