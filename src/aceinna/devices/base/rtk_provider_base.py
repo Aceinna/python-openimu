@@ -317,7 +317,7 @@ class RTKProviderBase(OpenDeviceBase):
                     thead.start()
 
             self.save_device_info()
-        except Exception:
+        except Exception as ex:
             if self.debug_serial_port is not None:
                 if self.debug_serial_port.isOpen():
                     self.debug_serial_port.close()
@@ -326,6 +326,7 @@ class RTKProviderBase(OpenDeviceBase):
                     self.rtcm_serial_port.close()
             self.debug_serial_port = None
             self.rtcm_serial_port = None
+            APP_CONTEXT.get_logger().info(ex)
             print_red(
                 'Can not log GNSS UART or DEBUG UART, pls check uart driver and connection!')
             return False
@@ -712,6 +713,7 @@ class RTKProviderBase(OpenDeviceBase):
             with open(file_path, 'w') as outfile:
                 json.dump(device_configuration, outfile,
                           indent=4, ensure_ascii=False)
+
 
     def after_upgrade_completed(self):
         # start ntrip client

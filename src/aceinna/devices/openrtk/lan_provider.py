@@ -68,7 +68,7 @@ class Provider(OpenDeviceBase):
 
         # copy contents of app_config under executor path
         self.setting_folder_path = os.path.join(
-            executor_path, setting_folder_name, 'openrtk')
+            executor_path, setting_folder_name)
 
         all_products = get_openrtk_products()
         config_file_mapping = get_configuratin_file_mapping()
