@@ -8,6 +8,7 @@ from .rtkl.uart_provider import Provider as RTKLUartProvider
 from .openrtk.lan_provider import Provider as OpenRTKLANProvider
 from .dmu.uart_provider import Provider as DMUUartProvider
 from .ins2000.uart_provider import Provider as INS2000UartProvider
+from .openrtk.ethernet_provider import Provider as INS401EthernetProvider
 from ..framework.context import APP_CONTEXT
 from ..framework.utils.print import print_green
 
@@ -28,6 +29,10 @@ def create_provider(device_type, communicator):
     if communicator.type == 'eth':
         if device_type == 'OpenRTK':
             return OpenRTKLANProvider(communicator)
+
+    if communicator.type=='100base':
+        if device_type == 'INS401':
+            return INS401EthernetProvider(communicator)
 
     return None
 
@@ -59,7 +64,6 @@ class DeviceManager:
 
         if provider is None:
             provider = create_provider(device_type, communicator)
-
             if provider is None:
                 return None
 
@@ -116,6 +120,14 @@ class DeviceManager:
             #         return DeviceManager.build_provider(communicator, device_access, ping_result)
 
         if communicator.type == 'eth':
+            device_access = args[0]
+
+            ping_result = ping_tool.do_ping(communicator.type, device_access,
+                                            None)
+            if ping_result is not None:
+                return DeviceManager.build_provider(communicator, device_access, ping_result)
+
+        if communicator.type == '100base':
             device_access = args[0]
 
             ping_result = ping_tool.do_ping(communicator.type, device_access,

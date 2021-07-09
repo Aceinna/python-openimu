@@ -90,5 +90,11 @@ def ping(communicator, *args):
             'device_info': device_info_text,
             'app_info': app_info_text
         }
+    if _need_check(filter_device_type, 'INS') and device_info_text.find('INS401') > -1:
+        return {
+            'device_type': 'INS401',
+            'device_info': device_info_text,
+            'app_info': app_info_text
+        }
 
     return None
