@@ -7,9 +7,13 @@ import json
 import socket
 import threading
 from abc import ABCMeta, abstractmethod
+import scapy
 import serial
 import serial.tools.list_ports
 import psutil
+from psutil import net_if_addrs, net_if_stats
+from scapy.all import conf, sendp, sniff,srp
+from scapy.layers.l2 import Ether
 from ..devices import DeviceManager
 from .constants import BAUDRATE_LIST
 from .context import APP_CONTEXT
@@ -31,6 +35,8 @@ class CommunicatorFactory:
             return SerialPort(options)
         elif method == 'eth':
             return LAN(options)
+        elif method == '100base':
+            return Ethernet(options)
         else:
             raise Exception('no matched communicator')
 
@@ -712,3 +718,88 @@ class LAN(Communicator):
         reset buffer
         '''
         pass
+
+class Ethernet(Communicator):
+    '''Ethernet'''
+
+    def __init__(self, options=None):
+        super().__init__()
+        self.type = '100base'
+        self.src_mac = conf.iface.mac
+        self.dst_mac = '04:00:00:00:00:04'  # TODO: predefined or configured?
+        self.ethernet_name = None
+        self.data = None
+
+        self.filter_device_type = None
+        self.filter_device_type_assigned = False
+
+        if options and options.device_type != 'auto':
+            self.filter_device_type = options.device_type
+            self.filter_device_type_assigned = True
+
+    def find_device(self, callback, retries=0, not_found_handler=None):
+        self.device = None
+        
+        # find network connection
+        for key, value in net_if_stats().items():
+            if key == 'ethernet' or key == '以太网':
+                if not value.isup:
+                    print_red('[Error] Cannot establish communication with device through Ethernet')
+      
+        # confirm device
+        self.confirm_device(self)
+        if self.device:
+            callback(self.device)
+
+    def open(self):
+        '''
+        open
+        '''
+
+    def close(self):
+        '''
+        close
+        '''
+
+    def write(self, data, is_flush=False):
+        '''
+        write
+        '''
+        try:
+            sendp(data, iface=conf.iface)
+            print(data)
+        except Exception as e:
+            raise
+
+    def read(self,size=0):
+        '''
+        read
+        '''
+        filter_exp ='ether dst host ' + self.src_mac + ' && ' + 'ether src host ' + self.dst_mac
+        data = sniff(count = 1, iface = conf.iface, filter = filter_exp, timeout = 5)
+        if data:
+            print('answer', data[0].original)
+            return data[0].original
+        return None
+
+    def write_read(self, data):
+        filter_exp ='ether dst host ' + self.src_mac + ' && ' + 'ether src host ' + self.dst_mac
+        ans = srp(Ether(_pkt=data), iface = conf.iface, filter = filter_exp, timeout = 1, retry = 3)
+        print('answer', ans)
+        if ans[0].res[0].answer:
+            return bytes(ans[0].res[0].answer)
+        return None
+
+    def reset_buffer(self):
+        '''
+        reset buffer
+        '''
+        pass
+
+    def get_src_mac(self):    
+        print('src',self.src_mac)
+        return bytes([int(x, 16) for x in self.src_mac.split(':')])
+
+    def get_dst_mac(self):
+        print('dst',self.dst_mac)
+        return bytes([int(x, 16) for x in self.dst_mac.split(':')])

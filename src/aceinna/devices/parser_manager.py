@@ -1,6 +1,7 @@
 from .parsers.open_message_parser import UartMessageParser as OpenUartMessageParser
 from .parsers.dmu_message_parser import UartMessageParser as DMUUartMessageParser
 from .parsers.ins2000_message_parser import UartMessageParser as INS2000UartMessageParser
+from .parsers.ins401_message_parser import EthernetMessageParser as INS401EthernetMessageParser
 
 class ParserManager:
     '''
@@ -18,5 +19,7 @@ class ParserManager:
             return DMUUartMessageParser(properties)
         elif device_type == 'INS2000':
             return INS2000UartMessageParser(properties)
+        elif device_type == 'INS401':
+            return INS401EthernetMessageParser(properties)
         else:
             return OpenUartMessageParser(properties)

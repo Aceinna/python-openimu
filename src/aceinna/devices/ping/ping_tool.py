@@ -1,6 +1,7 @@
 from .dmu import ping as ping_dmu
 from .open import ping as ping_opendevice
 from .ins2000 import ping as ping_ins2000
+from .ins401 import ping as ping_ins401
 from ...framework.context import APP_CONTEXT
 
 
@@ -29,6 +30,12 @@ def do_ping(communicator_type, device_access, filter_device_type):
     if communicator_type == 'eth':
         APP_CONTEXT.get_logger().logger.debug('Checking if is OpenRTK device...')
         ping_result = ping_opendevice(device_access, None)
+        if ping_result:
+            return ping_result
+
+    if communicator_type == '100base':
+        APP_CONTEXT.get_logger().logger.debug('Checking if is INS401 device...')
+        ping_result = ping_ins401(device_access, None)
         if ping_result:
             return ping_result
 

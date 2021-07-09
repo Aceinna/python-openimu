@@ -1,0 +1,724 @@
+{
+	"appVersion": "RTK330LA INS 24.00",
+	"type": "openrtk",
+    "description": "6-axis OpenRTK with INS application",
+    "initial":{
+        "useDefaultUart": 1,
+        "uart":[
+            {
+                "name": "GNSS",
+                "value": "com10",
+                "enable": 0
+            },
+            {
+                "name": "DEBUG",
+                "value": "com11",
+                "enable": 0 
+            },
+            {
+                "name": "SDK",
+                "value": "com12",
+                "enable": 0 
+            }
+        ],
+        "userParameters": [
+            {
+                "paramId": 2,
+                "name": "s1",
+                "value": 100
+            },
+            {
+                "paramId": 3,
+                "name": "gN",
+                "value": 1
+            },
+            {
+                "paramId": 4,
+                "name": "iN",
+                "value": 100
+            },
+            {
+                "paramId": 5,
+                "name": "d1",
+                "value": 10
+            },
+                        {
+                "paramId": 6,
+                "name": "pri lever arm x",
+                "value": 1.19
+            },
+            {
+                "paramId": 7,
+                "name": "pri lever arm y",
+                "value": -0.24
+            },
+            {
+                "paramId": 8,
+                "name": "pri lever arm z",
+                "value": -0.9
+            },
+            {
+                "paramId": 9,
+                "name": "vrp lever arm x",
+                "value": 0.0
+            },
+            {
+                "paramId": 10,
+                "name": "vrp lever arm y",
+                "value": 0.0
+            },
+            {
+                "paramId": 11,
+                "name": "vrp lever arm z",
+                "value": 0.0
+            },
+            {
+                "paramId": 12,
+                "name": "user lever arm x",
+                "value": 1.19
+            },
+            {
+                "paramId": 13,
+                "name": "user lever arm y",
+                "value": -0.24
+            },
+            {
+                "paramId": 14,
+                "name": "user lever arm z",
+                "value": -0.9
+            },
+            {
+                "paramId": 15,
+                "name": "rotation rbvx",
+                "value": 0.0
+            },
+            {
+                "paramId": 16,
+                "name": "rotation rbvy",
+                "value": 0.0
+            },
+            {
+                "paramId": 17,
+                "name": "rotation rbvz",
+                "value": 0.0
+            }
+		],
+		"ntrip":[
+			{
+                "name": "ip",
+                "value": "58.215.20.43"
+            },
+            {
+                "name": "port",
+                "value": 2201
+			},
+			{
+                "name": "mountPoint",
+                "value": "WX02"
+            },
+            {
+                "name": "username",
+                "value": "ymj_123"
+            },
+            {
+                "name": "password",
+                "value": "SIGEMZOOMQ1JDJI3"
+            }
+		]
+    },
+	"userConfiguration": [
+		{
+			"paramId": 0,
+			"category": "General",
+			"paramType": "disabled",
+			"type": "uint16",
+			"name": "Data CRC"
+		},
+		{
+			"paramId": 1,
+			"category": "General",
+			"paramType": "disabled",
+			"type": "uint16",
+			"name": "Data Size"
+		},
+        {
+			"paramId": 2,
+			"category": "General",
+			"paramType": "input",
+			"type": "uint8",
+			"name": "RAWIMU Packet Rate",
+			"argument": "s1"
+		},
+        {
+			"paramId": 3,
+			"category": "General",
+			"paramType": "input",
+			"type": "uint8",
+			"name": "BESTGNSS Packet Rate",
+			"argument": "gN"
+		},
+        {
+			"paramId": 4,
+			"category": "General",
+			"paramType": "input",
+			"type": "uint8",
+			"name": "INSPVA Packet Rate",
+			"argument": "iN"
+		},
+        {
+			"paramId": 5,
+			"category": "General",
+			"paramType": "input",
+			"type": "uint8",
+			"name": "INSSTD Packet Rate",
+			"argument": "d1"
+		},
+		{
+			"paramId": 6,
+			"category": "INS",
+			"paramType": "input",
+			"type": "float",
+			"name": "pri lever arm x",
+			"value_accuracy": 4
+		},
+		{
+			"paramId": 7,
+			"category": "INS",
+			"paramType": "input",
+			"type": "float",
+			"name": "pri lever arm y",
+			"value_accuracy": 4
+		},
+		{
+			"paramId": 8,
+			"category": "INS",
+			"paramType": "input",
+			"type": "float",
+			"name": "pri lever arm z",
+			"value_accuracy": 4
+		},
+        {
+			"paramId": 9,
+			"category": "INS",
+			"paramType": "input",
+			"type": "float",
+			"name": "vrp lever arm x",
+			"value_accuracy": 4
+		},
+		{
+			"paramId": 10,
+			"category": "INS",
+			"paramType": "input",
+			"type": "float",
+			"name": "vrp lever arm y",
+			"value_accuracy": 4
+		},
+		{
+			"paramId": 11,
+			"category": "INS",
+			"paramType": "input",
+			"type": "float",
+			"name": "vrp lever arm z",
+			"value_accuracy": 4
+		},
+        {
+			"paramId": 12,
+			"category": "INS",
+			"paramType": "input",
+			"type": "float",
+			"name": "user lever arm x",
+			"value_accuracy": 4
+		},
+		{
+			"paramId": 13,
+			"category": "INS",
+			"paramType": "input",
+			"type": "float",
+			"name": "user lever arm y",
+			"value_accuracy": 4
+		},
+		{
+			"paramId": 14,
+			"category": "INS",
+			"paramType": "input",
+			"type": "float",
+			"name": "user lever arm z",
+			"value_accuracy": 4
+		},
+        {
+			"paramId": 15,
+			"category": "INS",
+			"paramType": "input",
+			"type": "float",
+			"name": "rotation rbvx",
+			"value_accuracy": 4
+		},
+		{
+			"paramId": 16,
+			"category": "INS",
+			"paramType": "input",
+			"type": "float",
+			"name": "rotation rbvy",
+			"value_accuracy": 4
+		},
+		{
+			"paramId": 17,
+			"category": "INS",
+			"paramType": "input",
+			"type": "float",
+			"name": "rotation rbvz",
+			"value_accuracy": 4
+		}
+	],
+	"userMessages": {
+		"inputPackets": [
+			{
+				"name": "pG",
+				"description": "Get device serial number & factory ID",
+				"inputPayload": {},
+				"responsePayload": {
+					"type": "string",
+					"name": "Device ID and SN"
+				}
+			},
+			{
+				"name": "gV",
+				"description": "Get user app version",
+				"inputPayload": {},
+				"responsePayload": {
+					"type": "string",
+					"name": "User Version"
+				}
+			},
+			{
+				"name": "gA",
+				"description": "Get All Configuration Parameters",
+				"inputPayload": {},
+				"responsePayload": {
+					"type": "userConfiguration",
+					"name": "Full Current Configuration"
+				}
+            },
+            {
+				"name": "sC",
+				"description": "Save Conifguration Parameters to Flash",
+				"inputPayload": {},
+				"responsePayload": {}
+			},			
+			{
+				"name": "uP",
+				"description": "Update Configuration Parameter",
+				"inputPayload": {
+					"type": "userParameter",
+					"name": "Parameter to be Updated"
+				},
+				"responsePayload": {
+					"type": "paramId",
+					"name": "ID of the Updated Parameter"
+				}
+			}
+		],
+		"outputPackets": [
+            {
+                "name": "s1",
+                "isList": 0,
+                "payload": [
+                    {
+                        "type": "uint32",
+                        "name": "GPS_Week",
+                        "unit": ""
+                    },
+                    {
+                        "type": "double",
+                        "name": "GPS_TimeofWeek",
+                        "unit": "sec"
+                    },
+                    {
+                        "type": "float",
+                        "name": "x_accel",
+                        "unit": "m/s^2"
+                    },
+                    {
+                        "type": "float",
+                        "name": "y_accel",
+                        "unit": "m/s^2"
+                    },
+                    {
+                        "type": "float",
+                        "name": "z_accel",
+                        "unit": "m/s^2"
+                    },
+                    {
+                        "type": "float",
+                        "name": "x_rate",
+                        "unit": "deg/s"
+                    },
+                    {
+                        "type": "float",
+                        "name": "y_rate",
+                        "unit": "deg/s"
+                    },
+                    {
+                        "type": "float",
+                        "name": "z_rate",
+                        "unit": "deg/s"
+                    }
+                ],
+				"graphs": [
+					{
+						"name": "Acceleration",
+						"units": "m/s^2",
+						"xAxis": {"name":"GPS_TimeofWeek", "unit":"sec"},
+						"yAxes": [
+							"x_accel",
+							"y_accel",
+							"z_accel"
+						],
+						"colors": [
+							"#FF0000",
+							"#00FF00",
+							"#0000FF"
+						],
+						"yMax": 20
+					},
+					{
+						"name": "Angular-Rate",
+						"units": "deg/s",
+						"xAxis": {"name":"GPS_TimeofWeek", "unit":"sec"},
+						"yAxes": [
+							"x_rate",
+							"y_rate",
+							"z_rate"
+						],
+						"colors": [
+							"#FF0000",
+							"#00FF00",
+							"#0000FF"
+						],
+						"yMax": 200
+					}
+				]
+            },
+            {
+				"name": "iN",
+                "isList": 0,
+				"payload": [
+					{
+						"type": "uint32",
+						"name": "GPS_Week",
+						"unit": ""
+					},
+					{
+						"type": "double",
+						"name": "GPS_TimeofWeek",
+						"unit": "sec"
+                    },
+                    {
+						"type": "uint8",
+						"name": "insStatus",
+						"unit": ""
+                    },
+                    {
+						"type": "uint8",
+						"name": "insPositionType",
+						"unit": ""
+                    },
+					{
+						"type": "int32",
+						"name": "latitude",
+						"unit": "deg"
+					},
+					{
+						"type": "int32",
+						"name": "longitude",
+						"unit": "deg"
+					},
+					{
+						"type": "float",
+						"name": "height",
+						"unit": "m"
+                    },
+                    {
+						"type": "int16",
+						"name": "velocityNorth",
+						"unit": "m/s"
+					},
+					{
+						"type": "int16",
+						"name": "velocityEast",
+						"unit": "m/s"
+					},
+					{
+						"type": "int16",
+						"name": "velocityUp",
+						"unit": "m/s"
+					},
+					{
+						"type": "int16",
+						"name": "roll",
+						"unit": "m/s"
+					},
+					{
+						"type": "int16",
+						"name": "pitch",
+						"unit": "m/s"
+					},
+					{
+						"type": "int16",
+						"name": "heading",
+						"unit": "m/s"
+                    }
+				],
+				"graphs": []
+            },
+            {
+				"name": "d1",
+				"isList": 0,
+				"payload": [
+					{
+						"type": "uint32",
+						"name": "GPS_Week",
+						"unit": ""
+					},
+					{
+						"type": "double",
+						"name": "GPS_TimeofWeek",
+						"unit": "sec"
+                    },
+                    {
+						"type": "int16",
+						"name": "latitude_std",
+						"unit": ""
+					},
+					{
+						"type": "int16",
+						"name": "longitude_std",
+						"unit": ""
+					},
+					{
+						"type": "int16",
+						"name": "height_std",
+						"unit": ""
+                    },
+                    {
+						"type": "int16",
+						"name": "north_vel_std",
+						"unit": ""
+					},
+					{
+						"type": "int16",
+						"name": "east_vel_std",
+						"unit": ""
+					},
+					{
+						"type": "int16",
+						"name": "up_vel_std",
+						"unit": ""
+                    },
+                    {
+						"type": "int16",
+						"name": "roll_std",
+						"unit": ""
+					},
+					{
+						"type": "int16",
+						"name": "pitch_std",
+						"unit": ""
+					},
+					{
+						"type": "int16",
+						"name": "heading_std",
+						"unit": ""
+					}
+				],
+				"graphs": []
+            },
+            {
+				"name": "gN",
+				"isList": 0,
+				"payload": [
+					{
+						"type": "uint32",
+						"name": "GPS_Week",
+						"unit": ""
+					},
+					{
+						"type": "double",
+						"name": "GPS_TimeofWeek",
+						"unit": "sec"
+                    },
+                    {
+						"type": "uint8",
+						"name": "positionMode",
+						"unit": ""
+					},
+					{
+						"type": "int32",
+						"name": "latitude",
+						"unit": "deg"
+					},
+					{
+						"type": "int32",
+						"name": "longitude",
+						"unit": "deg"
+					},
+					{
+						"type": "float",
+						"name": "height",
+						"unit": "m"
+                    },
+                    {
+                        "type": "uint8",
+						"name": "numberOfSVs",
+						"unit": ""
+                    },
+					{
+						"type": "float",
+						"name": "hdop",
+						"unit": ""
+                    },
+                    {
+						"type": "uint16",
+						"name": "diffage",
+						"unit": ""
+                    },
+                    {
+						"type": "int16",
+						"name": "velocityNorth",
+						"unit": "m/s"
+					},
+					{
+						"type": "int16",
+						"name": "velocityEast",
+						"unit": "m/s"
+					},
+					{
+						"type": "int16",
+						"name": "velocityUp",
+						"unit": "m/s"
+					}
+				],
+				"graphs": []
+			},
+            {
+				"name": "sT",
+				"isList": 0,
+				"payload": [
+					{
+						"type": "uint32",
+						"name": "GPS_Week",
+						"unit": ""
+					},
+					{
+						"type": "double",
+						"name": "GPS_TimeofWeek",
+						"unit": "sec"
+					},
+					{
+						"type": "uint16",
+						"name": "year",
+						"unit": ""
+					},
+					{
+						"type": "uint8",
+						"name": "mouth",
+						"unit": ""
+					},
+					{
+						"type": "uint8",
+						"name": "day",
+						"unit": ""
+					},
+					{
+						"type": "uint8",
+						"name": "hour",
+						"unit": ""
+					},
+					{
+						"type": "uint8",
+						"name": "min",
+						"unit": ""
+					},
+					{
+						"type": "uint8",
+						"name": "sec",
+						"unit": ""
+					},
+
+					{
+						"type": "uint32",
+						"name": "imu_status",
+						"unit": ""
+					},
+					{
+						"type": "float",
+						"name": "imu_temperature",
+						"unit": "sec"
+                    },
+                    {
+						"type": "float",
+						"name": "mcu_temperature",
+						"unit": ""
+					}
+				],
+				"graphs": []
+			}
+		]
+	},
+    "CLICommands": [{
+			"name": "help",
+			"description": "CLI help menu",
+			"function": "help_handler"
+		},
+		{
+			"name": "exit",
+			"description": "exit CLI",
+			"function": ""
+		},
+		{
+			"name": "run",
+			"description": "Operations defined by users",
+			"function": "run_handler"
+		},
+		{
+			"name": "save",
+			"description": "Save the configuration into EEPROM",
+			"function": "save_handler"
+		},
+		{
+			"name": "connect",
+			"description": "Find OpenIMU device",
+			"function": "connect_handler"
+		},
+		{
+			"name": "upgrade",
+			"description": "Upgrade firmware",
+			"function": "upgrade_handler"
+		},
+		{
+			"name": "record",
+			"description": "Record output data of OpenIMU on local machine",
+			"function": "record_handler"
+		},
+		{
+			"name": "stop",
+			"description": "stop recording outputs on local machine",
+			"function": "stop_handler"
+		},
+		{
+			"name": "server_start",
+			"description": "start server thread and must use exit command to quit",
+			"function": "server_start_handler"
+		},
+		{
+			"name": "get",
+			"description": "Read the current configuration and output data",
+			"function": "get_handler"
+		},
+		{
+			"name": "set",
+			"description": "Write parameters to OpenIMU",
+			"function": "set_handler"
+		}
+	]
+}

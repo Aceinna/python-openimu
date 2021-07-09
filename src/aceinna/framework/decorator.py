@@ -12,7 +12,7 @@ from .utils.resource import is_dev_mode
 
 T = TypeVar('T')
 
-INTERFACES = ['uart', 'eth']
+INTERFACES = ['uart', 'eth','100base']
 MODES = ['default', 'cli', 'receiver']
 TYPES_OF_LOG = ['openrtk', 'rtkl']
 KML_RATES = [1, 2, 5, 10]
