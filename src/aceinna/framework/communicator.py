@@ -729,6 +729,7 @@ class Ethernet(Communicator):
         self.dst_mac = '04:00:00:00:00:04'  # TODO: predefined or configured?
         self.ethernet_name = None
         self.data = None
+        self.iface = None
 
         self.filter_device_type = None
         self.filter_device_type_assigned = False
@@ -741,11 +742,19 @@ class Ethernet(Communicator):
         self.device = None
         
         # find network connection
-        for key, value in net_if_stats().items():
-            if key == 'ethernet' or key == '以太网':
-                if not value.isup:
-                    print_red('[Error] Cannot establish communication with device through Ethernet')
-      
+        ifaces_list = self.get_network_card()
+
+        command_line =b"\x04\x00\x00\x00\x00\x04tx'xH\xa4\x00\x00UU\x01\xcc\x00\x00\x00\x00\xcc\r\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        filter_exp = 'ether src host ' + self.dst_mac
+        for i in range(len(ifaces_list)):
+            ans = srp(Ether( _pkt=command_line, src="FF:FF:FF:FF:FF:FF", dst=self.dst_mac), timeout=0.2, iface = ifaces_list[i][0], filter=filter_exp, retry = 2,  verbose = 0)
+            if ans[0]:
+                self.iface = ifaces_list[i][0]
+                self.src_mac = ifaces_list[i][1].replace('-', ':')
+                break
+            else:
+                if i == len(ifaces_list) - 1:
+                    print('The available Ethernet connection was not found.')
         # confirm device
         self.confirm_device(self)
         if self.device:
@@ -766,7 +775,7 @@ class Ethernet(Communicator):
         write
         '''
         try:
-            sendp(data, iface=conf.iface)
+            sendp(data, iface=self.iface, verbose = 0)
             print(data)
         except Exception as e:
             raise
@@ -775,17 +784,16 @@ class Ethernet(Communicator):
         '''
         read
         '''
-        filter_exp ='ether dst host ' + self.src_mac + ' && ' + 'ether src host ' + self.dst_mac
-        data = sniff(count = 1, iface = conf.iface, filter = filter_exp, timeout = 5)
+        filter_exp = 'ether src host ' + self.dst_mac
+        data = sniff(count = 1, iface = self.iface, filter = filter_exp, timeout = 1)
         if data:
-            print('answer', data[0].original)
+            # print('answer', data[0].original)
             return data[0].original
         return None
 
     def write_read(self, data):
-        filter_exp ='ether dst host ' + self.src_mac + ' && ' + 'ether src host ' + self.dst_mac
-        ans = srp(Ether(_pkt=data), iface = conf.iface, filter = filter_exp, timeout = 1, retry = 3)
-        print('answer', ans)
+        filter_exp = 'ether src host ' + self.dst_mac
+        ans = srp(Ether(_pkt=data), iface = self.iface, filter = filter_exp, timeout = 1, retry = 3, verbose = 0)
         if ans[0].res[0].answer:
             return bytes(ans[0].res[0].answer)
         return None
@@ -797,9 +805,17 @@ class Ethernet(Communicator):
         pass
 
     def get_src_mac(self):    
-        print('src',self.src_mac)
         return bytes([int(x, 16) for x in self.src_mac.split(':')])
 
     def get_dst_mac(self):
-        print('dst',self.dst_mac)
         return bytes([int(x, 16) for x in self.dst_mac.split(':')])
+    
+    def get_network_card(self):
+        network_card_info = []
+        info = net_if_addrs()
+
+        for k, v in info.items():
+            for item in v:
+                if item[0] == -1 and not item[1] == '127.0.0.1':
+                    network_card_info.append((k, item[1]))
+        return network_card_info

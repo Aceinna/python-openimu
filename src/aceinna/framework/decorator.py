@@ -2,6 +2,7 @@ import os
 import sys
 import argparse
 import traceback
+import signal
 from datetime import datetime, timedelta
 from functools import wraps
 from typing import TypeVar
@@ -84,7 +85,7 @@ def handle_application_exception(func):
         except KeyboardInterrupt:  # response for KeyboardInterrupt such as Ctrl+C
             print('User stop this program by KeyboardInterrupt! File:[{0}], Line:[{1}]'.format(
                 __file__, sys._getframe().f_lineno))
-            # APP.stop()
+            os.kill(os.getpid(), signal.SIGTERM)
             sys.exit()
         except Exception as ex:  # pylint: disable=bare-except
             if is_dev_mode():

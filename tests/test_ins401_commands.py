@@ -122,7 +122,6 @@ def ethernet_command_send(device_provider:EhternetProvider):
         else:
             return False
         
-        time.sleep(1)
     
     # set user configuration
     for i in range(16):
@@ -136,8 +135,7 @@ def ethernet_command_send(device_provider:EhternetProvider):
             print('set_user_configuration:', result)
         else:
             return False 
-        
-        time.sleep(1)
+
 
     # save user configuration
     command_line = save_user_configuration(device_provider.communicator.get_dst_mac(), 
@@ -188,6 +186,7 @@ def kill_app(signal_int, call_back):
     '''Kill main thread
     '''
     os.kill(os.getpid(), signal.SIGTERM)
+    sys.exit()
 
 @handle_application_exception
 def simple_start():
@@ -199,6 +198,11 @@ def simple_start():
 
 
 if __name__ == '__main__':
-    signal.signal(signal.SIGINT, kill_app)
     simple_start()
+    
+    while  True:
+        signal.signal(signal.SIGINT, kill_app)
+
+
+
 
