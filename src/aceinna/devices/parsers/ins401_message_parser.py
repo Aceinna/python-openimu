@@ -75,6 +75,9 @@ class EthernetMessageParser(MessageParserBase):
         payload = frame[self.payload_len_idx:payload_len+self.payload_len_idx]
         # parse interactive commands
         is_interactive_cmd = INPUT_PACKETS.__contains__(packet_type)
+
+        print("_parse_message:", is_interactive_cmd)
+
         if is_interactive_cmd:
             self._parse_input_packet(packet_type, payload, frame)
         else:
@@ -83,6 +86,9 @@ class EthernetMessageParser(MessageParserBase):
 
     def _parse_input_packet(self, packet_type, payload, frame):
         payload_parser = match_command_handler(packet_type)
+
+        print('_parse_input_packet:', payload_parser)
+
         if payload_parser:
             data, error = payload_parser(
                 payload, self.properties['userConfiguration'])
