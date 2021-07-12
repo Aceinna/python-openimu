@@ -747,7 +747,7 @@ class Ethernet(Communicator):
         command_line =b"\x04\x00\x00\x00\x00\x04tx'xH\xa4\x00\x00UU\x01\xcc\x00\x00\x00\x00\xcc\r\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
         filter_exp = 'ether src host ' + self.dst_mac
         for i in range(len(ifaces_list)):
-            ans = srp(Ether( _pkt=command_line, src="FF:FF:FF:FF:FF:FF", dst=self.dst_mac), timeout=1, iface = ifaces_list[i][0], filter=filter_exp, retry = 2,  verbose = 0)
+            ans = srp(Ether( _pkt=command_line, src="FF:FF:FF:FF:FF:FF", dst=self.dst_mac), timeout=0.2, iface = ifaces_list[i][0], filter=filter_exp, retry = 2,  verbose = 0)
             if ans[0]:
                 self.iface = ifaces_list[i][0]
                 self.src_mac = ifaces_list[i][1].replace('-', ':')
@@ -785,7 +785,7 @@ class Ethernet(Communicator):
         read
         '''
         filter_exp = 'ether src host ' + self.dst_mac
-        data = sniff(count = 1, iface = self.iface, filter = filter_exp, timeout = 5)
+        data = sniff(count = 1, iface = self.iface, filter = filter_exp, timeout = 1)
         if data:
             # print('answer', data[0].original)
             return data[0].original
