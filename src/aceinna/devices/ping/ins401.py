@@ -6,41 +6,18 @@ from ...framework.context import APP_CONTEXT
 pG = [0x01, 0xcc]
 
 
-def build_packet(dest, src, message_type, message_bytes=[]):
-    '''
-    Build final packet
-    '''
-    whole_packet=[]
-    header = dest + src + bytes([ 0, 0])
-    whole_packet.extend(header)
-
-    packet = []
-    packet.extend(message_type)
-    msg_len = len(message_bytes)
-    
-    packet_len = struct.pack("<I", msg_len)
-    
-    packet.extend(packet_len)
-    final_packet = packet + message_bytes
-
-    whole_packet.extend(helper.COMMAND_START)
-    whole_packet.extend(final_packet)
-    whole_packet.extend(helper.calc_crc(final_packet))
-
-    return bytes(whole_packet)
-
-
 def _run_command(communicator, command):
-    command_line = build_packet(
+    command_line = helper.build_ethernet_packet(
         communicator.get_dst_mac(), communicator.get_src_mac(), pG)
 
     data_buffer = []
-    read_line = communicator.write_read(command_line)
+    cmd_type = struct.unpack('>H', bytes(pG))[0]
+    read_line = communicator.write_read(command_line, cmd_type)
     if read_line:
         packet_raw = read_line[14:]
         packet_type = packet_raw[2:4]
         if packet_type == bytes(command):
-            packet_length = struct.unpack('<i', packet_raw[4:8])[0]
+            packet_length = struct.unpack('<I', packet_raw[4:8])[0]
             data_buffer = packet_raw[8: 8 + packet_length]
 
     return data_buffer

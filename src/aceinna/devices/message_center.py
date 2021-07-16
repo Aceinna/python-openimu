@@ -214,15 +214,17 @@ class DeviceMessageCenter(EventBase):
         '''
         while True:
             if self._has_exception or self._is_stop:
+                print('thread_receiver: exception')
                 return
 
             if self._is_pause:
-                time.sleep(0.1)
+                # time.sleep(0.1)
                 continue
 
             data = None
             try:
-                data = self._communicator.read(1000)
+                data = self._communicator.read()
+                # print('thread_receiver:', data)
             except Exception as ex:  # pylint: disable=broad-except
                 print('Thread:receiver error:', ex)
                 self.exceptiofn_lock.acquire()
@@ -237,7 +239,8 @@ class DeviceMessageCenter(EventBase):
                     self.data_queue.put(data_byte)
                 self.data_lock.release()
             else:
-                time.sleep(0.001)
+                # time.sleep(0.01)
+                pass
 
     def thread_parser(self, *args, **kwargs):
         ''' get data from data_queue and parse data into one whole frame.

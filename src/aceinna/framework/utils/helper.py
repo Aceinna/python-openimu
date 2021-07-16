@@ -27,6 +27,29 @@ def build_packet(message_type, message_bytes=[]):
     return COMMAND_START + final_packet + calc_crc(final_packet)
 
 
+def build_ethernet_packet(dest, src, message_type, message_bytes=[]):
+    '''
+    Build final packet
+    '''
+    whole_packet=[]
+    header = dest + src + bytes([0, 0])
+    whole_packet.extend(header)
+
+    packet = []
+    packet.extend(message_type)
+    msg_len = len(message_bytes)
+    
+    packet_len = struct.pack("<I", msg_len)
+    
+    packet.extend(packet_len)
+    final_packet = packet + message_bytes
+
+    whole_packet.extend(COMMAND_START)
+    whole_packet.extend(final_packet)
+    whole_packet.extend(calc_crc(final_packet))
+
+    return bytes(whole_packet)
+
 def build_input_packet(name, properties=None, param=False, value=False):
     '''
     Build input packet
