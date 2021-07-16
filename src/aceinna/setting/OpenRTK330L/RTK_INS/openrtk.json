@@ -1,7 +1,5 @@
 {
-	"name": "OpenRTK330_INS",
-	"app_version": "23.00",
-	"appName": "OpenRTK330 INS",
+	"appVersion": "OpenRTK330LI RTK_INS 2.0.13",
 	"type": "openrtk",
 	"description": "6-axis OpenRTK with INS application",
 	"initial": {
@@ -25,65 +23,70 @@
 		],
 		"userParameters": [
 			{
-				"paramId": 14,
-				"name": "pri lever arm x",
-				"value": 0.0
-			},
-			{
-				"paramId": 15,
-				"name": "pri lever arm y",
-				"value": 0.0
-			},
-			{
-				"paramId": 16,
-				"name": "pri lever arm z",
-				"value": 0.0
-			},
-			{
-				"paramId": 17,
-				"name": "vrp lever arm x",
-				"value": 0.0
-			},
-			{
-				"paramId": 18,
-				"name": "vrp lever arm y",
-				"value": 0.0
-			},
-			{
-				"paramId": 19,
-				"name": "vrp lever arm z",
-				"value": 0.0
-			},
-			{
-				"paramId": 20,
-				"name": "user lever arm x",
-				"value": 0.0
-			},
-			{
-				"paramId": 21,
-				"name": "user lever arm y",
-				"value": 0.0
-			},
-			{
-				"paramId": 22,
-				"name": "user lever arm z",
-				"value": 0.0
-			},
-			{
-				"paramId": 23,
-				"name": "rotation rbvx",
-				"value": 0.0
-			},
-			{
-				"paramId": 24,
-				"name": "rotation rbvy",
-				"value": 0.0
-			},
-			{
-				"paramId": 25,
-				"name": "rotation rbvz",
-				"value": 0.0
-			}
+                "paramId": 4,
+                "name": "s1",
+                "value": 100
+            },
+            {
+                "paramId": 5,
+                "name": "gN",
+                "value": 1
+            },
+            {
+                "paramId": 6,
+                "name": "iN",
+                "value": 100
+            },
+            {
+                "paramId": 7,
+                "name": "d1",
+                "value": 10
+            },
+            {
+                "paramId": 8,
+                "name": "lever arm x",
+                "value": 1.19
+            },
+            {
+                "paramId": 9,
+                "name": "lever arm y",
+                "value": -0.45
+            },
+            {
+                "paramId": 10,
+                "name": "lever arm z",
+                "value": -0.9
+            },
+            {
+                "paramId": 11,
+                "name": "point of interest x",
+                "value": 1.19
+            },
+            {
+                "paramId": 12,
+                "name": "point of interest y",
+                "value": -0.45
+            },
+            {
+                "paramId": 13,
+                "name": "point of interest z",
+                "value": -0.9
+            },
+            {
+                "paramId": 14,
+                "name": "rotation x",
+                "value": 0.0
+            },
+            {
+                "paramId": 15,
+                "name": "rotation y",
+                "value": 0.0
+            },
+            {
+                "paramId": 16,
+                "name": "rotation z",
+                "value": 0.0
+            }
 		],
 		"ntrip": [
 			{
@@ -127,680 +130,417 @@
 			"paramId": 2,
 			"category": "General",
 			"paramType": "select",
-			"type": "uint8",
-			"name": "rawimu",
+			"type": "char2",
+			"name": "Packet Type",
+			"argument": "type",
 			"options": [
-				100,
-				50,
-				25,
-				20,
-				10,
-				5,
-				4,
-				2,
-				1,
-				0
+                "s1"
 			]
 		},
 		{
 			"paramId": 3,
 			"category": "General",
 			"paramType": "select",
-			"type": "uint8",
-			"name": "bestgnss",
+			"type": "uint16",
+			"name": "Packet Rate",
+			"argument": "rate",
 			"options": [
-				1,
+				100,
+				50,
+				25,
+				20,
+				10,
+				5,
+				2,
 				0
-			]
+            ]
 		},
-		{
+        {
 			"paramId": 4,
 			"category": "General",
-			"paramType": "select",
+			"paramType": "input",
 			"type": "uint8",
-			"name": "inspvax",
-			"options": [
-				100,
-				50,
-				25,
-				20,
-				10,
-				5,
-				4,
-				2,
-				1,
-				0
-			]
+			"name": "RAWIMU Packet Rate",
+			"argument": "s1"
 		},
-		{
+        {
 			"paramId": 5,
 			"category": "General",
-			"paramType": "select",
+			"paramType": "input",
 			"type": "uint8",
-			"name": "odospeed",
-			"options": [
-				100,
-				50,
-				25,
-				20,
-				10,
-				5,
-				4,
-				2,
-				1,
-				0
-			]
+			"name": "BESTGNSS Packet Rate",
+			"argument": "gN"
 		},
-		{
+        {
 			"paramId": 6,
 			"category": "General",
-			"paramType": "select",
+			"paramType": "input",
 			"type": "uint8",
-			"name": "satellites",
-			"options": [
-				1,
-				0
-			]
+			"name": "INSPVA Packet Rate",
+			"argument": "iN"
 		},
-		{
+        {
 			"paramId": 7,
 			"category": "General",
-			"paramType": "select",
+			"paramType": "input",
 			"type": "uint8",
-			"name": "NMEA INS",
-			"options": [
-				100,
-				50,
-				25,
-				20,
-				10,
-				5,
-				4,
-				2,
-				1,
-				0
-			]
+			"name": "INSSTD Packet Rate",
+			"argument": "d1"
 		},
 		{
 			"paramId": 8,
-			"category": "General",
-			"paramType": "select",
-			"type": "uint8",
-			"name": "NMEA GGA",
+			"category": "Advanced",
+			"paramType": "input",
+			"type": "float",
+			"name": "lever arm x",
+			"argument": "lev_x",
+			"value_range": [
+				-1,
+				1
+			],
+			"value_accuracy": 6,
 			"options": [
-				1,
-				0
-			]
+            ]
 		},
 		{
 			"paramId": 9,
-			"category": "General",
-			"paramType": "select",
-			"type": "uint8",
-			"name": "NMEA RMC",
+			"category": "Advanced",
+			"paramType": "input",
+			"type": "float",
+			"name": "lever arm y",
+			"argument": "lev_y",
+			"value_range": [
+				-1,
+				1
+			],
+			"value_accuracy": 6,
 			"options": [
-				1,
-				0
 			]
 		},
 		{
 			"paramId": 10,
-			"category": "General",
-			"paramType": "select",
-			"type": "uint8",
-			"name": "NMEA PASHR",
+			"category": "Advanced",
+			"paramType": "input",
+			"type": "float",
+			"name": "lever arm z",
+			"argument": "lev_z",
+			"value_range": [
+				-1,
+				1
+			],
+			"value_accuracy": 6,
 			"options": [
-				10,
-				5,
-				2,
-				1,
-				0
 			]
 		},
 		{
 			"paramId": 11,
-			"category": "General",
-			"paramType": "select",
-			"type": "uint8",
-			"name": "NMEA GSA",
+			"category": "Advanced",
+			"paramType": "input",
+			"type": "float",
+			"name": "point of interest x",
+			"argument": "poi_x",
+			"value_range": [
+				-1,
+				1
+			],
+			"value_accuracy": 6,
 			"options": [
-				1,
-				0
 			]
 		},
 		{
 			"paramId": 12,
-			"category": "General",
-			"paramType": "select",
-			"type": "uint8",
-			"name": "NMEA ZDA",
+			"category": "Advanced",
+			"paramType": "input",
+			"type": "float",
+			"name": "point of interest y",
+			"argument": "poi_y",
+			"value_range": [
+				-1,
+				1
+			],
+			"value_accuracy": 6,
 			"options": [
-				1,
-				0
 			]
 		},
 		{
 			"paramId": 13,
-			"category": "General",
-			"paramType": "select",
-			"type": "uint8",
-			"name": "NMEA VTG",
+			"category": "Advanced",
+			"paramType": "input",
+			"type": "float",
+			"name": "point of interest z",
+			"argument": "poi_z",
+			"value_range": [
+				-1,
+				1
+			],
+			"value_accuracy": 6,
 			"options": [
-				10,
-				5,
-				2,
-				1,
-				0
+			]
+        },
+        {
+			"paramId": 14,
+			"category": "Advanced",
+			"paramType": "input",
+			"type": "float",
+			"name": "rotation x",
+			"argument": "rot_x",
+			"value_range": [
+				-1,
+				1
+			],
+			"value_accuracy": 6,
+			"options": [
 			]
 		},
 		{
-			"paramId": 14,
-			"category": "INS",
-			"paramType": "input",
-			"type": "float",
-			"name": "pri lever arm x",
-			"value_accuracy": 4
-		},
-		{
 			"paramId": 15,
-			"category": "INS",
+			"category": "Advanced",
 			"paramType": "input",
 			"type": "float",
-			"name": "pri lever arm y",
-			"value_accuracy": 4
+			"name": "rotation y",
+			"argument": "rot_y",
+			"value_range": [
+				-1,
+				1
+			],
+			"value_accuracy": 6,
+			"options": [
+			]
 		},
 		{
 			"paramId": 16,
-			"category": "INS",
+			"category": "Advanced",
 			"paramType": "input",
 			"type": "float",
-			"name": "pri lever arm z",
-			"value_accuracy": 4
-		},
-		{
+			"name": "rotation z",
+			"argument": "rot_z",
+			"value_range": [
+				-1,
+				1
+			],
+			"value_accuracy": 6,
+			"options": [
+			]
+        },
+        {
 			"paramId": 17,
-			"category": "INS",
-			"paramType": "input",
-			"type": "float",
-			"name": "vrp lever arm x",
-			"value_accuracy": 4
-		},
-		{
-			"paramId": 18,
-			"category": "INS",
-			"paramType": "input",
-			"type": "float",
-			"name": "vrp lever arm y",
-			"value_accuracy": 4
-		},
-		{
-			"paramId": 19,
-			"category": "INS",
-			"paramType": "input",
-			"type": "float",
-			"name": "vrp lever arm z",
-			"value_accuracy": 4
-		},
-		{
-			"paramId": 20,
-			"category": "INS",
-			"paramType": "input",
-			"type": "float",
-			"name": "user lever arm x",
-			"value_accuracy": 4
-		},
-		{
-			"paramId": 21,
-			"category": "INS",
-			"paramType": "input",
-			"type": "float",
-			"name": "user lever arm y",
-			"value_accuracy": 4
-		},
-		{
-			"paramId": 22,
-			"category": "INS",
-			"paramType": "input",
-			"type": "float",
-			"name": "user lever arm z",
-			"value_accuracy": 4
-		},
-		{
-			"paramId": 23,
-			"category": "INS",
-			"paramType": "input",
-			"type": "float",
-			"name": "rotation rbvx",
-			"value_accuracy": 4
-		},
-		{
-			"paramId": 24,
-			"category": "INS",
-			"paramType": "input",
-			"type": "float",
-			"name": "rotation rbvy",
-			"value_accuracy": 4
-		},
-		{
-			"paramId": 25,
-			"category": "INS",
-			"paramType": "input",
-			"type": "float",
-			"name": "rotation rbvz",
-			"value_accuracy": 4
-		},
-		{
-			"paramId": 26,
 			"category": "Ethnet",
 			"paramType": "select",
 			"type": "uint16",
 			"name": "MODE",
+			"argument": "MODE",
+			"value_range": [
+			],
+			"value_accuracy": 6,
 			"options": [
-				{
-					"key": "0",
-					"value": "DHCP"
-				},
-				{
-					"key": "1",
-					"value": "STATIC"
-				}
+                {"key":"0","value":"DHCP"},
+                {"key":"1","value":"STATIC"}
 			]
-		},
-		{
-			"paramId": 27,
+        },
+        {
+			"paramId": 18,
 			"category": "Ethnet",
 			"paramType": "input",
 			"type": "ip4",
-			"name": "STATIC IP"
-		},
+			"name": "STATIC IP",
+			"argument": "STATIC IP",
+			"value_range": [
+			],
+			"value_accuracy": 6,
+			"options": [
+			]
+        },
 		{
-			"paramId": 28,
+			"paramId": 19,
 			"category": "Ethnet",
 			"paramType": "input",
 			"type": "ip4",
-			"name": "NETMASK"
-		},
-		{
-			"paramId": 29,
+			"name": "NETMASK",
+			"argument": "NETMASK",
+			"value_range": [
+			],
+			"value_accuracy": 6,
+			"options": [
+			]
+        },
+        {
+			"paramId": 20,
 			"category": "Ethnet",
 			"paramType": "input",
 			"type": "ip4",
-			"name": "GATEWAY"
-		},
-		{
-			"paramId": 30,
+			"name": "GATEWAY",
+			"argument": "GATEWAY",
+			"value_range": [
+			],
+			"value_accuracy": 6,
+			"options": [
+			]
+        },
+        {
+			"paramId": 21,
 			"category": "Ethnet",
 			"paramType": "input",
 			"type": "ip6",
 			"name": "MAC",
-			"disabled": true
-		},
-		{
-			"paramId": 31,
-			"category": "RTCM",
-			"paramType": "input",
-			"type": "uint32",
-			"name": "USER TCP MODE",
-			"disabled": true
-		},
-		{
-			"paramId": 32,
-			"category": "NTRIP CLIENT",
-			"paramType": "input",
-			"type": "char26",
-			"name": "IP",
-			"dependsOn": {
-				"USER TCP MODE": 0
-			}
-		},
-		{
-			"paramId": 33,
-			"category": "NTRIP CLIENT",
-			"paramType": "input",
-			"type": "uint16",
-			"name": "PORT",
-			"dependsOn": {
-				"USER TCP MODE": 0
-			}
-		},
-		{
-			"paramId": 34,
-			"category": "NTRIP CLIENT",
-			"paramType": "input",
-			"type": "char20",
-			"name": "MOUNT POINT",
-			"dependsOn": {
-				"USER TCP MODE": 0
-			}
-		},
-		{
-			"paramId": 35,
-			"category": "NTRIP CLIENT",
-			"paramType": "input",
-			"type": "char20",
-			"name": "USERNAME",
-			"dependsOn": {
-				"USER TCP MODE": 0
-			}
-		},
-		{
-			"paramId": 36,
-			"category": "NTRIP CLIENT",
-			"paramType": "input",
-			"type": "char20",
-			"name": "PASSWORD",
-			"dependsOn": {
-				"USER TCP MODE": 0
-			}
-		},
-		{
-			"paramId": 37,
-			"category": "ACEINNA OpenARC",
-			"paramType": "input",
-			"type": "char26",
-			"name": "IP",
-			"dependsOn": {
-				"USER TCP MODE": 1
-			}
-		},
-		{
-			"paramId": 38,
-			"category": "ACEINNA OpenARC",
-			"paramType": "input",
-			"type": "uint16",
-			"name": "PORT",
-			"dependsOn": {
-				"USER TCP MODE": 1
-			}
-		},
-		{
-			"paramId": 39,
-			"category": "ACEINNA OpenARC",
-			"paramType": "input",
-			"type": "char20",
-			"name": "MOUNT POINT",
-			"dependsOn": {
-				"USER TCP MODE": 1
-			}
-		},
-		{
-			"paramId": 40,
-			"category": "ACEINNA OpenARC",
-			"paramType": "input",
-			"type": "char20",
-			"name": "USERNAME",
-			"dependsOn": {
-				"USER TCP MODE": 1
-			}
-		},
-		{
-			"paramId": 41,
-			"category": "ACEINNA OpenARC",
-			"paramType": "input",
-			"type": "char20",
-			"name": "PASSWORD",
-			"dependsOn": {
-				"USER TCP MODE": 1
-			}
-		},
-		{
-			"paramId": 42,
-			"category": "NTRIP SERVER",
-			"paramType": "input",
-			"type": "char26",
-			"name": "IP",
-			"dependsOn": {
-				"USER TCP MODE": 2
-			}
-		},
-		{
-			"paramId": 43,
-			"category": "NTRIP SERVER",
-			"paramType": "input",
-			"type": "uint16",
-			"name": "PORT",
-			"dependsOn": {
-				"USER TCP MODE": 2
-			}
-		},
-		{
-			"paramId": 44,
-			"category": "NTRIP SERVER",
-			"paramType": "input",
-			"type": "char20",
-			"name": "MOUNT POINT",
-			"dependsOn": {
-				"USER TCP MODE": 2
-			}
-		},
-		{
-			"paramId": 45,
-			"category": "NTRIP SERVER",
-			"paramType": "input",
-			"type": "char20",
-			"name": "PASSWORD",
-			"dependsOn": {
-				"USER TCP MODE": 2
-			}
-		},
-		{
-			"paramId": 46,
-			"category": "BASE STATION",
-			"paramType": "select",
-			"type": "uint16",
-			"name": "Position Type",
+            "argument": "MAC",
+            "disabled":true,
+			"value_range": [
+			],
+			"value_accuracy": 6,
 			"options": [
-				{
-					"key": "0",
-					"value": "REFERENCE"
-				},
-				{
-					"key": "1",
-					"value": "SPP"
-				},
-				{
-					"key": "2",
-					"value": "RTK"
-				},
-				{
-					"key": "3",
-					"value": "AUTO"
-				}
+			]
+        },
+        {
+			"paramId": 22,
+			"category": "Ntrip",
+			"paramType": "input",
+			"type": "char26",
+			"name": "IP",
+			"argument": "IP",
+			"value_range": [
 			],
-			"dependsOn": {
-				"USER TCP MODE": 2
-			}
-		},
-		{
-			"paramId": 47,
-			"category": "BASE STATION",
+			"value_accuracy": 6,
+			"options": [
+			]
+        },
+        {
+			"paramId": 23,
+			"category": "Ntrip",
 			"paramType": "input",
 			"type": "uint16",
-			"name": "Station ID",
-			"dependsOn": {
-				"USER TCP MODE": 2
-			}
-		},
-		{
-			"paramId": 48,
-			"category": "BASE STATION",
-			"paramType": "input",
-			"type": "double",
-			"name": "Antenna Height(m)",
-			"value_accuracy": 4,
+			"name": "PORT",
+			"argument": "PORT",
 			"value_range": [
-				0,
-				6.5535
 			],
-			"dependsOn": {
-				"USER TCP MODE": 2
-			}
-		},
-		{
-			"paramId": 49,
-			"category": "BASE STATION",
+			"value_accuracy": 0,
+			"options": [
+			]
+        },
+        {
+			"paramId": 24,
+			"category": "Ntrip",
 			"paramType": "input",
-			"type": "double",
-			"name": "Reference Latitude(deg)",
-			"value_accuracy": 8,
+			"type": "char20",
+			"name": "MOUNT POINT",
+			"argument": "MOUNT POINT",
 			"value_range": [
-				-180.0,
-				180.0
 			],
-			"dependsOn": {
-				"USER TCP MODE": 2
-			}
-		},
-		{
-			"paramId": 50,
-			"category": "BASE STATION",
+			"value_accuracy": 6,
+			"options": [
+			]
+        },
+        {
+			"paramId": 25,
+			"category": "Ntrip",
 			"paramType": "input",
-			"type": "double",
-			"name": "Reference Longitude(deg)",
-			"value_accuracy": 8,
+			"type": "char20",
+			"name": "USER NAME",
+			"argument": "USER NAME",
 			"value_range": [
-				-90.0,
-				90.0
 			],
-			"dependsOn": {
-				"USER TCP MODE": 2
-			}
-		},
-		{
-			"paramId": 51,
-			"category": "BASE STATION",
+			"value_accuracy": 6,
+			"options": [
+			]
+        },
+        {
+			"paramId": 26,
+			"category": "Ntrip",
 			"paramType": "input",
-			"type": "double",
-			"name": "Reference Height(m)",
-			"dependsOn": {
-				"USER TCP MODE": 2
-			}
-		},
-		{
-			"paramId": 52,
+			"type": "char20",
+			"name": "PASSWORD",
+			"argument": "PASSWORD",
+			"value_range": [
+			],
+			"value_accuracy": 6,
+			"options": [
+			]
+        },
+        {
+			"paramId": 27,
 			"category": "CAN",
 			"paramType": "input",
 			"type": "uint16",
-			"name": "ECU ADDRESS"
-		},
-		{
-			"paramId": 53,
+			"name": "ECU ADDRESS",
+			"argument": "ECU ADDRESS",
+			"value_range": [
+			],
+			"value_accuracy": 6,
+			"options": [
+			]
+        },
+        {
+            "paramId": 28,
 			"category": "CAN",
 			"paramType": "select",
 			"type": "uint16",
 			"name": "BAUDRATE",
-			"options": [
-				{
-					"key": "0",
-					"value": "125K"
-				},
-				{
-					"key": "1",
-					"value": "250K"
-				},
-				{
-					"key": "2",
-					"value": "500K"
-				},
-				{
-					"key": "3",
-					"value": "1000K"
-				}
+			"argument": "BAUDRATE",
+			"value_range": [
+			],
+			"value_accuracy": 6,
+            "options": [
+                {"key":"0","value":"500K"},
+                {"key":"1","value":"250K"},
+                {"key":"2","value":"125K"},
+                {"key":"3","value":"1000K"}
 			]
-		},
-		{
-			"paramId": 54,
+        },
+        {
+			"paramId": 29,
 			"category": "CAN",
 			"paramType": "input",
 			"type": "uint16",
 			"name": "PACKET TYPE",
+			"argument": "PACKET TYPE",
 			"value_range": [
-				0,
-				15
+                0, 15
 			],
 			"value_accuracy": 0
-		},
-		{
-			"paramId": 55,
+        },
+        {
+			"paramId": 30,
 			"category": "CAN",
 			"paramType": "select",
 			"type": "uint16",
 			"name": "PACKET RATE",
+			"argument": "PACKET RATE",
+			"value_range": [
+			],
+			"value_accuracy": 6,
 			"options": [
-				{
-					"key": "10",
-					"value": "10Hz"
-				}
+                {"key":"10","value":"10Hz"}
 			]
-		},
-		{
-			"paramId": 56,
+        },
+        {
+			"paramId": 31,
 			"category": "CAN",
 			"paramType": "select",
 			"type": "uint16",
 			"name": "CAN TERMRESISTOR",
+			"argument": "CAN TERMRESISTOR",
+			"value_range": [
+			],
+			"value_accuracy": 6,
 			"options": [
-				{
-					"key": "0",
-					"value": "DISABLE"
-				},
-				{
-					"key": "1",
-					"value": "ENABLE"
-				}
+                {"key":"0","value":"DISABLE"},
+                {"key":"1","value":"ENABLE"}
 			]
-		},
-		{
-			"paramId": 57,
+        },
+        {
+			"paramId": 32,
 			"category": "CAN",
 			"paramType": "select",
 			"type": "uint16",
 			"name": "BAUDRATE DETECT",
+			"argument": "BAUDRATE DETECT",
+			"value_range": [
+			],
+			"value_accuracy": 6,
 			"options": [
-				{
-					"key": "0",
-					"value": "DISABLE"
-				},
-				{
-					"key": "1",
-					"value": "ENABLE"
-				}
+                {"key":"0","value":"DISABLE"},
+                {"key":"1","value":"ENABLE"}
 			]
-		},
-		{
-			"paramId": 58,
-			"category": "CAN",
-			"paramType": "select",
-			"type": "uint32",
-			"name": "WHEEL TICK PIN MODE",
-			"options": [
-				{
-					"key": "0",
-					"value": "WHEEL TICK"
-				},
-				{
-					"key": "1",
-					"value": "SPI"
-				}
-			]
-		},
-		{
-			"paramId": 59,
-			"category": "CAN",
-			"paramType": "select",
-			"type": "uint32",
-			"name": "CAN MODE",
-			"options": [
-				{
-					"key": "0",
-					"value": "CAN ODO"
-				},
-				{
-					"key": "1",
-					"value": "J1939"
-				}
-			]
-		}
+        }
 	],
 	"userMessages": {
 		"inputPackets": [
@@ -823,15 +563,12 @@
 				}
 			},
 			{
-				"name": "gB",
-				"description": "Get Configuration Parameters by Block",
-				"inputPayload": {
-					"type": "userParameter",
-					"name": "Parameter to be Updated"
-				},
+				"name": "gA",
+				"description": "Get All Configuration Parameters",
+				"inputPayload": {},
 				"responsePayload": {
 					"type": "userConfiguration",
-					"name": "Specified Configuration Parameters"
+					"name": "Full Current Configuration"
 				}
 			},
 			{
@@ -851,19 +588,98 @@
 					"type": "paramId",
 					"name": "ID of the Updated Parameter"
 				}
-			},
-			{
-				"name": "rD",
-				"description": "Restore Defaults Command",
-				"inputPayload": {},
-				"responsePayload": {}
 			}
 		],
 		"outputPackets": [
 			{
 				"name": "s1",
 				"isList": 0,
-				"active": true,
+				"payload": [
+					{
+						"type": "uint32",
+						"name": "GPS_Week",
+						"unit": ""
+					},
+					{
+						"type": "double",
+						"name": "GPS_TimeofWeek",
+						"unit": "sec"
+					},
+					{
+						"type": "float",
+						"name": "x_accel",
+						"unit": "m/s^2"
+					},
+					{
+						"type": "float",
+						"name": "y_accel",
+						"unit": "m/s^2"
+					},
+					{
+						"type": "float",
+						"name": "z_accel",
+						"unit": "m/s^2"
+					},
+					{
+						"type": "float",
+						"name": "x_rate",
+						"unit": "deg/s"
+					},
+					{
+						"type": "float",
+						"name": "y_rate",
+						"unit": "deg/s"
+					},
+					{
+						"type": "float",
+						"name": "z_rate",
+						"unit": "deg/s"
+					}
+				],
+				"graphs": [
+					{
+						"name": "Acceleration",
+						"units": "m/s^2",
+						"xAxis": {
+							"name": "GPS_TimeofWeek",
+							"unit": "sec"
+						},
+						"yAxes": [
+							"x_accel",
+							"y_accel",
+							"z_accel"
+						],
+						"colors": [
+							"#FF0000",
+							"#00FF00",
+							"#0000FF"
+						],
+						"yMax": 20
+					},
+					{
+						"name": "Angular-Rate",
+						"units": "deg/s",
+						"xAxis": {
+							"name": "GPS_TimeofWeek",
+							"unit": "sec"
+						},
+						"yAxes": [
+							"x_rate",
+							"y_rate",
+							"z_rate"
+						],
+						"colors": [
+							"#FF0000",
+							"#00FF00",
+							"#0000FF"
+						],
+						"yMax": 200
+					}
+				]
+			},
+			{
+				"name": "s2",
+				"isList": 0,
 				"payload": [
 					{
 						"type": "uint32",
@@ -873,8 +689,8 @@
 					},
 					{
 						"type": "double",
-						"name": "GPS_TimeOfWeek",
-						"unit": "ms",
+						"name": "GPS_TimeofWeek",
+						"unit": "s",
 						"format": "11.4f"
 					},
 					{
@@ -897,423 +713,352 @@
 					},
 					{
 						"type": "float",
-						"name": "x_gyro",
+						"name": "x_rate",
 						"unit": "deg/s",
 						"format": "14.10f"
 					},
 					{
 						"type": "float",
-						"name": "y_gyro",
+						"name": "y_rate",
 						"unit": "deg/s",
 						"format": "14.10f"
 					},
 					{
 						"type": "float",
-						"name": "z_gyro",
+						"name": "z_rate",
 						"unit": "deg/s",
 						"format": "14.10f"
-					}
-				],
-				"graphs": [
-					{
-						"name": "Acceleration",
-						"units": "m/s^2",
-						"xAxis": {
-							"name": "GPS_TimeOfWeek",
-							"unit": "s"
-						},
-						"yAxes": [
-							"x_accel",
-							"y_accel",
-							"z_accel"
-						],
-						"colors": [
-							"#FF0000",
-							"#00FF00",
-							"#0000FF"
-						],
-						"yMax": 20
-					},
-					{
-						"name": "Angular-Rate",
-						"units": "deg/s",
-						"xAxis": {
-							"name": "GPS_TimeOfWeek",
-							"unit": "s"
-						},
-						"yAxes": [
-							"x_gyro",
-							"y_gyro",
-							"z_gyro"
-						],
-						"colors": [
-							"#FF0000",
-							"#00FF00",
-							"#0000FF"
-						],
-						"yMax": 200
 					}
 				]
 			},
 			{
-				"name": "g1",
+				"name": "iN",
 				"isList": 0,
 				"payload": [
 					{
-						"type": "uint16",
+						"type": "uint32",
 						"name": "GPS_Week",
-						"unit": "",
-						"format": ""
+						"unit": ""
 					},
+					{
+						"type": "double",
+						"name": "GPS_TimeofWeek",
+						"unit": "sec"
+					},
+					{
+						"type": "uint8",
+						"name": "insStatus",
+						"unit": ""
+					},
+					{
+						"type": "uint8",
+						"name": "insPositionType",
+						"unit": ""
+					},
+					{
+						"type": "int32",
+						"name": "latitude",
+						"unit": "deg"
+					},
+					{
+						"type": "int32",
+						"name": "longitude",
+						"unit": "deg"
+					},
+					{
+						"type": "float",
+						"name": "height",
+						"unit": "m"
+					},
+					{
+						"type": "int16",
+						"name": "velocityNorth",
+						"unit": "m/s"
+					},
+					{
+						"type": "int16",
+						"name": "velocityEast",
+						"unit": "m/s"
+					},
+					{
+						"type": "int16",
+						"name": "velocityUp",
+						"unit": "m/s"
+					},
+					{
+						"type": "int16",
+						"name": "roll",
+						"unit": "m/s"
+					},
+					{
+						"type": "int16",
+						"name": "pitch",
+						"unit": "m/s"
+					},
+					{
+						"type": "int16",
+						"name": "heading",
+						"unit": "m/s"
+					}
+				],
+				"graphs": []
+			},
+			{
+				"name": "d1",
+				"isList": 0,
+				"payload": [
 					{
 						"type": "uint32",
-						"name": "GPS_TimeOfWeek",
-						"unit": "ms",
-						"format": "11.4f"
-					},
-					{
-						"type": "uint8",
-						"name": "position_type",
-						"unit": "",
-						"format": "3"
+						"name": "GPS_Week",
+						"unit": ""
 					},
 					{
 						"type": "double",
+						"name": "GPS_TimeofWeek",
+						"unit": "sec"
+					},
+					{
+						"type": "int16",
+						"name": "latitude_std",
+						"unit": ""
+					},
+					{
+						"type": "int16",
+						"name": "longitude_std",
+						"unit": ""
+					},
+					{
+						"type": "int16",
+						"name": "height_std",
+						"unit": ""
+					},
+					{
+						"type": "int16",
+						"name": "north_vel_std",
+						"unit": ""
+					},
+					{
+						"type": "int16",
+						"name": "east_vel_std",
+						"unit": ""
+					},
+					{
+						"type": "int16",
+						"name": "up_vel_std",
+						"unit": ""
+					},
+					{
+						"type": "int16",
+						"name": "roll_std",
+						"unit": ""
+					},
+					{
+						"type": "int16",
+						"name": "pitch_std",
+						"unit": ""
+					},
+					{
+						"type": "int16",
+						"name": "heading_std",
+						"unit": ""
+					}
+				],
+				"graphs": []
+			},
+			{
+				"name": "gN",
+				"isList": 0,
+				"payload": [
+					{
+						"type": "uint32",
+						"name": "GPS_Week",
+						"unit": ""
+					},
+					{
+						"type": "double",
+						"name": "GPS_TimeofWeek",
+						"unit": "sec"
+					},
+					{
+						"type": "uint8",
+						"name": "positionMode",
+						"unit": ""
+					},
+					{
+						"type": "int32",
 						"name": "latitude",
-						"unit": "deg",
-						"format": "14.9f"
+						"unit": "deg"
 					},
 					{
-						"type": "double",
+						"type": "int32",
 						"name": "longitude",
-						"unit": "deg",
-						"format": "14.9f"
+						"unit": "deg"
 					},
 					{
-						"type": "double",
+						"type": "float",
 						"name": "height",
-						"unit": "m",
-						"format": "10.4f"
-					},
-					{
-						"type": "float",
-						"name": "latitude_standard_deviation",
-						"unit": "m",
-						"format": "10.4f"
-					},
-					{
-						"type": "float",
-						"name": "longitude_standard_deviation",
-						"unit": "m",
-						"format": "10.4f"
-					},
-					{
-						"type": "float",
-						"name": "height_standard_deviation",
-						"unit": "m",
-						"format": "10.4f"
+						"unit": "m"
 					},
 					{
 						"type": "uint8",
-						"name": "number_of_satellites",
-						"unit": "",
-						"format": "3"
-					},
-					{
-						"type": "uint8",
-						"name": "number_of_satellites_in_solution",
-						"unit": "",
-						"format": "3"
+						"name": "numberOfSVs",
+						"unit": ""
 					},
 					{
 						"type": "float",
 						"name": "hdop",
+						"unit": ""
+					},
+					{
+						"type": "float",
+						"name": "vdop",
 						"unit": "",
 						"format": "5.1f"
 					},
 					{
 						"type": "float",
+						"name": "tdop",
+						"unit": "",
+						"format": "5.1f"
+					},
+					{
+						"type": "uint16",
 						"name": "diffage",
+						"unit": ""
+					},
+					{
+						"type": "int16",
+						"name": "velocityNorth",
+						"unit": "m/s"
+					},
+					{
+						"type": "int16",
+						"name": "velocityEast",
+						"unit": "m/s"
+					},
+					{
+						"type": "int16",
+						"name": "velocityUp",
+						"unit": "m/s"
+					}
+				],
+				"graphs": []
+			},
+			{
+				"name": "d2",
+				"isList": 0,
+				"payload": [
+					{
+						"type": "uint32",
+						"name": "GPS_Week",
+						"unit": "",
+						"format": ""
+					},
+					{
+						"type": "double",
+						"name": "GPS_TimeofWeek",
 						"unit": "s",
-						"format": "5.1f"
-					},
-					{
-						"type": "float",
-						"name": "north_vel",
-						"unit": "m/s",
-						"format": "10.4f"
-					},
-					{
-						"type": "float",
-						"name": "east_vel",
-						"unit": "m/s",
-						"format": "10.4f"
-					},
-					{
-						"type": "float",
-						"name": "up_vel",
-						"unit": "m/s",
-						"format": "10.4f"
-					},
-					{
-						"type": "float",
-						"name": "north_vel_standard_deviation",
-						"unit": "m/s",
-						"format": "10.4f"
-					},
-					{
-						"type": "float",
-						"name": "east_vel_standard_deviation",
-						"unit": "m/s",
-						"format": "10.4f"
-					},
-					{
-						"type": "float",
-						"name": "up_vel_standard_deviation",
-						"unit": "m/s",
-						"format": "10.4f"
-					}
-				]
-			},
-			{
-				"name": "i1",
-				"isList": 0,
-				"payload": [
-					{
-						"type": "uint16",
-						"name": "GPS_Week",
-						"unit": "",
-						"format": ""
-					},
-					{
-						"type": "uint32",
-						"name": "GPS_TimeOfWeek",
-						"unit": "ms",
 						"format": "11.4f"
 					},
 					{
-						"type": "uint8",
-						"name": "ins_status",
-						"unit": "",
-						"format": "3"
-					},
-					{
-						"type": "uint8",
-						"name": "ins_position_type",
-						"unit": "",
-						"format": "3"
-					},
-					{
-						"type": "double",
-						"name": "latitude",
-						"unit": "deg",
-						"format": "14.9f"
-					},
-					{
-						"type": "double",
-						"name": "longitude",
-						"unit": "deg",
-						"format": "14.9f"
-					},
-					{
-						"type": "double",
-						"name": "height",
-						"unit": "m",
-						"format": "10.4f"
-					},
-					{
-						"type": "double",
-						"name": "north_velocity",
-						"unit": "m/s",
-						"format": "10.4f"
-					},
-					{
-						"type": "double",
-						"name": "east_velocity",
-						"unit": "m/s",
-						"format": "10.4f"
-					},
-					{
-						"type": "double",
-						"name": "up_velocity",
-						"unit": "m/s",
-						"format": "10.4f"
-					},
-					{
-						"type": "double",
-						"name": "roll",
-						"unit": "deg",
-						"format": "14.9f"
-					},
-					{
-						"type": "double",
-						"name": "pitch",
-						"unit": "deg",
-						"format": "14.9f"
-					},
-					{
-						"type": "double",
-						"name": "heading",
-						"unit": "deg",
-						"format": "14.9f"
-					},
-					{
-						"type": "float",
+						"type": "int16",
 						"name": "latitude_std",
-						"unit": "m",
+						"unit": "",
 						"format": "8.3f"
 					},
 					{
-						"type": "float",
+						"type": "int16",
 						"name": "longitude_std",
-						"unit": "m",
+						"unit": "",
 						"format": "8.3f"
 					},
 					{
-						"type": "float",
+						"type": "int16",
 						"name": "height_std",
-						"unit": "m",
+						"unit": "",
 						"format": "8.3f"
 					},
 					{
-						"type": "float",
-						"name": "north_velocity_std",
-						"unit": "m/s",
+						"type": "int16",
+						"name": "north_vel_std",
+						"unit": "",
 						"format": "8.3f"
 					},
 					{
-						"type": "float",
-						"name": "east_velocity_std",
-						"unit": "m/s",
+						"type": "int16",
+						"name": "east_vel_std",
+						"unit": "",
 						"format": "8.3f"
 					},
 					{
-						"type": "float",
-						"name": "up_velocity_std",
-						"unit": "m/s",
-						"format": "8.3f"
-					},
-					{
-						"type": "float",
-						"name": "roll_std",
-						"unit": "deg",
-						"format": "8.3f"
-					},
-					{
-						"type": "float",
-						"name": "pitch_std",
-						"unit": "deg",
-						"format": "8.3f"
-					},
-					{
-						"type": "float",
-						"name": "heading_std",
-						"unit": "deg",
+						"type": "int16",
+						"name": "up_vel_std",
+						"unit": "",
 						"format": "8.3f"
 					}
 				]
 			},
 			{
-				"name": "o1",
+				"name": "sT",
 				"isList": 0,
 				"payload": [
 					{
-						"type": "uint16",
-						"name": "GPS_Week",
-						"unit": "",
-						"format": ""
-					},
-					{
 						"type": "uint32",
-						"name": "GPS_TimeOfWeek",
-						"unit": "ms",
-						"format": "11.4f"
-					},
-					{
-						"type": "uint8",
-						"name": "mode",
-						"unit": "",
-						"format": "3"
+						"name": "GPS_Week",
+						"unit": ""
 					},
 					{
 						"type": "double",
-						"name": "speed",
-						"unit": "m/s",
-						"format": "10.4f"
+						"name": "GPS_TimeofWeek",
+						"unit": "sec"
+					},
+					{
+						"type": "uint16",
+						"name": "year",
+						"unit": ""
 					},
 					{
 						"type": "uint8",
-						"name": "fwd",
-						"unit": "",
-						"format": "3"
+						"name": "mouth",
+						"unit": ""
 					},
 					{
-						"type": "uint64",
-						"name": "wheel_tick",
-						"unit": "",
-						"format": "16"
-					}
-				]
-			},
-			{
-				"name": "y1",
-				"isList": 1,
-				"payload": [
+						"type": "uint8",
+						"name": "day",
+						"unit": ""
+					},
 					{
-						"type": "uint16",
-						"name": "GPS_Week",
-						"unit": "",
-						"format": ""
+						"type": "uint8",
+						"name": "hour",
+						"unit": ""
+					},
+					{
+						"type": "uint8",
+						"name": "min",
+						"unit": ""
+					},
+					{
+						"type": "uint8",
+						"name": "sec",
+						"unit": ""
 					},
 					{
 						"type": "uint32",
-						"name": "GPS_TimeOfWeek",
-						"unit": "ms",
-						"format": "11.4f"
-					},
-					{
-						"type": "uint8",
-						"name": "satelliteId",
-						"unit": "",
-						"format": "4"
-					},
-					{
-						"type": "uint8",
-						"name": "systemId",
-						"unit": "",
-						"format": "4"
-					},
-					{
-						"type": "uint8",
-						"name": "antennaId",
-						"unit": "",
-						"format": "5"
-					},
-					{
-						"type": "uint8",
-						"name": "l1cn0",
-						"unit": "",
-						"format": "4"
-					},
-					{
-						"type": "uint8",
-						"name": "l2cn0",
-						"unit": "",
-						"format": "4"
+						"name": "imu_status",
+						"unit": ""
 					},
 					{
 						"type": "float",
-						"name": "azimuth",
-						"unit": "deg",
-						"format": "10.3f"
+						"name": "imu_temperature",
+						"unit": "sec"
 					},
 					{
 						"type": "float",
-						"name": "elevation",
-						"unit": "deg",
-						"format": "10.3f"
+						"name": "mcu_temperature",
+						"unit": ""
 					}
-				]
+				],
+				"graphs": []
 			}
 		]
 	},
@@ -1329,14 +1074,29 @@
 			"function": ""
 		},
 		{
+			"name": "run",
+			"description": "Operations defined by users",
+			"function": "run_handler"
+		},
+		{
 			"name": "save",
 			"description": "Save the configuration into EEPROM",
 			"function": "save_handler"
 		},
 		{
+			"name": "connect",
+			"description": "Find OpenIMU device",
+			"function": "connect_handler"
+		},
+		{
 			"name": "upgrade",
 			"description": "Upgrade firmware",
 			"function": "upgrade_handler"
+		},
+		{
+			"name": "record",
+			"description": "Record output data of OpenIMU on local machine",
+			"function": "record_handler"
 		},
 		{
 			"name": "stop",
@@ -1347,6 +1107,16 @@
 			"name": "server_start",
 			"description": "start server thread and must use exit command to quit",
 			"function": "server_start_handler"
+		},
+		{
+			"name": "get",
+			"description": "Read the current configuration and output data",
+			"function": "get_handler"
+		},
+		{
+			"name": "set",
+			"description": "Write parameters to OpenIMU",
+			"function": "set_handler"
 		}
 	]
 }

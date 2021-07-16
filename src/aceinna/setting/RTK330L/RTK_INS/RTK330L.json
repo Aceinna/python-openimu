@@ -1,7 +1,7 @@
 {
 	"appVersion": "RTK330LA INS 24.00",
-	"type": "openrtk",
-	"description": "6-axis OpenRTK with INS application",
+	"type": "RTK330LA",
+	"description": "6-axis RTK330LA with INS application",
 	"initial": {
 		"useDefaultUart": 1,
 		"uart": [
@@ -406,6 +406,60 @@
 				]
 			},
 			{
+				"name": "s2",
+				"isList": 0,
+				"payload": [
+					{
+						"type": "uint32",
+						"name": "GPS_Week",
+						"unit": "",
+						"format": ""
+					},
+					{
+						"type": "double",
+						"name": "GPS_TimeofWeek",
+						"unit": "s",
+						"format": "11.4f"
+					},
+					{
+						"type": "float",
+						"name": "x_accel",
+						"unit": "m/s^2",
+						"format": "14.10f"
+					},
+					{
+						"type": "float",
+						"name": "y_accel",
+						"unit": "m/s^2",
+						"format": "14.10f"
+					},
+					{
+						"type": "float",
+						"name": "z_accel",
+						"unit": "m/s^2",
+						"format": "14.10f"
+					},
+					{
+						"type": "float",
+						"name": "x_rate",
+						"unit": "deg/s",
+						"format": "14.10f"
+					},
+					{
+						"type": "float",
+						"name": "y_rate",
+						"unit": "deg/s",
+						"format": "14.10f"
+					},
+					{
+						"type": "float",
+						"name": "z_rate",
+						"unit": "deg/s",
+						"format": "14.10f"
+					}
+				]
+			},
+			{
 				"name": "iN",
 				"isList": 0,
 				"payload": [
@@ -584,6 +638,18 @@
 						"unit": ""
 					},
 					{
+						"type": "float",
+						"name": "vdop",
+						"unit": "",
+						"format": "5.1f"
+					},
+					{
+						"type": "float",
+						"name": "tdop",
+						"unit": "",
+						"format": "5.1f"
+					},
+					{
 						"type": "uint16",
 						"name": "diffage",
 						"unit": ""
@@ -605,6 +671,60 @@
 					}
 				],
 				"graphs": []
+			},
+			{
+				"name": "d2",
+				"isList": 0,
+				"payload": [
+					{
+						"type": "uint32",
+						"name": "GPS_Week",
+						"unit": "",
+						"format": ""
+					},
+					{
+						"type": "double",
+						"name": "GPS_TimeofWeek",
+						"unit": "s",
+						"format": "11.4f"
+					},
+					{
+						"type": "int16",
+						"name": "latitude_std",
+						"unit": "",
+						"format": "8.3f"
+					},
+					{
+						"type": "int16",
+						"name": "longitude_std",
+						"unit": "",
+						"format": "8.3f"
+					},
+					{
+						"type": "int16",
+						"name": "height_std",
+						"unit": "",
+						"format": "8.3f"
+					},
+					{
+						"type": "int16",
+						"name": "north_vel_std",
+						"unit": "",
+						"format": "8.3f"
+					},
+					{
+						"type": "int16",
+						"name": "east_vel_std",
+						"unit": "",
+						"format": "8.3f"
+					},
+					{
+						"type": "int16",
+						"name": "up_vel_std",
+						"unit": "",
+						"format": "8.3f"
+					}
+				]
 			},
 			{
 				"name": "sT",

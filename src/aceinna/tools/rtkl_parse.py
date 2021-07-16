@@ -932,7 +932,7 @@ def prepare_setting_folder(setting_file):
     setting_folder_path = os.path.join(
         executor_path, setting_folder_name)
 
-    product = 'OpenRTK330L'
+    product = 'RTK330L'
     product_folder = os.path.join(setting_folder_path, product)
     if not os.path.isdir(product_folder):
         os.makedirs(product_folder)
