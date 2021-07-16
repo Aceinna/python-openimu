@@ -1,7 +1,7 @@
 {
-    "version": "2.0.5",
+    "version": "24.01.21",
     "userNMEAList": ["$GPGGA", "$GPRMC", "$GPGSV", "$GLGSV", "$GAGSV", "$BDGSV", "$GPGSA", "$GLGSA", "$GAGSA", "$BDGSA"],
-	"userPacketsTypeList": ["s1", "gN", "iN", "d1", "sT", "fM", "o1", "rt"],
+	"userPacketsTypeList": ["s1", "s2", "gN", "iN", "d1", "d2", "sT", "fM", "o1", "rt"],
 	"userOutputPackets": [
         {
             "name": "o1",
@@ -393,6 +393,60 @@
                 }
             ]
         },
+		{
+            "name": "s2",
+            "isList": 0,
+            "payload": [
+                {
+                    "type": "uint32",
+                    "name": "GPS_Week",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+                    "type": "double",
+                    "name": "GPS_TimeofWeek",
+                    "unit": "s",
+                    "format": "11.4f"
+                },
+                {
+                    "type": "float",
+                    "name": "x_accel",
+                    "unit": "m/s^2",
+                    "format": "14.10f"
+                },
+                {
+                    "type": "float",
+                    "name": "y_accel",
+                    "unit": "m/s^2",
+                    "format": "14.10f"
+                },
+                {
+                    "type": "float",
+                    "name": "z_accel",
+                    "unit": "m/s^2",
+                    "format": "14.10f"
+                },
+                {
+                    "type": "float",
+                    "name": "x_rate",
+                    "unit": "deg/s",
+                    "format": "14.10f"
+                },
+                {
+                    "type": "float",
+                    "name": "y_rate",
+                    "unit": "deg/s",
+                    "format": "14.10f"
+                },
+                {
+                    "type": "float",
+                    "name": "z_rate",
+                    "unit": "deg/s",
+                    "format": "14.10f"
+                }
+            ]
+        },
         {
             "name": "gN",
             "isList": 0,
@@ -445,6 +499,18 @@
                     "unit": "",
                     "format": "5.1f"
                 },
+				{
+					"type": "float",
+                    "name": "vdop",
+                    "unit": "",
+                    "format": "5.1f"
+                },
+				{
+					"type": "float",
+                    "name": "tdop",
+                    "unit": "",
+                    "format": "5.1f"
+                },
                 {
                     "type": "uint16",
                     "name": "diffage",
@@ -467,24 +533,6 @@
                     "type": "int16",
                     "name": "velocityUp",
                     "unit": "m/s",
-                    "format": "10.4f"
-                },
-				{
-                    "type": "int16",
-                    "name": "latitude_std",
-                    "unit": "m",
-                    "format": "10.4f"
-                },
-                {
-                    "type": "int16",
-                    "name": "longitude_std",
-                    "unit": "m",
-                    "format": "10.4f"
-                },
-                {
-                    "type": "int16",
-                    "name": "height_std",
-                    "unit": "m",
                     "format": "10.4f"
                 }
             ]
@@ -640,6 +688,60 @@
                 {
                     "type": "int16",
                     "name": "heading_std",
+                    "unit": "",
+                    "format": "8.3f"
+                }
+            ]
+        },
+        {
+            "name": "d2",
+            "isList": 0,
+            "payload": [
+                {
+                    "type": "uint32",
+                    "name": "GPS_Week",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+                    "type": "double",
+                    "name": "GPS_TimeofWeek",
+                    "unit": "s",
+                    "format": "11.4f"
+                },
+                {
+                    "type": "int16",
+                    "name": "latitude_std",
+                    "unit": "",
+                    "format": "8.3f"
+                },
+                {
+                    "type": "int16",
+                    "name": "longitude_std",
+                    "unit": "",
+                    "format": "8.3f"
+                },
+                {
+                    "type": "int16",
+                    "name": "height_std",
+                    "unit": "",
+                    "format": "8.3f"
+                },
+                {
+                    "type": "int16",
+                    "name": "north_vel_std",
+                    "unit": "",
+                    "format": "8.3f"
+                },
+                {
+                    "type": "int16",
+                    "name": "east_vel_std",
+                    "unit": "",
+                    "format": "8.3f"
+                },
+                {
+                    "type": "int16",
+                    "name": "up_vel_std",
                     "unit": "",
                     "format": "8.3f"
                 }

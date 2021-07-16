@@ -13,7 +13,6 @@ from ..framework.utils.print import (print_green, print_red)
 
 is_later_py_3 = sys.version_info > (3, 0)
 
-
 class InceptioParse:
     def __init__(self, data_file, path, json_setting, inskml_rate):
         self.rawdata = []
@@ -46,6 +45,7 @@ class InceptioParse:
         self.insdata = []
         self.pkfmt = {}
         self.last_time = 0
+        self.gNdata = []
 
         with open(json_setting) as json_data:
             self.rtk_properties = json.load(json_data)
@@ -230,7 +230,7 @@ class InceptioParse:
                 pass
             else:
                 track_ground = math.atan2(
-                    pos[10]/100, pos[9]/100) * (57.295779513082320)
+                    pos[12]/100, pos[11]/100) * (57.295779513082320)
 
                 gnss_track += "<Placemark>\n"
                 if i <= 1:
@@ -258,7 +258,7 @@ class InceptioParse:
                     + "<TR ALIGN=RIGHT><TD ALIGN=LEFT>Position:</TD><TD>"\
                     + "%.8f" % (pos[3]*180/2147483648) + "</TD><TD>" + "%.8f" % (pos[4]*180/2147483648) + "</TD><TD>" + "%.4f" % pos[5] + "</TD><TD>(DMS,m)</TD></TR>\n"\
                     + "<TR ALIGN=RIGHT><TD ALIGN=LEFT>Vel(N,E,D):</TD><TD>"\
-                    + "%.4f" % (pos[9]/100) + "</TD><TD>" + "%.4f" % (pos[10]/100) + "</TD><TD>" + "%.4f" % (-pos[11]/100) + "</TD><TD>(m/s)</TD></TR>\n"\
+                    + "%.4f" % (pos[11]/100) + "</TD><TD>" + "%.4f" % (pos[12]/100) + "</TD><TD>" + "%.4f" % (-pos[13]/100) + "</TD><TD>(m/s)</TD></TR>\n"\
                     + "<TR ALIGN=RIGHT><TD ALIGN=LEFT>Att(r,p,h):</TD><TD>"\
                     + "0" + "</TD><TD>" + "0" + "</TD><TD>" + "%.4f" % track_ground + "</TD><TD>(deg,approx)</TD></TR>\n"\
                     + "<TR ALIGN=RIGHT><TD ALIGN=LEFT>Mode:</TD><TD>"\
@@ -446,7 +446,25 @@ class InceptioParse:
                 format(data[6], output['payload'][6]['format']) + ","
             buffer = buffer + \
                 format(data[7], output['payload'][7]['format']) + "\n"
-
+		
+        elif output['name'] == 's2':
+            buffer = buffer + \
+                format(data[0], output['payload'][0]['format']) + ","
+            buffer = buffer + \
+                format(data[1], output['payload'][1]['format']) + ","
+            buffer = buffer + \
+                format(data[2], output['payload'][2]['format']) + ","
+            buffer = buffer + \
+                format(data[3], output['payload'][3]['format']) + ","
+            buffer = buffer + \
+                format(data[4], output['payload'][4]['format']) + ","
+            buffer = buffer + \
+                format(data[5], output['payload'][5]['format']) + ","
+            buffer = buffer + \
+                format(data[6], output['payload'][6]['format']) + ","
+            buffer = buffer + \
+                format(data[7], output['payload'][7]['format']) + "\n"
+				
             ff_buffer = '$GPIMU,'
             ff_buffer = ff_buffer + \
                 format(data[0], output['payload'][0]['format']) + ","
@@ -484,49 +502,31 @@ class InceptioParse:
             e_buffer = e_buffer + \
                 format(data[7], output['payload'][7]['format']) + "\n"
             self.f_imu.write(e_buffer)
-
+        
         elif output['name'] == 'o1':
-            buffer = buffer + \
-                format(data[0], output['payload'][0]['format']) + ","
-            buffer = buffer + \
-                format(data[1]/1000, output['payload'][1]['format']) + ","
-            buffer = buffer + \
-                format(data[2], output['payload'][2]['format']) + ","
-            buffer = buffer + \
-                format(data[3], output['payload'][3]['format']) + ","
-            buffer = buffer + \
-                format(data[4], output['payload'][4]['format']) + ","
-            buffer = buffer + \
-                format(data[5], output['payload'][5]['format']) + "\n"
+            buffer = buffer + format(data[0], output['payload'][0]['format']) + ","
+            buffer = buffer + format(data[1]/1000, output['payload'][1]['format']) + ","
+            buffer = buffer + format(data[2], output['payload'][2]['format']) + ","
+            buffer = buffer + format(data[3], output['payload'][3]['format']) + ","
+            buffer = buffer + format(data[4], output['payload'][4]['format']) + ","
+            buffer = buffer + format(data[5], output['payload'][5]['format']) + "\n"
 
             ff_buffer = '$GPODO,'
-            ff_buffer = ff_buffer + \
-                format(data[0], output['payload'][0]['format']) + ","
-            ff_buffer = ff_buffer + \
-                format(data[1]/1000, output['payload'][1]['format']) + ","
-            ff_buffer = ff_buffer + \
-                format(data[2], output['payload'][2]['format']) + ","
-            ff_buffer = ff_buffer + \
-                format(data[3], output['payload'][3]['format']) + ","
-            ff_buffer = ff_buffer + \
-                format(data[4], output['payload'][4]['format']) + ","
-            ff_buffer = ff_buffer + \
-                format(data[5], output['payload'][5]['format']) + "\n"
+            ff_buffer = ff_buffer + format(data[0], output['payload'][0]['format']) + ","
+            ff_buffer = ff_buffer + format(data[1]/1000, output['payload'][1]['format']) + ","
+            ff_buffer = ff_buffer + format(data[2], output['payload'][2]['format']) + ","
+            ff_buffer = ff_buffer + format(data[3], output['payload'][3]['format']) + ","
+            ff_buffer = ff_buffer + format(data[4], output['payload'][4]['format']) + ","
+            ff_buffer = ff_buffer + format(data[5], output['payload'][5]['format']) + "\n"
             self.f_process.write(ff_buffer)
 
             e_buffer = ''
-            e_buffer = e_buffer + \
-                format(data[0], output['payload'][0]['format']) + ","
-            e_buffer = e_buffer + \
-                format(data[1]/1000, output['payload'][1]['format']) + ","
-            e_buffer = e_buffer + \
-                format(data[2], output['payload'][2]['format']) + ","
-            e_buffer = e_buffer + \
-                format(data[3], output['payload'][3]['format']) + ","
-            e_buffer = e_buffer + \
-                format(data[4], output['payload'][4]['format']) + ","
-            e_buffer = e_buffer + \
-                format(data[5], output['payload'][5]['format']) + "\n"
+            e_buffer = e_buffer + format(data[0], output['payload'][0]['format']) + ","
+            e_buffer = e_buffer + format(data[1]/1000, output['payload'][1]['format']) + ","
+            e_buffer = e_buffer + format(data[2], output['payload'][2]['format']) + ","
+            e_buffer = e_buffer + format(data[3], output['payload'][3]['format']) + ","
+            e_buffer = e_buffer + format(data[4], output['payload'][4]['format']) + ","
+            e_buffer = e_buffer + format(data[5], output['payload'][5]['format']) + "\n"
             self.f_odo.write(e_buffer)
 
         elif output['name'] == 'gN':
@@ -551,106 +551,116 @@ class InceptioParse:
             buffer = buffer + \
                 format(data[8], output['payload'][8]['format']) + ","
             buffer = buffer + \
-                format(data[9]/100, output['payload'][9]['format']) + ","
+                format(data[9], output['payload'][9]['format']) + ","
             buffer = buffer + \
-                format(data[10]/100, output['payload'][10]['format']) + ","
+                format(data[10], output['payload'][10]['format']) + ","
             buffer = buffer + \
                 format(data[11]/100, output['payload'][11]['format']) + ","
             buffer = buffer + \
-                format(data[12]/1000, output['payload'][12]['format']) + ","
+                format(data[12]/100, output['payload'][12]['format']) + ","
             buffer = buffer + \
-                format(data[13]/1000, output['payload'][13]['format']) + ","
-            buffer = buffer + \
-                format(data[14]/1000, output['payload'][14]['format']) + "\n"
+                format(data[13]/100, output['payload'][13]['format']) + "\n"
 
-            ff_buffer = '$GPGNSS,'
-            ff_buffer = ff_buffer + \
-                format(data[0], output['payload'][0]['format']) + ","
-            ff_buffer = ff_buffer + \
-                format(data[1], output['payload'][1]['format']) + ","
-            ff_buffer = ff_buffer + \
-                format(data[3]*180/2147483648,
-                       output['payload'][3]['format']) + ","
-            ff_buffer = ff_buffer + \
-                format(data[4]*180/2147483648,
-                       output['payload'][4]['format']) + ","
-            ff_buffer = ff_buffer + \
-                format(data[5], output['payload'][5]['format']) + ","
-            ff_buffer = ff_buffer + \
-                format(data[12]/1000, output['payload'][12]['format']) + ","
-            ff_buffer = ff_buffer + \
-                format(data[13]/1000, output['payload'][13]['format']) + ","
-            ff_buffer = ff_buffer + \
-                format(data[14]/1000, output['payload'][14]['format']) + ","
-
-            # std = 100
-            # if data[2] == 1:
-            #     std = 5
-            # elif data[2] == 5:
-            #     std = 0.3
-            # elif data[2] == 4:
-            #     std = 0.01
-            # ff_buffer = ff_buffer + format(std, output['payload'][5]['format']) + ","
-            # ff_buffer = ff_buffer + format(std, output['payload'][5]['format']) + ","
-            # ff_buffer = ff_buffer + format(std * 2, output['payload'][5]['format']) + ","
-            ff_buffer = ff_buffer + \
-                format(data[2], output['payload'][2]['format']) + "\n"
-            self.f_process.write(ff_buffer)
-
-            ff_buffer = '$GPVEL,'
-            ff_buffer = ff_buffer + \
-                format(data[0], output['payload'][0]['format']) + ","
-            ff_buffer = ff_buffer + \
-                format(data[1], output['payload'][1]['format']) + ","
-            north_vel = data[9]/100
-            east_vel = data[10]/100
-            up_vel = data[11]/100
-            horizontal_speed = math.sqrt(
-                north_vel * north_vel + east_vel * east_vel)
-            track_over_ground = math.atan2(
-                east_vel, north_vel) * (57.295779513082320)
-            ff_buffer = ff_buffer + \
-                format(horizontal_speed, output['payload'][9]['format']) + ","
-            ff_buffer = ff_buffer + \
-                format(track_over_ground,
-                       output['payload'][10]['format']) + ","
-            ff_buffer = ff_buffer + \
-                format(up_vel, output['payload'][11]['format']) + "\n"
-            self.f_process.write(ff_buffer)
-
-            e_buffer = ''
-            e_buffer = e_buffer + \
-                format(data[0], output['payload'][0]['format']) + ","
-            e_buffer = e_buffer + \
-                format(data[1], output['payload'][1]['format']) + ","
-            e_buffer = e_buffer + \
-                format(data[3]*180/2147483648,
-                       output['payload'][3]['format']) + ","
-            e_buffer = e_buffer + \
-                format(data[4]*180/2147483648,
-                       output['payload'][4]['format']) + ","
-            e_buffer = e_buffer + \
-                format(data[5], output['payload'][5]['format']) + ","
-            e_buffer = e_buffer + \
-                format(data[12]/1000, output['payload'][5]['format']) + ","
-            e_buffer = e_buffer + \
-                format(data[13]/1000, output['payload'][5]['format']) + ","
-            e_buffer = e_buffer + \
-                format(data[14]/1000, output['payload'][5]['format']) + ","
-            e_buffer = e_buffer + \
-                format(data[2], output['payload'][2]['format']) + ","
-            e_buffer = e_buffer + \
-                format(north_vel, output['payload'][9]['format']) + ","
-            e_buffer = e_buffer + \
-                format(east_vel, output['payload'][10]['format']) + ","
-            e_buffer = e_buffer + \
-                format(up_vel, output['payload'][11]['format']) + ","
-            e_buffer = e_buffer + \
-                format(track_over_ground,
-                       output['payload'][10]['format']) + "\n"
-            self.f_gnssposvel.write(e_buffer)
-
+            self.gNdata = data
             self.gnssdata.append(data)
+            
+        elif output['name'] == 'd2':
+            buffer = buffer + \
+                format(data[0], output['payload'][0]['format']) + ","
+            buffer = buffer + \
+                format(data[1], output['payload'][1]['format']) + ","
+            buffer = buffer + \
+                format(data[2]/100, output['payload'][2]['format']) + ","
+            buffer = buffer + \
+                format(data[3]/100, output['payload'][3]['format']) + ","
+            buffer = buffer + \
+                format(data[4]/100, output['payload'][4]['format']) + ","
+            buffer = buffer + \
+                format(data[5]/100, output['payload'][5]['format']) + ","
+            buffer = buffer + \
+                format(data[6]/100, output['payload'][6]['format']) + ","
+            buffer = buffer + \
+                format(data[7]/100, output['payload'][7]['format']) + "\n"
+			
+            if self.gNdata != None and self.gNdata != []:
+                outgn = next((x for x in self.rtk_properties['userOutputPackets'] if x['name'] == 'gN'), None)
+
+                ff_buffer = '$GPGNSS,'
+                ff_buffer = ff_buffer + \
+					format(self.gNdata[0], outgn['payload'][0]['format']) + ","
+                ff_buffer = ff_buffer + \
+					format(self.gNdata[1], outgn['payload'][1]['format']) + ","
+                ff_buffer = ff_buffer + \
+					format(self.gNdata[3]*180/2147483648,
+						   outgn['payload'][3]['format']) + ","
+                ff_buffer = ff_buffer + \
+					format(self.gNdata[4]*180/2147483648,
+						   outgn['payload'][4]['format']) + ","
+                ff_buffer = ff_buffer + \
+					format(self.gNdata[5], outgn['payload'][5]['format']) + ","
+				
+                ff_buffer = ff_buffer + \
+					format(data[2]/100, output['payload'][2]['format']) + ","
+                ff_buffer = ff_buffer + \
+					format(data[3]/100, output['payload'][3]['format']) + ","
+                ff_buffer = ff_buffer + \
+					format(data[4]/100, output['payload'][4]['format']) + ","
+				
+                ff_buffer = ff_buffer + \
+					format(self.gNdata[2], outgn['payload'][2]['format']) + "\n"
+                self.f_process.write(ff_buffer)
+
+                ff_buffer = '$GPVEL,'
+                ff_buffer = ff_buffer + \
+					format(self.gNdata[0], outgn['payload'][0]['format']) + ","
+                ff_buffer = ff_buffer + \
+					format(self.gNdata[1], outgn['payload'][1]['format']) + ","
+                north_vel = self.gNdata[11]/100
+                east_vel = self.gNdata[12]/100
+                up_vel = self.gNdata[13]/100
+                horizontal_speed = math.sqrt(
+					north_vel * north_vel + east_vel * east_vel)
+                track_over_ground = math.atan2(
+					east_vel, north_vel) * (57.295779513082320)
+                ff_buffer = ff_buffer + \
+					format(horizontal_speed, outgn['payload'][11]['format']) + ","
+                ff_buffer = ff_buffer + \
+					format(track_over_ground,
+						   outgn['payload'][12]['format']) + ","
+                ff_buffer = ff_buffer + \
+					format(up_vel, outgn['payload'][13]['format']) + "\n"
+                self.f_process.write(ff_buffer)
+
+                e_buffer = ''
+                e_buffer = e_buffer + \
+					format(self.gNdata[0], outgn['payload'][0]['format']) + ","
+                e_buffer = e_buffer + \
+					format(self.gNdata[1], outgn['payload'][1]['format']) + ","
+                e_buffer = e_buffer + \
+					format(self.gNdata[3]*180/2147483648,
+						   outgn['payload'][3]['format']) + ","
+                e_buffer = e_buffer + \
+					format(self.gNdata[4]*180/2147483648,
+						   outgn['payload'][4]['format']) + ","
+                e_buffer = e_buffer + \
+					format(self.gNdata[5], outgn['payload'][5]['format']) + ","
+                e_buffer = e_buffer + \
+					format(data[2]/100, output['payload'][2]['format']) + ","
+                e_buffer = e_buffer + \
+					format(data[3]/100, output['payload'][3]['format']) + ","
+                e_buffer = e_buffer + \
+					format(data[4]/100, output['payload'][4]['format']) + ","
+                e_buffer = e_buffer + \
+					format(self.gNdata[2], outgn['payload'][2]['format']) + ","
+                e_buffer = e_buffer + \
+					format(north_vel, outgn['payload'][11]['format']) + ","
+                e_buffer = e_buffer + \
+					format(east_vel, outgn['payload'][12]['format']) + ","
+                e_buffer = e_buffer + \
+					format(up_vel, outgn['payload'][13]['format']) + ","
+                e_buffer = e_buffer + \
+					format(track_over_ground, outgn['payload'][12]['format']) + "\n"
+                self.f_gnssposvel.write(e_buffer)
 
         elif output['name'] == 'iN':
             buffer = buffer + \
@@ -769,6 +779,7 @@ class InceptioParse:
                 format(data[9]/100, output['payload'][9]['format']) + ","
             buffer = buffer + \
                 format(data[10]/100, output['payload'][10]['format']) + "\n"
+				
         elif output['name'] == 'sT':
             buffer = buffer + \
                 format(data[0], output['payload'][0]['format']) + ","
@@ -842,54 +853,6 @@ class InceptioParse:
                 format(data[22], output['payload'][22]['format']) + ","
             buffer = buffer + \
                 format(data[23], output['payload'][23]['format']) + "\n"
-
-        elif output['name'] == 'rt':
-            buffer = buffer + \
-                format(data[0], output['payload'][0]['format']) + ","
-            buffer = buffer + \
-                format(data[1], output['payload'][1]['format']) + ","
-            buffer = buffer + \
-                format(data[2], output['payload'][2]['format']) + ","
-            buffer = buffer + \
-                format(data[3], output['payload'][3]['format']) + ","
-            buffer = buffer + \
-                format(data[4], output['payload'][4]['format']) + ","
-            buffer = buffer + \
-                format(data[5], output['payload'][5]['format']) + ","
-            buffer = buffer + \
-                format(data[6], output['payload'][6]['format']) + ","
-            buffer = buffer + \
-                format(data[7], output['payload'][7]['format']) + ","
-            buffer = buffer + \
-                format(data[8], output['payload'][8]['format']) + ","
-            buffer = buffer + \
-                format(data[9], output['payload'][9]['format']) + ","
-            buffer = buffer + \
-                format(data[10], output['payload'][10]['format']) + ","
-            buffer = buffer + \
-                format(data[11], output['payload'][11]['format']) + ","
-            buffer = buffer + \
-                format(data[12], output['payload'][12]['format']) + ","
-            buffer = buffer + \
-                format(data[13], output['payload'][13]['format']) + ","
-            buffer = buffer + \
-                format(data[14], output['payload'][14]['format']) + ","
-            buffer = buffer + \
-                format(data[15], output['payload'][15]['format']) + ","
-            buffer = buffer + \
-                format(data[16], output['payload'][16]['format']) + ","
-            buffer = buffer + \
-                format(data[17], output['payload'][17]['format']) + ","
-            buffer = buffer + \
-                format(data[18], output['payload'][18]['format']) + ","
-            buffer = buffer + \
-                format(data[19], output['payload'][19]['format']) + ","
-            buffer = buffer + \
-                format(data[20], output['payload'][20]['format']) + ","
-            buffer = buffer + \
-                format(data[21], output['payload'][21]['format']) + ","
-            buffer = buffer + \
-                format(data[22], output['payload'][22]['format']) + "\n"
 
         self.log_files[output['name']].write(buffer)
 
@@ -969,7 +932,7 @@ def prepare_setting_folder(setting_file):
     setting_folder_path = os.path.join(
         executor_path, setting_folder_name)
 
-    product = 'RTK330L'
+    product = 'OpenRTK330L'
     product_folder = os.path.join(setting_folder_path, product)
     if not os.path.isdir(product_folder):
         os.makedirs(product_folder)
@@ -993,9 +956,10 @@ def do_parse(folder_path, kml_rate, setting_file):
     setting_path = prepare_setting_folder(setting_file)
     for root, _, file_name in os.walk(folder_path):
         for fname in file_name:
-            if fname.startswith('user') and fname.endswith('.bin'):
+            if (fname.startswith('user') or fname.startswith('debug')) and fname.endswith('.bin') or (fname.startswith('IMU')) or (fname.endswith('.log')):
                 file_path = os.path.join(root, fname)
-                print_green('Parse is started. File path: {0}'.format(file_path))
+                print_green(
+                    'Parse is started. File path: {0}'.format(file_path))
                 path = mkdir(file_path)
                 try:
                     with open(file_path, 'rb') as fp_rawdata:
