@@ -5,9 +5,9 @@ import datetime
 import threading
 import math
 import re
+import struct
 from ..widgets import (
-    # EthernetDataLogger, EthernetDebugDataLogger, EthernetRTCMDataLogger
-    EthernetDataLogger
+    NTRIPClient, EthernetDataLogger, EthernetDebugDataLogger, EthernetRTCMDataLogger
 )
 from ...framework.utils import (
     helper, resource
@@ -51,7 +51,7 @@ class Provider(OpenDeviceBase):
         self.nmea_buffer = []
         self.nmea_sync = 0
         self.prepare_folders()
-        self.ntripClient = None
+        self.ntrip_client = None
         self.connected = True
         self.rtk_log_file_name = ''
 
@@ -164,14 +164,31 @@ class Provider(OpenDeviceBase):
                 '\nTo keep runing, use INS configuration as default.' +
                 '\nYou can choose to place your json file under execution path if it is an unknown application.')
 
-    # def ntrip_client_thread(self):
-    #     self.ntripClient = NTRIPClient(self.properties, self.communicator)
-    #     self.ntripClient.run()
+    def ntrip_client_thread(self):
+        self.ntrip_client = NTRIPClient(self.properties)
+        self.ntrip_client.on('parsed', self.handle_rtcm_data_parsed)
+        self.ntrip_client.run()
+
+    def handle_rtcm_data_parsed(self, data):
+        # print('rtcm',data)
+
+        if self.rtcm_logf is not None and data is not None:
+            self.rtcm_logf.write(bytes(data))
+            self.rtcm_logf.flush()
+        if self.communicator.can_write() and not self.is_upgrading:
+            whole_packet = helper.build_ethernet_packet(
+                                                        self.communicator.get_dst_mac(), 
+                                                        self.communicator.get_src_mac(),
+                                                        b'\x02\x0b',
+                                                        data)
+    
+            self.communicator.write(whole_packet)
+            pass
 
     def after_setup(self):
         set_user_para = self.cli_options and self.cli_options.set_user_para
         self.ntrip_client_enable = self.cli_options and self.cli_options.ntrip_client
-        # with_raw_log = self.cli_options and self.cli_options.with_raw_log
+        # with_raw_log = self.cli_options and self.cli_options.with_raw_log        
 
         if set_user_para:
             result = self.set_params(
@@ -180,9 +197,10 @@ class Provider(OpenDeviceBase):
             if result['packetType'] == 'success':
                 self.save_config()
 
-        # if self.ntrip_client_enable:
-        #     t = threading.Thread(target=self.ntrip_client_thread)
-        #     t.start()
+        # start ntrip client
+        if self.properties["initial"].__contains__("ntrip") and not self.ntrip_client:
+            threading.Thread(target=self.ntrip_client_thread).start()
+            pass
 
         try:
             if self.data_folder is not None:
@@ -194,18 +212,17 @@ class Provider(OpenDeviceBase):
                 self.rtk_log_file_name = file_name
                 self.user_logf = open(
                     file_name + '/' + 'user_' + file_time + '.bin', "wb")
-                # self.debug_logf = open(
-                #     file_name + '/' + 'debug_' + file_time + '.bin', "wb")
-                # self.rtcm_logf = open(
-                #     file_name + '/' + 'rtcm_' + file_time + '.bin', "wb")
+                self.debug_logf = open(
+                    file_name + '/' + 'debug_' + file_time + '.bin', "wb")
+                self.rtcm_logf = open(
+                    file_name + '/' + 'rtcm_' + file_time + '.bin', "wb")
 
             # start a thread to log data
-            threading.Thread(target=self.thread_data_log).start()
+            # threading.Thread(target=self.thread_data_log).start()
             # threading.Thread(target=self.thread_debug_data_log).start()
             # threading.Thread(target=self.thread_rtcm_data_log).start()
 
             self.save_device_info()
-
         except Exception as e:
             print(e)
             return False
@@ -219,56 +236,59 @@ class Provider(OpenDeviceBase):
         return int(cksum, 16), calc_cksum
 
     def on_read_raw(self, data):
-        # for bytedata in data:
-        #     if bytedata == 0x24:
-        #         self.nmea_buffer = []
-        #         self.nmea_sync = 0
-        #         self.nmea_buffer.append(chr(bytedata))
-        #     else:
-        #         self.nmea_buffer.append(chr(bytedata))
-        #         if self.nmea_sync == 0:
-        #             if bytedata == 0x0D:
-        #                 self.nmea_sync = 1
-        #         elif self.nmea_sync == 1:
-        #             if bytedata == 0x0A:
-        #                 try:
-        #                     str_nmea = ''.join(self.nmea_buffer)
-        #                     cksum, calc_cksum = self.nmea_checksum(
-        #                         str_nmea)
-        #                     if cksum == calc_cksum:
-        #                         if str_nmea.find("$GPGGA") != -1:
-        #                             self.add_output_packet('gga',str_nmea)
-        #                     APP_CONTEXT.get_print_logger().info(str_nmea.replace('\r\n', ''))
-        #                 except Exception as e:
-        #                     # print('NMEA fault:{0}'.format(e))
-        #                     pass
-        #             self.nmea_buffer = []
-        #             self.nmea_sync = 0
+        for bytedata in data:
+            if bytedata == 0x24:
+                self.nmea_buffer = []
+                self.nmea_sync = 0
+                self.nmea_buffer.append(chr(bytedata))
+            else:
+                self.nmea_buffer.append(chr(bytedata))
+                if self.nmea_sync == 0:
+                    if bytedata == 0x0D:
+                        self.nmea_sync = 1
+                elif self.nmea_sync == 1:
+                    if bytedata == 0x0A:
+                        try:
+                            str_nmea = ''.join(self.nmea_buffer)
+                            cksum, calc_cksum = self.nmea_checksum(
+                                str_nmea)
+                            if cksum == calc_cksum:
+                                if str_nmea.find("$GPGGA") != -1:
+                                    self.add_output_packet('gga',str_nmea)
+                            APP_CONTEXT.get_print_logger().info(str_nmea.replace('\r\n', ''))
+                        except Exception as e:
+                            # print('NMEA fault:{0}'.format(e))
+                            pass
+                    self.nmea_buffer = []
+                    self.nmea_sync = 0
         
-        if self.user_logf is not None:
+        if self.user_logf is not None and data is not None:
             self.user_logf.write(data)
+            self.user_logf.flush()
+        
 
     def thread_data_log(self, *args, **kwargs):
-        self.lan_data_logger = EthernetDataLogger(
+        self.ethernet_data_logger = EthernetDataLogger(
             self.properties, self.communicator, self.user_logf)
-        self.lan_data_logger.run()
+        self.ethernet_data_logger.run()
 
     def thread_debug_data_log(self, *args, **kwargs):
-        self.lan_debug_data_logger = EthernetDebugDataLogger(
+        self.ethernet_debug_data_logger = EthernetDebugDataLogger(
             self.properties, self.communicator, self.debug_logf)
-        self.lan_debug_data_logger.run()
+        self.ethernet_debug_data_logger.run()
 
     def thread_rtcm_data_log(self, *args, **kwargs):
-        self.lan_rtcm_data_logger = EthernetRTCMDataLogger(
+        self.ethernet_rtcm_data_logger = EthernetRTCMDataLogger(
             self.properties, self.communicator, self.rtcm_logf)
-        self.lan_rtcm_data_logger.run()
+        self.ethernet_rtcm_data_logger.run()
 
     def on_receive_output_packet(self, packet_type, data, error=None):
         '''
         Listener for getting output packet
         '''
+        print('on_receive_output_packet:', data)
         # $GPGGA,080319.00,3130.4858508,N,12024.0998832,E,4,25,0.5,12.459,M,0.000,M,2.0,*46
-        if packet_type == 'gN':
+        if packet_type == b'\x02\x0a':
             if self.ntrip_client_enable:
                 # $GPGGA
                 gpgga = '$GPGGA'
@@ -328,11 +348,11 @@ class Provider(OpenDeviceBase):
                     str_checksum = str_checksum[2:]
                 gpgga = gpgga + '*' + str_checksum + '\r\n'
                 print(gpgga)
-                if self.ntripClient != None:
-                    self.ntripClient.send(gpgga)
+                if self.ntrip_client != None:
+                    self.ntrip_client.send(gpgga)
                 return
 
-        elif packet_type == 'pS':
+        elif packet_type ==  b'\x03\x0a':
             try:
                 if data['latitude'] != 0.0 and data['longitude'] != 0.0:
                     if self.pS_data:
@@ -374,7 +394,7 @@ class Provider(OpenDeviceBase):
                 # print(e)
                 pass
 
-        elif packet_type == 'sK':
+        elif packet_type ==  b'\x05\x0a':
             if self.sky_data:
                 if self.sky_data[0]['timeOfWeek'] == data[0]['timeOfWeek']:
                     self.sky_data.extend(data)
@@ -618,7 +638,7 @@ class Provider(OpenDeviceBase):
                 #     parameter['type'], parameter['value']))
             # result = self.set_param(parameter)
             command_line = helper.build_packet(
-                'uB', message_bytes)
+                b'\x03\xcc', message_bytes)
             # for s in command_line:
             #     print(hex(s))
 

@@ -11,8 +11,8 @@ import scapy
 import serial
 import serial.tools.list_ports
 import psutil
-from psutil import net_if_addrs, net_if_stats
-from scapy.all import conf, sendp, sniff,srp
+from psutil import net_if_addrs
+from scapy.all import conf, sendp, sniff, srp, wrpcap, sys
 from scapy.layers.l2 import Ether
 from ..devices import DeviceManager
 from .constants import BAUDRATE_LIST
@@ -725,7 +725,7 @@ class Ethernet(Communicator):
     def __init__(self, options=None):
         super().__init__()
         self.type = '100base'
-        self.src_mac = conf.iface.mac
+        self.src_mac = None
         self.dst_mac = '04:00:00:00:00:04'  # TODO: predefined or configured?
         self.ethernet_name = None
         self.data = None
@@ -745,16 +745,18 @@ class Ethernet(Communicator):
         ifaces_list = self.get_network_card()
 
         command_line =b"\x04\x00\x00\x00\x00\x04tx'xH\xa4\x00\x00UU\x01\xcc\x00\x00\x00\x00\xcc\r\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-        filter_exp = 'ether src host ' + self.dst_mac
+        filter_exp = 'ether src host ' + self.dst_mac + ' and ether[16:2] == 0x01cc'
         for i in range(len(ifaces_list)):
-            ans = srp(Ether( _pkt=command_line, src="FF:FF:FF:FF:FF:FF", dst=self.dst_mac), timeout=0.2, iface = ifaces_list[i][0], filter=filter_exp, retry = 2,  verbose = 0)
+            ans = srp(Ether( _pkt=command_line, src="FF:FF:FF:FF:FF:FF", dst=self.dst_mac), timeout=0.5, iface = ifaces_list[i][0], filter=filter_exp, retry = 3,  verbose = 0)
             if ans[0]:
                 self.iface = ifaces_list[i][0]
                 self.src_mac = ifaces_list[i][1].replace('-', ':')
+                print(self.iface)
                 break
             else:
                 if i == len(ifaces_list) - 1:
                     print('The available Ethernet connection was not found.')
+                    return None
         # confirm device
         self.confirm_device(self)
         if self.device:
@@ -769,6 +771,10 @@ class Ethernet(Communicator):
         '''
         close
         '''
+    def can_write(self):
+        if self.iface:
+            return True
+        return False
 
     def write(self, data, is_flush=False):
         '''
@@ -776,25 +782,27 @@ class Ethernet(Communicator):
         '''
         try:
             sendp(data, iface=self.iface, verbose = 0)
-            print(data)
+            # print(data)
         except Exception as e:
             raise
 
-    def read(self,size=0):
+    def read(self, callback=None):
         '''
         read
         '''
-        filter_exp = 'ether src host ' + self.dst_mac
-        data = sniff(count = 1, iface = self.iface, filter = filter_exp, timeout = 1)
-        if data:
-            # print('answer', data[0].original)
-            return data[0].original
-        return None
 
-    def write_read(self, data):
         filter_exp = 'ether src host ' + self.dst_mac
-        ans = srp(Ether(_pkt=data), iface = self.iface, filter = filter_exp, timeout = 1, retry = 3, verbose = 0)
+        sniff(prn = callback, count = 0, iface = self.iface, filter = filter_exp)
+
+    def write_read(self, data, filter_cmd_type = 0):
+        if filter_cmd_type:
+            filter_exp = 'ether src host ' + self.dst_mac + ' and ether[16:2] == %d' % filter_cmd_type
+        else:
+            filter_exp = 'ether src host ' + self.dst_mac
+
+        ans = srp(Ether(_pkt=data), iface = self.iface, filter = filter_exp, timeout = 0.5, retry = 3, verbose = 0)
         if ans[0].res[0].answer:
+            # print(bytes(ans[0].res[0].answer))
             return bytes(ans[0].res[0].answer)
         return None
 
@@ -816,6 +824,6 @@ class Ethernet(Communicator):
 
         for k, v in info.items():
             for item in v:
-                if item[0] == -1 and not item[1] == '127.0.0.1':
+                if item[0] == -1 and not item[1] == '':
                     network_card_info.append((k, item[1]))
         return network_card_info

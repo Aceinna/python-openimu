@@ -203,9 +203,9 @@ class Provider(OpenDeviceBase):
                     file_name + '/' + 'rtcm_' + file_time + '.bin', "wb")
 
             # start a thread to log data
-            threading.Thread(target=self.thread_data_log).start()
-            threading.Thread(target=self.thread_debug_data_log).start()
-            threading.Thread(target=self.thread_rtcm_data_log).start()
+            # threading.Thread(target=self.thread_data_log).start()
+            # threading.Thread(target=self.thread_debug_data_log).start()
+            # threading.Thread(target=self.thread_rtcm_data_log).start()
 
             self.save_device_info()
 
@@ -270,6 +270,7 @@ class Provider(OpenDeviceBase):
         '''
         Listener for getting output packet
         '''
+        print('on_receive_output_packet:', data)
         # $GPGGA,080319.00,3130.4858508,N,12024.0998832,E,4,25,0.5,12.459,M,0.000,M,2.0,*46
         if packet_type == 'gN':
             if self.ntrip_client_enable:
