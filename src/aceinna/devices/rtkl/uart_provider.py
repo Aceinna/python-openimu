@@ -14,15 +14,6 @@ from ...framework.utils import (
 from ...framework.utils.print import print_red
 
 
-def build_content(content):
-    len_mod = len(content) % 16
-    if len_mod == 0:
-        return content
-
-    fill_bytes = bytes(16-len_mod)
-    return content + fill_bytes
-
-
 class Provider(RTKProviderBase):
     '''
     RTK330LA UART provider
@@ -96,7 +87,7 @@ class Provider(RTKProviderBase):
     def build_worker(self, rule, content):
         if rule == 'rtk':
             rtk_upgrade_worker = FirmwareUpgradeWorker(
-                self.communicator, self.bootloader_baudrate, lambda: build_content(content), 192)
+                self.communicator, self.bootloader_baudrate, lambda: helper.format_firmware_content(content), 192)
             rtk_upgrade_worker.on(
                 UPGRADE_EVENT.FIRST_PACKET, lambda: time.sleep(15))
             rtk_upgrade_worker.on(UPGRADE_EVENT.BEFORE_WRITE,
@@ -105,7 +96,7 @@ class Provider(RTKProviderBase):
 
         if rule == 'ins':
             ins_upgrade_worker = FirmwareUpgradeWorker(
-                self.communicator, self.bootloader_baudrate, lambda: build_content(content), 192)
+                self.communicator, self.bootloader_baudrate, lambda: helper.format_firmware_content(content), 192)
             ins_upgrade_worker.on(
                 UPGRADE_EVENT.FIRST_PACKET, lambda: time.sleep(15))
             ins_upgrade_worker.on(UPGRADE_EVENT.BEFORE_WRITE,

@@ -14,9 +14,10 @@ from ...framework.utils import (helper, resource)
 from ...framework.file_storage import FileLoger
 from ...framework.configuration import get_config
 from ...framework.ans_platform_api import AnsPlatformAPI
+from ...framework.progress_bar import ProgressBar
+from ...framework.constants import INTERFACES
 from ..message_center import (DeviceMessageCenter, EVENT_TYPE)
 from ..parser_manager import ParserManager
-from ...framework.progress_bar import ProgressBar
 from ..upgrade_center import UpgradeCenter
 
 if sys.version_info[0] > 2:
@@ -112,40 +113,6 @@ class OpenDeviceBase(EventBase):
     def get_operation_status(self):
         ''' Return current devcie operation status
         '''
-
-    def internal_input_command(self, command, read_length=500):
-        '''
-        Internal input command
-        '''
-        command_line = helper.build_input_packet(command)
-        self.communicator.write(command_line)
-        time.sleep(0.1)
-
-        data_buffer = self.read_untils_have_data(command, read_length, 20)
-        parsed = bytearray(data_buffer) if data_buffer and len(
-            data_buffer) > 0 else None
-
-        format_string = None
-        if parsed is not None:
-            try:
-                if sys.version_info < (3, 0):
-                    format_string = str(struct.pack(
-                        '{0}B'.format(len(parsed)), *parsed))
-                else:
-                    format_string = str(struct.pack(
-                        '{0}B'.format(len(parsed)), *parsed), 'utf-8')
-            except UnicodeDecodeError:
-                return ''
-
-        if format_string is not None:
-            return format_string
-        return ''
-
-    def read_untils_have_data(self, packet_type, read_length=200, retry_times=20):
-        '''
-        Get data from limit times of read
-        '''
-        return helper.read_untils_have_data(self.communicator, packet_type, read_length, retry_times)
 
     def _setup_message_center(self):
         if not self._message_center:
@@ -289,11 +256,7 @@ class OpenDeviceBase(EventBase):
         Restart device
         '''
         # output firmware upgrade finished
-        time.sleep(1)
-        command_line = helper.build_bootloader_input_packet('JA')
-        self.communicator.write(command_line)
-        print('Restarting app ...')
-        time.sleep(5)
+        self.jump_to_application()
 
         if self.is_upgrading:
             self.emit('upgrade_restart')
@@ -326,14 +289,7 @@ class OpenDeviceBase(EventBase):
 
             # run command JI
             if not self.is_in_bootloader:
-                command_line = helper.build_bootloader_input_packet('JI')
-                self.communicator.reset_buffer()  # clear input and output buffer
-                self.communicator.write(command_line, True)
-                time.sleep(3)
-
-                # It is used to skip streaming data with size 1000 per read
-                helper.read_untils_have_data(
-                    self.communicator, 'JI', 1000, 50)
+                self.jump_to_bootloader()
 
             workers = self.get_upgrade_workers(firmware_content)
 
@@ -507,3 +463,46 @@ class OpenDeviceBase(EventBase):
         return {
             'packetType': 'success'
         }
+
+    def jump_to_bootloader(self):
+        if self.communicator.type == INTERFACES.UART:
+            command_line = helper.build_bootloader_input_packet('JI')
+            self.communicator.reset_buffer()  # clear input and output buffer
+            self.communicator.write(command_line, True)
+            time.sleep(3)
+
+            # It is used to skip streaming data with size 1000 per read
+            helper.read_untils_have_data(
+                self.communicator, 'JI', 1000, 50)
+        elif self.communicator.type == INTERFACES.ETH_100BASE_T1:
+            command_JI = [0x01, 0xaa]
+            command_line = helper.build_ethernet_packet(
+                self.communicator.get_dst_mac(),
+                self.communicator.get_src_mac(),
+                command_JI)
+
+            self.communicator.write(command_line)
+
+        # cli = self.command_builder.create('JI', timeout=3)
+        # cli.send()
+        # time.sleep(3)
+
+    def jump_to_application(self):
+        time.sleep(1)
+        if self.communicator.type == INTERFACES.UART:
+            command_line = helper.build_bootloader_input_packet('JA')
+            self.communicator.write(command_line)
+
+        elif self.communicator.type == INTERFACES.ETH_100BASE_T1:
+            command_JA = [0x02, 0xaa]
+            command_line = helper.build_ethernet_packet(
+                self.communicator.get_dst_mac(),
+                self.communicator.get_src_mac(),
+                command_JA)
+
+            self.communicator.write(command_line)
+
+        # cli = self.command_builder.create('JA', timeout=5)
+        # cli.send()
+        print('Restarting app ...')
+        time.sleep(5)

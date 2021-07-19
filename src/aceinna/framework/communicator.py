@@ -15,7 +15,7 @@ from psutil import net_if_addrs
 from scapy.all import sendp, sniff, srp
 from scapy.layers.l2 import Ether
 from ..devices import DeviceManager
-from .constants import BAUDRATE_LIST
+from .constants import (BAUDRATE_LIST, INTERFACES)
 from .context import APP_CONTEXT
 from .utils.resource import (get_executor_path)
 from .wrapper import SocketConnWrapper
@@ -31,11 +31,11 @@ class CommunicatorFactory:
         '''
         Initial communicator instance
         '''
-        if method == 'uart':
+        if method == INTERFACES.UART:
             return SerialPort(options)
-        elif method == 'eth':
+        elif method == INTERFACES.ETH:
             return LAN(options)
-        elif method == '100base':
+        elif method == INTERFACES.ETH_100BASE_T1:
             return Ethernet(options)
         else:
             raise Exception('no matched communicator')
@@ -123,7 +123,7 @@ class SerialPort(Communicator):
 
     def __init__(self, options=None):
         super(SerialPort, self).__init__()
-        self.type = 'uart'
+        self.type = INTERFACES.UART
         self.serial_port = None  # the active UART
         self.port = None
         self.baud = None
@@ -567,7 +567,7 @@ class LAN(Communicator):
 
     def __init__(self, options=None):
         super().__init__()
-        self.type = 'eth'
+        self.type = INTERFACES.ETH
         self.host = None
         self.port = 2203  # TODO: predefined or configured?
 
@@ -719,12 +719,13 @@ class LAN(Communicator):
         '''
         pass
 
+
 class Ethernet(Communicator):
     '''Ethernet'''
 
     def __init__(self, options=None):
         super().__init__()
-        self.type = '100base'
+        self.type = INTERFACES.ETH_100BASE_T1
         self.src_mac = None
         self.dst_mac = '04:00:00:00:00:04'  # TODO: predefined or configured?
         self.ethernet_name = None
@@ -744,10 +745,12 @@ class Ethernet(Communicator):
         # find network connection
         ifaces_list = self.get_network_card()
 
-        command_line =b"\x04\x00\x00\x00\x00\x04tx'xH\xa4\x00\x00UU\x01\xcc\x00\x00\x00\x00\xcc\r\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-        filter_exp = 'ether src host ' + self.dst_mac + ' and ether[16:2] == 0x01cc'
+        command_line = b"\x04\x00\x00\x00\x00\x04tx'xH\xa4\x00\x00UU\x01\xcc\x00\x00\x00\x00\xcc\r\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        filter_exp = 'ether src host ' + \
+            self.dst_mac + ' and ether[16:2] == 0x01cc'
         for i in range(len(ifaces_list)):
-            ans = srp(Ether( _pkt=command_line, src="FF:FF:FF:FF:FF:FF", dst=self.dst_mac), timeout=0.5, iface = ifaces_list[i][0], filter=filter_exp, retry = 3,  verbose = 0)
+            ans = srp(Ether(_pkt=command_line, src="FF:FF:FF:FF:FF:FF", dst=self.dst_mac),
+                      timeout=0.5, iface=ifaces_list[i][0], filter=filter_exp, retry=3,  verbose=0)
             if ans[0]:
                 self.iface = ifaces_list[i][0]
                 self.src_mac = ifaces_list[i][1].replace('-', ':')
@@ -771,6 +774,7 @@ class Ethernet(Communicator):
         '''
         close
         '''
+
     def can_write(self):
         if self.iface:
             return True
@@ -781,7 +785,7 @@ class Ethernet(Communicator):
         write
         '''
         try:
-            sendp(data, iface=self.iface, verbose = 0)
+            sendp(data, iface=self.iface, verbose=0)
             # print(data)
         except Exception as e:
             raise
@@ -792,15 +796,17 @@ class Ethernet(Communicator):
         '''
 
         filter_exp = 'ether src host ' + self.dst_mac
-        sniff(prn = callback, count = 0, iface = self.iface, filter = filter_exp)
+        sniff(prn=callback, count=0, iface=self.iface, filter=filter_exp)
 
-    def write_read(self, data, filter_cmd_type = 0):
+    def write_read(self, data, filter_cmd_type=0):
         if filter_cmd_type:
-            filter_exp = 'ether src host ' + self.dst_mac + ' and ether[16:2] == %d' % filter_cmd_type
+            filter_exp = 'ether src host ' + self.dst_mac + \
+                ' and ether[16:2] == %d' % filter_cmd_type
         else:
             filter_exp = 'ether src host ' + self.dst_mac
 
-        ans = srp(Ether(_pkt=data), iface = self.iface, filter = filter_exp, timeout = 0.5, retry = 3, verbose = 0)
+        ans = srp(Ether(_pkt=data), iface=self.iface,
+                  filter=filter_exp, timeout=0.5, retry=3, verbose=0)
         if ans[0].res[0].answer:
             # print(bytes(ans[0].res[0].answer))
             return bytes(ans[0].res[0].answer)

@@ -405,3 +405,12 @@ def collection_to_dict(collection, key):
         actual_key = item[key]
         inst[actual_key] = item
     return inst
+
+
+def format_firmware_content(content):
+    len_mod = len(content) % 16
+    if len_mod == 0:
+        return content
+
+    fill_bytes = bytes(16-len_mod)
+    return content + fill_bytes

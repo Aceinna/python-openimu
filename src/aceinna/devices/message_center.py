@@ -6,6 +6,7 @@ import datetime
 import time
 from .base import EventBase
 from ..framework.utils import helper
+from ..framework.constants import INTERFACES
 if sys.version_info[0] > 2:
     from queue import Queue
 else:
@@ -139,7 +140,7 @@ class DeviceMessageCenter(EventBase):
             self._has_running_checker = True
 
         # setup receiver, parser
-        if self._communicator.type == '100base':
+        if self._communicator.type == INTERFACES.ETH_100BASE_T1:
             funcs = [self.thread_ethernet_receiver, self.thread_parser]
         else:
             funcs = [self.thread_receiver, self.thread_parser]

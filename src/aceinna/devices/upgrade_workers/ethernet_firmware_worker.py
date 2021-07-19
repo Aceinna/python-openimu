@@ -1,17 +1,17 @@
 import time
+import struct
 from ..base.upgrade_worker_base import UpgradeWorkerBase
 from ...framework.utils import helper
 from . import (UPGRADE_EVENT, UPGRADE_GROUP)
 
-class FirmwareUpgradeWorker(UpgradeWorkerBase):
-    '''Firmware upgrade worker
+class EthernetFirmwareUpgradeWorker(UpgradeWorkerBase):
+    '''Firmware upgrade worker under ethernet, only used while upgrade firmware
     '''
 
-    def __init__(self, communicator, baudrate, file_content, block_size=240):
-        super(FirmwareUpgradeWorker, self).__init__()
+    def __init__(self, communicator, file_content, block_size=240):
+        super(EthernetFirmwareUpgradeWorker, self).__init__()
         self._communicator = communicator
         self.current = 0
-        self._baudrate = baudrate
         self.max_data_len = block_size  # custom
         self._group = UPGRADE_GROUP.FIRMWARE
 
@@ -31,13 +31,20 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
         '''
         Send block to bootloader
         '''
-        # print(data_len, addr, time.time())
-        command_line = helper.build_bootloader_input_packet(
-            'WA', data_len, current, data)
-        try:
-            self._communicator.write(command_line, True)
-        except Exception as ex:  # pylint: disable=broad-except
-            return False
+        command_WA = [0x03, 0xaa]
+
+        message_bytes = []
+        message_bytes.extend(struct.pack('>I', current))
+        message_bytes.append(data_len)
+        message_bytes.extend(data)
+
+        command_line = helper.build_ethernet_packet(
+            self.communicator.get_dst_mac(),
+            self.communicator.get_src_mac(),
+            command_WA, message_bytes)
+
+        command_filter = struct.unpack('>H', bytes(command_WA))[0]
+        response = self.communicator.write_read(command_line, command_filter)
 
         # custom
         if current == 0:
@@ -48,8 +55,6 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
                           'Fail in first packet: {0}'.format(ex))
                 return False
 
-        response = helper.read_untils_have_data(
-            self._communicator, 'WA', 12, 10)
         # wait WA end if cannot read response in defined retry times
         if response is None:
             time.sleep(0.1)
@@ -64,14 +69,13 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
             self.emit(UPGRADE_EVENT.ERROR, self._key, 'Invalid file content')
             return
 
-        self._communicator.serial_port.baudrate = self._baudrate
-        self._communicator.serial_port.reset_input_buffer()
         try:
             self.emit(UPGRADE_EVENT.BEFORE_WRITE)
         except Exception as ex:
             self.emit(UPGRADE_EVENT.ERROR, self._key,
                       'Fail in before write: {0}'.format(ex))
             return
+
         while self.current < self.total:
             if self._is_stopped:
                 return

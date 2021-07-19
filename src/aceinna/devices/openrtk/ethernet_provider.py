@@ -1,4 +1,5 @@
 import os
+import struct
 import time
 import json
 import datetime
@@ -13,13 +14,19 @@ from ...framework.utils import (
     helper, resource
 )
 from ...framework.context import APP_CONTEXT
+from ...framework.utils.firmware_parser import parser as firmware_content_parser
 from ..base.provider_base import OpenDeviceBase
 from ..configs.openrtk_predefine import (
     APP_STR, get_openrtk_products, get_configuratin_file_mapping
 )
 from ..decorator import with_device_message
+from ...models import InternalCombineAppParseRule
 from ..parsers.open_field_parser import encode_value
 from ...framework.utils.print import print_yellow
+from ..upgrade_workers import (
+    EthernetFirmwareUpgradeWorker,
+    UPGRADE_EVENT
+)
 
 
 class Provider(OpenDeviceBase):
@@ -95,6 +102,21 @@ class Provider(OpenDeviceBase):
                     with open(app_name_config_path, "wb") as code:
                         code.write(app_config_content)
 
+    @property
+    def is_in_bootloader(self):
+        ''' Check if the connected device is in bootloader mode
+        '''
+        if not self.app_info or not self.app_info.__contains__('version'):
+            return False
+
+        version = self.app_info['version']
+        version_splits = version.split(',')
+        if len(version_splits) == 1:
+            if 'bootloader' in version_splits[0].lower():
+                return True
+
+        return False
+
     def bind_device_info(self, device_access, device_info, app_info):
         self._build_device_info(device_info)
         self._build_app_info(app_info)
@@ -113,7 +135,7 @@ class Provider(OpenDeviceBase):
 
         self.device_info = {
             'name': split_text[0],
-            'pn': split_text[1],        
+            'pn': split_text[1],
             'sn': split_text[2]
         }
 
@@ -137,7 +159,7 @@ class Provider(OpenDeviceBase):
         self.app_info = {
             'app_name': app_name,
             'app_version': split_text[1] + split_text[2],
-            'bootloader_version': split_text[3] + split_text[4], 
+            'bootloader_version': split_text[3] + split_text[4],
         }
 
     def load_properties(self):
@@ -150,7 +172,7 @@ class Provider(OpenDeviceBase):
 
         # Load the openimu.json based on its app
         product_name = self.device_info['name']
-        app_name = 'RTK_INS' #self.app_info['app_name']
+        app_name = 'RTK_INS'  # self.app_info['app_name']
         app_file_path = os.path.join(
             self.setting_folder_path, product_name, app_name, 'ins401.json')
 
@@ -177,18 +199,18 @@ class Provider(OpenDeviceBase):
             self.rtcm_logf.flush()
         if self.communicator.can_write() and not self.is_upgrading:
             whole_packet = helper.build_ethernet_packet(
-                                                        self.communicator.get_dst_mac(), 
-                                                        self.communicator.get_src_mac(),
-                                                        b'\x02\x0b',
-                                                        data)
-    
+                self.communicator.get_dst_mac(),
+                self.communicator.get_src_mac(),
+                b'\x02\x0b',
+                data)
+
             self.communicator.write(whole_packet)
             pass
 
     def after_setup(self):
         set_user_para = self.cli_options and self.cli_options.set_user_para
         self.ntrip_client_enable = self.cli_options and self.cli_options.ntrip_client
-        # with_raw_log = self.cli_options and self.cli_options.with_raw_log        
+        # with_raw_log = self.cli_options and self.cli_options.with_raw_log
 
         if set_user_para:
             result = self.set_params(
@@ -198,16 +220,15 @@ class Provider(OpenDeviceBase):
                 self.save_config()
 
         # start ntrip client
-        if self.properties["initial"].__contains__("ntrip") and not self.ntrip_client:
+        if self.properties["initial"].__contains__("ntrip") and not self.ntrip_client and not self.is_in_bootloader:
             threading.Thread(target=self.ntrip_client_thread).start()
-            pass
 
         try:
             if self.data_folder is not None:
                 dir_time = time.strftime("%Y%m%d_%H%M%S", time.localtime())
                 file_time = time.strftime(
                     "%Y_%m_%d_%H_%M_%S", time.localtime())
-                file_name = self.data_folder + '/' + 'openrtk_log_' + dir_time
+                file_name = self.data_folder + '/' + 'ins401_log_' + dir_time
                 os.mkdir(file_name)
                 self.rtk_log_file_name = file_name
                 self.user_logf = open(
@@ -254,18 +275,17 @@ class Provider(OpenDeviceBase):
                                 str_nmea)
                             if cksum == calc_cksum:
                                 if str_nmea.find("$GPGGA") != -1:
-                                    self.add_output_packet('gga',str_nmea)
+                                    self.add_output_packet('gga', str_nmea)
                             APP_CONTEXT.get_print_logger().info(str_nmea.replace('\r\n', ''))
                         except Exception as e:
                             # print('NMEA fault:{0}'.format(e))
                             pass
                     self.nmea_buffer = []
                     self.nmea_sync = 0
-        
+
         if self.user_logf is not None and data is not None:
             self.user_logf.write(data)
             self.user_logf.flush()
-        
 
     def thread_data_log(self, *args, **kwargs):
         self.ethernet_data_logger = EthernetDataLogger(
@@ -352,7 +372,7 @@ class Provider(OpenDeviceBase):
                     self.ntrip_client.send(gpgga)
                 return
 
-        elif packet_type ==  b'\x03\x0a':
+        elif packet_type == b'\x03\x0a':
             try:
                 if data['latitude'] != 0.0 and data['longitude'] != 0.0:
                     if self.pS_data:
@@ -394,7 +414,7 @@ class Provider(OpenDeviceBase):
                 # print(e)
                 pass
 
-        elif packet_type ==  b'\x05\x0a':
+        elif packet_type == b'\x05\x0a':
             if self.sky_data:
                 if self.sky_data[0]['timeOfWeek'] == data[0]['timeOfWeek']:
                     self.sky_data.extend(data)
@@ -414,35 +434,69 @@ class Provider(OpenDeviceBase):
                     and output_packet_config['from'] == 'imu':
                 self.add_output_packet('imu', data)
 
-    def do_write_firmware(self, firmware_content):
-        raise Exception('It is not supported by connecting device with LAN')
+    def before_write_content(self, core, content_len):
+        command_CS = [0x04, 0xaa]
 
-        # rules = [
-        #     InternalCombineAppParseRule('rtk', 'rtk_start:', 4),
-        #     InternalCombineAppParseRule('sdk', 'sdk_start:', 4),
-        # ]
+        message_bytes = [ord('C'), ord(core)]
+        message_bytes.extend(struct.pack('>I', content_len))
 
-        # parsed_content = firmware_content_parser(firmware_content, rules)
+        command_line = helper.build_ethernet_packet(
+            self.communicator.get_dst_mac(),
+            self.communicator.get_src_mac(),
+            command_CS, message_bytes)
 
-        # user_port_num, port_name = self.build_connected_serial_port_info()
-        # sdk_port = port_name + str(int(user_port_num) + 3)
+        time.sleep(3)  # sleep 3s, to wait for bootloader ready
 
-        # sdk_uart = serial.Serial(sdk_port, 115200, timeout=0.1)
-        # if not sdk_uart.isOpen():
-        #     raise Exception('Cannot open SDK upgrade port')
+        command_filter = struct.unpack('>H', bytes(command_CS))[0]
+        result = self.communicator.write_read(command_line, command_filter)
 
-        # upgrade_center = UpgradeCenter()
+        if not result:
+            raise Exception('Cannot run set core command')
 
-        # upgrade_center.register(
-        #     FirmwareUpgradeWorker(self.communicator, parsed_content['rtk']))
+    def build_worker(self, rule, content):
+        ''' Build upgarde worker by rule and content
+        '''
+        if rule == 'rtk':
+            rtk_upgrade_worker = EthernetFirmwareUpgradeWorker(
+                self.communicator, lambda: helper.format_firmware_content(content), 192)
+            rtk_upgrade_worker.on(
+                UPGRADE_EVENT.FIRST_PACKET, lambda: time.sleep(12))
+            rtk_upgrade_worker.on(UPGRADE_EVENT.BEFORE_WRITE,
+                                  lambda: self.before_write_content('0', len(content)))
+            return rtk_upgrade_worker
 
-        # upgrade_center.register(
-        #     SDKUpgradeWorker(sdk_uart, parsed_content['sdk']))
+        if rule == 'ins':
+            ins_upgrade_worker = EthernetFirmwareUpgradeWorker(
+                self.communicator, lambda: helper.format_firmware_content(content), 192)
+            ins_upgrade_worker.on(
+                UPGRADE_EVENT.FIRST_PACKET, lambda: time.sleep(12))
+            ins_upgrade_worker.on(UPGRADE_EVENT.BEFORE_WRITE,
+                                  lambda: self.before_write_content('1', len(content)))
+            return ins_upgrade_worker
 
-        # upgrade_center.on('progress', self.handle_upgrade_process)
-        # upgrade_center.on('error', self.handle_upgrade_error)
-        # upgrade_center.on('finish', self.handle_upgrade_complete)
-        # upgrade_center.start()
+    def get_upgrade_workers(self, firmware_content):
+        workers = []
+        rules = [
+            InternalCombineAppParseRule('rtk', 'rtk_start:', 4),
+            InternalCombineAppParseRule('ins', 'ins_start:', 4),
+            InternalCombineAppParseRule('sdk', 'sdk_start:', 4),
+        ]
+
+        parsed_content = firmware_content_parser(firmware_content, rules)
+
+        # foreach parsed content, if empty, skip register into upgrade center
+        for _, rule in enumerate(parsed_content):
+            content = parsed_content[rule]
+            if len(content) == 0:
+                continue
+
+            worker = self.build_worker(rule, content)
+            if not worker:
+                continue
+
+            workers.append(worker)
+
+        return workers
 
     def get_device_connection_info(self):
         return {
@@ -471,6 +525,14 @@ class Provider(OpenDeviceBase):
         )
         with open(file_path, 'w') as outfile:
             outfile.write(self._device_info_string)
+
+    def after_upgrade_completed(self):
+        # start ntrip client
+        if self.properties["initial"].__contains__("ntrip") and not self.ntrip_client and not self.is_in_bootloader:
+            thead = threading.Thread(target=self.ntrip_client_thread)
+            thead.start()
+
+        self.save_device_info()
 
     # command list
     def server_status(self, *args):  # pylint: disable=invalid-name
@@ -777,10 +839,10 @@ class Provider(OpenDeviceBase):
 
     @with_device_message
     def send_command(self, command_line):
-        #command_line = #build a command
-        #helper.build_input_packet('rD')
+        # command_line = #build a command
+        # helper.build_input_packet('rD')
         result = yield self._message_center.build(command=command_line, timeout=5)
-        
+
         error = result['error']
         data = result['data']
         if error:
@@ -795,4 +857,3 @@ class Provider(OpenDeviceBase):
             'packetType': 'success',
             'data': data
         }
-        

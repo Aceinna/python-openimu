@@ -6,14 +6,14 @@ import signal
 from datetime import datetime, timedelta
 from functools import wraps
 from typing import TypeVar
-from .constants import (DEVICE_TYPES, BAUDRATE_LIST)
+from .constants import (DEVICE_TYPES, BAUDRATE_LIST, INTERFACES)
 from .utils.print import print_red
 from .utils.resource import is_dev_mode
 
 
 T = TypeVar('T')
 
-INTERFACES = ['uart', 'eth','100base']
+INTERFACE_LIST = INTERFACES.list()
 MODES = ['default', 'cli', 'receiver']
 TYPES_OF_LOG = ['openrtk', 'rtkl']
 KML_RATES = [1, 2, 5, 10]
@@ -26,7 +26,7 @@ def _build_args():
         description='Aceinna python driver input args command:', allow_abbrev=False)
 
     parser.add_argument("-i", "--interface", dest="interface",  metavar='',
-                        help="Interface. Allowed one of values: {0}".format(INTERFACES), default='uart', choices=INTERFACES)
+                        help="Interface. Allowed one of values: {0}".format(INTERFACE_LIST), default=INTERFACES.UART, choices=INTERFACE_LIST)
     parser.add_argument("-p", "--port", dest='port',  metavar='', type=int,
                         help="Webserver port")
     parser.add_argument("--device-type", dest="device_type", type=str,
