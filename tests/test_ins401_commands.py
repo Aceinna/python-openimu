@@ -74,11 +74,7 @@ def set_vehicle_speed_data(dest, src, command, field_value):
 
     command_line = helper.build_ethernet_packet(dest, src, command, message_bytes)
     return command_line
-def ethernet_command_send(device_provider:EhternetProvider, command_line=[], filter_cmd_type = []):
-    device_provider.communicator.filter_cmd_type = struct.unpack('>H', bytes(filter_cmd_type))[0]
-    result = device_provider.send_command(command_line)
-    device_provider.communicator.filter_cmd_type = 0
-    return result
+
 
 def ethernet_command_send_receive(device_provider:EhternetProvider):
     # get production info
@@ -87,24 +83,22 @@ def ethernet_command_send_receive(device_provider:EhternetProvider):
                                        list(INPUT_PACKETS[0]))
     
     if command_line:
-        result = ethernet_command_send(device_provider, command_line, list(INPUT_PACKETS[0]))           
+        result = device_provider.send_command(command_line)         
         print('get_production_info:', result)
     else:
         return False
-    time.sleep(0.5)
+
     #  get user configuration parameters
-    device_provider.communicator.filter_cmd_type = struct.unpack('>H', bytes(INPUT_PACKETS[1]))[0]
     for i in range(16):
         command_line = get_user_configuration_parameters(device_provider.communicator.get_dst_mac(), 
                                                          device_provider.communicator.get_src_mac(),
                                                          list(INPUT_PACKETS[1]),
                                                          i + 1)
         if command_line:
-            result = ethernet_command_send(device_provider, command_line, list(INPUT_PACKETS[1]))            
+            result = device_provider.send_command(command_line)            
             print('get_user_configuration_parameters:', result)
         else:
             return False
-        time.sleep(0.5)
       
     # set user configuration
     for i in range(16):
@@ -114,11 +108,10 @@ def ethernet_command_send_receive(device_provider:EhternetProvider):
                                               i + 1,
                                               user_parameters[i])
         if command_line:
-            result = ethernet_command_send(device_provider, command_line, INPUT_PACKETS[2])            
+            result = device_provider.send_command(command_line)            
             print('set_user_configuration:', result)
         else:
             return False 
-        time.sleep(0.5)
 
 
     # save user configuration
@@ -127,11 +120,10 @@ def ethernet_command_send_receive(device_provider:EhternetProvider):
                                        list(INPUT_PACKETS[3]))
     
     if command_line:
-        result = ethernet_command_send(device_provider, command_line, INPUT_PACKETS[3])            
+        result = device_provider.send_command(command_line)            
         print('save_user_configuration:', result)
     else:
         return False
-    time.sleep(0.5)
 
     # set vehicle speed data
     vehicle_speed_value = 80
@@ -145,7 +137,7 @@ def ethernet_command_send_receive(device_provider:EhternetProvider):
         print('set_vehicle_speed_data')
     else:
         return False
-    time.sleep(0.5)              
+                 
     # set base rtcm data
     # rtcm_data = [1, 2, 3, 4, 5, 6, 7, 8]
     # command_line = set_base_rtcm_data(device_provider.communicator.get_dst_mac(), 

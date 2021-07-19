@@ -730,7 +730,6 @@ class Ethernet(Communicator):
         self.ethernet_name = None
         self.data = None
         self.iface = None
-        self.filter_cmd_type = 0
 
         self.filter_device_type = None
         self.filter_device_type_assigned = False
@@ -787,20 +786,13 @@ class Ethernet(Communicator):
         except Exception as e:
             raise
 
-    def read(self):
+    def read(self, callback=None):
         '''
         read
         '''
-        if self.filter_cmd_type:
-            filter_exp = 'ether src host ' + self.dst_mac + ' and ether[16:2] == %d' % self.filter_cmd_type
-        else:
-            filter_exp = 'ether src host ' + self.dst_mac
 
-        data = sniff(count = 1, store = 1, iface = self.iface, filter = filter_exp, timeout = 1)
-        if data:
-            # print('answer', data[0].original)
-            return data[0].original
-        return None
+        filter_exp = 'ether src host ' + self.dst_mac
+        sniff(prn = callback, count = 0, iface = self.iface, filter = filter_exp)
 
     def write_read(self, data, filter_cmd_type = 0):
         if filter_cmd_type:
