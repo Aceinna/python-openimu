@@ -210,6 +210,11 @@ class RTKProviderBase(OpenDeviceBase):
         # print('new ntrip client')
         self.ntrip_client = NTRIPClient(self.properties)
         self.ntrip_client.on('parsed', self.handle_rtcm_data_parsed)
+        if self.device_info.__contains__('sn') and self.device_info.__contains__('pn'):
+            self.ntrip_client.set_connect_headers({
+                'Ntrip-Sn':self.device_info['sn'],
+                'Ntrip-Pn':self.device_info['pn']
+            })
         self.ntrip_client.run()
 
     def handle_rtcm_data_parsed(self, data):
