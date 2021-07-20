@@ -1,6 +1,9 @@
 # History
 
 ---
+## 2.6.0 / TBD
+- [INS401] Support the new device.
+
 ## 2.5.0 / 2021-07-02
 - [DMU] Support firmware upgrade.
 - [OpenRTK/RTK330LA] Support ST9100 chip upgrade.

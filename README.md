@@ -12,12 +12,20 @@ A message communication tool for OpenIMU, OpenRTK and other devices of Aceinna
 There are 2 ways to run the tool
 
 #### Prepare
-Install the dependency library. It is better to create a virtual environment before to do it.
+1. Install the dependency library. It is better to create a virtual environment before to do it.
 
-python 3.x
 ```bash
 $ pip install -r requirements.txt
 ```
+
+2. Install pcap api library(`optional`). Because we try to support INS401 a new device from Aceinna. It would use 100BASE-T1 ethernet, and the data transfer is in low-level of network, so we need help of pcap api. Actually, we integrated `scapy` in our project. The pcap api library is the dependency of `scapy`. If you are using a INS401 device, please also install the library based on your platform.
+
+| Platform | Libraray | Reference |
+| - | - | - |
+| Windows | `npcap` | https://scapy.readthedocs.io/en/latest/installation.html#windows |
+| Ubuntu | `tcpdump` | https://scapy.readthedocs.io/en/latest/installation.html#debian-ubuntu-fedora |
+| Mac | `libpcap` | https://scapy.readthedocs.io/en/latest/installation.html#mac-os-x |
+
 
 #### A. From source code
 
@@ -47,7 +55,7 @@ Arguments:
 
 | Name | Type | Default | Description |
 | - | :-: | :-: | - |
-| -i, --interface | String | 'default' | Value should be `uart`, `eth` |
+| -i, --interface | String | 'default' | Value should be `uart`, `eth`, `100base-t1` |
 | -p, --port | Number | '8000' | Value should be an available port |
 | --device-type | String | 'auto' | Value should be one of `IMU`, `RTK`, `DMU` |
 | -b, --baudrate | String | None | Value should be a valid baudrate. The valid value should be one of `38400`, `57600`, `115200`, `230400`, `460800` |
@@ -141,6 +149,7 @@ Aceinna Device could be connected with your PC via UART or LAN. The supported in
 | OpenIMU | `uart` | |
 | OpenRTK | `uart`, `eth` | The startup argument `-i eth` is supported |
 | RTK330L | `uart` |  |
+| INS401 | `100base-t1` | The startup argument `-i 100base-t1` is supported |
 
 
 ## Parse Tool
