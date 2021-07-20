@@ -7,12 +7,12 @@ import json
 import socket
 import threading
 from abc import ABCMeta, abstractmethod
-import scapy
+#import scapy
 import serial
 import serial.tools.list_ports
 import psutil
 from psutil import net_if_addrs
-from scapy.all import conf, sendp, sniff, srp, wrpcap, sys
+from scapy.all import sendp, sniff, srp
 from scapy.layers.l2 import Ether
 from ..devices import DeviceManager
 from .constants import BAUDRATE_LIST
@@ -740,7 +740,7 @@ class Ethernet(Communicator):
 
     def find_device(self, callback, retries=0, not_found_handler=None):
         self.device = None
-        
+
         # find network connection
         ifaces_list = self.get_network_card()
 
@@ -812,12 +812,12 @@ class Ethernet(Communicator):
         '''
         pass
 
-    def get_src_mac(self):    
+    def get_src_mac(self):
         return bytes([int(x, 16) for x in self.src_mac.split(':')])
 
     def get_dst_mac(self):
         return bytes([int(x, 16) for x in self.dst_mac.split(':')])
-    
+
     def get_network_card(self):
         network_card_info = []
         info = net_if_addrs()

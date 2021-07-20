@@ -143,7 +143,7 @@ class DeviceMessageCenter(EventBase):
             funcs = [self.thread_ethernet_receiver, self.thread_parser]
         else:
             funcs = [self.thread_receiver, self.thread_parser]
-        
+
         for func in funcs:
             thread = threading.Thread(target=func)
             thread.start()
@@ -240,7 +240,7 @@ class DeviceMessageCenter(EventBase):
                 self._communicator.read(self.ethernet_callback)
             except Exception as ex:  # pylint: disable=broad-except
                 print('Thread:receiver error:', ex)
-                self.exceptiofn_lock.acquire()
+                self.exception_lock.acquire()
                 self._has_exception = True  # Notice thread paser to exit.
                 self.exception_lock.release()
                 return  # exit thread receiver
@@ -265,7 +265,7 @@ class DeviceMessageCenter(EventBase):
                 # print('thread_receiver:', data)
             except Exception as ex:  # pylint: disable=broad-except
                 print('Thread:receiver error:', ex)
-                self.exceptiofn_lock.acquire()
+                self.exception_lock.acquire()
                 self._has_exception = True  # Notice thread paser to exit.
                 self.exception_lock.release()
                 return  # exit thread receiver
