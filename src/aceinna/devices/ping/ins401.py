@@ -12,6 +12,7 @@ def _run_command(communicator, command):
 
     data_buffer = []
     cmd_type = struct.unpack('>H', bytes(pG))[0]
+    
     read_line = communicator.write_read(command_line, cmd_type)
     if read_line:
         packet_raw = read_line[14:]

@@ -31,10 +31,6 @@ def build_ethernet_packet(dest, src, message_type, message_bytes=[]):
     '''
     Build final packet
     '''
-    whole_packet=[]
-    header = dest + src + bytes([0, 0])
-    whole_packet.extend(header)
-
     packet = []
     packet.extend(message_type)
     msg_len = len(message_bytes)
@@ -44,10 +40,20 @@ def build_ethernet_packet(dest, src, message_type, message_bytes=[]):
     packet.extend(packet_len)
     final_packet = packet + message_bytes
 
+    msg_len = len(COMMAND_START) + len(final_packet) + 2
+    payload_len = struct.pack('<H', len(COMMAND_START) + len(final_packet) + 2)
+
+    whole_packet=[]
+    header = dest + src + bytes(payload_len)
+    whole_packet.extend(header)
+
     whole_packet.extend(COMMAND_START)
     whole_packet.extend(final_packet)
     whole_packet.extend(calc_crc(final_packet))
-
+    if msg_len < 46:
+        fill_bytes = bytes(46-msg_len)
+        whole_packet.extend(fill_bytes)
+        
     return bytes(whole_packet)
 
 def build_input_packet(name, properties=None, param=False, value=False):
