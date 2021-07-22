@@ -855,10 +855,8 @@ class Ethernet(Communicator):
 
     def get_network_card(self):
         network_card_info = []
-        info = net_if_addrs()
-
-        for k, v in info.items():
-            for item in v:
-                if item[0] == -1 and not item[1] == '':
-                    network_card_info.append((k, item[1]))
+        for item in conf.ifaces:
+            if conf.ifaces[item].ip == '127.0.0.1':
+                continue
+            network_card_info.append((conf.ifaces[item].name, conf.ifaces[item].mac))
         return network_card_info
