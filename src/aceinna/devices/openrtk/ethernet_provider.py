@@ -172,9 +172,6 @@ class Provider(OpenDeviceBase):
     def handle_rtcm_data_parsed(self, data):
         # print('rtcm',data)
 
-        if self.rtcm_logf is not None and data is not None:
-            self.rtcm_logf.write(bytes(data))
-            self.rtcm_logf.flush()
         if self.communicator.can_write() and not self.is_upgrading:
             whole_packet = helper.build_ethernet_packet(
                                                         self.communicator.get_dst_mac(), 
@@ -183,6 +180,10 @@ class Provider(OpenDeviceBase):
                                                         data)
     
             self.communicator.write(whole_packet)
+            
+        if self.rtcm_logf is not None and data is not None:
+            self.rtcm_logf.write(bytes(data))
+            self.rtcm_logf.flush()
             pass
 
     def after_setup(self):

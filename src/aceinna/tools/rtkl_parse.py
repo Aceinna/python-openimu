@@ -113,7 +113,7 @@ class InceptioParse:
             if self.sync_state == 1:
                 self.packet_buffer.append(new_byte)
                 # packet len
-                if len(self.packet_buffer) == self.packet_buffer[2] + 5:
+                if len(self.packet_buffer) == self.packet_buffer[2] + 8:
                     packet_crc = 256 * \
                         self.packet_buffer[-2] + self.packet_buffer[-1]
                     # packet crc
