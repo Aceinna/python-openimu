@@ -21,7 +21,12 @@ from ..configs.openrtk_predefine import (
 )
 from ..decorator import with_device_message
 from ...models import InternalCombineAppParseRule
-from ..upgrade_center import UpgradeCenter
+from ..upgrade_workers import (
+    FirmwareUpgradeWorker,
+    JumpApplicationWorker,
+    JumpBootloaderWorker,
+    UPGRADE_GROUP
+)
 from ..parsers.open_field_parser import encode_value
 from abc import ABCMeta, abstractmethod
 
@@ -212,8 +217,8 @@ class RTKProviderBase(OpenDeviceBase):
         self.ntrip_client.on('parsed', self.handle_rtcm_data_parsed)
         if self.device_info.__contains__('sn') and self.device_info.__contains__('pn'):
             self.ntrip_client.set_connect_headers({
-                'Ntrip-Sn':self.device_info['sn'],
-                'Ntrip-Pn':self.device_info['pn']
+                'Ntrip-Sn': self.device_info['sn'],
+                'Ntrip-Pn': self.device_info['pn']
             })
         self.ntrip_client.run()
 
@@ -595,7 +600,6 @@ class RTKProviderBase(OpenDeviceBase):
         ]
 
         parsed_content = firmware_content_parser(firmware_content, rules)
-
         # foreach parsed content, if empty, skip register into upgrade center
         for _, rule in enumerate(parsed_content):
             content = parsed_content[rule]
@@ -608,7 +612,29 @@ class RTKProviderBase(OpenDeviceBase):
 
             workers.append(worker)
 
-        return workers
+        # prepare jump bootloader worker and jump application workder
+        # append jump bootloader worker before the first firmware upgrade workder
+        # append jump application worker after the last firmware uprade worker
+        start_index = -1
+        end_index = -1
+        for i, worker in enumerate(workers):
+            if isinstance(worker, FirmwareUpgradeWorker):
+                start_index = i if start_index == -1 else start_index
+                end_index = i
+
+        jumpBootloaderWorker = JumpBootloaderWorker(self.communicator)
+        jumpBootloaderWorker.group = UPGRADE_GROUP.BEFORE_ALL
+
+        jumpApplicationWorker = JumpApplicationWorker(
+            self.communicator, self.bootloader_baudrate)
+        jumpApplicationWorker.group = UPGRADE_GROUP.AFTER_ALL
+
+        if start_index > -1 and end_index > -1:
+            workers.insert(
+                start_index, jumpBootloaderWorker)
+            workers.insert(
+                end_index+2, jumpApplicationWorker)
+        return
 
     def get_device_connection_info(self):
         return {
@@ -699,7 +725,6 @@ class RTKProviderBase(OpenDeviceBase):
             with open(file_path, 'w') as outfile:
                 json.dump(device_configuration, outfile,
                           indent=4, ensure_ascii=False)
-
 
     def after_upgrade_completed(self):
         # start ntrip client

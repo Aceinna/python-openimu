@@ -1,16 +1,19 @@
 import sys
 import unittest
+import time
 
 try:
     from mocker.upgrade_workers.normal_worker import NormalWorker
     from mocker.upgrade_workers.error_worker import ErrorWorker
     from aceinna.devices.upgrade_center import UpgradeCenter
+    from aceinna.devices.upgrade_workers import UPGRADE_EVENT, UPGRADE_GROUP
 except:
     sys.path.append('./src')
     sys.path.append('./tests')
     from mocker.upgrade_workers.normal_worker import NormalWorker
     from mocker.upgrade_workers.error_worker import ErrorWorker
     from aceinna.devices.upgrade_center import UpgradeCenter
+    from aceinna.devices.upgrade_workers import UPGRADE_EVENT, UPGRADE_GROUP
 
 
 class TestUpgradeCenter(unittest.TestCase):
@@ -75,6 +78,21 @@ class TestUpgradeCenter(unittest.TestCase):
     def test_firmware_worker(self):
         pass
 
+    def test_before_after_workers(self):
+        upgrade_center = UpgradeCenter()
+        before_worker = NormalWorker()
+        before_worker.group = UPGRADE_GROUP.BEFORE_RUN
+        upgrade_center.register(before_worker)
+        after_worker = NormalWorker()
+        after_worker.group = UPGRADE_GROUP.AFTER_RUN
+        upgrade_center.register(after_worker)
+
+        upgrade_center.register(NormalWorker())
+        upgrade_center.register(NormalWorker())
+        upgrade_center.register(NormalWorker())
+
+        upgrade_center.on('finish', self.handle_done)
+        upgrade_center.start()
 
 if __name__ == '__main__':
-    unittest.main()
+     unittest.main()

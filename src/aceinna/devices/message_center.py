@@ -140,10 +140,10 @@ class DeviceMessageCenter(EventBase):
             self._has_running_checker = True
 
         # setup receiver, parser
-        if self._communicator.type == INTERFACES.ETH_100BASE_T1:
-            funcs = [self.thread_ethernet_receiver, self.thread_parser]
-        else:
-            funcs = [self.thread_receiver, self.thread_parser]
+        # if self._communicator.type == INTERFACES.ETH_100BASE_T1:
+        #     funcs = [self.thread_ethernet_receiver, self.thread_parser]
+        # else:
+        funcs = [self.thread_receiver, self.thread_parser]
 
         for func in funcs:
             thread = threading.Thread(target=func)

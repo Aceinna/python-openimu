@@ -27,7 +27,7 @@ def build_packet(message_type, message_bytes=[]):
     return COMMAND_START + final_packet + calc_crc(final_packet)
 
 
-def build_ethernet_packet(dest, src, message_type, message_bytes=[]):
+def build_ethernet_packet(dest, src, message_type, message_bytes=[], transfer_message_bytes_len=True):
     '''
     Build ethernet packet
     '''
@@ -35,26 +35,31 @@ def build_ethernet_packet(dest, src, message_type, message_bytes=[]):
     packet.extend(message_type)
     msg_len = len(message_bytes)
 
-    packet_len = struct.pack("<I", msg_len)
+    if transfer_message_bytes_len:
+        packet_len = struct.pack("<I", msg_len)
+    else:
+        packet_len = [msg_len]
 
     packet.extend(packet_len)
     final_packet = packet + message_bytes
 
-    msg_len = len(COMMAND_START) + len(final_packet) + 2
-    payload_len = struct.pack('<H', len(COMMAND_START) + len(final_packet) + 2)
+    payload_len = len(COMMAND_START) + len(final_packet) + 2
+    payload_len_in_short = struct.pack(
+        '<H', len(COMMAND_START) + len(final_packet) + 2)
 
-    whole_packet=[]
-    header = dest + src + bytes(payload_len)
+    whole_packet = []
+    header = dest + src + payload_len_in_short
     whole_packet.extend(header)
 
     whole_packet.extend(COMMAND_START)
     whole_packet.extend(final_packet)
     whole_packet.extend(calc_crc(final_packet))
-    if msg_len < 46:
-        fill_bytes = bytes(46-msg_len)
+    if payload_len < 46:
+        fill_bytes = bytes(46-payload_len)
         whole_packet.extend(fill_bytes)
 
     return bytes(whole_packet)
+
 
 def build_input_packet(name, properties=None, param=False, value=False):
     '''

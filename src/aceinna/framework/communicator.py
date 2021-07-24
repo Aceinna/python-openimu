@@ -6,6 +6,7 @@ import time
 import json
 import socket
 import threading
+import collections
 from abc import ABCMeta, abstractmethod
 import serial
 import serial.tools.list_ports
@@ -54,6 +55,7 @@ class Communicator(object):
         self.read_size = 0
         self.device = None
         self.threadList = []
+        self.type = 'Unknown'
 
     @abstractmethod
     def find_device(self, callback, retries=0, not_found_handler=None):
@@ -734,12 +736,14 @@ class Ethernet(Communicator):
         self.filter_device_type_assigned = False
 
         self.iface_confirmed = False
+        self.receive_cache = collections.deque(maxlen=1000)
+        self.is_sniffing = False
 
         if options and options.device_type != 'auto':
             self.filter_device_type = options.device_type
             self.filter_device_type_assigned = True
 
-    def handle_receive_packet(self, packet):
+    def handle_iface_confirm_packet(self, packet):
         self.iface_confirmed = True
         self.dst_mac = packet.src
 
@@ -751,7 +755,7 @@ class Ethernet(Communicator):
         command_line = helper.build_ethernet_packet(
             self.get_dst_mac(), src_mac, pG)
         async_sniffer = AsyncSniffer(
-            iface=iface[0], prn=self.handle_receive_packet, filter=filter_exp)
+            iface=iface[0], prn=self.handle_iface_confirm_packet, filter=filter_exp)
         async_sniffer.start()
         sendp(command_line, iface=iface[0], verbose=0)
         time.sleep(1)
@@ -774,14 +778,25 @@ class Ethernet(Communicator):
                 break
             else:
                 if i == len(ifaces_list) - 1:
-                    print('No available Ethernet card was found.')
+                    print_red('No available Ethernet card was found.')
                     return None
 
         # confirm device
         time.sleep(1)
         self.confirm_device(self)
         if self.device:
+            # establish the packet sniff thread
+            threading.Thread(target=self.start_listen_data).start()
             callback(self.device)
+        else:
+            print_red('Cannot confirm the device in ethernet 100base-t1 connection')
+
+    def start_listen_data(self):
+        self.is_sniffing = True
+        sniff(prn=self.handle_recive_packet, iface=self.iface)
+
+    def handle_recive_packet(self, packet):
+        self.receive_cache.append(packet)
 
     def open(self):
         '''
@@ -808,17 +823,20 @@ class Ethernet(Communicator):
         except Exception as e:
             raise
 
-    def read(self, callback=None):
+    def read(self, size=100):
         '''
         read
         '''
-        filter_exp = 'ether src host ' + self.dst_mac
-        sniff(prn=callback, count=0, iface=self.iface, filter=filter_exp)
+        self.receive_cache.popleft()
 
     def handle_receive_read_result(self, packet):
         self.read_result = bytes(packet)
 
     def write_read(self, data, filter_cmd_type=0):
+        if self.is_sniffing:
+            print_yellow('Cannot run another sniff when the communicator is sniffing.')
+            return None
+
         if filter_cmd_type:
             filter_exp = 'ether dst host ' + self.src_mac + \
                 ' and ether[16:2] == %d' % filter_cmd_type
@@ -832,7 +850,7 @@ class Ethernet(Communicator):
 
         sendp(data, iface=self.iface, verbose=0)
 
-        time.sleep(2)
+        time.sleep(1)
         async_sniffer.stop()
 
         if self.read_result:
@@ -844,7 +862,7 @@ class Ethernet(Communicator):
         '''
         reset buffer
         '''
-        pass
+        self.receive_cache.clear()
 
     def get_src_mac(self):
         return bytes([int(x, 16) for x in self.src_mac.split(':')])

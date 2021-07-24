@@ -255,26 +255,8 @@ class OpenDeviceBase(EventBase):
         '''
         Restart device
         '''
-        # output firmware upgrade finished
-        self.jump_to_application()
-
         if self.is_upgrading:
             self.emit('upgrade_restart')
-
-    def enter_bootloader(self, *args):
-        self._message_center.pause()
-
-        command_line = helper.build_bootloader_input_packet('JI')
-        self.communicator.write(command_line)
-        time.sleep(3)
-        helper.read_untils_have_data(
-            self.communicator, 'JI', 1000, 50)
-
-        # ping and update the device info
-        if self.communicator.type == 'uart':
-            self.communicator.serial_port.baudrate = self.bootloader_baudrate
-
-        # self._message_center.resume()
 
     def thread_do_upgrade_framework(self, file):
         '''
@@ -286,10 +268,6 @@ class OpenDeviceBase(EventBase):
             if not can_download:
                 self.handle_upgrade_error('cannot find firmware file')
                 return
-
-            # run command JI
-            if not self.is_in_bootloader:
-                self.jump_to_bootloader()
 
             workers = self.get_upgrade_workers(firmware_content)
 

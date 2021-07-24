@@ -25,7 +25,12 @@ from ..parsers.open_field_parser import encode_value
 from ...framework.utils.print import print_yellow
 from ..upgrade_workers import (
     EthernetFirmwareUpgradeWorker,
-    UPGRADE_EVENT
+    FirmwareUpgradeWorker,
+    SDK9100UpgradeWorker,
+    JumpBootloaderWorker,
+    JumpApplicationWorker,
+    UPGRADE_EVENT,
+    UPGRADE_GROUP
 )
 
 
@@ -191,8 +196,8 @@ class Provider(OpenDeviceBase):
         self.ntrip_client.on('parsed', self.handle_rtcm_data_parsed)
         if self.device_info.__contains__('sn') and self.device_info.__contains__('pn'):
             self.ntrip_client.set_connect_headers({
-                'Ntrip-Sn':self.device_info['sn'],
-                'Ntrip-Pn':self.device_info['pn']
+                'Ntrip-Sn': self.device_info['sn'],
+                'Ntrip-Pn': self.device_info['pn']
             })
         self.ntrip_client.run()
 
@@ -316,139 +321,12 @@ class Provider(OpenDeviceBase):
         '''
         Listener for getting output packet
         '''
-        #print('on_receive_output_packet:', data)
-        # $GPGGA,080319.00,3130.4858508,N,12024.0998832,E,4,25,0.5,12.459,M,0.000,M,2.0,*46
-        # if packet_type == b'\x02\x0a':
-        #     if self.ntrip_client_enable:
-        #         # $GPGGA
-        #         gpgga = '$GPGGA'
-        #         # time
-        #         timeOfWeek = float(data['GPS_TimeofWeek']) - 18
-        #         dsec = int(timeOfWeek)
-        #         msec = timeOfWeek - dsec
-        #         sec = dsec % 86400
-        #         hour = int(sec / 3600)
-        #         minute = int(sec % 3600 / 60)
-        #         second = sec % 60
-        #         gga_time = format(hour*10000 + minute*100 +
-        #                           second + msec, '09.2f')
-        #         gpgga = gpgga + ',' + gga_time
-        #         # latitude
-        #         latitude = float(data['latitude']) * 180 / 2147483648.0
-        #         if latitude >= 0:
-        #             latflag = 'N'
-        #         else:
-        #             latflag = 'S'
-        #             latitude = math.fabs(latitude)
-        #         lat_d = int(latitude)
-        #         lat_m = (latitude-lat_d) * 60
-        #         lat_dm = format(lat_d*100 + lat_m, '012.7f')
-        #         gpgga = gpgga + ',' + lat_dm + ',' + latflag
-        #         # longitude
-        #         longitude = float(data['longitude']) * 180 / 2147483648.0
-        #         if longitude >= 0:
-        #             lonflag = 'E'
-        #         else:
-        #             lonflag = 'W'
-        #             longitude = math.fabs(longitude)
-        #         lon_d = int(longitude)
-        #         lon_m = (longitude-lon_d) * 60
-        #         lon_dm = format(lon_d*100 + lon_m, '013.7f')
-        #         gpgga = gpgga + ',' + lon_dm + ',' + lonflag
-        #         # positionMode
-        #         gpgga = gpgga + ',' + str(data['positionMode'])
-        #         # svs
-        #         gpgga = gpgga + ',' + str(data['numberOfSVs'])
-        #         # hop
-        #         gpgga = gpgga + ',' + format(float(data['hdop']), '03.1f')
-        #         # height
-        #         gpgga = gpgga + ',' + \
-        #             format(float(data['height']), '06.3f') + ',M'
-        #         #
-        #         gpgga = gpgga + ',0.000,M'
-        #         # diffage
-        #         gpgga = gpgga + ',' + \
-        #             format(float(data['diffage']), '03.1f') + ','
-        #         # ckm
-        #         checksum = 0
-        #         for i in range(1, len(gpgga)):
-        #             checksum = checksum ^ ord(gpgga[i])
-        #         str_checksum = hex(checksum)
-        #         if str_checksum.startswith("0x"):
-        #             str_checksum = str_checksum[2:]
-        #         gpgga = gpgga + '*' + str_checksum + '\r\n'
-
-        #         if self.ntrip_client != None:
-        #             self.ntrip_client.send(gpgga)
-        #         return
-
-        # elif packet_type == b'\x03\x0a':
-        #     try:
-        #         if data['latitude'] != 0.0 and data['longitude'] != 0.0:
-        #             if self.pS_data:
-        #                 if self.pS_data['GPS_Week'] == data['GPS_Week']:
-        #                     if data['GPS_TimeofWeek'] - self.pS_data['GPS_TimeofWeek'] >= 0.2:
-        #                         self.add_output_packet('pos', data)
-        #                         self.pS_data = data
-
-        #                         if data['insStatus'] >= 3 and data['insStatus'] <= 5:
-        #                             ins_status = 'INS_INACTIVE'
-        #                             if data['insStatus'] == 3:
-        #                                 ins_status = 'INS_SOLUTION_GOOD'
-        #                             elif data['insStatus'] == 4:
-        #                                 ins_status = 'INS_SOLUTION_FREE'
-        #                             elif data['insStatus'] == 5:
-        #                                 ins_status = 'INS_ALIGNMENT_COMPLETE'
-
-        #                             ins_pos_type = 'INS_INVALID'
-        #                             if data['insPositionType'] == 1:
-        #                                 ins_pos_type = 'INS_SPP'
-        #                             elif data['insPositionType'] == 4:
-        #                                 ins_pos_type = 'INS_RTKFIXED'
-        #                             elif data['insPositionType'] == 5:
-        #                                 ins_pos_type = 'INS_RTKFLOAT'
-
-        #                             inspva = '#INSPVA,%s,%10.2f, %s, %s,%12.8f,%13.8f,%8.3f,%9.3f,%9.3f,%9.3f,%9.3f,%9.3f,%9.3f' %\
-        #                                 (data['GPS_Week'], data['GPS_TimeofWeek'], ins_status, ins_pos_type,
-        #                                  data['latitude'], data['longitude'], data['height'],
-        #                                  data['velocityNorth'], data['velocityEast'], data['velocityUp'],
-        #                                  data['roll'], data['pitch'], data['heading'])
-        #                             print(inspva)
-        #                 else:
-        #                     self.add_output_packet('pos', data)
-        #                     self.pS_data = data
-        #             else:
-        #                 self.add_output_packet('pos', data)
-        #                 self.pS_data = data
-        #     except Exception as e:
-        #         # print(e)
-        #         pass
-
-        # elif packet_type == b'\x05\x0a':
-        #     if self.sky_data:
-        #         if self.sky_data[0]['timeOfWeek'] == data[0]['timeOfWeek']:
-        #             self.sky_data.extend(data)
-        #         else:
-        #             self.add_output_packet('skyview', self.sky_data)
-        #             self.add_output_packet('snr', self.sky_data)
-        #             self.sky_data = []
-        #             self.sky_data.extend(data)
-        #     else:
-        #         self.sky_data.extend(data)
-
         if packet_type == b'\x06\n':
             if self.rtcm_rover_logf:
                 self.rtcm_rover_logf.write(bytes(data))
         else:
             if self.user_logf:
                 self.user_logf.write(bytes(data))
-        # else:
-        #     output_packet_config = next(
-        #         (x for x in self.properties['userMessages']['outputPackets']
-        #          if x['name'] == packet_type), None)
-        #     if output_packet_config and output_packet_config.__contains__('from') \
-        #             and output_packet_config['from'] == 'imu':
-        #         self.add_output_packet('imu', data)
 
     def before_write_content(self, core, content_len):
         command_CS = [0x04, 0xaa]
@@ -473,8 +351,9 @@ class Provider(OpenDeviceBase):
         ''' Build upgarde worker by rule and content
         '''
         if rule == 'rtk':
-            rtk_upgrade_worker = EthernetFirmwareUpgradeWorker(
+            rtk_upgrade_worker = FirmwareUpgradeWorker(
                 self.communicator, lambda: helper.format_firmware_content(content), 192)
+            rtk_upgrade_worker.name = 'MAIN_RTK'
             rtk_upgrade_worker.on(
                 UPGRADE_EVENT.FIRST_PACKET, lambda: time.sleep(12))
             rtk_upgrade_worker.on(UPGRADE_EVENT.BEFORE_WRITE,
@@ -482,13 +361,31 @@ class Provider(OpenDeviceBase):
             return rtk_upgrade_worker
 
         if rule == 'ins':
-            ins_upgrade_worker = EthernetFirmwareUpgradeWorker(
+            ins_upgrade_worker = FirmwareUpgradeWorker(
                 self.communicator, lambda: helper.format_firmware_content(content), 192)
+            ins_upgrade_worker.name = 'MAIN_RTK'
+            ins_upgrade_worker.group = UPGRADE_GROUP.FIRMWARE
             ins_upgrade_worker.on(
                 UPGRADE_EVENT.FIRST_PACKET, lambda: time.sleep(12))
             ins_upgrade_worker.on(UPGRADE_EVENT.BEFORE_WRITE,
                                   lambda: self.before_write_content('1', len(content)))
             return ins_upgrade_worker
+
+        if rule == 'sdk':
+            sdk_upgrade_worker = SDK9100UpgradeWorker(
+                self.communicator, lambda: helper.format_firmware_content(content), 192)
+            sdk_upgrade_worker.group = UPGRADE_GROUP.FIRMWARE
+
+        if rule == 'imu':
+            imu_upgrade_worker = FirmwareUpgradeWorker(
+                self.communicator, lambda: helper.format_firmware_content(content), 192)
+            imu_upgrade_worker.name = 'SUB_IMU'
+            imu_upgrade_worker.group = UPGRADE_GROUP.FIRMWARE
+            imu_upgrade_worker.on(
+                UPGRADE_EVENT.FIRST_PACKET, lambda: time.sleep(5))
+            imu_upgrade_worker.on(UPGRADE_EVENT.BEFORE_WRITE,
+                                  lambda: self.before_write_content('0', len(content)))
+            return imu_upgrade_worker
 
     def get_upgrade_workers(self, firmware_content):
         workers = []
@@ -496,6 +393,7 @@ class Provider(OpenDeviceBase):
             InternalCombineAppParseRule('rtk', 'rtk_start:', 4),
             InternalCombineAppParseRule('ins', 'ins_start:', 4),
             InternalCombineAppParseRule('sdk', 'sdk_start:', 4),
+            InternalCombineAppParseRule('imu', 'imu_start:', 4),
         ]
 
         parsed_content = firmware_content_parser(firmware_content, rules)
@@ -511,6 +409,59 @@ class Provider(OpenDeviceBase):
                 continue
 
             workers.append(worker)
+
+        # wrap ins bootloader
+        start_index = -1
+        end_index = -1
+        for i, worker in enumerate(workers):
+            if isinstance(worker, FirmwareUpgradeWorker) and worker.name == 'MAIN_RTK':
+                start_index = i if start_index == -1 else start_index
+                end_index = i
+        dst_mac = self.communicator.get_dst_mac()
+        src_mac = self.communicator.get_src_mac()
+        ins_jump_bootloader_command = helper.build_ethernet_packet(
+            dst_mac, src_mac, bytes([0x01, 0xaa]))
+        ins_jump_bootloader_worker = JumpBootloaderWorker(
+            self.communicator, command=ins_jump_bootloader_command)
+        ins_jump_bootloader_worker.group = UPGRADE_GROUP.FIRMWARE
+
+        ins_jump_application_command = helper.build_ethernet_packet(
+            dst_mac, src_mac, bytes([0x02, 0xaa]))
+        ins_jump_application_worker = JumpApplicationWorker(
+            self.communicator, command=ins_jump_application_command)
+        ins_jump_application_worker.group = UPGRADE_GROUP.FIRMWARE
+
+        if start_index > -1 and end_index > -1:
+            workers.insert(
+                start_index, ins_jump_bootloader_worker)
+            workers.insert(
+                end_index+2, ins_jump_application_worker)
+
+        # wrap imu bootloader
+        start_index = -1
+        end_index = -1
+        for i, worker in enumerate(workers):
+            if isinstance(worker, FirmwareUpgradeWorker) and worker.name == 'SUB_IMU':
+                start_index = i if start_index == -1 else start_index
+                end_index = i
+
+        imu_jump_bootloader_command = helper.build_ethernet_packet(
+            dst_mac, src_mac, bytes([0x49, 0x4a]), False)
+        imu_jump_bootloader_worker = JumpBootloaderWorker(
+            self.communicator, command=imu_jump_bootloader_command)
+        imu_jump_bootloader_worker.group = UPGRADE_GROUP.FIRMWARE
+
+        imu_jump_application_command = helper.build_ethernet_packet(
+            dst_mac, src_mac, bytes([0x41, 0x4a]), False)
+        imu_jump_application_worker = JumpApplicationWorker(
+            self.communicator, command=imu_jump_application_command)
+        imu_jump_application_worker.group = UPGRADE_GROUP.FIRMWARE
+
+        if start_index > -1 and end_index > -1:
+            workers.insert(
+                start_index, imu_jump_bootloader_worker)
+            workers.insert(
+                end_index+2, imu_jump_application_worker)
 
         return workers
 

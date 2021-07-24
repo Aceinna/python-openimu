@@ -13,6 +13,8 @@ from .configuration_field import CONFIGURATION_FIELD_DEFINES_SINGLETON
 from .eeprom_field import EEPROM_FIELD_DEFINES_SINGLETON
 from ..upgrade_workers import (
     FirmwareUpgradeWorker,
+    JumpBootloaderWorker,
+    JumpApplicationWorker,
     UPGRADE_EVENT
 )
 
@@ -199,7 +201,12 @@ class Provider(OpenDeviceBase):
             self.communicator, self.bootloader_baudrate, firmware_content)
         firmware_worker.on(
             UPGRADE_EVENT.FIRST_PACKET, lambda: time.sleep(8))
-        return [firmware_worker]
+
+        jump_bootloader_worker = JumpBootloaderWorker(self.communicator)
+        jump_application_worker = JumpApplicationWorker(
+            self.communicator, bootloader_baudrate=self.bootloader_baudrate)
+
+        return [jump_bootloader_worker, firmware_worker, jump_application_worker]
 
     def get_device_connection_info(self):
         return {
