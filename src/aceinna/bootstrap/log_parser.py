@@ -1,6 +1,7 @@
 import os
 from ..tools.openrtk_parse import do_parse as do_parse_openrtk_logs
 from ..tools.rtkl_parse import do_parse as do_parse_rtkl_logs
+from ..tools.ins401_parse import do_parse as do_parse_ins401_logs
 from ..models import LogParserArgs
 from ..framework.constants import APP_TYPE
 from ..framework.context import APP_CONTEXT
@@ -27,6 +28,10 @@ class LogParser:
                                   setting_file)
         elif self._options.log_type == 'rtkl':
             do_parse_rtkl_logs(self._options.path,
+                               self._options.kml_rate,
+                               setting_file)
+        elif self._options.log_type == 'ins401':
+            do_parse_ins401_logs(self._options.path,
                                self._options.kml_rate,
                                setting_file)
         else:

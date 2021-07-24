@@ -164,7 +164,7 @@ Arguments:
 
 | Name | Type | Default | Description |
 | - | :-: | :-: | - |
-| -t | String | 'openrtk' | Switch work mode. Value should be one of `openrtk`,`rtkl` |
+| -t | String | 'openrtk' | Switch work mode. Value should be one of `openrtk`,`rtkl`,`ins401` |
 | -p | String | '.' | Value should be a valid path. It could be the container folder of log files |
 | -i | Number | 5 | INS kml rate(hz) |
 
