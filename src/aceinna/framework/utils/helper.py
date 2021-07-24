@@ -66,6 +66,7 @@ def build_ethernet_packet(dest, src, message_type, message_bytes=[], payload_len
     return Command(message_type, bytes(whole_packet), payload_length_format)
 
 
+
 def build_input_packet(name, properties=None, param=False, value=False):
     '''
     Build input packet
