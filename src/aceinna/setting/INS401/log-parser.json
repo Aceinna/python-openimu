@@ -1,377 +1,11 @@
 {
     "version": "23.01",
     "userNMEAList": ["$GPGGA", "$GPRMC", "$GPGSV", "$GLGSV", "$GAGSV", "$BDGSV", "$GPGSA", "$GLGSA", "$GAGSA", "$BDGSA", "$GPZDA", "$GPVTG", "$PASHR", "$GNINS"],
-	"userPacketsTypeList": ["s1", "g1", "i1", "o1", "y1"],
-	"zouPacketsTypeList": ["fmim", "fmig","fmin"],
-	"zouOutputPackets": [
-		{
-			"name": "imu",
-			"messageId": "fmim",
-			"needHeadTime": 2,
-			"payload": [
-                {
-					"type": "double",
-					"name": "time",
-                    "unit": "",
-                    "need": 1,
-                    "format": ""
-				},
-				{
-					"type": "float",
-					"name": "accx",
-                    "unit": "s",
-                    "need": 1,
-                    "format": "11.7f"
-                },
-                {
-					"type": "float",
-					"name": "accy",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.7f"
-				},
-				{
-					"type": "float",
-					"name": "accz",
-                    "unit": "m/s",
-                    "need": 1,
-                    "format": "11.7f"
-				},
-				{
-					"type": "float",
-					"name": "gyrox",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.7f"
-				},
-				{
-					"type": "float",
-					"name": "gyroy",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.7f"
-				},
-				{
-					"type": "float",
-					"name": "gyroz",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.7f"
-				},
-				{
-					"type": "float",
-					"name": "magx",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.7f"
-				},
-				{
-					"type": "float",
-					"name": "magy",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.7f"
-				},
-				{
-					"type": "float",
-					"name": "magz",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.7f"
-				}
-			]
-		},
-		{
-			"name": "gnss",
-			"messageId": "fmig",
-			"needHeadTime": 2,
-			"payload": [
-                {
-					"type": "double",
-					"name": "time",
-                    "unit": "",
-                    "need": 1,
-                    "format": ""
-				},
-                {
-					"type": "double",
-					"name": "latitude",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.9f"
-				},
-                {
-					"type": "double",
-					"name": "longitude",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.9f"
-				},
-				{
-					"type": "double",
-					"name": "height",
-                    "unit": "s",
-                    "need": 1,
-                    "format": "11.8f"
-                },
-                {
-					"type": "float",
-					"name": "north_speed",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.7f"
-				},
-				{
-					"type": "float",
-					"name": "east_speed",
-                    "unit": "m/s",
-                    "need": 1,
-                    "format": "11.7f"
-				},
-				{
-					"type": "float",
-					"name": "down_speed",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.7f"
-				},
-				{
-					"type": "float",
-					"name": "north_variance",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.7f"
-				},
-				{
-					"type": "float",
-					"name": "east_variance",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.7f"
-				},
-				{
-					"type": "float",
-					"name": "height_variance",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.7f"
-				},
-				{
-					"type": "float",
-					"name": "reverse",
-                    "unit": "",
-                    "need": 0,
-                    "format": "11.7f"
-				},
-				{
-					"type": "float",
-					"name": "reverse",
-                    "unit": "",
-                    "need": 0,
-                    "format": "11.7f"
-				},
-				{
-					"type": "float",
-					"name": "course",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.7f"
-				},
-				{
-					"type": "float",
-					"name": "HRMS",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.7f"
-				},
-				{
-					"type": "float",
-					"name": "VRMS",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.7f"
-				},
-				{
-					"type": "float",
-					"name": "HDOP",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.7f"
-				},
-				{
-					"type": "float",
-					"name": "VDOP",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.7f"
-				},				
-				{
-					"type": "uint8",
-					"name": "satellites",
-                    "unit": "",
-                    "need": 1,
-                    "format": ""
-				},				
-				{
-					"type": "uint8",
-					"name": "fix",
-                    "unit": "",
-                    "need": 1,
-                    "format": ""
-				},				
-				{
-					"type": "uint8",
-					"name": "age",
-                    "unit": "",
-                    "need": 1,
-                    "format": ""
-				}
-			]
-		},
-		{
-			"name": "navi",
-			"messageId": "fmin",
-			"needHeadTime": 2,
-			"payload": [
-                {
-					"type": "double",
-					"name": "time",
-                    "unit": "",
-                    "need": 1,
-                    "format": ""
-				},
-                {
-					"type": "double",
-					"name": "latitude",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.9f"
-				},
-                {
-					"type": "double",
-					"name": "longitude",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.9f"
-				},
-				{
-					"type": "double",
-					"name": "height",
-                    "unit": "s",
-                    "need": 1,
-                    "format": "11.8f"
-                },
-                {
-					"type": "float",
-					"name": "north_speed",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.4f"
-				},
-				{
-					"type": "float",
-					"name": "east_speed",
-                    "unit": "m/s",
-                    "need": 1,
-                    "format": "11.4f"
-				},
-				{
-					"type": "float",
-					"name": "down_speed",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.4f"
-				},
-				{
-					"type": "float",
-					"name": "roll_angle",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.4f"
-				},
-				{
-					"type": "float",
-					"name": "pitch_angle",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.4f"
-				},
-				{
-					"type": "float",
-					"name": "heading_angle",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.4f"
-				},
-				{
-					"type": "float",
-					"name": "steering_angle",
-                    "unit": "",
-                    "need": 0,
-                    "format": "11.4f"
-				},
-				{
-					"type": "float",
-					"name": "accx_offset",
-                    "unit": "",
-                    "need": 0,
-                    "format": "11.4f"
-				},
-				{
-					"type": "float",
-					"name": "accy_offset",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.4f"
-				},
-				{
-					"type": "float",
-					"name": "accz_offset",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.4f"
-				},
-				{
-					"type": "float",
-					"name": "groyx_offset",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.4f"
-				},
-				{
-					"type": "float",
-					"name": "groyy_offset",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.4f"
-				},
-				{
-					"type": "float",
-					"name": "groyz_offset",
-                    "unit": "",
-                    "need": 1,
-                    "format": "11.4f"
-				},				
-				{
-					"type": "float",
-					"name": "steering_angle_offset",
-                    "unit": "",
-                    "need": 1,
-                    "format": ""
-				},				
-				{
-					"type": "uint32",
-					"name": "status",
-                    "unit": "",
-                    "need": 1,
-                    "format": ""
-				}
-			]
-		}
-	],
+	"userPacketsTypeList": ["01,0a", "02,0a", "03,0a", "04,0a", "0a,05"],
 	"userOutputPackets": [
         {
-            "name": "s1",
+            "name": "01,0a",
+            "display": "imu",
             "isList": 0,
             "payload": [
                 {
@@ -383,7 +17,7 @@
                 {
                     "type": "uint32",
                     "name": "GPS_TimeOfWeek",
-                    "unit": "s",
+                    "unit": "ms",
                     "format": "11.4f"
                 },
                 {
@@ -425,7 +59,8 @@
             ]
         },
         {
-            "name": "g1",
+            "name": "02,0a",
+            "display": "GNSS Solution Packet",
             "isList": 0,
             "payload": [
                 {
@@ -437,7 +72,7 @@
                 {
                     "type": "uint32",
                     "name": "GPS_TimeOfWeek",
-                    "unit": "s",
+                    "unit": "ms",
                     "format": "11.4f"
                 },
                 {
@@ -545,7 +180,8 @@
             ]
         },
         {
-            "name": "i1",
+            "name": "03,0a",
+            "display":"INS Solution Packet",
             "isList": 0,
             "payload": [
                 {
@@ -557,7 +193,7 @@
                 {
                     "type": "uint32",
                     "name": "GPS_TimeOfWeek",
-                    "unit": "s",
+                    "unit": "ms",
                     "format": "11.4f"
                 },
                 {
@@ -683,7 +319,8 @@
             ]
         },
         {
-            "name": "o1",
+            "name": "04,0a",
+            "display":"Odometer",
             "isList": 0,
             "payload": [
                 {
@@ -695,7 +332,7 @@
                 {
                     "type": "uint32",
                     "name": "GPS_TimeOfWeek",
-                    "unit": "s",
+                    "unit": "ms",
                     "format": "11.4f"
                 },
                 {
@@ -725,8 +362,9 @@
             ]
         },
         {
-            "name": "y1",
-            "isList": 1,
+            "name": "0a,05",
+            "display": "Diagnostic Message",
+            "isList": 0,
             "payload": [
                 {
                     "type": "uint16",
@@ -737,50 +375,62 @@
                 {
                     "type": "uint32",
                     "name": "GPS_TimeOfWeek",
-                    "unit": "s",
+                    "unit": "ms",
                     "format": "11.4f"
                 },
                 {
-                    "type": "uint8",
-                    "name": "satelliteId",
+                    "type": "uint16",
+                    "name": "Year UTC",
                     "unit": "",
-                    "format": "4"
+                    "format": ""
                 },
                 {
                     "type": "uint8",
-                    "name": "systemId",
+                    "name": "Month UTC",
                     "unit": "",
-                    "format": "4"
+                    "format": ""
                 },
                 {
                     "type": "uint8",
-                    "name": "antennaId",
+                    "name": "Day UTC",
                     "unit": "",
-                    "format": "5"
+                    "format": ""
                 },
                 {
                     "type": "uint8",
-                    "name": "l1cn0",
+                    "name": "Hour UTC",
                     "unit": "",
-                    "format": "4"
+                    "format": ""
                 },
                 {
                     "type": "uint8",
-                    "name": "l2cn0",
+                    "name": "Minute UTC",
                     "unit": "",
-                    "format": "4"
+                    "format": ""
+                },
+                {
+                    "type": "uint8",
+                    "name": "Second UTC",
+                    "unit": "",
+                    "format": ""
+                },
+                {
+                    "type": "uint32",
+                    "name": "Device Status",
+                    "unit": "",
+                    "format": ""
                 },
                 {
                     "type": "float",
-                    "name": "azimuth",
-                    "unit": "deg",
-                    "format": "10.3f"
+                    "name": "IMU Temperature",
+                    "unit": "",
+                    "format": ""
                 },
                 {
                     "type": "float",
-                    "name": "elevation",
-                    "unit": "deg",
-                    "format": "10.3f"
+                    "name": "MCU Temperature",
+                    "unit": "",
+                    "format": ""
                 }
             ]
         }
