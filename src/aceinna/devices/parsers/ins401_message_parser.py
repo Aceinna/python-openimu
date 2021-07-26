@@ -12,7 +12,7 @@ MSG_HEADER = [0x55, 0x55]
 PACKET_TYPE_INDEX = 2
 # PRIVATE_PACKET_TYPE = ['RE', 'WE', 'UE', 'LE', 'SR']
 INPUT_PACKETS = [b'\x01\xcc', b'\x02\xcc', b'\x03\xcc', b'\x04\xcc', b'\x01\x0b', b'\x02\x0b']
-OTHER_OUTPUT_PACKETS = [b'\x020a', b'\x030a', b'\x050a']
+OTHER_OUTPUT_PACKETS = [b'\x020a', b'\x030a', b'\x050a', b'\x060a']
 
 
 class EthernetMessageParser(MessageParserBase):
@@ -31,12 +31,12 @@ class EthernetMessageParser(MessageParserBase):
     def analyse(self, data_block):
         if self.find_header:
             self.frame.append(data_block)
-       
+
             if self.payload_len_idx == len(self.frame):
                 payload_len_byte = bytes(self.frame[4:])
                 self.payload_len = struct.unpack('<I', payload_len_byte)[0]
 
-            elif 8 + self.payload_len + 2 == len(self.frame): 
+            elif 8 + self.payload_len + 2 == len(self.frame):
                 packet_type_byte = bytes(self.frame[PACKET_TYPE_INDEX:4])
                 packet_type = struct.unpack('>H', packet_type_byte)[0]
                 self.find_header = False
@@ -75,7 +75,7 @@ class EthernetMessageParser(MessageParserBase):
         payload = frame[self.payload_len_idx:payload_len+self.payload_len_idx]
         # parse interactive commands
         is_interactive_cmd = INPUT_PACKETS.__contains__(packet_type)
-     
+
         if is_interactive_cmd:
             self._parse_input_packet(packet_type, payload, frame)
         else:

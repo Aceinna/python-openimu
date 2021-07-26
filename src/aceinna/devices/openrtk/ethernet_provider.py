@@ -197,6 +197,7 @@ class Provider(OpenDeviceBase):
         if self.rtcm_logf is not None and data is not None:
             self.rtcm_logf.write(bytes(data))
             self.rtcm_logf.flush()
+
         if self.communicator.can_write() and not self.is_upgrading:
             whole_packet = helper.build_ethernet_packet(
                 self.communicator.get_dst_mac(),
@@ -233,10 +234,12 @@ class Provider(OpenDeviceBase):
                 self.rtk_log_file_name = file_name
                 self.user_logf = open(
                     file_name + '/' + 'user_' + file_time + '.bin', "wb")
-                self.debug_logf = open(
-                    file_name + '/' + 'debug_' + file_time + '.bin', "wb")
+                # self.debug_logf = open(
+                #     file_name + '/' + 'debug_' + file_time + '.bin', "wb")
                 self.rtcm_logf = open(
-                    file_name + '/' + 'rtcm_' + file_time + '.bin', "wb")
+                    file_name + '/' + 'rtcm_base_' + file_time + '.bin', "wb")
+                self.rtcm_rover_logf = open(
+                    file_name + '/' + 'rtcm_rover_' + file_time + '.bin', "wb")
 
             # start a thread to log data
             # threading.Thread(target=self.thread_data_log).start()
@@ -367,7 +370,7 @@ class Provider(OpenDeviceBase):
                 if str_checksum.startswith("0x"):
                     str_checksum = str_checksum[2:]
                 gpgga = gpgga + '*' + str_checksum + '\r\n'
-                print(gpgga)
+
                 if self.ntrip_client != None:
                     self.ntrip_client.send(gpgga)
                 return
@@ -425,6 +428,9 @@ class Provider(OpenDeviceBase):
                     self.sky_data.extend(data)
             else:
                 self.sky_data.extend(data)
+
+        elif packet_type == b'\x06\x0a':
+            self.rtcm_rover_logf.write(bytes(data))
 
         else:
             output_packet_config = next(
