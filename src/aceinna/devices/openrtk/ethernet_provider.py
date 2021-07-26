@@ -309,7 +309,7 @@ class Provider(OpenDeviceBase):
         '''
         Listener for getting output packet
         '''
-        print('on_receive_output_packet:', data)
+        #print('on_receive_output_packet:', data)
         # $GPGGA,080319.00,3130.4858508,N,12024.0998832,E,4,25,0.5,12.459,M,0.000,M,2.0,*46
         if packet_type == b'\x02\x0a':
             if self.ntrip_client_enable:

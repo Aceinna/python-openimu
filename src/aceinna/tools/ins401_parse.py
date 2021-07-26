@@ -668,8 +668,8 @@ class INS401Parse:
         #self.log_files[output['name']].write(buffer)
 
     def parse_output_packet_payload(self, packet_type):
-        payload_lenth = self.packet_buffer[2]
-        payload = self.packet_buffer[3:payload_lenth+3]
+        payload_lenth = struct.unpack('<I', bytes(self.packet_buffer[2:6]))[0]
+        payload = self.packet_buffer[6:payload_lenth+6]
         output = next(
             (x for x in self.rtk_properties['userOutputPackets'] if x['name'] == packet_type), None)
         if output != None:
