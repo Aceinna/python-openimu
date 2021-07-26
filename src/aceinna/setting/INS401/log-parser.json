@@ -1,7 +1,7 @@
 {
     "version": "23.01",
     "userNMEAList": ["$GPGGA", "$GPRMC", "$GPGSV", "$GLGSV", "$GAGSV", "$BDGSV", "$GPGSA", "$GLGSA", "$GAGSA", "$BDGSA", "$GPZDA", "$GPVTG", "$PASHR", "$GNINS"],
-	"userPacketsTypeList": ["01,0a", "02,0a", "03,0a", "04,0a", "0a,05"],
+	"userPacketsTypeList": ["01,0a", "02,0a", "03,0a", "04,0a", "05,0a"],
 	"userOutputPackets": [
         {
             "name": "01,0a",
@@ -227,37 +227,49 @@
                     "format": "10.4f"
                 },
                 {
-                    "type": "double",
+                    "type": "float",
                     "name": "north_velocity",
                     "unit": "m/s",
                     "format": "10.4f"
                 },
                 {
-                    "type": "double",
+                    "type": "float",
                     "name": "east_velocity",
                     "unit": "m/s",
                     "format": "10.4f"
                 },
                 {
-                    "type": "double",
+                    "type": "float",
                     "name": "up_velocity",
                     "unit": "m/s",
                     "format": "10.4f"
                 },
                 {
-                    "type": "double",
+                    "type": "float",
+                    "name": "longitudinal_velocity",
+                    "unit": "m/s",
+                    "format": "10.4f"
+                },
+                {
+                    "type": "float",
+                    "name": "lateral_velocity",
+                    "unit": "m/s",
+                    "format": "10.4f"
+                },
+                {
+                    "type": "float",
                     "name": "roll",
                     "unit": "deg",
                     "format": "14.9f"
                 },
                 {
-                    "type": "double",
+                    "type": "float",
                     "name": "pitch",
                     "unit": "deg",
                     "format": "14.9f"
                 },
                 {
-                    "type": "double",
+                    "type": "float",
                     "name": "heading",
                     "unit": "deg",
                     "format": "14.9f"
@@ -295,6 +307,18 @@
                 {
                     "type": "float",
                     "name": "up_velocity_std",
+                    "unit": "m/s",
+                    "format": "8.3f"
+                },
+                {
+                    "type": "float",
+                    "name": "long_vel_std",
+                    "unit": "m/s",
+                    "format": "8.3f"
+                },
+                {
+                    "type": "float",
+                    "name": "lat_vel_std",
                     "unit": "m/s",
                     "format": "8.3f"
                 },
@@ -362,7 +386,7 @@
             ]
         },
         {
-            "name": "0a,05",
+            "name": "05,0a",
             "display": "Diagnostic Message",
             "isList": 0,
             "payload": [
@@ -377,42 +401,6 @@
                     "name": "GPS_TimeOfWeek",
                     "unit": "ms",
                     "format": "11.4f"
-                },
-                {
-                    "type": "uint16",
-                    "name": "Year UTC",
-                    "unit": "",
-                    "format": ""
-                },
-                {
-                    "type": "uint8",
-                    "name": "Month UTC",
-                    "unit": "",
-                    "format": ""
-                },
-                {
-                    "type": "uint8",
-                    "name": "Day UTC",
-                    "unit": "",
-                    "format": ""
-                },
-                {
-                    "type": "uint8",
-                    "name": "Hour UTC",
-                    "unit": "",
-                    "format": ""
-                },
-                {
-                    "type": "uint8",
-                    "name": "Minute UTC",
-                    "unit": "",
-                    "format": ""
-                },
-                {
-                    "type": "uint8",
-                    "name": "Second UTC",
-                    "unit": "",
-                    "format": ""
                 },
                 {
                     "type": "uint32",

@@ -759,7 +759,7 @@ class UserRawParse:
                     + "<TR ALIGN=RIGHT><TD ALIGN=LEFT>Vel(N,E,D):</TD><TD>"\
                     + "%.4f" % ins[7] + "</TD><TD>" + "%.4f" % ins[8] + "</TD><TD>" + "%.4f" % (-ins[9]) + "</TD><TD>(m/s)</TD></TR>\n"\
                     + "<TR ALIGN=RIGHT><TD ALIGN=LEFT>Att(r,p,h):</TD><TD>"\
-                    + "%.4f" % ins[10] + "</TD><TD>" + "%.4f" % ins[11] + "</TD><TD>" + "%.4f" % ins[12] + "</TD><TD>(deg,approx)</TD></TR>\n"\
+                    + "%.4f" % ins[12] + "</TD><TD>" + "%.4f" % ins[13] + "</TD><TD>" + "%.4f" % ins[14] + "</TD><TD>(deg,approx)</TD></TR>\n"\
                     + "<TR ALIGN=RIGHT><TD ALIGN=LEFT>Mode:</TD><TD>"\
                     + ins_status[ins[2]] + "</TD><TD>" + ins_postype[ins[3]] + "</TD><TR>\n"\
                     + "</TABLE>\n"\
@@ -783,7 +783,7 @@ class UserRawParse:
                 ins_track += "<styleUrl>#P" + str(pcolor) + "</styleUrl>\n"\
                     + "<Style>\n"\
                     + "<IconStyle>\n"\
-                    + "<heading>" + "%.4f" % ins[12] + "</heading>\n"\
+                    + "<heading>" + "%.4f" % ins[14] + "</heading>\n"\
                     + "</IconStyle>\n"\
                     + "</Style>\n"
 
@@ -1002,11 +1002,11 @@ class UserRawParse:
                 buffer = buffer + \
                     format(data[9], output['payload'][9]['format']) + ","
                 buffer = buffer + \
-                    format(data[10], output['payload'][10]['format']) + ","
-                buffer = buffer + \
-                    format(data[11], output['payload'][11]['format']) + ","
-                buffer = buffer + \
                     format(data[12], output['payload'][12]['format']) + ","
+                buffer = buffer + \
+                    format(data[13], output['payload'][13]['format']) + ","
+                buffer = buffer + \
+                    format(data[14], output['payload'][14]['format']) + ","
                 buffer = buffer + \
                     format(data[3], output['payload'][3]['format']) + "\n"
                 self.f_process.write(buffer)
@@ -1029,11 +1029,11 @@ class UserRawParse:
                 buffer = buffer + \
                     format(data[9], output['payload'][9]['format']) + ","
                 buffer = buffer + \
-                    format(data[10], output['payload'][10]['format']) + ","
-                buffer = buffer + \
-                    format(data[11], output['payload'][11]['format']) + ","
-                buffer = buffer + \
                     format(data[12], output['payload'][12]['format']) + ","
+                buffer = buffer + \
+                    format(data[13], output['payload'][13]['format']) + ","
+                buffer = buffer + \
+                    format(data[14], output['payload'][14]['format']) + ","
                 buffer = buffer + \
                     format(data[3], output['payload'][3]['format']) + ","
                 buffer = buffer + \
