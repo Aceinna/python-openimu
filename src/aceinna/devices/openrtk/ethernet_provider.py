@@ -189,6 +189,11 @@ class Provider(OpenDeviceBase):
     def ntrip_client_thread(self):
         self.ntrip_client = NTRIPClient(self.properties)
         self.ntrip_client.on('parsed', self.handle_rtcm_data_parsed)
+        if self.device_info.__contains__('sn') and self.device_info.__contains__('pn'):
+            self.ntrip_client.set_connect_headers({
+                'Ntrip-Sn':self.device_info['sn'],
+                'Ntrip-Pn':self.device_info['pn']
+            })
         self.ntrip_client.run()
 
     def handle_rtcm_data_parsed(self, data):
@@ -280,6 +285,7 @@ class Provider(OpenDeviceBase):
                                 if str_nmea.find("$GPGGA") != -1:
                                     if self.ntrip_client:
                                         self.ntrip_client.send(str_nmea)
+                                self.user_logf.write(str_nmea.encode())
                             APP_CONTEXT.get_print_logger().info(str_nmea.replace('\r\n', ''))
                         except Exception as e:
                             # print('NMEA fault:{0}'.format(e))
@@ -287,9 +293,9 @@ class Provider(OpenDeviceBase):
                     self.nmea_buffer = []
                     self.nmea_sync = 0
 
-        if self.user_logf is not None and data is not None:
-            self.user_logf.write(data)
-            self.user_logf.flush()
+        # if self.user_logf is not None and data is not None:
+        #     self.user_logf.write(data)
+        #     self.user_logf.flush()
 
     def thread_data_log(self, *args, **kwargs):
         self.ethernet_data_logger = EthernetDataLogger(

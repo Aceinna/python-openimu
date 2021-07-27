@@ -11,7 +11,8 @@ from .ins401_packet_parser import (
 MSG_HEADER = [0x55, 0x55]
 PACKET_TYPE_INDEX = 2
 # PRIVATE_PACKET_TYPE = ['RE', 'WE', 'UE', 'LE', 'SR']
-INPUT_PACKETS = [b'\x01\xcc', b'\x02\xcc', b'\x03\xcc', b'\x04\xcc', b'\x01\x0b', b'\x02\x0b']
+INPUT_PACKETS = [b'\x01\xcc', b'\x02\xcc',
+                 b'\x03\xcc', b'\x04\xcc', b'\x01\x0b', b'\x02\x0b']
 OTHER_OUTPUT_PACKETS = [b'\x02\n', b'\x03\n', b'\x05\n', b'\x06\n']
 
 
@@ -80,7 +81,7 @@ class EthernetMessageParser(MessageParserBase):
             self._parse_input_packet(packet_type, payload, frame)
         else:
             # consider as output packet, parse output Messages
-            self._parse_output_packet(packet_type, payload)
+            self._parse_output_packet(packet_type, payload, frame)
 
     def _parse_input_packet(self, packet_type, payload, frame):
         payload_parser = match_command_handler(packet_type)
@@ -97,7 +98,7 @@ class EthernetMessageParser(MessageParserBase):
             print('[Warning] Unsupported command {0}'.format(
                 packet_type.encode()))
 
-    def _parse_output_packet(self, packet_type, payload):
+    def _parse_output_packet(self, packet_type, payload, frame):
         # check if it is the valid out packet
         payload_parser = None
         is_other_output_packet = OTHER_OUTPUT_PACKETS.__contains__(packet_type)
@@ -106,9 +107,9 @@ class EthernetMessageParser(MessageParserBase):
             data = payload_parser(payload)
 
             self.emit('continuous_message',
-                  packet_type=packet_type,
-                  data=data,
-                  event_time=time.time())
+                      packet_type=packet_type,
+                      data=frame,
+                      event_time=time.time())
             return
 
         payload_parser = common_continuous_parser
