@@ -325,7 +325,7 @@ class INS401Parse:
             ep = self.weeksecondstoutc(ins[0], ins[1]/1000, -18)
             ep_sp = time.strptime(ep, "%Y-%m-%d %H:%M:%S")
 
-            if math.fmod(ep_sp[5]+(ins[1] % 1000)/1000+0.0005, self.inskml_rate) < 0.005:
+            if math.fmod(ep_sp[5]+(ins[1] % 1000)/1000+0.0005, self.inskml_rate) < self.inskml_rate:
                 if abs(ins[5]*ins[4]) < 0.00000001:
                     continue
 
@@ -343,7 +343,7 @@ class INS401Parse:
             ep = self.weeksecondstoutc(ins[0], ins[1]/1000, -18)
             ep_sp = time.strptime(ep, "%Y-%m-%d %H:%M:%S")
 
-            if i == 0 or i == len(self.insdata)-1 or math.fmod(ins[1]/1000 + 0.0005, self.inskml_rate) < 0.005:
+            if i == 0 or i == len(self.insdata)-1 or math.fmod(ins[1]/1000 + 0.0005, self.inskml_rate) < self.inskml_rate:
                 ins_track += "<Placemark>\n"
                 if i <= 1:
                     ins_track += "<name>Start</name>\n"
@@ -592,7 +592,7 @@ class INS401Parse:
 
         # ins
         elif output['name'] == '03,0a':
-            if data[1] % 100 == 0:
+            if (data[1]%100) < 10:
                 buffer = '$GPINS,'
                 buffer = buffer + \
                     format(data[0], output['payload'][0]['format']) + ","
