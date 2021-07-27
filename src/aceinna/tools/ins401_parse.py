@@ -615,7 +615,7 @@ class INS401Parse:
                 buffer = buffer + \
                     format(data[13], output['payload'][13]['format']) + ","
                 buffer = buffer + \
-                    format(data[13], output['payload'][14]['format']) + ","
+                    format(data[14], output['payload'][14]['format']) + ","
                 buffer = buffer + \
                     format(data[3], output['payload'][3]['format']) + "\n"
                 self.f_process.write(buffer)
