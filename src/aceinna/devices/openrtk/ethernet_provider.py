@@ -439,7 +439,10 @@ class Provider(OpenDeviceBase):
         if packet_type == b'\x06\n':
             if self.rtcm_rover_logf:
                 self.rtcm_rover_logf.write(bytes(data))
-
+        else:
+            if self.user_logf:
+                self.user_logf.write(data)
+                self.user_logf.flush()
         # else:
         #     output_packet_config = next(
         #         (x for x in self.properties['userMessages']['outputPackets']
