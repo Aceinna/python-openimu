@@ -12,7 +12,7 @@ MSG_HEADER = [0x55, 0x55]
 PACKET_TYPE_INDEX = 2
 # PRIVATE_PACKET_TYPE = ['RE', 'WE', 'UE', 'LE', 'SR']
 INPUT_PACKETS = [b'\x01\xcc', b'\x02\xcc', b'\x03\xcc', b'\x04\xcc', b'\x01\x0b', b'\x02\x0b']
-OTHER_OUTPUT_PACKETS = [b'\x020a', b'\x030a', b'\x050a', b'\x060a']
+OTHER_OUTPUT_PACKETS = [b'\x02\x0a', b'\x03\x0a', b'\x05\x0a', b'\x06\x0a']
 
 
 class EthernetMessageParser(MessageParserBase):
