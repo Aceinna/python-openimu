@@ -441,8 +441,7 @@ class Provider(OpenDeviceBase):
                 self.rtcm_rover_logf.write(bytes(data))
         else:
             if self.user_logf:
-                self.user_logf.write(data)
-                self.user_logf.flush()
+                self.user_logf.write(bytes(data))
         # else:
         #     output_packet_config = next(
         #         (x for x in self.properties['userMessages']['outputPackets']
