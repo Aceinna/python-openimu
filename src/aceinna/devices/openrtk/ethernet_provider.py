@@ -278,7 +278,8 @@ class Provider(OpenDeviceBase):
                                 str_nmea)
                             if cksum == calc_cksum:
                                 if str_nmea.find("$GPGGA") != -1:
-                                    self.add_output_packet('gga', str_nmea)
+                                    if self.ntrip_client:
+                                        self.ntrip_client.send(str_nmea)
                             APP_CONTEXT.get_print_logger().info(str_nmea.replace('\r\n', ''))
                         except Exception as e:
                             # print('NMEA fault:{0}'.format(e))
@@ -311,134 +312,135 @@ class Provider(OpenDeviceBase):
         '''
         #print('on_receive_output_packet:', data)
         # $GPGGA,080319.00,3130.4858508,N,12024.0998832,E,4,25,0.5,12.459,M,0.000,M,2.0,*46
-        if packet_type == b'\x02\x0a':
-            if self.ntrip_client_enable:
-                # $GPGGA
-                gpgga = '$GPGGA'
-                # time
-                timeOfWeek = float(data['GPS_TimeofWeek']) - 18
-                dsec = int(timeOfWeek)
-                msec = timeOfWeek - dsec
-                sec = dsec % 86400
-                hour = int(sec / 3600)
-                minute = int(sec % 3600 / 60)
-                second = sec % 60
-                gga_time = format(hour*10000 + minute*100 +
-                                  second + msec, '09.2f')
-                gpgga = gpgga + ',' + gga_time
-                # latitude
-                latitude = float(data['latitude']) * 180 / 2147483648.0
-                if latitude >= 0:
-                    latflag = 'N'
-                else:
-                    latflag = 'S'
-                    latitude = math.fabs(latitude)
-                lat_d = int(latitude)
-                lat_m = (latitude-lat_d) * 60
-                lat_dm = format(lat_d*100 + lat_m, '012.7f')
-                gpgga = gpgga + ',' + lat_dm + ',' + latflag
-                # longitude
-                longitude = float(data['longitude']) * 180 / 2147483648.0
-                if longitude >= 0:
-                    lonflag = 'E'
-                else:
-                    lonflag = 'W'
-                    longitude = math.fabs(longitude)
-                lon_d = int(longitude)
-                lon_m = (longitude-lon_d) * 60
-                lon_dm = format(lon_d*100 + lon_m, '013.7f')
-                gpgga = gpgga + ',' + lon_dm + ',' + lonflag
-                # positionMode
-                gpgga = gpgga + ',' + str(data['positionMode'])
-                # svs
-                gpgga = gpgga + ',' + str(data['numberOfSVs'])
-                # hop
-                gpgga = gpgga + ',' + format(float(data['hdop']), '03.1f')
-                # height
-                gpgga = gpgga + ',' + \
-                    format(float(data['height']), '06.3f') + ',M'
-                #
-                gpgga = gpgga + ',0.000,M'
-                # diffage
-                gpgga = gpgga + ',' + \
-                    format(float(data['diffage']), '03.1f') + ','
-                # ckm
-                checksum = 0
-                for i in range(1, len(gpgga)):
-                    checksum = checksum ^ ord(gpgga[i])
-                str_checksum = hex(checksum)
-                if str_checksum.startswith("0x"):
-                    str_checksum = str_checksum[2:]
-                gpgga = gpgga + '*' + str_checksum + '\r\n'
+        # if packet_type == b'\x02\x0a':
+        #     if self.ntrip_client_enable:
+        #         # $GPGGA
+        #         gpgga = '$GPGGA'
+        #         # time
+        #         timeOfWeek = float(data['GPS_TimeofWeek']) - 18
+        #         dsec = int(timeOfWeek)
+        #         msec = timeOfWeek - dsec
+        #         sec = dsec % 86400
+        #         hour = int(sec / 3600)
+        #         minute = int(sec % 3600 / 60)
+        #         second = sec % 60
+        #         gga_time = format(hour*10000 + minute*100 +
+        #                           second + msec, '09.2f')
+        #         gpgga = gpgga + ',' + gga_time
+        #         # latitude
+        #         latitude = float(data['latitude']) * 180 / 2147483648.0
+        #         if latitude >= 0:
+        #             latflag = 'N'
+        #         else:
+        #             latflag = 'S'
+        #             latitude = math.fabs(latitude)
+        #         lat_d = int(latitude)
+        #         lat_m = (latitude-lat_d) * 60
+        #         lat_dm = format(lat_d*100 + lat_m, '012.7f')
+        #         gpgga = gpgga + ',' + lat_dm + ',' + latflag
+        #         # longitude
+        #         longitude = float(data['longitude']) * 180 / 2147483648.0
+        #         if longitude >= 0:
+        #             lonflag = 'E'
+        #         else:
+        #             lonflag = 'W'
+        #             longitude = math.fabs(longitude)
+        #         lon_d = int(longitude)
+        #         lon_m = (longitude-lon_d) * 60
+        #         lon_dm = format(lon_d*100 + lon_m, '013.7f')
+        #         gpgga = gpgga + ',' + lon_dm + ',' + lonflag
+        #         # positionMode
+        #         gpgga = gpgga + ',' + str(data['positionMode'])
+        #         # svs
+        #         gpgga = gpgga + ',' + str(data['numberOfSVs'])
+        #         # hop
+        #         gpgga = gpgga + ',' + format(float(data['hdop']), '03.1f')
+        #         # height
+        #         gpgga = gpgga + ',' + \
+        #             format(float(data['height']), '06.3f') + ',M'
+        #         #
+        #         gpgga = gpgga + ',0.000,M'
+        #         # diffage
+        #         gpgga = gpgga + ',' + \
+        #             format(float(data['diffage']), '03.1f') + ','
+        #         # ckm
+        #         checksum = 0
+        #         for i in range(1, len(gpgga)):
+        #             checksum = checksum ^ ord(gpgga[i])
+        #         str_checksum = hex(checksum)
+        #         if str_checksum.startswith("0x"):
+        #             str_checksum = str_checksum[2:]
+        #         gpgga = gpgga + '*' + str_checksum + '\r\n'
 
-                if self.ntrip_client != None:
-                    self.ntrip_client.send(gpgga)
-                return
+        #         if self.ntrip_client != None:
+        #             self.ntrip_client.send(gpgga)
+        #         return
 
-        elif packet_type == b'\x03\x0a':
-            try:
-                if data['latitude'] != 0.0 and data['longitude'] != 0.0:
-                    if self.pS_data:
-                        if self.pS_data['GPS_Week'] == data['GPS_Week']:
-                            if data['GPS_TimeofWeek'] - self.pS_data['GPS_TimeofWeek'] >= 0.2:
-                                self.add_output_packet('pos', data)
-                                self.pS_data = data
+        # elif packet_type == b'\x03\x0a':
+        #     try:
+        #         if data['latitude'] != 0.0 and data['longitude'] != 0.0:
+        #             if self.pS_data:
+        #                 if self.pS_data['GPS_Week'] == data['GPS_Week']:
+        #                     if data['GPS_TimeofWeek'] - self.pS_data['GPS_TimeofWeek'] >= 0.2:
+        #                         self.add_output_packet('pos', data)
+        #                         self.pS_data = data
 
-                                if data['insStatus'] >= 3 and data['insStatus'] <= 5:
-                                    ins_status = 'INS_INACTIVE'
-                                    if data['insStatus'] == 3:
-                                        ins_status = 'INS_SOLUTION_GOOD'
-                                    elif data['insStatus'] == 4:
-                                        ins_status = 'INS_SOLUTION_FREE'
-                                    elif data['insStatus'] == 5:
-                                        ins_status = 'INS_ALIGNMENT_COMPLETE'
+        #                         if data['insStatus'] >= 3 and data['insStatus'] <= 5:
+        #                             ins_status = 'INS_INACTIVE'
+        #                             if data['insStatus'] == 3:
+        #                                 ins_status = 'INS_SOLUTION_GOOD'
+        #                             elif data['insStatus'] == 4:
+        #                                 ins_status = 'INS_SOLUTION_FREE'
+        #                             elif data['insStatus'] == 5:
+        #                                 ins_status = 'INS_ALIGNMENT_COMPLETE'
 
-                                    ins_pos_type = 'INS_INVALID'
-                                    if data['insPositionType'] == 1:
-                                        ins_pos_type = 'INS_SPP'
-                                    elif data['insPositionType'] == 4:
-                                        ins_pos_type = 'INS_RTKFIXED'
-                                    elif data['insPositionType'] == 5:
-                                        ins_pos_type = 'INS_RTKFLOAT'
+        #                             ins_pos_type = 'INS_INVALID'
+        #                             if data['insPositionType'] == 1:
+        #                                 ins_pos_type = 'INS_SPP'
+        #                             elif data['insPositionType'] == 4:
+        #                                 ins_pos_type = 'INS_RTKFIXED'
+        #                             elif data['insPositionType'] == 5:
+        #                                 ins_pos_type = 'INS_RTKFLOAT'
 
-                                    inspva = '#INSPVA,%s,%10.2f, %s, %s,%12.8f,%13.8f,%8.3f,%9.3f,%9.3f,%9.3f,%9.3f,%9.3f,%9.3f' %\
-                                        (data['GPS_Week'], data['GPS_TimeofWeek'], ins_status, ins_pos_type,
-                                         data['latitude'], data['longitude'], data['height'],
-                                         data['velocityNorth'], data['velocityEast'], data['velocityUp'],
-                                         data['roll'], data['pitch'], data['heading'])
-                                    print(inspva)
-                        else:
-                            self.add_output_packet('pos', data)
-                            self.pS_data = data
-                    else:
-                        self.add_output_packet('pos', data)
-                        self.pS_data = data
-            except Exception as e:
-                # print(e)
-                pass
+        #                             inspva = '#INSPVA,%s,%10.2f, %s, %s,%12.8f,%13.8f,%8.3f,%9.3f,%9.3f,%9.3f,%9.3f,%9.3f,%9.3f' %\
+        #                                 (data['GPS_Week'], data['GPS_TimeofWeek'], ins_status, ins_pos_type,
+        #                                  data['latitude'], data['longitude'], data['height'],
+        #                                  data['velocityNorth'], data['velocityEast'], data['velocityUp'],
+        #                                  data['roll'], data['pitch'], data['heading'])
+        #                             print(inspva)
+        #                 else:
+        #                     self.add_output_packet('pos', data)
+        #                     self.pS_data = data
+        #             else:
+        #                 self.add_output_packet('pos', data)
+        #                 self.pS_data = data
+        #     except Exception as e:
+        #         # print(e)
+        #         pass
 
-        elif packet_type == b'\x05\x0a':
-            if self.sky_data:
-                if self.sky_data[0]['timeOfWeek'] == data[0]['timeOfWeek']:
-                    self.sky_data.extend(data)
-                else:
-                    self.add_output_packet('skyview', self.sky_data)
-                    self.add_output_packet('snr', self.sky_data)
-                    self.sky_data = []
-                    self.sky_data.extend(data)
-            else:
-                self.sky_data.extend(data)
+        # elif packet_type == b'\x05\x0a':
+        #     if self.sky_data:
+        #         if self.sky_data[0]['timeOfWeek'] == data[0]['timeOfWeek']:
+        #             self.sky_data.extend(data)
+        #         else:
+        #             self.add_output_packet('skyview', self.sky_data)
+        #             self.add_output_packet('snr', self.sky_data)
+        #             self.sky_data = []
+        #             self.sky_data.extend(data)
+        #     else:
+        #         self.sky_data.extend(data)
 
-        elif packet_type == b'\x06\x0a':
-            self.rtcm_rover_logf.write(bytes(data))
+        if packet_type == b'\x06\n':
+            if self.rtcm_rover_logf:
+                self.rtcm_rover_logf.write(bytes(data))
 
-        else:
-            output_packet_config = next(
-                (x for x in self.properties['userMessages']['outputPackets']
-                 if x['name'] == packet_type), None)
-            if output_packet_config and output_packet_config.__contains__('from') \
-                    and output_packet_config['from'] == 'imu':
-                self.add_output_packet('imu', data)
+        # else:
+        #     output_packet_config = next(
+        #         (x for x in self.properties['userMessages']['outputPackets']
+        #          if x['name'] == packet_type), None)
+        #     if output_packet_config and output_packet_config.__contains__('from') \
+        #             and output_packet_config['from'] == 'imu':
+        #         self.add_output_packet('imu', data)
 
     def before_write_content(self, core, content_len):
         command_CS = [0x04, 0xaa]
