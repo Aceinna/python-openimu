@@ -61,6 +61,7 @@ class Provider(OpenDeviceBase):
         self.ntrip_client = None
         self.connected = True
         self.rtk_log_file_name = ''
+        self.rtcm_rover_logf = None
 
     def prepare_folders(self):
         '''
