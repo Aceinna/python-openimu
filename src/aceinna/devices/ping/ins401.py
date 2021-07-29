@@ -7,12 +7,12 @@ pG = [0x01, 0xcc]
 
 
 def _run_command(communicator, command):
-    command_line = helper.build_ethernet_packet(
+    run_command = helper.build_ethernet_packet(
         communicator.get_dst_mac(), communicator.get_src_mac(), pG)
 
     data_buffer = []
     cmd_type = struct.unpack('>H', bytes(pG))[0]
-    read_line = communicator.write_read(command_line, cmd_type)
+    read_line = communicator.write_read(run_command.actual_command, cmd_type)
     if read_line:
         packet_raw = read_line[14:]
         packet_type = packet_raw[2:4]
@@ -66,7 +66,7 @@ def ping(communicator, *args):
 
     # Prevent action. Get app info again,
     # if cannot retrieve any info at the first time of ping. Should find the root cause.
-    
+
     if info_text.find('INS401') > -1:
         split_text = info_text.split(' RTK_INS')
         device_info_text = split_text[0]

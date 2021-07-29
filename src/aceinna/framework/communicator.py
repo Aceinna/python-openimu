@@ -752,12 +752,12 @@ class Ethernet(Communicator):
         filter_exp = 'ether dst host ' + \
             iface[1] + ' and ether[16:2] == 0x01cc'
         src_mac = bytes([int(x, 16) for x in iface[1].split(':')])
-        command_line = helper.build_ethernet_packet(
+        command = helper.build_ethernet_packet(
             self.get_dst_mac(), src_mac, pG)
         async_sniffer = AsyncSniffer(
             iface=iface[0], prn=self.handle_iface_confirm_packet, filter=filter_exp)
         async_sniffer.start()
-        sendp(command_line, iface=iface[0], verbose=0)
+        sendp(command.actual_command, iface=iface[0], verbose=0)
         time.sleep(1)
         async_sniffer.stop()
 
@@ -796,7 +796,7 @@ class Ethernet(Communicator):
         sniff(prn=self.handle_recive_packet, iface=self.iface)
 
     def handle_recive_packet(self, packet):
-        self.receive_cache.append(packet)
+        self.receive_cache.append(bytes(packet))
 
     def open(self):
         '''

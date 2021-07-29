@@ -1,15 +1,17 @@
 import time
 from ..base.upgrade_worker_base import UpgradeWorkerBase
 from ...framework.utils import helper
-from ..ping.open import ping
+from ...framework.command import Command
+#from ..ping.open import ping
 from . import (UPGRADE_EVENT, UPGRADE_GROUP)
 
-
+#TODO may merge with jump bootloader worker
 class JumpApplicationWorker(UpgradeWorkerBase):
     '''Firmware upgrade worker
     '''
     _command = None
     _listen_packet = None
+    _wait_timeout_after_command = 3
     # bootloader_baudrate=115200
 
     def __init__(self, communicator, *args, **kwargs):
@@ -25,7 +27,11 @@ class JumpApplicationWorker(UpgradeWorkerBase):
             self._command = kwargs.get('command')
 
         if kwargs.get('listen_packet'):
-            self._listen_packet = kwargs.get('command')
+            self._listen_packet = kwargs.get('listen_packet')
+
+        if kwargs.get('wait_timeout_after_command'):
+            self._wait_timeout_after_command = kwargs.get(
+                'wait_timeout_after_command')
 
     def stop(self):
         self._is_stopped = True
@@ -36,20 +42,35 @@ class JumpApplicationWorker(UpgradeWorkerBase):
     def work(self):
         '''Send JA and ping device
         '''
-        if self._is_stopped:
-            return
-
         # run command JA
         # command_line = helper.build_bootloader_input_packet('JA')
         # self._communicator.serial_port.baudrate = self._bootloader_baudrate
 
-        self.emit('before_command')
+        if self._is_stopped:
+            return
 
-        self._communicator.reset_buffer()  # clear input and output buffer
-        self._communicator.write(self._command, True)
-        time.sleep(5)
+        if self._command:
+            actual_command = None
+            payload_length_format = 'B'
 
-        self.emit('after_command')
+            if  isinstance(self._command, Command):
+                actual_command = self._command.actual_command
+                payload_length_format = self._command.payload_length_format
+
+            if isinstance(self._command, list):
+                actual_command = self._command
+
+            self.emit(UPGRADE_EVENT.BEFORE_COMMAND)
+
+            self._communicator.reset_buffer()
+            self._communicator.write(actual_command)
+
+            time.sleep(self._wait_timeout_after_command)
+
+            helper.read_untils_have_data(
+                self._communicator, self._listen_packet, 1000, 50, payload_length_format)
+
+            self.emit(UPGRADE_EVENT.AFTER_COMMAND)
 
         # ping device
         # can_ping = False

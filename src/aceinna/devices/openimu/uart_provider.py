@@ -240,15 +240,29 @@ class Provider(OpenDeviceBase):
             }
         }
 
+
+
     def get_upgrade_workers(self, firmware_content):
         firmware_worker = FirmwareUpgradeWorker(
             self.communicator, self.bootloader_baudrate, firmware_content)
         firmware_worker.on(
             UPGRADE_EVENT.FIRST_PACKET, lambda: time.sleep(8))
 
-        jump_bootloader_worker = JumpBootloaderWorker(self.communicator)
+        jump_bootloader_command = helper.build_bootloader_input_packet(
+            'JI')
+        jump_bootloader_worker = JumpBootloaderWorker(
+            self.communicator,
+            command=jump_bootloader_command,
+            wait_timeout_after_command=3)
+
+        jump_application_command = helper.build_bootloader_input_packet('JA')
         jump_application_worker = JumpApplicationWorker(
-            self.communicator, bootloader_baudrate=self.bootloader_baudrate)
+            self.communicator,
+            command=jump_application_command,
+            wait_timeout_after_command=3)
+        jump_application_worker.on(UPGRADE_EVENT.BEFORE_COMMAND, self.before_jump_app_command)
+        jump_application_worker.on(UPGRADE_EVENT.AFTER_COMMAND, self.after_jump_app_command)
+        # bootloader_baudrate=self.bootloader_baudrate)
 
         return [jump_bootloader_worker, firmware_worker, jump_application_worker]
 
