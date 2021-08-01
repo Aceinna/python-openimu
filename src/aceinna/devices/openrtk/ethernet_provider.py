@@ -22,7 +22,7 @@ from ..configs.openrtk_predefine import (
 from ..decorator import with_device_message
 from ...models import InternalCombineAppParseRule
 from ..parsers.open_field_parser import encode_value
-from ...framework.utils.print import print_yellow
+from ...framework.utils.print import (print_yellow, print_green)
 from ..upgrade_workers import (
     EthernetFirmwareUpgradeWorker,
     FirmwareUpgradeWorker,
@@ -230,6 +230,9 @@ class Provider(OpenDeviceBase):
             ##print('set user para {0}'.format(result))
             if result['packetType'] == 'success':
                 self.save_config()
+
+            # check saved result
+            self.check_predefined_result()
 
         # start ntrip client
         if self.properties["initial"].__contains__("ntrip") and not self.ntrip_client and not self.is_in_bootloader:
@@ -481,18 +484,95 @@ class Provider(OpenDeviceBase):
 
         return 'IDLE'
 
-    def save_device_info(self):
-        if not self.rtk_log_file_name or not self._device_info_string:
-            return
-
+    def check_predefined_result(self):
         local_time = time.localtime()
         formatted_file_time = time.strftime("%Y_%m_%d_%H_%M_%S", local_time)
         file_path = os.path.join(
             self.rtk_log_file_name,
-            'device_info_{0}.txt'.format(formatted_file_time)
+            'parameters_predefined_{0}.json'.format(formatted_file_time)
         )
-        with open(file_path, 'w') as outfile:
-            outfile.write(self._device_info_string)
+        # save parameters to data log folder after predefined parameters setup
+        result = self.get_params()
+        if result['packetType'] == 'inputParams':
+            with open(file_path, 'w') as outfile:
+                json.dump(result['data'], outfile)
+
+        # compare saved parameters with predefined parameters
+        hashed_predefined_parameters = helper.collection_to_dict(
+            self.properties["initial"]["userParameters"], key='paramId')
+        hashed_current_parameters = helper.collection_to_dict(
+            result['data'], key='paramId')
+
+        success_count = 0
+        fail_count = 0
+        fail_parameters = []
+        for key in hashed_predefined_parameters:
+            if hashed_current_parameters[key]['value'] == \
+                    hashed_predefined_parameters[key]['value']:
+                success_count += 1
+            else:
+                fail_count += 1
+                fail_parameters.append(
+                    hashed_predefined_parameters[key]['name'])
+
+        check_result = 'Predefined Parameters are saved. Success ({0}), Fail ({1})'.format(
+            success_count, fail_count)
+        if success_count == len(hashed_predefined_parameters.keys()):
+            print_green(check_result)
+
+        if fail_count > 0:
+            print_yellow(check_result)
+            print_yellow('The failed parameters: {0}'.format(fail_parameters))
+
+    def save_device_info(self):
+        ''' Save device configuration
+            File name: configuration.json
+        '''
+        if not self.rtk_log_file_name or not self._device_info_string:
+            return
+
+        # local_time = time.localtime()
+        # formatted_file_time = time.strftime("%Y_%m_%d_%H_%M_%S", local_time)
+        # file_path = os.path.join(
+        #     self.rtk_log_file_name,
+        #     'device_info_{0}.txt'.format(formatted_file_time)
+        # )
+        # with open(file_path, 'w') as outfile:
+        #     outfile.write(self._device_info_string)
+
+        if self.is_in_bootloader:
+            return
+
+        result = self.get_params()
+
+        device_configuration = None
+        file_path = os.path.join(self.rtk_log_file_name, 'configuration.json')
+
+        if not os.path.exists(file_path):
+            device_configuration = []
+        else:
+            with open(file_path) as json_data:
+                device_configuration = (list)(json.load(json_data))
+
+        if result['packetType'] == 'inputParams':
+            session_info = dict()
+            session_info['time'] = time.strftime(
+                "%Y-%m-%d %H:%M:%S", time.localtime())
+            session_info['device'] = self.device_info
+            session_info['app'] = self.app_info
+            session_info['interface'] = self.cli_options.interface
+            parameters_configuration = dict()
+            for item in result['data']:
+                param_name = item['name']
+                param_value = item['value']
+                parameters_configuration[param_name] = param_value
+
+            session_info['parameters'] = parameters_configuration
+            device_configuration.append(session_info)
+
+            with open(file_path, 'w') as outfile:
+                json.dump(device_configuration, outfile,
+                          indent=4, ensure_ascii=False)
 
     def after_upgrade_completed(self):
         # start ntrip client
@@ -563,30 +643,17 @@ class Provider(OpenDeviceBase):
         has_error = False
         parameter_values = []
 
-        if self.app_info['app_name'] == 'INS':
-            conf_parameters = self.properties['userConfiguration']
-            conf_parameters_len = len(conf_parameters)-1
-            step = 10
+        for parameter in self.properties['userConfiguration']:
+            if parameter['paramId'] == 0:
+                continue
 
-            for i in range(2, conf_parameters_len, step):
-                start_byte = i
-                end_byte = i+step-1 if i+step < conf_parameters_len else conf_parameters_len
+            result = self.get_param(parameter)
 
-                command_line = helper.build_packet(
-                    'gB', [start_byte, end_byte])
-                result = yield self._message_center.build(command=command_line, timeout=2)
-                if result['error']:
-                    has_error = True
-                    break
-
-                parameter_values.extend(result['data'])
-        else:
-            command_line = helper.build_input_packet('gA')
-            result = yield self._message_center.build(command=command_line, timeout=3)
             if result['error']:
                 has_error = True
+                break
 
-            parameter_values = result['data']
+            parameter_values.extend(result['data'])
 
         if not has_error:
             self.parameters = parameter_values
@@ -605,10 +672,16 @@ class Provider(OpenDeviceBase):
         '''
         Update paramter value
         '''
-        command_line = helper.build_input_packet(
-            'gP', properties=self.properties, param=params['paramId'])
-        # self.communicator.write(command_line)
-        # result = self.get_input_result('gP', timeout=1)
+        gP = b'\x02\xcc'
+        message_bytes = []
+        message_bytes.extend(
+            encode_value('uint32', params['paramId'])
+        )
+        command_line = command_line = helper.build_ethernet_packet(
+            self.communicator.get_dst_mac(),
+            self.communicator.get_src_mac(),
+            gP,
+            message_bytes)
         result = yield self._message_center.build(command=command_line)
 
         data = result['data']
@@ -638,62 +711,34 @@ class Provider(OpenDeviceBase):
         Update paramters value
         '''
         input_parameters = self.properties['userConfiguration']
-        grouped_parameters = {}
 
         for parameter in params:
             exist_parameter = next(
                 (x for x in input_parameters if x['paramId'] == parameter['paramId']), None)
 
             if exist_parameter:
-                has_group = grouped_parameters.__contains__(
-                    exist_parameter['category'])
-                if not has_group:
-                    grouped_parameters[exist_parameter['category']] = []
+                result = self.set_param(parameter)
 
-                current_group = grouped_parameters[exist_parameter['category']]
+                packet_type = result['packet_type']
+                data = result['data']
 
-                current_group.append(
-                    {'paramId': parameter['paramId'], 'value': parameter['value'], 'type': exist_parameter['type']})
-
-        for group in grouped_parameters.values():
-            message_bytes = []
-            for parameter in group:
-                message_bytes.extend(
-                    encode_value('int8', parameter['paramId'])
-                )
-                message_bytes.extend(
-                    encode_value(parameter['type'], parameter['value'])
-                )
-                # print('parameter type {0}, value {1}'.format(
-                #     parameter['type'], parameter['value']))
-            # result = self.set_param(parameter)
-            command_line = helper.build_packet(
-                b'\x03\xcc', message_bytes)
-            # for s in command_line:
-            #     print(hex(s))
-
-            result = yield self._message_center.build(command=command_line)
-
-            packet_type = result['packet_type']
-            data = result['data']
-
-            if packet_type == 'error':
-                yield {
-                    'packetType': 'error',
-                    'data': {
-                        'error': data
+                if packet_type == 'error':
+                    yield {
+                        'packetType': 'error',
+                        'data': {
+                            'error': data
+                        }
                     }
-                }
-                break
+                    break
 
-            if data > 0:
-                yield {
-                    'packetType': 'error',
-                    'data': {
-                        'error': data
+                if data > 0:
+                    yield {
+                        'packetType': 'error',
+                        'data': {
+                            'error': data
+                        }
                     }
-                }
-                break
+                    break
 
         yield {
             'packetType': 'success',
@@ -707,10 +752,19 @@ class Provider(OpenDeviceBase):
         '''
         Update paramter value
         '''
-        command_line = helper.build_input_packet(
-            'uP', properties=self.properties, param=params['paramId'], value=params['value'])
-        # self.communicator.write(command_line)
-        # result = self.get_input_result('uP', timeout=1)
+        uP = b'\x03\xcc'
+        message_bytes = []
+        message_bytes.extend(
+            encode_value('uint32', params['paramId'])
+        )
+        message_bytes.extend(
+            encode_value(params['type'], params['value'])
+        )
+        command_line = helper.build_ethernet_packet(
+            self.communicator.get_dst_mac(),
+            self.communicator.get_src_mac(),
+            uP,
+            message_bytes)
         result = yield self._message_center.build(command=command_line)
 
         error = result['error']
@@ -735,7 +789,12 @@ class Provider(OpenDeviceBase):
         '''
         Save configuration
         '''
-        command_line = helper.build_input_packet('sC')
+        sC = b'\x04\xcc'
+        command_line = helper.build_ethernet_packet(
+            self.communicator.get_dst_mac(),
+            self.communicator.get_src_mac(),
+            sC)
+
         # self.communicator.write(command_line)
         # result = self.get_input_result('sC', timeout=2)
         result = yield self._message_center.build(command=command_line, timeout=2)
@@ -758,23 +817,7 @@ class Provider(OpenDeviceBase):
         '''
         Reset params to default
         '''
-        command_line = helper.build_input_packet('rD')
-        result = yield self._message_center.build(command=command_line, timeout=2)
-
-        error = result['error']
-        data = result['data']
-        if error:
-            yield {
-                'packetType': 'error',
-                'data': {
-                    'error': error
-                }
-            }
-
-        yield {
-            'packetType': 'success',
-            'data': data
-        }
+        raise Exception('Not implemented')
 
     def upgrade_framework(self, params, *args):  # pylint: disable=unused-argument
         '''
