@@ -313,7 +313,7 @@ class Provider(OpenDeviceBase):
             self.properties, self.communicator, self.rtcm_logf)
         self.ethernet_rtcm_data_logger.run()
 
-    def on_receive_output_packet(self, packet_type, data, error=None):
+    def on_receive_output_packet(self, packet_type, data, *args):
         '''
         Listener for getting output packet
         '''
@@ -321,8 +321,9 @@ class Provider(OpenDeviceBase):
             if self.rtcm_rover_logf:
                 self.rtcm_rover_logf.write(bytes(data))
         else:
-            if self.user_logf:
-                self.user_logf.write(bytes(data))
+            raw_data = args.get('raw')
+            if self.user_logf and raw_data:
+                self.user_logf.write(bytes(raw_data))
 
     def before_write_content(self, core, content_len):
         command_CS = [0x04, 0xaa]

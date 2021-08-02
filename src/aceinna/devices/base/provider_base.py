@@ -74,7 +74,7 @@ class OpenDeviceBase(EventBase):
         '''
 
     @abstractmethod
-    def on_receive_output_packet(self, packet_type, data):
+    def on_receive_output_packet(self, packet_type, data, *args):
         '''
         Listener for receiving output packet
         '''
@@ -165,7 +165,7 @@ class OpenDeviceBase(EventBase):
         self.connected = False
         self.emit('exception', error_type, message)
 
-    def on_receive_continuous_messsage(self, packet_type, data, event_time):
+    def on_receive_continuous_messsage(self, packet_type, data, event_time, *args):
         '''
         event handler after got continuous message
         '''
@@ -178,7 +178,7 @@ class OpenDeviceBase(EventBase):
         else:
             self._logger.append(packet_type, data)
 
-        self.on_receive_output_packet(packet_type, data)
+        self.on_receive_output_packet(packet_type, data, *args)
 
     def on_crc_failure(self, packet_type, event_time):
         '''
