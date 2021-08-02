@@ -383,7 +383,7 @@ class RTKProviderBase(OpenDeviceBase):
     def thread_rtcm_port_receiver(self, *args, **kwargs):
         pass
 
-    def on_receive_output_packet(self, packet_type, data, error=None):
+    def on_receive_output_packet(self, packet_type, data, *args):
         '''
         Listener for getting output packet
         '''
