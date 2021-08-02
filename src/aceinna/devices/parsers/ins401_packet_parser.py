@@ -30,6 +30,7 @@ def _format_string(data_buffer):
 
     return formatted
 
+
 def string_parser(payload, user_configuration):
     error = False
     data = ''
@@ -167,7 +168,7 @@ def get_parameter_parser(payload, user_configuration):
     data = None
     error = False
     param_id = decode_value('uint32', payload[0:4])
-  
+
     if param_id is not False:
         param = filter(lambda item: item['paramId'] ==
                        param_id, user_configuration)
@@ -175,7 +176,7 @@ def get_parameter_parser(payload, user_configuration):
         try:
             first_item = next(iter(param), None)
             param_value = decode_value(
-                first_item['type'], payload[4:12])
+                first_item['type'], payload[4:12], first_item)
             data = {"paramId": param_id,
                     "name": first_item['name'], "value": param_value}
         except StopIteration:
@@ -321,16 +322,18 @@ def other_output_parser(payload):
     return payload
 
 # packet handler
+
+
 def match_command_handler(packet_type):
     '''
     Find the handler for specified packet
     '''
     parser_dict = {
         b'\x01\xcc': string_parser,
-        b'\x02\xcc': get_parameter_parser,  
+        b'\x02\xcc': get_parameter_parser,
         b'\x03\xcc': update_parameter_parser,
         b'\x04\xcc': update_parameter_parser,
         b'\x01\x0b': common_input_parser,
         b'\x02\x0b': common_input_parser
-        }
+    }
     return parser_dict.get(packet_type)
