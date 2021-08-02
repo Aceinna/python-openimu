@@ -7,18 +7,14 @@ import threading
 import math
 import re
 import struct
-from ..widgets import (
-    NTRIPClient, EthernetDataLogger, EthernetDebugDataLogger, EthernetRTCMDataLogger
-)
-from ...framework.utils import (
-    helper, resource
-)
+from ..widgets import (NTRIPClient, EthernetDataLogger,
+                       EthernetDebugDataLogger, EthernetRTCMDataLogger)
+from ...framework.utils import (helper, resource)
 from ...framework.context import APP_CONTEXT
 from ...framework.utils.firmware_parser import parser as firmware_content_parser
 from ..base.provider_base import OpenDeviceBase
-from ..configs.openrtk_predefine import (
-    APP_STR, get_openrtk_products, get_configuratin_file_mapping
-)
+from ..configs.openrtk_predefine import (APP_STR, get_openrtk_products,
+                                         get_configuratin_file_mapping)
 from ..decorator import with_device_message
 from ...models import InternalCombineAppParseRule
 from ..parsers.open_field_parser import encode_value
@@ -81,8 +77,8 @@ class Provider(OpenDeviceBase):
         self.data_folder = data_folder_path
 
         # copy contents of app_config under executor path
-        self.setting_folder_path = os.path.join(
-            executor_path, setting_folder_name)
+        self.setting_folder_path = os.path.join(executor_path,
+                                                setting_folder_name)
 
         all_products = get_openrtk_products()
         config_file_mapping = get_configuratin_file_mapping()
@@ -101,7 +97,9 @@ class Provider(OpenDeviceBase):
                     if not os.path.isdir(app_name_path):
                         os.makedirs(app_name_path)
                     app_config_content = resource.get_content_from_bundle(
-                        setting_folder_name, os.path.join(product, app_name, config_file_mapping[product]))
+                        setting_folder_name,
+                        os.path.join(product, app_name,
+                                     config_file_mapping[product]))
                     if app_config_content is None:
                         continue
 
@@ -153,8 +151,7 @@ class Provider(OpenDeviceBase):
         app_version = text
 
         split_text = app_version.split(' ')
-        app_name = next(
-            (item for item in APP_STR if item in split_text), None)
+        app_name = next((item for item in APP_STR if item in split_text), None)
 
         if not app_name:
             app_name = 'RTK_INS'
@@ -179,8 +176,8 @@ class Provider(OpenDeviceBase):
         # Load the openimu.json based on its app
         product_name = self.device_info['name']
         app_name = 'RTK_INS'  # self.app_info['app_name']
-        app_file_path = os.path.join(
-            self.setting_folder_path, product_name, app_name, 'ins401.json')
+        app_file_path = os.path.join(self.setting_folder_path, product_name,
+                                     app_name, 'ins401.json')
 
         with open(app_file_path) as json_data:
             self.properties = json.load(json_data)
@@ -190,7 +187,8 @@ class Provider(OpenDeviceBase):
                 'Failed to extract app version information from unit.' +
                 '\nThe supported application list is {0}.'.format(APP_STR) +
                 '\nTo keep runing, use INS configuration as default.' +
-                '\nYou can choose to place your json file under execution path if it is an unknown application.')
+                '\nYou can choose to place your json file under execution path if it is an unknown application.'
+            )
 
     def ntrip_client_thread(self):
         self.ntrip_client = NTRIPClient(self.properties)
@@ -212,9 +210,7 @@ class Provider(OpenDeviceBase):
         if self.communicator.can_write() and not self.is_upgrading:
             whole_packet = helper.build_ethernet_packet(
                 self.communicator.get_dst_mac(),
-                self.communicator.get_src_mac(),
-                b'\x02\x0b',
-                data)
+                self.communicator.get_src_mac(), b'\x02\x0b', data)
 
             self.communicator.write(whole_packet)
             pass
@@ -224,45 +220,40 @@ class Provider(OpenDeviceBase):
         self.ntrip_client_enable = self.cli_options and self.cli_options.ntrip_client
         # with_raw_log = self.cli_options and self.cli_options.with_raw_log
 
-        if set_user_para:
-            result = self.set_params(
-                self.properties["initial"]["userParameters"])
-            ##print('set user para {0}'.format(result))
-            if result['packetType'] == 'success':
-                self.save_config()
-
-            # check saved result
-            self.check_predefined_result()
-
-        # start ntrip client
-        if self.properties["initial"].__contains__("ntrip") and not self.ntrip_client and not self.is_in_bootloader:
-            threading.Thread(target=self.ntrip_client_thread).start()
-
         try:
-            if self.data_folder is not None:
+            if self.data_folder:
                 dir_time = time.strftime("%Y%m%d_%H%M%S", time.localtime())
-                file_time = time.strftime(
-                    "%Y_%m_%d_%H_%M_%S", time.localtime())
+                file_time = time.strftime("%Y_%m_%d_%H_%M_%S",
+                                          time.localtime())
                 file_name = self.data_folder + '/' + 'ins401_log_' + dir_time
                 os.mkdir(file_name)
                 self.rtk_log_file_name = file_name
+
                 self.user_logf = open(
                     file_name + '/' + 'user_' + file_time + '.bin', "wb")
-                # self.debug_logf = open(
-                #     file_name + '/' + 'debug_' + file_time + '.bin', "wb")
                 self.rtcm_logf = open(
                     file_name + '/' + 'rtcm_base_' + file_time + '.bin', "wb")
                 self.rtcm_rover_logf = open(
                     file_name + '/' + 'rtcm_rover_' + file_time + '.bin', "wb")
 
-            # start a thread to log data
-            # threading.Thread(target=self.thread_data_log).start()
-            # threading.Thread(target=self.thread_debug_data_log).start()
-            # threading.Thread(target=self.thread_rtcm_data_log).start()
+            if set_user_para:
+                result = self.set_params(
+                    self.properties["initial"]["userParameters"])
+                ##print('set user para {0}'.format(result))
+                if result['packetType'] == 'success':
+                    self.save_config()
+
+                # check saved result
+                self.check_predefined_result()
+
+            # start ntrip client
+            if self.properties["initial"].__contains__("ntrip") \
+                    and not self.ntrip_client and not self.is_in_bootloader:
+                threading.Thread(target=self.ntrip_client_thread).start()
 
             self.save_device_info()
         except Exception as e:
-            print(e)
+            print('Exception in after setup', e)
             return False
 
     def nmea_checksum(self, data):
@@ -288,14 +279,14 @@ class Provider(OpenDeviceBase):
                     if bytedata == 0x0A:
                         try:
                             str_nmea = ''.join(self.nmea_buffer)
-                            cksum, calc_cksum = self.nmea_checksum(
-                                str_nmea)
+                            cksum, calc_cksum = self.nmea_checksum(str_nmea)
                             if cksum == calc_cksum:
                                 if str_nmea.find("$GPGGA") != -1:
                                     if self.ntrip_client:
                                         self.ntrip_client.send(str_nmea)
                                 self.user_logf.write(str_nmea.encode())
-                            APP_CONTEXT.get_print_logger().info(str_nmea.replace('\r\n', ''))
+                            APP_CONTEXT.get_print_logger().info(
+                                str_nmea.replace('\r\n', ''))
                         except Exception as e:
                             # print('NMEA fault:{0}'.format(e))
                             pass
@@ -307,8 +298,9 @@ class Provider(OpenDeviceBase):
         #     self.user_logf.flush()
 
     def thread_data_log(self, *args, **kwargs):
-        self.ethernet_data_logger = EthernetDataLogger(
-            self.properties, self.communicator, self.user_logf)
+        self.ethernet_data_logger = EthernetDataLogger(self.properties,
+                                                       self.communicator,
+                                                       self.user_logf)
         self.ethernet_data_logger.run()
 
     def thread_debug_data_log(self, *args, **kwargs):
@@ -339,8 +331,7 @@ class Provider(OpenDeviceBase):
         message_bytes.extend(struct.pack('>I', content_len))
 
         command_line = helper.build_ethernet_packet(
-            self.communicator.get_dst_mac(),
-            self.communicator.get_src_mac(),
+            self.communicator.get_dst_mac(), self.communicator.get_src_mac(),
             command_CS, message_bytes)
 
         time.sleep(3)  # sleep 3s, to wait for bootloader ready
@@ -359,9 +350,8 @@ class Provider(OpenDeviceBase):
                 self.communicator, lambda: helper.format_firmware_content(content), 192)
             rtk_upgrade_worker.name = 'MAIN_RTK'
             rtk_upgrade_worker.on(
-                UPGRADE_EVENT.FIRST_PACKET, lambda: time.sleep(12))
-            rtk_upgrade_worker.on(UPGRADE_EVENT.BEFORE_WRITE,
-                                  lambda: self.before_write_content('0', len(content)))
+                UPGRADE_EVENT.BEFORE_WRITE,
+                lambda: self.before_write_content('0', len(content)))
             return rtk_upgrade_worker
 
         if rule == 'ins':
@@ -370,9 +360,8 @@ class Provider(OpenDeviceBase):
             ins_upgrade_worker.name = 'MAIN_RTK'
             ins_upgrade_worker.group = UPGRADE_GROUP.FIRMWARE
             ins_upgrade_worker.on(
-                UPGRADE_EVENT.FIRST_PACKET, lambda: time.sleep(12))
-            ins_upgrade_worker.on(UPGRADE_EVENT.BEFORE_WRITE,
-                                  lambda: self.before_write_content('1', len(content)))
+                UPGRADE_EVENT.BEFORE_WRITE,
+                lambda: self.before_write_content('1', len(content)))
             return ins_upgrade_worker
 
         if rule == 'sdk':
@@ -489,8 +478,7 @@ class Provider(OpenDeviceBase):
         formatted_file_time = time.strftime("%Y_%m_%d_%H_%M_%S", local_time)
         file_path = os.path.join(
             self.rtk_log_file_name,
-            'parameters_predefined_{0}.json'.format(formatted_file_time)
-        )
+            'parameters_predefined_{0}.json'.format(formatted_file_time))
         # save parameters to data log folder after predefined parameters setup
         result = self.get_params()
         if result['packetType'] == 'inputParams':
@@ -500,13 +488,13 @@ class Provider(OpenDeviceBase):
         # compare saved parameters with predefined parameters
         hashed_predefined_parameters = helper.collection_to_dict(
             self.properties["initial"]["userParameters"], key='paramId')
-        hashed_current_parameters = helper.collection_to_dict(
-            result['data'], key='paramId')
-
+        hashed_current_parameters = helper.collection_to_dict(result['data'],
+                                                              key='paramId')
         success_count = 0
         fail_count = 0
         fail_parameters = []
         for key in hashed_predefined_parameters:
+            #print(hashed_current_parameters[key]['name'], 'current:',hashed_current_parameters[key]['value'],'predefined:',hashed_predefined_parameters[key]['value'])
             if hashed_current_parameters[key]['value'] == \
                     hashed_predefined_parameters[key]['value']:
                 success_count += 1
@@ -556,8 +544,8 @@ class Provider(OpenDeviceBase):
 
         if result['packetType'] == 'inputParams':
             session_info = dict()
-            session_info['time'] = time.strftime(
-                "%Y-%m-%d %H:%M:%S", time.localtime())
+            session_info['time'] = time.strftime("%Y-%m-%d %H:%M:%S",
+                                                 time.localtime())
             session_info['device'] = self.device_info
             session_info['app'] = self.app_info
             session_info['interface'] = self.cli_options.interface
@@ -571,12 +559,16 @@ class Provider(OpenDeviceBase):
             device_configuration.append(session_info)
 
             with open(file_path, 'w') as outfile:
-                json.dump(device_configuration, outfile,
-                          indent=4, ensure_ascii=False)
+                json.dump(device_configuration,
+                          outfile,
+                          indent=4,
+                          ensure_ascii=False)
 
     def after_upgrade_completed(self):
         # start ntrip client
-        if self.properties["initial"].__contains__("ntrip") and not self.ntrip_client and not self.is_in_bootloader:
+        if self.properties["initial"].__contains__(
+                "ntrip"
+        ) and not self.ntrip_client and not self.is_in_bootloader:
             thead = threading.Thread(target=self.ntrip_client_thread)
             thead.start()
 
@@ -587,26 +579,34 @@ class Provider(OpenDeviceBase):
         '''
         Get server connection status
         '''
-        return {
-            'packetType': 'ping',
-            'data': {'status': '1'}
-        }
+        return {'packetType': 'ping', 'data': {'status': '1'}}
 
     def get_device_info(self, *args):  # pylint: disable=invalid-name
         '''
         Get device information
         '''
         return {
-            'packetType': 'deviceInfo',
-            'data':  [
-                {'name': 'Product Name', 'value': self.device_info['name']},
-                {'name': 'IMU', 'value': self.device_info['imu']},
-                {'name': 'PN', 'value': self.device_info['pn']},
-                {'name': 'Firmware Version',
-                 'value': self.device_info['firmware_version']},
-                {'name': 'SN', 'value': self.device_info['sn']},
-                {'name': 'App Version', 'value': self.app_info['version']}
-            ]
+            'packetType':
+            'deviceInfo',
+            'data': [{
+                'name': 'Product Name',
+                'value': self.device_info['name']
+            }, {
+                'name': 'IMU',
+                'value': self.device_info['imu']
+            }, {
+                'name': 'PN',
+                'value': self.device_info['pn']
+            }, {
+                'name': 'Firmware Version',
+                'value': self.device_info['firmware_version']
+            }, {
+                'name': 'SN',
+                'value': self.device_info['sn']
+            }, {
+                'name': 'App Version',
+                'value': self.app_info['version']
+            }]
         }
 
     def get_log_info(self):
@@ -648,24 +648,17 @@ class Provider(OpenDeviceBase):
                 continue
 
             result = self.get_param(parameter)
-
-            if result['error']:
+            if result['packetType'] == 'error':
                 has_error = True
                 break
 
-            parameter_values.extend(result['data'])
+            parameter_values.append(result['data'])
 
         if not has_error:
             self.parameters = parameter_values
-            yield {
-                'packetType': 'inputParams',
-                'data': parameter_values
-            }
+            yield {'packetType': 'inputParams', 'data': parameter_values}
 
-        yield {
-            'packetType': 'error',
-            'data': 'No Response'
-        }
+        yield {'packetType': 'error', 'data': 'No Response'}
 
     @with_device_message
     def get_param(self, params, *args):  # pylint: disable=unused-argument
@@ -674,36 +667,23 @@ class Provider(OpenDeviceBase):
         '''
         gP = b'\x02\xcc'
         message_bytes = []
-        message_bytes.extend(
-            encode_value('uint32', params['paramId'])
-        )
+        message_bytes.extend(encode_value('uint32', params['paramId']))
         command_line = command_line = helper.build_ethernet_packet(
-            self.communicator.get_dst_mac(),
-            self.communicator.get_src_mac(),
-            gP,
-            message_bytes)
+            self.communicator.get_dst_mac(), self.communicator.get_src_mac(),
+            gP, message_bytes)
         result = yield self._message_center.build(command=command_line)
 
         data = result['data']
         error = result['error']
 
         if error:
-            yield {
-                'packetType': 'error',
-                'data': 'No Response'
-            }
+            yield {'packetType': 'error', 'data': 'No Response'}
 
         if data:
             self.parameters = data
-            yield {
-                'packetType': 'inputParam',
-                'data': data
-            }
+            yield {'packetType': 'inputParam', 'data': data}
 
-        yield {
-            'packetType': 'error',
-            'data': 'No Response'
-        }
+        yield {'packetType': 'error', 'data': 'No Response'}
 
     @with_device_message
     def set_params(self, params, *args):  # pylint: disable=unused-argument
@@ -713,39 +693,26 @@ class Provider(OpenDeviceBase):
         input_parameters = self.properties['userConfiguration']
 
         for parameter in params:
-            exist_parameter = next(
-                (x for x in input_parameters if x['paramId'] == parameter['paramId']), None)
+            exist_parameter = next((x for x in input_parameters
+                                    if x['paramId'] == parameter['paramId']),
+                                   None)
 
             if exist_parameter:
+                parameter['type'] = exist_parameter['type']
                 result = self.set_param(parameter)
 
-                packet_type = result['packet_type']
+                packet_type = result['packetType']
                 data = result['data']
 
                 if packet_type == 'error':
-                    yield {
-                        'packetType': 'error',
-                        'data': {
-                            'error': data
-                        }
-                    }
+                    yield {'packetType': 'error', 'data': {'error': data}}
                     break
 
-                if data > 0:
-                    yield {
-                        'packetType': 'error',
-                        'data': {
-                            'error': data
-                        }
-                    }
+                if data['error'] > 0:
+                    yield {'packetType': 'error', 'data': {'error': data}}
                     break
 
-        yield {
-            'packetType': 'success',
-            'data': {
-                'error': 0
-            }
-        }
+        yield {'packetType': 'success', 'data': {'error': 0}}
 
     @with_device_message
     def set_param(self, params, *args):  # pylint: disable=unused-argument
@@ -754,35 +721,19 @@ class Provider(OpenDeviceBase):
         '''
         uP = b'\x03\xcc'
         message_bytes = []
-        message_bytes.extend(
-            encode_value('uint32', params['paramId'])
-        )
-        message_bytes.extend(
-            encode_value(params['type'], params['value'])
-        )
+        message_bytes.extend(encode_value('uint32', params['paramId']))
+        message_bytes.extend(encode_value(params['type'], params['value']))
         command_line = helper.build_ethernet_packet(
-            self.communicator.get_dst_mac(),
-            self.communicator.get_src_mac(),
-            uP,
-            message_bytes)
+            self.communicator.get_dst_mac(), self.communicator.get_src_mac(),
+            uP, message_bytes)
         result = yield self._message_center.build(command=command_line)
 
         error = result['error']
         data = result['data']
         if error:
-            yield {
-                'packetType': 'error',
-                'data': {
-                    'error': data
-                }
-            }
+            yield {'packetType': 'error', 'data': {'error': data}}
 
-        yield {
-            'packetType': 'success',
-            'data': {
-                'error': data
-            }
-        }
+        yield {'packetType': 'success', 'data': {'error': data}}
 
     @with_device_message
     def save_config(self, *args):  # pylint: disable=unused-argument
@@ -791,26 +742,20 @@ class Provider(OpenDeviceBase):
         '''
         sC = b'\x04\xcc'
         command_line = helper.build_ethernet_packet(
-            self.communicator.get_dst_mac(),
-            self.communicator.get_src_mac(),
+            self.communicator.get_dst_mac(), self.communicator.get_src_mac(),
             sC)
 
         # self.communicator.write(command_line)
         # result = self.get_input_result('sC', timeout=2)
-        result = yield self._message_center.build(command=command_line, timeout=2)
+        result = yield self._message_center.build(command=command_line,
+                                                  timeout=2)
 
         data = result['data']
         error = result['error']
         if data:
-            yield {
-                'packetType': 'success',
-                'data': error
-            }
+            yield {'packetType': 'success', 'data': error}
 
-        yield {
-            'packetType': 'success',
-            'data': error
-        }
+        yield {'packetType': 'success', 'data': error}
 
     @with_device_message
     def reset_params(self, params, *args):  # pylint: disable=unused-argument
@@ -838,33 +783,24 @@ class Provider(OpenDeviceBase):
             if self._logger is not None:
                 self._logger.stop_user_log()
 
-            thread = threading.Thread(
-                target=self.thread_do_upgrade_framework, args=(file,))
+            thread = threading.Thread(target=self.thread_do_upgrade_framework,
+                                      args=(file, ))
             thread.start()
             print("Upgrade RTK330LA firmware started at:[{0}].".format(
                 datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 
-        return {
-            'packetType': 'success'
-        }
+        return {'packetType': 'success'}
 
     @with_device_message
     def send_command(self, command_line):
         # command_line = #build a command
         # helper.build_input_packet('rD')
-        result = yield self._message_center.build(command=command_line, timeout=5)
+        result = yield self._message_center.build(command=command_line,
+                                                  timeout=5)
 
         error = result['error']
         data = result['data']
         if error:
-            yield {
-                'packetType': 'error',
-                'data': {
-                    'error': error
-                }
-            }
+            yield {'packetType': 'error', 'data': {'error': error}}
 
-        yield {
-            'packetType': 'success',
-            'data': data
-        }
+        yield {'packetType': 'success', 'data': data}
