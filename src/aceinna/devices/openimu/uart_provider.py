@@ -240,6 +240,13 @@ class Provider(OpenDeviceBase):
             }
         }
 
+    def before_jump_app_command(self):
+        self.original_baudrate = self.communicator.serial_port.baudrate
+        self.communicator.serial_port.baudrate = self.bootloader_baudrate
+
+
+    def after_jump_app_command(self):
+        self.communicator.serial_port.baudrate = self.original_baudrate
 
 
     def get_upgrade_workers(self, firmware_content):

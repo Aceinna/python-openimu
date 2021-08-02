@@ -827,7 +827,7 @@ class Ethernet(Communicator):
         '''
         read
         '''
-        self.receive_cache.popleft()
+        return self.receive_cache.popleft()
 
     def handle_receive_read_result(self, packet):
         self.read_result = bytes(packet)
