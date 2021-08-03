@@ -159,7 +159,7 @@ class Provider(OpenDeviceBase):
     def on_read_raw(self, data):
         pass
 
-    def on_receive_output_packet(self, packet_type, data, *args):
+    def on_receive_output_packet(self, packet_type, data, *args, **kwargs):
         '''
         Listener for getting output packet
         '''
