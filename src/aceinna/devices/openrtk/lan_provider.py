@@ -266,7 +266,7 @@ class Provider(OpenDeviceBase):
             self.properties, self.communicator, self.rtcm_logf)
         self.lan_rtcm_data_logger.run()
 
-    def on_receive_output_packet(self, packet_type, data, *args):
+    def on_receive_output_packet(self, packet_type, data, *args, **kwargs):
         '''
         Listener for getting output packet
         '''
