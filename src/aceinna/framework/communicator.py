@@ -813,7 +813,7 @@ class Ethernet(Communicator):
         read
         '''
         filter_exp = 'ether src host ' + self.dst_mac
-        sniff(prn=callback, count=0, iface=self.iface, filter=filter_exp)
+        sniff(store=0, prn=callback, count=0, iface=self.iface, filter=filter_exp)
 
     def handle_receive_read_result(self, packet):
         self.read_result = bytes(packet)
