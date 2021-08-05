@@ -249,11 +249,20 @@ class Provider(OpenDeviceBase):
         self.communicator.serial_port.baudrate = self.original_baudrate
 
 
+    def firmware_write_command_generator(self, data_len, current, data):
+        command_WA = 'WA'
+        message_bytes = []
+        message_bytes.extend(struct.pack('>I', current))
+        message_bytes.extend(struct.pack('B', data_len))
+        message_bytes.extend(data)
+        return helper.build_packet(command_WA, message_bytes)
+
     def get_upgrade_workers(self, firmware_content):
         firmware_worker = FirmwareUpgradeWorker(
-            self.communicator, self.bootloader_baudrate, firmware_content)
+            self.communicator, firmware_content,
+            self.firmware_write_command_generator)
         firmware_worker.on(
-            UPGRADE_EVENT.FIRST_PACKET, lambda: time.sleep(8))
+            UPGRADE_EVENT.FIRST_PACKET, lambda: time.sleep(5))
 
         jump_bootloader_command = helper.build_bootloader_input_packet(
             'JI')
@@ -269,7 +278,6 @@ class Provider(OpenDeviceBase):
             wait_timeout_after_command=3)
         jump_application_worker.on(UPGRADE_EVENT.BEFORE_COMMAND, self.before_jump_app_command)
         jump_application_worker.on(UPGRADE_EVENT.AFTER_COMMAND, self.after_jump_app_command)
-        # bootloader_baudrate=self.bootloader_baudrate)
 
         return [jump_bootloader_worker, firmware_worker, jump_application_worker]
 

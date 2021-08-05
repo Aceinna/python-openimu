@@ -360,7 +360,7 @@ class Provider(OpenDeviceBase):
         command_WA = [0x41,0x57]
         message_bytes = []
         message_bytes.extend(struct.pack('>I', current))
-        message_bytes.extend(struct.pack('>I', data_len))
+        message_bytes.extend(struct.pack('B', data_len))
         message_bytes.extend(data)
         return helper.build_ethernet_packet(
             self.communicator.get_dst_mac(),

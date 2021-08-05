@@ -467,8 +467,7 @@ def read_untils_have_data(communicator,
 
         data_buffer_per_time = bytearray(read_data)
         data_buffer.extend(data_buffer_per_time)
-
-        if communicator.type == INTERFACES.ETH_100BASE_T1:
+        if hasattr(communicator,'type') and communicator.type == INTERFACES.ETH_100BASE_T1:
             response = _parse_eth_100base_t1_buffer(
                 data_buffer, payload_length_format)
         else:

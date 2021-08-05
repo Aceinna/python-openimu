@@ -88,7 +88,7 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
             self.emit(UPGRADE_EVENT.ERROR, self._key, 'Invalid file content')
             return
 
-        #TODO: move to before write
+        # TODO: move to before write
         # self._communicator.serial_port.baudrate = self._baudrate
         # self._communicator.serial_port.reset_input_buffer()
         try:
