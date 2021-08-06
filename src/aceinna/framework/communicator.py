@@ -753,8 +753,9 @@ class Ethernet(Communicator):
         async_sniffer = AsyncSniffer(
             iface=iface[0], prn=self.handle_receive_packet, filter=filter_exp)
         async_sniffer.start()
-        sendp(command_line, iface=iface[0], verbose=0,count=3)
-        time.sleep(1)
+        time.sleep(0.2)
+        sendp(command_line, iface=iface[0], verbose=0)
+        time.sleep(0.5)
         async_sniffer.stop()
 
         if self.iface_confirmed:
@@ -829,10 +830,10 @@ class Ethernet(Communicator):
         async_sniffer = AsyncSniffer(
             iface=self.iface, prn=self.handle_receive_read_result, filter=filter_exp)
         async_sniffer.start()
+        time.sleep(0.2)
+        sendp(data, iface=self.iface, verbose=0)
 
-        sendp(data, iface=self.iface, verbose=0, count=2)
-
-        time.sleep(2)
+        time.sleep(0.5)
         async_sniffer.stop()
 
         if self.read_result:
