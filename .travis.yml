@@ -17,7 +17,7 @@ jobs:
       env: PATH=/c/Python38:/c/Python38/Scripts:$PATH
 branches:
   only:
-    - master
+    - develop
 
 install:
   - pip3 install --upgrade pip # all three OSes agree about 'pip3'
