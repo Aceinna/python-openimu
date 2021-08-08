@@ -135,18 +135,34 @@ class Provider(OpenDeviceBase):
         '''
         Build device info
         '''
-        split_text = text.split(' ')
+        if text.__contains__('SN:'):
+            split_text = text.split(' ')
+            sn_split_text = text.split('SN:')
 
-        self.device_info = {
-            'name': split_text[0],
-            'pn': split_text[1],
-            'sn': split_text[2]
-        }
+            self.device_info = {
+                'name': split_text[0],
+                'pn': split_text[2],
+                'sn': sn_split_text[1]
+            }
+        else:
+            split_text = text.split(' ')
+
+            self.device_info = {
+                'name': split_text[0],
+                'pn': split_text[1],
+                'sn': split_text[2]
+            }
 
     def _build_app_info(self, text):
         '''
         Build app info
         '''
+
+        if text.__contains__('SN:'):
+            self.app_info = {
+                'version':'bootloader'
+            }
+            return
 
         app_version = text
 
@@ -161,7 +177,7 @@ class Provider(OpenDeviceBase):
 
         self.app_info = {
             'app_name': app_name,
-            'app_version': split_text[1] + split_text[2],
+            'version': split_text[1] + split_text[2],
             'bootloader_version': split_text[3] + split_text[4],
         }
 
@@ -324,6 +340,18 @@ class Provider(OpenDeviceBase):
             if self.user_logf and raw_data:
                 self.user_logf.write(bytes(raw_data))
 
+    def after_jump_bootloader(self):
+        command_pG = [0x01, 0xcc]
+        dst_mac = 'FF:FF:FF:FF:FF:FF'
+
+        command = helper.build_ethernet_packet(
+            bytes([int(x, 16) for x in dst_mac.split(':')]),
+            self.communicator.get_src_mac(),
+            command_pG)
+
+        self.communicator.write(command.actual_command)
+        time.sleep(1)
+
     def before_write_content(self, core, content_len):
         command_CS = [0x04, 0xaa]
 
@@ -375,7 +403,7 @@ class Provider(OpenDeviceBase):
                 self.communicator,
                 lambda: helper.format_firmware_content(content),
                 self.ins_firmware_write_command_generator,
-                960)
+                192)
             rtk_upgrade_worker.name = 'MAIN_RTK'
             rtk_upgrade_worker.on(
                 UPGRADE_EVENT.FIRST_PACKET, lambda: time.sleep(3))
@@ -388,7 +416,7 @@ class Provider(OpenDeviceBase):
                 self.communicator,
                 lambda: helper.format_firmware_content(content),
                 self.ins_firmware_write_command_generator,
-                960)
+                192)
             ins_upgrade_worker.name = 'MAIN_RTK'
             ins_upgrade_worker.group = UPGRADE_GROUP.FIRMWARE
             ins_upgrade_worker.on(
@@ -451,13 +479,18 @@ class Provider(OpenDeviceBase):
         ins_jump_bootloader_worker = JumpBootloaderWorker(
             self.communicator,
             command=ins_jump_bootloader_command,
-            wait_timeout_after_command=4)
+            listen_packet=[0x01, 0xaa],
+            wait_timeout_after_command=8)
         ins_jump_bootloader_worker.group = UPGRADE_GROUP.FIRMWARE
+        ins_jump_bootloader_worker.on(UPGRADE_EVENT.AFTER_COMMAND, self.after_jump_bootloader)
 
         ins_jump_application_command = helper.build_ethernet_packet(
             dst_mac, src_mac, bytes([0x02, 0xaa]))
         ins_jump_application_worker = JumpApplicationWorker(
-            self.communicator, command=ins_jump_application_command)
+            self.communicator,
+            command=ins_jump_application_command,
+            listen_packet=[0x02, 0xaa],
+            wait_timeout_after_command=4)
         ins_jump_application_worker.group = UPGRADE_GROUP.FIRMWARE
 
         if start_index > -1 and end_index > -1:
@@ -706,10 +739,10 @@ class Provider(OpenDeviceBase):
         gP = b'\x02\xcc'
         message_bytes = []
         message_bytes.extend(encode_value('uint32', params['paramId']))
-        command_line = command_line = helper.build_ethernet_packet(
+        command_line = helper.build_ethernet_packet(
             self.communicator.get_dst_mac(), self.communicator.get_src_mac(),
             gP, message_bytes)
-        result = yield self._message_center.build(command=command_line)
+        result = yield self._message_center.build(command=command_line.actual_command)
 
         data = result['data']
         error = result['error']
@@ -785,7 +818,7 @@ class Provider(OpenDeviceBase):
 
         # self.communicator.write(command_line)
         # result = self.get_input_result('sC', timeout=2)
-        result = yield self._message_center.build(command=command_line,
+        result = yield self._message_center.build(command=command_line.actual_command,
                                                   timeout=2)
 
         data = result['data']
@@ -824,7 +857,7 @@ class Provider(OpenDeviceBase):
             thread = threading.Thread(target=self.thread_do_upgrade_framework,
                                       args=(file, ))
             thread.start()
-            print("Upgrade RTK330LA firmware started at:[{0}].".format(
+            print("Upgrade INS401 firmware started at:[{0}].".format(
                 datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 
         return {'packetType': 'success'}

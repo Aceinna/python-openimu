@@ -269,12 +269,14 @@ class Provider(OpenDeviceBase):
         jump_bootloader_worker = JumpBootloaderWorker(
             self.communicator,
             command=jump_bootloader_command,
+            listen_packet='JI',
             wait_timeout_after_command=3)
 
         jump_application_command = helper.build_bootloader_input_packet('JA')
         jump_application_worker = JumpApplicationWorker(
             self.communicator,
             command=jump_application_command,
+            listen_packet='JA',
             wait_timeout_after_command=3)
         jump_application_worker.on(UPGRADE_EVENT.BEFORE_COMMAND, self.before_jump_app_command)
         jump_application_worker.on(UPGRADE_EVENT.AFTER_COMMAND, self.after_jump_app_command)

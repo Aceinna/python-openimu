@@ -793,7 +793,9 @@ class Ethernet(Communicator):
 
     def start_listen_data(self):
         self.is_sniffing = True
-        sniff(prn=self.handle_recive_packet, iface=self.iface)
+        filter_exp = 'ether src host {0}'.format(self.dst_mac)
+
+        sniff(prn=self.handle_recive_packet, iface=self.iface, filter=filter_exp)
 
     def handle_recive_packet(self, packet):
         self.receive_cache.append(bytes(packet))
@@ -827,7 +829,9 @@ class Ethernet(Communicator):
         '''
         read
         '''
-        return self.receive_cache.popleft()
+        if len(self.receive_cache) > 0:
+            return self.receive_cache.popleft()
+        return []
 
     def handle_receive_read_result(self, packet):
         self.read_result = bytes(packet)

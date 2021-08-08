@@ -105,7 +105,9 @@ class Driver(EventBase):
         if hasattr(self._communicator, 'serial_port'):
             find_options['com_port'] = self._communicator.serial_port.port
 
-        self._communicator.set_find_options(find_options)
+        if hasattr(self._communicator, 'set_find_options'):
+            self._communicator.set_find_options(find_options)
+
         self._communicator.find_device(
             self._device_upgrade_restart_handler,
             retries=2,
