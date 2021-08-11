@@ -25,6 +25,7 @@ from ..upgrade_workers import (
     FirmwareUpgradeWorker,
     JumpApplicationWorker,
     JumpBootloaderWorker,
+    UPGRADE_EVENT,
     UPGRADE_GROUP
 )
 from ..parsers.open_field_parser import encode_value
@@ -591,6 +592,15 @@ class RTKProviderBase(OpenDeviceBase):
         '''
         pass
 
+    def before_jump_app_command(self):
+        self.original_baudrate = self.communicator.serial_port.baudrate
+        self.communicator.serial_port.baudrate = self.bootloader_baudrate
+
+
+    def after_jump_app_command(self):
+        self.communicator.serial_port.baudrate = self.original_baudrate
+
+
     def get_upgrade_workers(self, firmware_content):
         workers = []
         rules = [
@@ -622,19 +632,32 @@ class RTKProviderBase(OpenDeviceBase):
                 start_index = i if start_index == -1 else start_index
                 end_index = i
 
-        jumpBootloaderWorker = JumpBootloaderWorker(self.communicator)
+        jump_bootloader_command = helper.build_bootloader_input_packet(
+            'JI')
+        jumpBootloaderWorker = JumpBootloaderWorker(
+            self.communicator,
+            command=jump_bootloader_command,
+            listen_packet='JI',
+            wait_timeout_after_command=3)
         jumpBootloaderWorker.group = UPGRADE_GROUP.BEFORE_ALL
 
+        jump_application_command = helper.build_bootloader_input_packet('JA')
         jumpApplicationWorker = JumpApplicationWorker(
-            self.communicator, self.bootloader_baudrate)
+            self.communicator,
+            command=jump_application_command,
+            listen_packet='JA',
+            wait_timeout_after_command=3)
         jumpApplicationWorker.group = UPGRADE_GROUP.AFTER_ALL
+
+        jumpApplicationWorker.on(UPGRADE_EVENT.BEFORE_COMMAND, self.before_jump_app_command)
+        jumpApplicationWorker.on(UPGRADE_EVENT.AFTER_COMMAND, self.after_jump_app_command)
 
         if start_index > -1 and end_index > -1:
             workers.insert(
                 start_index, jumpBootloaderWorker)
             workers.insert(
                 end_index+2, jumpApplicationWorker)
-        return
+        return workers
 
     def get_device_connection_info(self):
         return {
