@@ -1,3 +1,3 @@
 # Package Version
-VERSION = '2.5.0a'
+VERSION = '2.5.1a'
 PACKAGE_NAME = 'openimu'
