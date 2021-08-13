@@ -21,7 +21,7 @@ class UPGRADE_GROUP:
 
 
 from .firmware_worker import FirmwareUpgradeWorker
-from .ethernet_firmware_worker import EthernetFirmwareUpgradeWorker
+from .ethernet_sdk_9100_worker import SDKUpgradeWorker as EthernetSDK9100UpgradeWorker
 from .sdk_8100_worker import SDKUpgradeWorker as SDK8100UpgradeWorker
 from .sdk_9100_worker import SDKUpgradeWorker as SDK9100UpgradeWorker
 from .jump_application_worker import JumpApplicationWorker

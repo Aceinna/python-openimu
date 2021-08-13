@@ -20,7 +20,7 @@ from ...models import InternalCombineAppParseRule
 from ..parsers.open_field_parser import encode_value
 from ...framework.utils.print import (print_yellow, print_green)
 from ..upgrade_workers import (
-    EthernetFirmwareUpgradeWorker,
+    EthernetSDK9100UpgradeWorker,
     FirmwareUpgradeWorker,
     SDK9100UpgradeWorker,
     JumpBootloaderWorker,
@@ -370,7 +370,7 @@ class Provider(OpenDeviceBase):
         result = helper.read_untils_have_data(
             self.communicator, command_CS, 1000, 50)
 
-        if not result:
+        if not result == []:
             raise Exception('Cannot run set core command')
 
     def ins_firmware_write_command_generator(self, data_len, current, data):
@@ -426,8 +426,9 @@ class Provider(OpenDeviceBase):
             return ins_upgrade_worker
 
         if rule == 'sdk':
-            sdk_upgrade_worker = SDK9100UpgradeWorker(
-                self.communicator, lambda: helper.format_firmware_content(content), 192)
+            sdk_upgrade_worker = EthernetSDK9100UpgradeWorker(
+                self.communicator,
+                lambda: helper.format_firmware_content(content))
             sdk_upgrade_worker.group = UPGRADE_GROUP.FIRMWARE
 
         if rule == 'imu':

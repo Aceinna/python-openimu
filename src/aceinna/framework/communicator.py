@@ -789,16 +789,19 @@ class Ethernet(Communicator):
             threading.Thread(target=self.start_listen_data).start()
             callback(self.device)
         else:
-            print_red('Cannot confirm the device in ethernet 100base-t1 connection')
+            print_red(
+                'Cannot confirm the device in ethernet 100base-t1 connection')
 
     def start_listen_data(self):
         self.is_sniffing = True
         filter_exp = 'ether src host {0}'.format(self.dst_mac)
 
-        sniff(prn=self.handle_recive_packet, iface=self.iface, filter=filter_exp)
+        sniff(prn=self.handle_recive_packet,
+              iface=self.iface, filter=filter_exp)
 
     def handle_recive_packet(self, packet):
-        self.receive_cache.append(bytes(packet))
+        packet_raw = bytes(packet)[14:]
+        self.receive_cache.append(packet_raw)
 
     def open(self):
         '''
@@ -838,7 +841,8 @@ class Ethernet(Communicator):
 
     def write_read(self, data, filter_cmd_type=0):
         if self.is_sniffing:
-            print_yellow('Cannot run another sniff when the communicator is sniffing.')
+            print_yellow(
+                'Cannot run another sniff when the communicator is sniffing.')
             return None
 
         if filter_cmd_type:
