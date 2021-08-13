@@ -57,6 +57,7 @@ class RTKProviderBase(OpenDeviceBase):
         self.debug_logf = None
         self.rtcm_logf = None
         self.debug_c_f = None
+        self.ntrip_rtcm_logf = None
         self.enable_data_log = False
         self.is_app_matched = False
         self.ntrip_client_enable = False
@@ -218,7 +219,9 @@ class RTKProviderBase(OpenDeviceBase):
 
     def handle_rtcm_data_parsed(self, data):
         if self.communicator.can_write() and not self.is_upgrading:
-            self.communicator.write(data)
+            self.communicator.write(bytearray(data))
+        
+        self.ntrip_rtcm_logf.write(bytearray(data))
 
     def build_connected_serial_port_info(self):
         if not self.communicator.serial_port:
@@ -267,6 +270,9 @@ class RTKProviderBase(OpenDeviceBase):
 
         # start ntrip client
         if self.properties["initial"].__contains__("ntrip") and not self.ntrip_client and not self.is_in_bootloader:
+            self.ntrip_rtcm_logf = open(os.path.join(self.rtk_log_file_name, 'ntrip_rtcm_{0}.bin'.format(
+                formatted_file_time)), "wb")
+            
             thead = threading.Thread(target=self.ntrip_client_thread)
             thead.start()
 
