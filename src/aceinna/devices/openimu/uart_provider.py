@@ -211,7 +211,7 @@ class Provider(OpenDeviceBase):
             self.properties = json.load(json_data)
 
     def after_setup(self):
-        pass
+        self.original_baudrate = self.communicator.serial_port.baudrate
 
     def on_read_raw(self, data):
         pass
@@ -241,13 +241,14 @@ class Provider(OpenDeviceBase):
         }
 
     def before_jump_app_command(self):
-        self.original_baudrate = self.communicator.serial_port.baudrate
         self.communicator.serial_port.baudrate = self.bootloader_baudrate
-
 
     def after_jump_app_command(self):
         self.communicator.serial_port.baudrate = self.original_baudrate
 
+    def before_write_content(self):
+        self.communicator.serial_port.baudrate = self.bootloader_baudrate
+        self.communicator.serial_port.reset_input_buffer()
 
     def firmware_write_command_generator(self, data_len, current, data):
         command_WA = 'WA'
@@ -261,6 +262,8 @@ class Provider(OpenDeviceBase):
         firmware_worker = FirmwareUpgradeWorker(
             self.communicator, firmware_content,
             self.firmware_write_command_generator)
+        firmware_worker.on(UPGRADE_EVENT.BEFORE_WRITE,
+                           lambda: self.before_write_content())
         firmware_worker.on(
             UPGRADE_EVENT.FIRST_PACKET, lambda: time.sleep(5))
 
@@ -278,8 +281,10 @@ class Provider(OpenDeviceBase):
             command=jump_application_command,
             listen_packet='JA',
             wait_timeout_after_command=3)
-        jump_application_worker.on(UPGRADE_EVENT.BEFORE_COMMAND, self.before_jump_app_command)
-        jump_application_worker.on(UPGRADE_EVENT.AFTER_COMMAND, self.after_jump_app_command)
+        jump_application_worker.on(
+            UPGRADE_EVENT.BEFORE_COMMAND, self.before_jump_app_command)
+        jump_application_worker.on(
+            UPGRADE_EVENT.AFTER_COMMAND, self.after_jump_app_command)
 
         return [jump_bootloader_worker, firmware_worker, jump_application_worker]
 

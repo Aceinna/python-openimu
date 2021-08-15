@@ -157,6 +157,7 @@ class Provider(OpenDeviceBase):
 
     def after_setup(self):
         self.is_conf_loaded = False
+        self.original_baudrate = self.communicator.serial_port.baudrate
 
     def on_read_raw(self, data):
         pass
@@ -197,13 +198,15 @@ class Provider(OpenDeviceBase):
         }
 
     def before_jump_app_command(self):
-        self.original_baudrate = self.communicator.serial_port.baudrate
         self.communicator.serial_port.baudrate = self.bootloader_baudrate
 
 
     def after_jump_app_command(self):
         self.communicator.serial_port.baudrate = self.original_baudrate
 
+    def before_write_content(self):
+        self.communicator.serial_port.baudrate = self.bootloader_baudrate
+        self.communicator.serial_port.reset_input_buffer()
 
     def firmware_write_command_generator(self, data_len, current, data):
         command_WA = 'WA'
@@ -217,6 +220,8 @@ class Provider(OpenDeviceBase):
         firmware_worker = FirmwareUpgradeWorker(
             self.communicator, firmware_content,
             self.firmware_write_command_generator)
+        firmware_worker.on(UPGRADE_EVENT.BEFORE_WRITE,
+                           lambda: self.before_write_content())
         firmware_worker.on(
             UPGRADE_EVENT.FIRST_PACKET, lambda: time.sleep(5))
 

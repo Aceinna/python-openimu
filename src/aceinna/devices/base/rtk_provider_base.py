@@ -250,6 +250,9 @@ class RTKProviderBase(OpenDeviceBase):
         rtcm_port = ''
         set_user_para = self.cli_options and self.cli_options.set_user_para
 
+        # save original baudrate
+        self.original_baudrate = self.communicator.serial_port.baudrate
+
         if self.data_folder is None:
             raise Exception(
                 'Data folder does not exists, please check if the application has create folder permission')
@@ -593,13 +596,10 @@ class RTKProviderBase(OpenDeviceBase):
         pass
 
     def before_jump_app_command(self):
-        self.original_baudrate = self.communicator.serial_port.baudrate
         self.communicator.serial_port.baudrate = self.bootloader_baudrate
-
 
     def after_jump_app_command(self):
         self.communicator.serial_port.baudrate = self.original_baudrate
-
 
     def get_upgrade_workers(self, firmware_content):
         workers = []
@@ -649,8 +649,10 @@ class RTKProviderBase(OpenDeviceBase):
             wait_timeout_after_command=3)
         jumpApplicationWorker.group = UPGRADE_GROUP.AFTER_ALL
 
-        jumpApplicationWorker.on(UPGRADE_EVENT.BEFORE_COMMAND, self.before_jump_app_command)
-        jumpApplicationWorker.on(UPGRADE_EVENT.AFTER_COMMAND, self.after_jump_app_command)
+        jumpApplicationWorker.on(
+            UPGRADE_EVENT.BEFORE_COMMAND, self.before_jump_app_command)
+        jumpApplicationWorker.on(
+            UPGRADE_EVENT.AFTER_COMMAND, self.after_jump_app_command)
 
         if start_index > -1 and end_index > -1:
             workers.insert(
