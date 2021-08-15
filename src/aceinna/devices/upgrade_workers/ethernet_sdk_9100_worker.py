@@ -894,19 +894,13 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
         self._communicator = communicator
         self._file_content = file_content
 
-    def build_command(self, message_type, message_body):
-        dst_mac = self._communicator.get_dst_mac()
-        src_mac = self._communicator.get_src_mac()
-        return helper.build_ethernet_packet(
-            dest=dst_mac,
-            src=src_mac,
-            message_type=message_type,
-            message_bytes=message_body)
-
-    def write_wrapper(self, send_method, data):
-        send_command = self.build_command(send_method, data)
+    def write_wrapper(self, dst, src, send_method, data):
+        send_command = helper.build_ethernet_packet(
+            dest=dst,
+            src=src,
+            message_type=send_method,
+            message_bytes=data)
         self._communicator.write(send_command.actual_command)
-        # self._communicator.write(data)
 
     def _match(self, result, check_data):
         if isinstance(check_data, list):
@@ -990,12 +984,14 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
     def send_packet(self, data, send_method=[0x07, 0xaa], buffer_size=1024):
         total = len(data)
         start = 0
+        dst = self._communicator.get_dst_mac()
+        src = self._communicator.get_src_mac()
 
         if total == 0 or buffer_size <= 0:
             return
 
         if total <= buffer_size:
-            self.write_wrapper(send_method, data)
+            self.write_wrapper(dst, src, send_method, data)
             return
 
         split_range = []
@@ -1009,7 +1005,8 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
                 total = 0
 
         for actual_size in split_range:
-            self.write_wrapper(send_method, data[start: start+actual_size])
+            self.write_wrapper(dst, src, send_method,
+                               data[start: start+actual_size])
             start += actual_size
             time.sleep(0.01)
 
@@ -1017,6 +1014,7 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
         if self._is_stopped:
             return False
 
+        self._communicator.reset_buffer()
         self.send_packet([], send_method=JS)
         #command_line = helper.build_bootloader_input_packet('JS')
         # self.write_wrapper(command_line)
@@ -1024,7 +1022,8 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
 
         #response = helper.read_untils_have_data(self._uart, 'JS')
         # print(rev_data)
-        response = helper.read_untils_have_data(self._communicator, JS)
+        response = helper.read_untils_have_data(
+            self._communicator, JS, retry_times=200)
         print('JS result', response)
         return True  # if response is not None else False
 
@@ -1036,7 +1035,8 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
         # command_line = helper.build_bootloader_input_packet('JG')
         # self.write_wrapper(command_line)
         time.sleep(2)
-        response = helper.read_untils_have_data(self._communicator, JG)
+        response = helper.read_untils_have_data(
+            self._communicator, JG, retry_times=200)
         print('JG result', response)
         return True if response is not None else False
 
@@ -1158,6 +1158,9 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
         # self.write_wrapper(bin_info_list)
         self.send_packet(bin_info_list, buffer_size=512)
 
+        self.read_until(0xCC, 10, 1)
+        self.read_until(0xCC, 10, 1)
+
         return self.read_until(0xCC, 10, 1)
 
     def get_bin_info_list(self, fs_len, bin_data):
@@ -1236,7 +1239,7 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
         write_result = True
         packet_num = math.ceil(fs_len/BLOCK_SIZE)
         current = 0
-        for i in range(1,packet_num):
+        for i in range(1, packet_num):
             if self._is_stopped:
                 return False
 
@@ -1302,8 +1305,16 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
             return self._raise_error('Send sdk command failed')
         time.sleep(8)
 
-        # need a device ping command
-        self.send_packet([], pG)
+        # need a device ping command, ping 5 times
+        self._communicator.reset_buffer()
+        for i in range(5):
+            self.write_wrapper('ff:ff:ff:ff:ff:ff',
+                               self._communicator.get_src_mac(), pG, [])
+            time.sleep(.5)
+            response = helper.read_untils_have_data(
+                self._communicator, pG)
+            if response:
+                break
 
         if not self.send_sync():
             return self._raise_error('Sync failed')

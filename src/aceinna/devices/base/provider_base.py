@@ -56,6 +56,7 @@ class OpenDeviceBase(EventBase):
         self.ans_platform = AnsPlatformAPI()
         self._pbar = None
         self._device_info_string = ''
+        self.with_upgrade_error = False
 
     @property
     def is_in_bootloader(self):
@@ -225,6 +226,7 @@ class OpenDeviceBase(EventBase):
     def _reset_client(self):
         self.is_streaming = False
         self.is_upgrading = False
+        self.with_upgrade_error = False
 
         self._message_center.resume()
 
@@ -399,6 +401,7 @@ class OpenDeviceBase(EventBase):
         if self._pbar:
             self._pbar.close()
         self.is_upgrading = False
+        self.with_upgrade_error = True
         self._message_center.resume()
         self.emit('upgrade_failed', 'UPGRADE.FAILED.001', message)
         # self.add_output_packet('upgrade_complete', {
@@ -415,6 +418,7 @@ class OpenDeviceBase(EventBase):
     def handle_upgrade_complete(self):
         if self._pbar:
             self._pbar.close()
+        time.sleep(2)
         self.restart()
 
     def connect_log(self, params):

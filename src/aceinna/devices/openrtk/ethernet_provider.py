@@ -223,7 +223,7 @@ class Provider(OpenDeviceBase):
             self.rtcm_logf.write(bytes(data))
             self.rtcm_logf.flush()
 
-        if self.communicator.can_write() and not self.is_upgrading:
+        if self.communicator.can_write() and not self.is_upgrading and not self.with_upgrade_error:
             command = helper.build_ethernet_packet(
                 self.communicator.get_dst_mac(),
                 self.communicator.get_src_mac(), b'\x02\x0b', data)
@@ -363,8 +363,10 @@ class Provider(OpenDeviceBase):
             self.communicator.get_src_mac(),
             command_CS, message_bytes)
 
-        self.communicator.write(command.actual_command)
+        self.communicator.reset_buffer()
 
+        time.sleep(2)
+        self.communicator.write(command.actual_command)
         time.sleep(1)
 
         result = helper.read_untils_have_data(
@@ -406,7 +408,7 @@ class Provider(OpenDeviceBase):
                 192)
             rtk_upgrade_worker.name = 'MAIN_RTK'
             rtk_upgrade_worker.on(
-                UPGRADE_EVENT.FIRST_PACKET, lambda: time.sleep(3))
+                UPGRADE_EVENT.FIRST_PACKET, lambda: time.sleep(15))
             rtk_upgrade_worker.on(UPGRADE_EVENT.BEFORE_WRITE,
                                   lambda: self.before_write_content('0', len(content)))
             return rtk_upgrade_worker
@@ -420,7 +422,7 @@ class Provider(OpenDeviceBase):
             ins_upgrade_worker.name = 'MAIN_RTK'
             ins_upgrade_worker.group = UPGRADE_GROUP.FIRMWARE
             ins_upgrade_worker.on(
-                UPGRADE_EVENT.FIRST_PACKET, lambda: time.sleep(3))
+                UPGRADE_EVENT.FIRST_PACKET, lambda: time.sleep(15))
             ins_upgrade_worker.on(UPGRADE_EVENT.BEFORE_WRITE,
                                   lambda: self.before_write_content('1', len(content)))
             return ins_upgrade_worker

@@ -70,13 +70,14 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
                 return False
 
         response = helper.read_untils_have_data(
-            self._communicator, listen_packet, 12, 10, payload_length_format)
+            self._communicator, listen_packet, 12, 100, payload_length_format)
 
         # response = helper.read_untils_have_data(
         #     self._communicator, 'WA', 12, 10)
         # wait WA end if cannot read response in defined retry times
         if response is None:
-            time.sleep(0.1)
+            self.emit(UPGRADE_EVENT.ERROR, self._key,
+                      'Fail in write block data')
         return True
 
     def work(self):

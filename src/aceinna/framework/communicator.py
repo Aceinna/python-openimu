@@ -801,6 +801,10 @@ class Ethernet(Communicator):
 
     def handle_recive_packet(self, packet):
         packet_raw = bytes(packet)[14:]
+        packet_type = packet_raw[2:4]
+        if packet_type == [0x01, 0xcc]:
+            self.dst_mac = packet.src
+
         self.receive_cache.append(packet_raw)
 
     def open(self):
