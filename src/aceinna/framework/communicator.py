@@ -797,11 +797,11 @@ class Ethernet(Communicator):
 
     def start_listen_data(self):
         '''
-        Should stop sinff before start again
+        The different mac address make the filter very hard to match
         '''
         self.is_sniffing = True
-        filter_exp = 'ether dst host {0} and ether[14:2] == 0x5555'.format(
-            self.src_mac)
+        # filter_exp = 'ether src host {0}'.format(self.dst_mac)
+        filter_exp = 'ether dst host {0}'.format(self.src_mac)
 
         sniff(prn=self.handle_recive_packet,
               iface=self.iface, filter=filter_exp)
