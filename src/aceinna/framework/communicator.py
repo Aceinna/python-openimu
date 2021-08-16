@@ -749,6 +749,8 @@ class Ethernet(Communicator):
 
     def confirm_iface(self, iface):
         pG = [0x01, 0xcc]
+        self.dst_mac = 'FF:FF:FF:FF:FF:FF'
+
         filter_exp = 'ether dst host ' + \
             iface[1] + ' and ether[16:2] == 0x01cc'
         src_mac = bytes([int(x, 16) for x in iface[1].split(':')])
@@ -786,15 +788,20 @@ class Ethernet(Communicator):
         self.confirm_device(self)
         if self.device:
             # establish the packet sniff thread
-            threading.Thread(target=self.start_listen_data).start()
+            if not self.is_sniffing:
+                threading.Thread(target=self.start_listen_data).start()
             callback(self.device)
         else:
             print_red(
                 'Cannot confirm the device in ethernet 100base-t1 connection')
 
     def start_listen_data(self):
+        '''
+        Should stop sinff before start again
+        '''
         self.is_sniffing = True
-        filter_exp = 'ether src host {0}'.format(self.dst_mac)
+        filter_exp = 'ether dst host {0} and ether[14:2] == 0x5555'.format(
+            self.src_mac)
 
         sniff(prn=self.handle_recive_packet,
               iface=self.iface, filter=filter_exp)
@@ -844,11 +851,10 @@ class Ethernet(Communicator):
         self.read_result = bytes(packet)
 
     def write_read(self, data, filter_cmd_type=0):
-        if self.is_sniffing:
-            print_yellow(
-                'Cannot run another sniff when the communicator is sniffing.')
-            return None
-
+        # if self.is_sniffing:
+        #     print_yellow(
+        #         'Cannot run another sniff when the communicator is sniffing.')
+        #     return None
         if filter_cmd_type:
             filter_exp = 'ether dst host ' + self.src_mac + \
                 ' and ether[16:2] == %d' % filter_cmd_type
