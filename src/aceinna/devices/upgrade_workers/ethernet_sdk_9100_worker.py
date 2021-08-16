@@ -892,7 +892,11 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
     def __init__(self, communicator, file_content):
         super(SDKUpgradeWorker, self).__init__()
         self._communicator = communicator
-        self._file_content = file_content
+
+        if not callable(file_content):
+            self._file_content = file_content
+        else:
+            self._file_content = file_content()
 
     def write_wrapper(self, dst, src, send_method, data):
         send_command = helper.build_ethernet_packet(
@@ -1308,8 +1312,9 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
         # need a device ping command, ping 5 times
         self._communicator.reset_buffer()
         for i in range(5):
-            self.write_wrapper('ff:ff:ff:ff:ff:ff',
-                               self._communicator.get_src_mac(), pG, [])
+            self.write_wrapper(
+                bytes([int(x, 16) for x in 'ff:ff:ff:ff:ff:ff'.split(':')]),
+                self._communicator.get_src_mac(), pG, [])
             time.sleep(.5)
             response = helper.read_untils_have_data(
                 self._communicator, pG)
