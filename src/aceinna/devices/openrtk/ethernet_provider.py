@@ -432,6 +432,7 @@ class Provider(OpenDeviceBase):
                 self.communicator,
                 lambda: helper.format_firmware_content(content))
             sdk_upgrade_worker.group = UPGRADE_GROUP.FIRMWARE
+            return sdk_upgrade_worker
 
         if rule == 'imu':
             imu_upgrade_worker = FirmwareUpgradeWorker(

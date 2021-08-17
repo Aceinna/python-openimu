@@ -991,8 +991,8 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
         dst = self._communicator.get_dst_mac()
         src = self._communicator.get_src_mac()
 
-        if total == 0 or buffer_size <= 0:
-            return
+        # if total == 0 or buffer_size <= 0:
+        #     return
 
         if total <= buffer_size:
             self.write_wrapper(dst, src, send_method, data)
