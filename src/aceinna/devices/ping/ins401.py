@@ -8,7 +8,7 @@ pG = [0x01, 0xcc]
 
 def _run_command(communicator, command):
     run_command = helper.build_ethernet_packet(communicator.get_dst_mac(),
-                                               communicator.get_src_mac(), pG)
+                                               communicator.get_src_mac(), pG,[], '<I', communicator.ethernet_type_flag)
 
     data_buffer = []
     cmd_type = struct.unpack('>H', bytes(pG))[0]

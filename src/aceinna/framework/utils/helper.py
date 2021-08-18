@@ -4,6 +4,7 @@ Helper
 import struct
 import sys
 import collections
+import time
 from .dict_extend import Dict
 from ..constants import INTERFACES
 from ..command import Command
@@ -35,7 +36,7 @@ def build_packet(message_type, message_bytes=[]):
     return COMMAND_START + final_packet + calc_crc(final_packet)
 
 
-def build_ethernet_packet(dest, src, message_type, message_bytes=[], payload_length_format='<I'):
+def build_ethernet_packet(dest, src, message_type, message_bytes=[], payload_length_format='<I', ethernet_type_flag = False):
     '''
     Build ethernet packet
     '''
@@ -53,7 +54,10 @@ def build_ethernet_packet(dest, src, message_type, message_bytes=[], payload_len
         '<H', len(COMMAND_START) + len(final_packet) + 2)
 
     whole_packet = []
-    header = dest + src + payload_len_in_short
+    if ethernet_type_flag:
+        header = dest + src + bytes([0, 0])
+    else:
+        header = dest + src + bytes(payload_len_in_short)
     whole_packet.extend(header)
 
     whole_packet.extend(COMMAND_START)
@@ -460,9 +464,10 @@ def read_untils_have_data(communicator,
 
     while trys < retry_times:
         read_data = communicator.read(read_length)
-
+        time.sleep(0.001)
         if read_data is None:
             trys += 1
+
             continue
 
         data_buffer_per_time = bytearray(read_data)

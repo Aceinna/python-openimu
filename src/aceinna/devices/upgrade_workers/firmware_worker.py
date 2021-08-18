@@ -68,9 +68,8 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
                 self.emit(UPGRADE_EVENT.ERROR, self._key,
                           'Fail in first packet: {0}'.format(ex))
                 return False
-
         response = helper.read_untils_have_data(
-            self._communicator, listen_packet, 12, 100, payload_length_format)
+            self._communicator, listen_packet, 12, 200, payload_length_format)
 
         # response = helper.read_untils_have_data(
         #     self._communicator, 'WA', 12, 10)

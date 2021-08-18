@@ -53,6 +53,9 @@ class JumpApplicationWorker(UpgradeWorkerBase):
             actual_command = None
             payload_length_format = 'B'
 
+            if callable(self._command):
+                self._command = self._command()
+            
             if  isinstance(self._command, Command):
                 actual_command = self._command.actual_command
                 payload_length_format = self._command.payload_length_format
@@ -62,13 +65,17 @@ class JumpApplicationWorker(UpgradeWorkerBase):
 
             self.emit(UPGRADE_EVENT.BEFORE_COMMAND)
 
-            self._communicator.reset_buffer()
             self._communicator.write(actual_command)
 
             time.sleep(self._wait_timeout_after_command)
-
-            helper.read_untils_have_data(
+ 
+            result = helper.read_untils_have_data(
                 self._communicator, self._listen_packet, 1000, 50, payload_length_format)
+
+            if self._communicator.async_sniffer:
+                self._communicator.async_sniffer.stop()
+                self._communicator.reset_buffer()
+                self._communicator.async_sniffer = None
 
             self.emit(UPGRADE_EVENT.AFTER_COMMAND)
 

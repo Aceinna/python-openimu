@@ -125,6 +125,17 @@ class Provider(OpenDeviceBase):
         self._build_device_info(device_info)
         self._build_app_info(app_info)
         self.connected = True
+        # INS401 INS401 8550-4006-01 28.00.01
+        
+        text_info = device_info.split(' ')
+        if device_info.find('RTK330LA') > -1 and device_info.find('INS401') > -1:
+            if text_info[1] == 'RTK330LA':
+                device_info = 'INS401 8550-4006-01 ' + text_info[4] 
+                app_info = '28.00.01 '
+        if device_info.find('INS401') > -1:
+            if text_info[1] == 'INS401':
+                device_info = text_info[1] +' '+ text_info[2] + ' ' + text_info[4] 
+                app_info = text_info[3]
 
         self._device_info_string = '# Connected {0} with ethernet #\n\rDevice: {1} \n\rFirmware: {2}'\
             .format('INS401', device_info, app_info)
@@ -191,6 +202,8 @@ class Provider(OpenDeviceBase):
 
         # Load the openimu.json based on its app
         product_name = self.device_info['name']
+        if product_name == 'INS401':
+            self.is_app_matched = True
         app_name = 'RTK_INS'  # self.app_info['app_name']
         app_file_path = os.path.join(self.setting_folder_path, product_name,
                                      app_name, 'ins401.json')
@@ -341,16 +354,8 @@ class Provider(OpenDeviceBase):
                 self.user_logf.write(bytes(raw_data))
 
     def after_jump_bootloader(self):
-        command_pG = [0x01, 0xcc]
-        dst_mac = 'FF:FF:FF:FF:FF:FF'
-
-        command = helper.build_ethernet_packet(
-            bytes([int(x, 16) for x in dst_mac.split(':')]),
-            self.communicator.get_src_mac(),
-            command_pG)
-
-        self.communicator.write(command.actual_command)
-        time.sleep(1)
+        self.communicator.confirm_bootloader()
+        pass
 
     def before_write_content(self, core, content_len):
         command_CS = [0x04, 0xaa]
@@ -361,13 +366,10 @@ class Provider(OpenDeviceBase):
         command = helper.build_ethernet_packet(
             self.communicator.get_dst_mac(),
             self.communicator.get_src_mac(),
-            command_CS, message_bytes)
+            command_CS, message_bytes, '<I', self.communicator.ethernet_type_flag)
 
         self.communicator.reset_buffer()
-
-        time.sleep(2)
         self.communicator.write(command.actual_command)
-        time.sleep(1)
 
         result = helper.read_untils_have_data(
             self.communicator, command_CS, 1000, 50)
@@ -384,7 +386,7 @@ class Provider(OpenDeviceBase):
         return helper.build_ethernet_packet(
             self.communicator.get_dst_mac(),
             self.communicator.get_src_mac(),
-            command_WA, message_bytes)
+            command_WA, message_bytes, '<I', self.communicator.ethernet_type_flag)
 
     def imu_firmware_write_command_generator(self, data_len, current, data):
         command_WA = [0x41,0x57]
@@ -396,6 +398,15 @@ class Provider(OpenDeviceBase):
             self.communicator.get_dst_mac(),
             self.communicator.get_src_mac(),
             command_WA, message_bytes, 'B')
+    
+    def ins_jump_bootloader_command_generator(self):
+        return helper.build_ethernet_packet(
+            self.communicator.get_dst_mac(), self.communicator.get_src_mac(), bytes([0x01, 0xaa]), [], '<I', self.communicator.ethernet_type_flag)
+        
+
+    def ins_jump_application_command_generator(self):
+        return helper.build_ethernet_packet(
+            self.communicator.get_dst_mac(), self.communicator.get_src_mac(), bytes([0x02, 0xaa]), [], '<I', self.communicator.ethernet_type_flag)
 
     def build_worker(self, rule, content):
         ''' Build upgarde worker by rule and content
@@ -427,6 +438,7 @@ class Provider(OpenDeviceBase):
                                   lambda: self.before_write_content('1', len(content)))
             return ins_upgrade_worker
 
+
         if rule == 'sdk':
             sdk_upgrade_worker = EthernetSDK9100UpgradeWorker(
                 self.communicator,
@@ -445,6 +457,7 @@ class Provider(OpenDeviceBase):
             imu_upgrade_worker.on(
                 UPGRADE_EVENT.FIRST_PACKET, lambda: time.sleep(5))
             return imu_upgrade_worker
+
 
     def get_upgrade_workers(self, firmware_content):
         workers = []
@@ -476,23 +489,19 @@ class Provider(OpenDeviceBase):
             if isinstance(worker, FirmwareUpgradeWorker) and worker.name == 'MAIN_RTK':
                 start_index = i if start_index == -1 else start_index
                 end_index = i
-        dst_mac = self.communicator.get_dst_mac()
-        src_mac = self.communicator.get_src_mac()
-        ins_jump_bootloader_command = helper.build_ethernet_packet(
-            dst_mac, src_mac, bytes([0x01, 0xaa]))
-        ins_jump_bootloader_worker = JumpBootloaderWorker(
-            self.communicator,
-            command=ins_jump_bootloader_command,
-            listen_packet=[0x01, 0xaa],
-            wait_timeout_after_command=8)
-        ins_jump_bootloader_worker.group = UPGRADE_GROUP.FIRMWARE
-        ins_jump_bootloader_worker.on(UPGRADE_EVENT.AFTER_COMMAND, self.after_jump_bootloader)
 
-        ins_jump_application_command = helper.build_ethernet_packet(
-            dst_mac, src_mac, bytes([0x02, 0xaa]))
+        ins_jump_bootloader_worker = JumpBootloaderWorker(
+                self.communicator,
+                command=self.ins_jump_bootloader_command_generator,
+                listen_packet=[0x01, 0xaa],
+                wait_timeout_after_command=8)
+        ins_jump_bootloader_worker.group = UPGRADE_GROUP.FIRMWARE
+        ins_jump_bootloader_worker.on(UPGRADE_EVENT.AFTER_COMMAND, self.after_jump_bootloader)    
+        
+
         ins_jump_application_worker = JumpApplicationWorker(
             self.communicator,
-            command=ins_jump_application_command,
+            command=self.ins_jump_application_command_generator,
             listen_packet=[0x02, 0xaa],
             wait_timeout_after_command=4)
         ins_jump_application_worker.group = UPGRADE_GROUP.FIRMWARE
@@ -512,7 +521,7 @@ class Provider(OpenDeviceBase):
                 end_index = i
 
         imu_jump_bootloader_command = helper.build_ethernet_packet(
-            dst_mac, src_mac, bytes([0x49, 0x4a]), payload_length_format='B')
+            self.communicator.get_dst_mac(), self.communicator.get_src_mac(), bytes([0x49, 0x4a]), payload_length_format='B')
         imu_jump_bootloader_worker = JumpBootloaderWorker(
             self.communicator,
             command=imu_jump_bootloader_command,
@@ -520,7 +529,7 @@ class Provider(OpenDeviceBase):
         imu_jump_bootloader_worker.group = UPGRADE_GROUP.FIRMWARE
 
         imu_jump_application_command = helper.build_ethernet_packet(
-            dst_mac, src_mac, bytes([0x41, 0x4a]), payload_length_format='B')
+            self.communicator.get_dst_mac(), self.communicator.get_src_mac(), bytes([0x41, 0x4a]), payload_length_format='B')
         imu_jump_application_worker = JumpApplicationWorker(
             self.communicator, command=imu_jump_application_command)
         imu_jump_application_worker.group = UPGRADE_GROUP.FIRMWARE
@@ -647,7 +656,7 @@ class Provider(OpenDeviceBase):
             thead = threading.Thread(target=self.ntrip_client_thread)
             thead.start()
 
-        self.save_device_info()
+        #self.save_device_info()
 
     # command list
     def server_status(self, *args):  # pylint: disable=invalid-name
