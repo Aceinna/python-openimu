@@ -1028,7 +1028,7 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
         # print(rev_data)
         response = helper.read_untils_have_data(
             self._communicator, JS, retry_times=200)
-        print('JS result', response)
+        # print('JS result', response)
         return True  # if response is not None else False
 
     def send_sdk_cmd_JG(self):
@@ -1041,7 +1041,7 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
         time.sleep(2)
         response = helper.read_untils_have_data(
             self._communicator, JG, retry_times=200)
-        print('JG result', response)
+        # print('JG result', response)
         return True if response is not None else False
 
     def send_sync(self):

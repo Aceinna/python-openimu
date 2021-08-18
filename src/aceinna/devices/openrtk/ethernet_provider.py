@@ -22,7 +22,6 @@ from ...framework.utils.print import (print_yellow, print_green)
 from ..upgrade_workers import (
     EthernetSDK9100UpgradeWorker,
     FirmwareUpgradeWorker,
-    SDK9100UpgradeWorker,
     JumpBootloaderWorker,
     JumpApplicationWorker,
     UPGRADE_EVENT,
@@ -160,7 +159,7 @@ class Provider(OpenDeviceBase):
 
         if text.__contains__('SN:'):
             self.app_info = {
-                'version':'bootloader'
+                'version': 'bootloader'
             }
             return
 
@@ -261,12 +260,13 @@ class Provider(OpenDeviceBase):
                 # check saved result
                 self.check_predefined_result()
 
+            self.save_device_info()
+
             # start ntrip client
             if self.properties["initial"].__contains__("ntrip") \
                     and not self.ntrip_client and not self.is_in_bootloader:
                 threading.Thread(target=self.ntrip_client_thread).start()
 
-            self.save_device_info()
         except Exception as e:
             print('Exception in after setup', e)
             return False
@@ -341,16 +341,20 @@ class Provider(OpenDeviceBase):
                 self.user_logf.write(bytes(raw_data))
 
     def after_jump_bootloader(self):
-        command_pG = [0x01, 0xcc]
-        dst_mac = 'FF:FF:FF:FF:FF:FF'
+        self.communicator.reshake_hand()
 
-        command = helper.build_ethernet_packet(
-            bytes([int(x, 16) for x in dst_mac.split(':')]),
-            self.communicator.get_src_mac(),
-            command_pG)
+    def after_jump_application(self):
+        '''
+            check if in application mode
+        '''
+        for i in range(10):
+            try:
+                result = self.communicator.reshake_hand()
+                if result:
+                    break
+            except:
+                continue
 
-        self.communicator.write(command.actual_command)
-        time.sleep(1)
 
     def before_write_content(self, core, content_len):
         command_CS = [0x04, 0xaa]
@@ -361,7 +365,8 @@ class Provider(OpenDeviceBase):
         command = helper.build_ethernet_packet(
             self.communicator.get_dst_mac(),
             self.communicator.get_src_mac(),
-            command_CS, message_bytes)
+            command_CS, message_bytes,
+            use_length_as_protocol=self.communicator.use_length_as_protocol)
 
         self.communicator.reset_buffer()
 
@@ -376,7 +381,7 @@ class Provider(OpenDeviceBase):
             raise Exception('Cannot run set core command')
 
     def ins_firmware_write_command_generator(self, data_len, current, data):
-        command_WA = [0x03,0xaa]
+        command_WA = [0x03, 0xaa]
         message_bytes = []
         message_bytes.extend(struct.pack('>I', current))
         message_bytes.extend(struct.pack('>I', data_len))
@@ -384,10 +389,11 @@ class Provider(OpenDeviceBase):
         return helper.build_ethernet_packet(
             self.communicator.get_dst_mac(),
             self.communicator.get_src_mac(),
-            command_WA, message_bytes)
+            command_WA, message_bytes,
+            use_length_as_protocol=self.communicator.use_length_as_protocol)
 
     def imu_firmware_write_command_generator(self, data_len, current, data):
-        command_WA = [0x41,0x57]
+        command_WA = [0x41, 0x57]
         message_bytes = []
         message_bytes.extend(struct.pack('>I', current))
         message_bytes.extend(struct.pack('B', data_len))
@@ -396,6 +402,20 @@ class Provider(OpenDeviceBase):
             self.communicator.get_dst_mac(),
             self.communicator.get_src_mac(),
             command_WA, message_bytes, 'B')
+
+    def ins_jump_bootloader_command_generator(self):
+        return helper.build_ethernet_packet(
+            self.communicator.get_dst_mac(),
+            self.communicator.get_src_mac(),
+            bytes([0x01, 0xaa]),
+            use_length_as_protocol=self.communicator.use_length_as_protocol)
+
+    def ins_jump_application_command_generator(self):
+        return helper.build_ethernet_packet(
+            self.communicator.get_dst_mac(),
+            self.communicator.get_src_mac(),
+            bytes([0x02, 0xaa]),
+            use_length_as_protocol=self.communicator.use_length_as_protocol)
 
     def build_worker(self, rule, content):
         ''' Build upgarde worker by rule and content
@@ -478,24 +498,24 @@ class Provider(OpenDeviceBase):
                 end_index = i
         dst_mac = self.communicator.get_dst_mac()
         src_mac = self.communicator.get_src_mac()
-        ins_jump_bootloader_command = helper.build_ethernet_packet(
-            dst_mac, src_mac, bytes([0x01, 0xaa]))
+
         ins_jump_bootloader_worker = JumpBootloaderWorker(
             self.communicator,
-            command=ins_jump_bootloader_command,
+            command=self.ins_jump_bootloader_command_generator,
             listen_packet=[0x01, 0xaa],
             wait_timeout_after_command=8)
         ins_jump_bootloader_worker.group = UPGRADE_GROUP.FIRMWARE
-        ins_jump_bootloader_worker.on(UPGRADE_EVENT.AFTER_COMMAND, self.after_jump_bootloader)
+        ins_jump_bootloader_worker.on(
+            UPGRADE_EVENT.AFTER_COMMAND, self.after_jump_bootloader)
 
-        ins_jump_application_command = helper.build_ethernet_packet(
-            dst_mac, src_mac, bytes([0x02, 0xaa]))
         ins_jump_application_worker = JumpApplicationWorker(
             self.communicator,
-            command=ins_jump_application_command,
+            command=self.ins_jump_application_command_generator,
             listen_packet=[0x02, 0xaa],
             wait_timeout_after_command=4)
         ins_jump_application_worker.group = UPGRADE_GROUP.FIRMWARE
+        ins_jump_application_worker.on(
+            UPGRADE_EVENT.AFTER_COMMAND, self.after_jump_application)
 
         if start_index > -1 and end_index > -1:
             workers.insert(
@@ -728,6 +748,7 @@ class Provider(OpenDeviceBase):
                 break
 
             parameter_values.append(result['data'])
+            time.sleep(0.05)
 
         if not has_error:
             self.parameters = parameter_values

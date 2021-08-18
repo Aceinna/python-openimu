@@ -36,7 +36,6 @@ def string_parser(payload, user_configuration):
     data = ''
 
     data_str = _format_string(payload)
-    print(data_str)
 
     if data_str and (data_str.find('INS401') > -1) \
        and (data_str.find('RTK_INS App') > -1) \

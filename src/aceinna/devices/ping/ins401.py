@@ -8,18 +8,13 @@ pG = [0x01, 0xcc]
 
 def _run_command(communicator, command):
     run_command = helper.build_ethernet_packet(communicator.get_dst_mac(),
-                                               communicator.get_src_mac(), pG)
+                                               communicator.get_src_mac(), command)
+    communicator.reset_buffer()
+    communicator.write(run_command.actual_command)
 
-    data_buffer = []
-    cmd_type = struct.unpack('>H', bytes(pG))[0]
-    read_line = communicator.write_read(run_command.actual_command, cmd_type)
-    if read_line:
-        packet_raw = read_line[14:]
-        packet_type = packet_raw[2:4]
-        if packet_type == bytes(command):
-            packet_length = struct.unpack('<I', packet_raw[4:8])[0]
-            data_buffer = packet_raw[8:8 + packet_length]
-
+    time.sleep(0.1)
+    data_buffer = helper.read_untils_have_data(
+        communicator, command, retry_times=100)
     return data_buffer
 
 
