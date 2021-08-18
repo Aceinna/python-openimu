@@ -1054,9 +1054,9 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
 
         for i in range(retry_times):
             self.send_packet(sync)
-            time.sleep(0.5)
+            time.sleep(0.1)
 
-            is_matched = self.read_until([0x3A, 0x54, 0x2C, 0xA6], 100)
+            is_matched = self.read_until([0x3A, 0x54, 0x2C, 0xA6], 10)
             if is_matched:
                 break
 
@@ -1098,6 +1098,7 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
         check_baud = [0x38]
         time.sleep(0.01)
         self.send_packet(check_baud)
+        time.sleep(0.5)
 
         return self.read_until(0xCC, 10, 1)
 
@@ -1137,14 +1138,20 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
                     0x83, 0x04, 0x01, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00]
 
         self.send_packet(preamble)
-        self.send_packet(preamble)
         self.send_packet(crc_val_boot_hex)
         self.send_packet(boot_size_hex)
         self.send_packet(entry_hex)
         self.send_packet(boot_part1)
         self.send_packet(boot_part2)
 
-        return self.read_until(0xCC, 100, 1)
+        for _ in range(10):
+            is_match = self.read_until(0xCC, 10, 1)
+            if is_match:
+                return True
+            time.sleep(1)
+
+        return False
+        #return self.read_until(0xCC, 100, 1)
 
     def send_write_flash_cmd(self):
         if self._is_stopped:
@@ -1153,7 +1160,7 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
 
         # self.write_wrapper(write_cmd)
         self.send_packet(write_cmd)
-
+        time.sleep(2)
         return self.read_until(0xCC, 10, 1)
 
     def send_bin_info(self, bin_info_list):
@@ -1161,11 +1168,13 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
             return False
         # self.write_wrapper(bin_info_list)
         self.send_packet(bin_info_list, buffer_size=512)
+        time.sleep(8)
 
-        self.read_until(0xCC, 10, 1)
-        self.read_until(0xCC, 10, 1)
+        self.read_until(0xCC, 1)
+        self.read_until(0xCC, 1)
+        self.read_until(0xCC, 1)
 
-        return self.read_until(0xCC, 10, 1)
+        return self.read_until(0xCC, 1)
 
     def get_bin_info_list(self, fs_len, bin_data):
         bootMode = 0x01
@@ -1253,8 +1262,9 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
                 data_to_sdk = bin_data[i*BLOCK_SIZE:(i+1)*BLOCK_SIZE]
 
             current += len(data_to_sdk)
-            self.send_packet(data_to_sdk)
-            has_read = self.read_until(0xCC, 100, 1)
+            self.send_packet(list(data_to_sdk))
+            time.sleep(0.02)
+            has_read = self.read_until(0xCC, 200)
 
             if has_read:
                 self.emit(UPGRADE_EVENT.PROGRESS,
