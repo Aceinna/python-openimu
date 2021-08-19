@@ -19,3 +19,7 @@ class Command(object):
     @property
     def packet_type(self):
         return self._packet_type
+
+    @packet_type.setter
+    def packet_type(self,value):
+        self._packet_type = value

@@ -1151,7 +1151,7 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
             time.sleep(1)
 
         return False
-        #return self.read_until(0xCC, 100, 1)
+        # return self.read_until(0xCC, 100, 1)
 
     def send_write_flash_cmd(self):
         if self._is_stopped:
@@ -1244,14 +1244,15 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
         return self.read_until(0xCC, 500, 1)
 
     def flash_write_pre(self, bin_data):
-        data_to_sdk = bin_data[0:5120]
+        data_to_sdk = bin_data[0:BLOCK_SIZE]
         # self.send_packet(data_to_sdk)
         self.send_packet(list(data_to_sdk), send_method=WP)
 
     def flash_write(self, fs_len, bin_data):
         write_result = True
         packet_num = math.ceil(fs_len/BLOCK_SIZE)
-        current = 0
+        # because a block size of data is write at previous step
+        current = BLOCK_SIZE
         for i in range(1, packet_num):
             if self._is_stopped:
                 return False
