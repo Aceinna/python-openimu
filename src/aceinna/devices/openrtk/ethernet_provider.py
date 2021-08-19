@@ -748,7 +748,7 @@ class Provider(OpenDeviceBase):
                 break
 
             parameter_values.append(result['data'])
-            time.sleep(0.05)
+            time.sleep(0.01)
 
         if not has_error:
             self.parameters = parameter_values
@@ -768,7 +768,7 @@ class Provider(OpenDeviceBase):
             self.communicator.get_dst_mac(), self.communicator.get_src_mac(),
             gP, message_bytes)
         result = yield self._message_center.build(command=command_line.actual_command)
-
+        #print(result, len(self.communicator.receive_cache))
         data = result['data']
         error = result['error']
 
