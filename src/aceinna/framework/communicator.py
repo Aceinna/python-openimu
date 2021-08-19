@@ -738,7 +738,7 @@ class Ethernet(Communicator):
 
         self.iface_confirmed = False
         self.receive_cache = collections.deque(maxlen=1000)
-        self.ethernet_type_flag = False
+        self.use_length_as_protocol = True
         self.async_sniffer = None
 
         if options and options.device_type != 'auto':
@@ -751,26 +751,34 @@ class Ethernet(Communicator):
         self.packet = bytes(packet)
 
     def confirm_iface(self, iface):
-        pG = [0x01, 0xcc]
-        self.dst_mac = 'FF:FF:FF:FF:FF:FF'
+        dst_mac_str = 'FF:FF:FF:FF:FF:FF'
 
         filter_exp = 'ether dst host ' + \
             iface[1] + ' and ether[16:2] == 0x01cc'
+        dst_mac = bytes([int(x, 16) for x in dst_mac_str.split(':')])
         src_mac = bytes([int(x, 16) for x in iface[1].split(':')])
-        command = helper.build_ethernet_packet(
-            self.get_dst_mac(), src_mac, pG, [], '<I', False)
-        async_sniffer = AsyncSniffer(
-            iface=iface[0], prn=self.handle_iface_confirm_packet, filter=filter_exp)
-        async_sniffer.start()
-        time.sleep(0.2)
-        sendp(command.actual_command, iface=iface[0], verbose=0)
-        time.sleep(0.5)
-        async_sniffer.stop()
-        
+
+        self.send_async_shake_hand(
+            iface[0], dst_mac, src_mac, filter_exp, True)
+
         if self.iface_confirmed:
             self.iface = iface[0]
             self.src_mac = iface[1]
-            self.ethernet_type_flag = False
+            self.use_length_as_protocol = True
+            print('[NetworkCard]', self.iface)
+            return
+
+        dst_mac_str = '04:00:00:00:00:04'
+        filter_exp = 'ether src host ' + \
+            self.dst_mac + ' and ether[16:2] == 0x01cc'
+
+        self.send_async_shake_hand(
+            iface[0], dst_mac, src_mac, filter_exp, False)
+
+        if self.iface_confirmed:
+            self.iface = iface[0]
+            self.src_mac = iface[1]
+            self.use_length_as_protocol = False
             print('[NetworkCard]', self.iface)
             print(self.dst_mac)
         else:
@@ -799,50 +807,114 @@ class Ethernet(Communicator):
 
     def find_device(self, callback, retries=0, not_found_handler=None):
         self.device = None
-        self.iface_confirmed = False
 
         # find network connection
-        ifaces_list = self.get_network_card()
-        for i in range(len(ifaces_list)):
-            self.confirm_iface(ifaces_list[i])
-            if self.iface_confirmed:
-                break
-            else:
-                if i == len(ifaces_list) - 1:
-                    print_red('No available Ethernet card was found.')
-                    return None
+        if not self.iface_confirmed:
+            ifaces_list = self.get_network_card()
+            for i in range(len(ifaces_list)):
+                self.confirm_iface(ifaces_list[i])
+                if self.iface_confirmed:
+                    break
+                else:
+                    if i == len(ifaces_list) - 1:
+                        print_red('No available Ethernet card was found.')
+                        return None
+        else:
+            self.reshake_hand()
 
         # confirm device
+
+        self.start_listen_data()
+        time.sleep(1)
         self.confirm_device(self)
         if self.device:
             # establish the packet sniff thread
-            if not self.async_sniffer:
-                self.start_listen_data()
 
             callback(self.device)
         else:
             print_red(
                 'Cannot confirm the device in ethernet 100base-t1 connection')
 
+    def send_async_shake_hand(self, iface, dst_mac, src_mac, filter, use_length_as_protocol):
+        pG = [0x01, 0xcc]
+        command = helper.build_ethernet_packet(
+            dst_mac, src_mac, pG, use_length_as_protocol=use_length_as_protocol)
+        async_sniffer = AsyncSniffer(
+            iface=iface,
+            prn=self.handle_iface_confirm_packet,
+            filter=filter)
+        async_sniffer.start()
+        time.sleep(0.2)
+        sendp(command.actual_command, iface=iface, verbose=0)
+        time.sleep(0.5)
+        async_sniffer.stop()
+
+    def reshake_hand(self):
+        if not self.async_sniffer:
+            raise Exception('Cannot invoke without internal async sniffer')
+
+        dst_mac_str = 'FF:FF:FF:FF:FF:FF'
+        src_mac = self.get_src_mac()
+
+        # send latest shake hand
+        dst_mac = bytes([int(x, 16) for x in dst_mac_str.split(':')])
+        data_buffer = self.send_sync_shake_hand(dst_mac, src_mac, use_length_as_protocol=True)
+
+        if data_buffer:
+            self.use_length_as_protocol = True
+            return True
+
+        # send old shake hand
+        dst_mac_str = '04:00:00:00:00:04'
+        dst_mac = bytes([int(x, 16) for x in dst_mac_str.split(':')])
+        data_buffer = self.send_sync_shake_hand(dst_mac, src_mac, use_length_as_protocol=False)
+
+        if data_buffer:
+            self.use_length_as_protocol = False
+            return True
+        else:
+            raise Exception('Cannot finish shake hand.')
+
+    def send_sync_shake_hand(self, dst_mac, src_mac,use_length_as_protocol):
+        pG = [0x01, 0xcc]
+        command = helper.build_ethernet_packet(
+            dst_mac,
+            src_mac, pG,
+            use_length_as_protocol=use_length_as_protocol)
+        self.reset_buffer()
+        self.write(command.actual_command)
+        time.sleep(0.1)
+        return helper.read_untils_have_data(self, command, retry_times=100)
+
     def start_listen_data(self):
         '''
         The different mac address make the filter very hard to match
         '''
-        # filter_exp = 'ether src host {0}'.format(self.dst_mac)
-        filter_exp = 'ether src host {0}'.format(self.dst_mac)
+
+        if self.async_sniffer and self.async_sniffer.running:
+            return
+
+        hard_code_mac = '04:00:00:00:00:04'
+        filter_exp = 'ether src host {0} or {1}'.format(
+            self.dst_mac, hard_code_mac)
 
         self.async_sniffer = AsyncSniffer(
-                iface=self.iface, prn=self.handle_recive_packet, filter=filter_exp, store = 0)
+            iface=self.iface, prn=self.handle_recive_packet, filter=filter_exp, store=0)
         self.async_sniffer.start()
-        time.sleep(0.2)
+        time.sleep(0.1)
 
     def handle_recive_packet(self, packet):
-        packet_raw = bytes(packet)[14:]
-        packet_type = packet_raw[2:4]
+        packet_raw = bytes(packet)[12:]
+        packet_raw_length = packet_raw[0:2]
+        packet_type = packet_raw[4:6]
+
         if packet_type == b'\x01\xcc':
             self.dst_mac = packet.src
 
-        self.receive_cache.append(packet_raw)
+        if packet_raw_length == b'\x00\x00':
+            self.use_length_as_protocol = False
+
+        self.receive_cache.append(packet_raw[2:])
 
     def open(self):
         '''
@@ -877,34 +949,6 @@ class Ethernet(Communicator):
             return self.receive_cache.popleft()
         return []
 
-    def handle_receive_read_result(self, packet):
-        self.read_result = bytes(packet)
-
-    def write_read(self, data, filter_cmd_type=0):
-        # if self.is_sniffing:
-        #     print_yellow(
-        #         'Cannot run another sniff when the communicator is sniffing.')
-        #     return None
-        if filter_cmd_type:
-            filter_exp = 'ether src host ' + self.dst_mac + \
-                ' and ether[16:2] == %d' % filter_cmd_type
-        else:
-            filter_exp = 'ether src host ' + self.dst_mac
-
-        self.read_result = None
-        async_sniffer = AsyncSniffer(
-            iface=self.iface, prn=self.handle_receive_read_result, filter=filter_exp)
-        async_sniffer.start()
-        time.sleep(0.1)
-        sendp(data, iface=self.iface, verbose=0)
-
-        time.sleep(0.1)
-        async_sniffer.stop()
-
-        if self.read_result:
-            return self.read_result
-
-        return None
 
     def reset_buffer(self):
         '''

@@ -36,7 +36,8 @@ def build_packet(message_type, message_bytes=[]):
     return COMMAND_START + final_packet + calc_crc(final_packet)
 
 
-def build_ethernet_packet(dest, src, message_type, message_bytes=[], payload_length_format='<I', ethernet_type_flag = False):
+def build_ethernet_packet(dest, src, message_type, message_bytes=[], payload_length_format='<I', use_length_as_protocol=True, *args, **kwargs):
+
     '''
     Build ethernet packet
     '''
@@ -50,8 +51,11 @@ def build_ethernet_packet(dest, src, message_type, message_bytes=[], payload_len
     final_packet = packet + message_bytes
 
     payload_len = len(COMMAND_START) + len(final_packet) + 2
-    payload_len_in_short = struct.pack(
-        '<H', len(COMMAND_START) + len(final_packet) + 2)
+
+    if not use_length_as_protocol:
+        payload_len = 0
+
+    payload_len_in_short = struct.pack('<H', payload_len)
 
     whole_packet = []
     if ethernet_type_flag:
@@ -472,7 +476,7 @@ def read_untils_have_data(communicator,
 
         data_buffer_per_time = bytearray(read_data)
         data_buffer.extend(data_buffer_per_time)
-        if hasattr(communicator,'type') and communicator.type == INTERFACES.ETH_100BASE_T1:
+        if hasattr(communicator, 'type') and communicator.type == INTERFACES.ETH_100BASE_T1:
             response = _parse_eth_100base_t1_buffer(
                 data_buffer, payload_length_format)
         else:

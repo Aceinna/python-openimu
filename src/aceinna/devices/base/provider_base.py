@@ -418,7 +418,7 @@ class OpenDeviceBase(EventBase):
     def handle_upgrade_complete(self):
         if self._pbar:
             self._pbar.close()
-        time.sleep(2)
+        time.sleep(8)
         self.restart()
 
     def connect_log(self, params):
@@ -445,46 +445,3 @@ class OpenDeviceBase(EventBase):
         return {
             'packetType': 'success'
         }
-
-    def jump_to_bootloader(self):
-        if self.communicator.type == INTERFACES.UART:
-            command_line = helper.build_bootloader_input_packet('JI')
-            self.communicator.reset_buffer()  # clear input and output buffer
-            self.communicator.write(command_line, True)
-            time.sleep(3)
-
-            # It is used to skip streaming data with size 1000 per read
-            helper.read_untils_have_data(
-                self.communicator, 'JI', 1000, 50)
-        elif self.communicator.type == INTERFACES.ETH_100BASE_T1:
-            command_JI = [0x01, 0xaa]
-            command_line = helper.build_ethernet_packet(
-                self.communicator.get_dst_mac(),
-                self.communicator.get_src_mac(),
-                command_JI)
-
-            self.communicator.write(command_line)
-
-        # cli = self.command_builder.create('JI', timeout=3)
-        # cli.send()
-        # time.sleep(3)
-
-    def jump_to_application(self):
-        time.sleep(1)
-        if self.communicator.type == INTERFACES.UART:
-            command_line = helper.build_bootloader_input_packet('JA')
-            self.communicator.write(command_line)
-
-        elif self.communicator.type == INTERFACES.ETH_100BASE_T1:
-            command_JA = [0x02, 0xaa]
-            command_line = helper.build_ethernet_packet(
-                self.communicator.get_dst_mac(),
-                self.communicator.get_src_mac(),
-                command_JA)
-
-            self.communicator.write(command_line)
-
-        # cli = self.command_builder.create('JA', timeout=5)
-        # cli.send()
-        print('Restarting app ...')
-        time.sleep(5)
