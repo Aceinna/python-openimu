@@ -47,6 +47,9 @@ class JumpBootloaderWorker(UpgradeWorkerBase):
             actual_command = None
             payload_length_format = 'B'
 
+            if callable(self._command):
+                self._command = self._command()
+
             if  isinstance(self._command, Command):
                 actual_command = self._command.actual_command
                 payload_length_format = self._command.payload_length_format

@@ -767,8 +767,9 @@ class Ethernet(Communicator):
             return
 
         dst_mac_str = '04:00:00:00:00:04'
+        dst_mac = bytes([int(x, 16) for x in dst_mac_str.split(':')])
         filter_exp = 'ether src host ' + \
-            self.dst_mac + ' and ether[16:2] == 0x01cc'
+            dst_mac_str + ' and ether[16:2] == 0x01cc'
 
         self.send_async_shake_hand(
             iface[0], dst_mac, src_mac, filter_exp, False)
@@ -788,6 +789,7 @@ class Ethernet(Communicator):
             for i in range(len(ifaces_list)):
                 self.confirm_iface(ifaces_list[i])
                 if self.iface_confirmed:
+                    self.start_listen_data()
                     break
                 else:
                     if i == len(ifaces_list) - 1:
@@ -797,7 +799,6 @@ class Ethernet(Communicator):
             self.reshake_hand()
 
         # confirm device
-        self.start_listen_data()
         time.sleep(1)
         self.confirm_device(self)
         if self.device:
@@ -822,49 +823,44 @@ class Ethernet(Communicator):
         async_sniffer.stop()
 
     def reshake_hand(self):
-        if not self.async_sniffer:
-            raise Exception('Cannot invoke without internal async sniffer')
+        if self.async_sniffer and self.async_sniffer.running:
+            self.async_sniffer.stop()
 
+        self.iface_confirmed=False
         dst_mac_str = 'FF:FF:FF:FF:FF:FF'
+
+        filter_exp = 'ether dst host ' + \
+            self.src_mac + ' and ether[16:2] == 0x01cc'
+        dst_mac = bytes([int(x, 16) for x in dst_mac_str.split(':')])
         src_mac = self.get_src_mac()
 
-        # send latest shake hand
-        dst_mac = bytes([int(x, 16) for x in dst_mac_str.split(':')])
-        data_buffer = self.send_sync_shake_hand(dst_mac, src_mac, use_length_as_protocol=True)
+        self.send_async_shake_hand(
+            self.iface, dst_mac, src_mac, filter_exp, True)
 
-        if data_buffer:
+        if self.iface_confirmed:
             self.use_length_as_protocol = True
+            self.start_listen_data()
             return True
 
-        # send old shake hand
         dst_mac_str = '04:00:00:00:00:04'
         dst_mac = bytes([int(x, 16) for x in dst_mac_str.split(':')])
-        data_buffer = self.send_sync_shake_hand(dst_mac, src_mac, use_length_as_protocol=False)
+        filter_exp = 'ether src host ' + \
+            dst_mac_str + ' and ether[16:2] == 0x01cc'
 
-        if data_buffer:
+        self.send_async_shake_hand(
+            self.iface, dst_mac, src_mac, filter_exp, True)
+
+        if self.iface_confirmed:
             self.use_length_as_protocol = False
+            self.start_listen_data()
             return True
         else:
             raise Exception('Cannot finish shake hand.')
-
-    def send_sync_shake_hand(self, dst_mac, src_mac,use_length_as_protocol):
-        pG = [0x01, 0xcc]
-        command = helper.build_ethernet_packet(
-            dst_mac,
-            src_mac, pG,
-            use_length_as_protocol=use_length_as_protocol)
-        self.reset_buffer()
-        self.write(command.actual_command)
-        time.sleep(0.1)
-        return helper.read_untils_have_data(self, command, retry_times=100)
 
     def start_listen_data(self):
         '''
         The different mac address make the filter very hard to match
         '''
-        if self.async_sniffer and self.async_sniffer.running:
-            return
-
         hard_code_mac = '04:00:00:00:00:04'
         filter_exp = 'ether src host {0} or {1}'.format(
             self.dst_mac, hard_code_mac)
