@@ -107,10 +107,10 @@ class Driver(EventBase):
 
         if hasattr(self._communicator, 'set_find_options'):
             self._communicator.set_find_options(find_options)
-        
+
         self._communicator.find_device(
             self._device_upgrade_restart_handler,
-            retries=1,
+            retries=2,
             not_found_handler=self._device_not_found_handler)
 
     def _handle_receive_continous_data(self, packet_type, data):

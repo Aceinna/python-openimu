@@ -122,8 +122,7 @@ class DeviceMessageCenter(EventBase):
 
         self._parser.set_run_command(message.get_command())
         self._communicator.write(message.get_command())
-        if self._communicator.type == INTERFACES.ETH_100BASE_T1:
-            time.sleep(0.1)
+        # print('run command', message.get_command())
 
     def run_post(self):
         if self.prerun_queue.empty():
