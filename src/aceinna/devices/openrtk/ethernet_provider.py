@@ -280,6 +280,9 @@ class Provider(OpenDeviceBase):
         return int(cksum, 16), calc_cksum
 
     def on_read_raw(self, data):
+        if data[0] == 0x24:
+            return
+
         for bytedata in data:
             if bytedata == 0x24:
                 self.nmea_buffer = []
@@ -751,7 +754,6 @@ class Provider(OpenDeviceBase):
                 break
 
             parameter_values.append(result['data'])
-            time.sleep(0.01)
 
         if not has_error:
             self.parameters = parameter_values
@@ -770,7 +772,7 @@ class Provider(OpenDeviceBase):
         command_line = helper.build_ethernet_packet(
             self.communicator.get_dst_mac(), self.communicator.get_src_mac(),
             gP, message_bytes)
-        result = yield self._message_center.build(command=command_line.actual_command)
+        result = yield self._message_center.build(command=command_line.actual_command, timeout=5)
         #print(result, len(self.communicator.receive_cache))
         data = result['data']
         error = result['error']
