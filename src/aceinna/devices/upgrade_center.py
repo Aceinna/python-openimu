@@ -2,18 +2,26 @@ import time
 import threading
 from .base import EventBase
 from itertools import groupby
-from .upgrade_workers import UPGRADE_EVENT
+from .upgrade_workers import UPGRADE_EVENT, UPGRADE_GROUP
+
 
 class UpgradeCenter(EventBase):
     def __init__(self):
         super(UpgradeCenter, self).__init__()
         self.workers = {}
+        self.before_run_status = []
         self.run_status = []
+        self.after_run_status = []
         self.is_processing = False
         self.is_error = False
         self.current = 0
         self.total = 0
         self.data_lock = threading.Lock()
+
+        self.before_run_group = None
+        self.after_run_group = None
+        self.normal_run_group = []
+        self.normal_workers = []
 
     def register(self, worker):
         worker_key = 'worker-' + str(len(self.workers))
@@ -36,16 +44,12 @@ class UpgradeCenter(EventBase):
 
         self.is_processing = True
 
-        # group workers by group name if has
-        all_workers = self.workers.values()
-        worker_group = groupby(all_workers, key=lambda x: x['group'])
-        for key, group in worker_group:
-            if key:
-                # start thread to run workers in a group
-                self.start_workers_in_single_thread(list(group))
-            else:
-                # start multi thread to run workers in no named group
-                self.start_workers_in_multi_thread(list(group))
+        self.split_workers()
+
+        if self.before_run_group:
+            self.before_run()
+        else:
+            self.normal_run()
 
         return True
 
@@ -54,6 +58,52 @@ class UpgradeCenter(EventBase):
             worker['executor'].stop()
 
         self.is_processing = False
+
+    def split_workers(self):
+        # group workers by group name if has
+        all_workers = self.workers.values()
+        worker_group = groupby(all_workers, key=lambda x: x['group'])
+        for key, group in worker_group:
+            if key == UPGRADE_GROUP.BEFORE_ALL:
+                self.before_run_group = list(group)
+                continue
+
+            if key == UPGRADE_GROUP.AFTER_ALL:
+                self.after_run_group = list(group)
+                continue
+
+            normal_workers = list(group)
+            self.normal_workers.extend(normal_workers)
+            self.normal_run_group.append((key, normal_workers))
+
+    def before_run(self):
+        for worker in self.before_run_group:
+            executor = worker['executor']
+            self.start_before_run_worker(executor)
+
+    def start_before_run_worker(self, executor):
+        executor.on(UPGRADE_EVENT.ERROR, self.handle_worker_error)
+        executor.on(UPGRADE_EVENT.FINISH, self.handle_before_run_worker_done)
+        executor.work()
+
+    def normal_run(self):
+        for key, group in self.normal_run_group:
+            if key:
+                # start thread to run workers in a group
+                self.start_workers_in_single_thread(group)
+            else:
+                # start multi thread to run workers in no named group
+                self.start_workers_in_multi_thread(group)
+
+    def after_run(self):
+        for worker in self.after_run_group:
+            executor = worker['executor']
+            self.start_after_run_worker(executor)
+
+    def start_after_run_worker(self, executor):
+        executor.on(UPGRADE_EVENT.ERROR, self.handle_worker_error)
+        executor.on(UPGRADE_EVENT.FINISH, self.handle_after_run_worker_done)
+        executor.work()
 
     def start_workers_in_single_thread(self, workers):
         def start_in_thread(workers):
@@ -107,14 +157,27 @@ class UpgradeCenter(EventBase):
 
         self.emit(UPGRADE_EVENT.ERROR, message)
 
+    def handle_before_run_worker_done(self, worker_key):
+        self.before_run_status.append(worker_key)
+
+        if len(self.before_run_status) == len(self.before_run_group):
+            self.normal_run()
+
     def handle_worker_done(self, worker_key):
         ''' on worker progress
             should check if all workers is done
         '''
         self.run_status.append(worker_key)
-        # print('{0} worker finished'.format(worker_key))
+        if len(self.run_status) == len(self.normal_workers):
+            if not self.after_run_group:
+                # wait a time, output data to client
+                time.sleep(.5)
+                self.emit(UPGRADE_EVENT.FINISH)
+            else:
+                self.after_run()
 
-        if len(self.run_status) == len(self.workers):
-            # wait a time, output data to client
+    def handle_after_run_worker_done(self, worker_key):
+        self.after_run_status.append(worker_key)
+        if len(self.after_run_status) == len(self.after_run_group):
             time.sleep(.5)
             self.emit(UPGRADE_EVENT.FINISH)

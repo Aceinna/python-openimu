@@ -3,7 +3,11 @@ Helper
 """
 import struct
 import sys
+import collections
+import time
 from .dict_extend import Dict
+from ..constants import INTERFACES
+from ..command import Command
 
 if sys.version_info[0] > 2:
     from queue import Queue
@@ -11,6 +15,11 @@ else:
     from Queue import Queue
 
 COMMAND_START = [0x55, 0x55]
+PACKET_FOUND_INIT_STATE = 0
+PACKET_FOUND_START_STATE = 1
+PACKET_FOUND_TYPE_STATE = 2
+PACKET_FOUND_LENGTH_STATE = 3
+PACKET_FOUND_PAYLOAD_STATE = 4
 
 
 def build_packet(message_type, message_bytes=[]):
@@ -27,7 +36,7 @@ def build_packet(message_type, message_bytes=[]):
     return COMMAND_START + final_packet + calc_crc(final_packet)
 
 
-def build_ethernet_packet(dest, src, message_type, message_bytes=[]):
+def build_ethernet_packet(dest, src, message_type, message_bytes=[], payload_length_format='<I', use_length_as_protocol=True, *args, **kwargs):
     '''
     Build ethernet packet
     '''
@@ -35,26 +44,31 @@ def build_ethernet_packet(dest, src, message_type, message_bytes=[]):
     packet.extend(message_type)
     msg_len = len(message_bytes)
 
-    packet_len = struct.pack("<I", msg_len)
+    packet_len = struct.pack(payload_length_format, msg_len)
 
     packet.extend(packet_len)
     final_packet = packet + message_bytes
 
-    msg_len = len(COMMAND_START) + len(final_packet) + 2
-    payload_len = struct.pack('<H', len(COMMAND_START) + len(final_packet) + 2)
+    payload_len = len(COMMAND_START) + len(final_packet) + 2
 
-    whole_packet=[]
-    header = dest + src + bytes(payload_len)
+    if not use_length_as_protocol:
+        payload_len = 0
+
+    payload_len_in_short = struct.pack('<H', payload_len)
+
+    whole_packet = []
+    header = dest + src + payload_len_in_short
     whole_packet.extend(header)
 
     whole_packet.extend(COMMAND_START)
     whole_packet.extend(final_packet)
     whole_packet.extend(calc_crc(final_packet))
-    if msg_len < 46:
-        fill_bytes = bytes(46-msg_len)
+    if payload_len < 46:
+        fill_bytes = bytes(46-payload_len)
         whole_packet.extend(fill_bytes)
 
-    return bytes(whole_packet)
+    return Command(message_type, bytes(whole_packet), payload_length_format)
+
 
 def build_input_packet(name, properties=None, param=False, value=False):
     '''
@@ -365,7 +379,82 @@ def _parse_buffer(data_buffer):
     return response
 
 
-def read_untils_have_data(communicator, packet_type, read_length=200, retry_times=20):
+def _parse_eth_100base_t1_buffer(data_buffer, payload_length_format='<I'):
+    response = {
+        'parsed': False,
+        'parsed_end_index': len(data_buffer),
+        'result': []
+    }
+
+    command_start = [0x55, 0x55]
+    packet_type = []
+    packet_length = []
+    fmt_packet_length = -1
+    payload = []
+    match_state = PACKET_FOUND_INIT_STATE
+    packet_sync_match = collections.deque(maxlen=2)
+    payload_length_bytes_fmt = struct.calcsize(payload_length_format)
+
+    for value in data_buffer:
+        #print('state', match_state)
+        if match_state == PACKET_FOUND_INIT_STATE:
+            packet_sync_match.append(value)
+
+        if len(packet_sync_match) == 2 and [x for x in packet_sync_match] == command_start:
+            match_state = PACKET_FOUND_START_STATE
+            packet_sync_match.clear()
+            continue
+
+        if match_state == PACKET_FOUND_START_STATE:
+            packet_type.append(value)
+            if len(packet_type) >= 2:
+                match_state = PACKET_FOUND_TYPE_STATE
+                continue
+
+        if match_state == PACKET_FOUND_TYPE_STATE:
+            packet_length.append(value)
+            if len(packet_length) == payload_length_bytes_fmt:
+                try:
+                    fmt_packet_length = struct.unpack(
+                        '<I', bytes(packet_length))[0]
+                except Exception as ex:
+                    fmt_packet_length = -1
+
+                if fmt_packet_length > -1:
+                    match_state = PACKET_FOUND_LENGTH_STATE
+                    continue
+                else:
+                    packet_type = []
+                    packet_length = []
+                    fmt_packet_length = -1
+                    match_state = PACKET_FOUND_INIT_STATE
+                    continue
+
+        if match_state == PACKET_FOUND_LENGTH_STATE:
+            if len(payload) == fmt_packet_length:
+                response['parsed'] = True
+                response['result'].append({
+                    'type': packet_type,
+                    'data': payload
+                })
+
+                packet_type = []
+                packet_length = []
+                fmt_packet_length = -1
+                payload = []
+                match_state = PACKET_FOUND_INIT_STATE
+                continue
+
+            payload.append(value)
+
+    return response
+
+
+def read_untils_have_data(communicator,
+                          packet_type,
+                          read_length=200,
+                          retry_times=20,
+                          payload_length_format='<I'):
     '''
     Get data from limit times of read
     '''
@@ -375,15 +464,19 @@ def read_untils_have_data(communicator, packet_type, read_length=200, retry_time
 
     while trys < retry_times:
         read_data = communicator.read(read_length)
-
+        time.sleep(0.001)
         if read_data is None:
             trys += 1
             continue
 
         data_buffer_per_time = bytearray(read_data)
         data_buffer.extend(data_buffer_per_time)
+        if hasattr(communicator, 'type') and communicator.type == INTERFACES.ETH_100BASE_T1:
+            response = _parse_eth_100base_t1_buffer(
+                data_buffer, payload_length_format)
+        else:
+            response = _parse_buffer(data_buffer)
 
-        response = _parse_buffer(data_buffer)
         if response['parsed']:
             matched_packet = next(
                 (packet['data'] for packet in response['result']

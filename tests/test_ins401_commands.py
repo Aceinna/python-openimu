@@ -87,7 +87,7 @@ def ethernet_command_send_receive(device_provider:EhternetProvider):
                                        list(INPUT_PACKETS[0]))
 
     if command_line:
-        result = device_provider.send_command(command_line)
+        result = device_provider.send_command(command_line.actual_command)
         print('get_production_info:', result)
     else:
         return False
@@ -99,7 +99,7 @@ def ethernet_command_send_receive(device_provider:EhternetProvider):
                                                          list(INPUT_PACKETS[1]),
                                                          i + 1)
         if command_line:
-            result = device_provider.send_command(command_line)
+            result = device_provider.send_command(command_line.actual_command)
             print('get_user_configuration_parameters:', result)
         else:
             return False
@@ -112,7 +112,7 @@ def ethernet_command_send_receive(device_provider:EhternetProvider):
                                               i + 1,
                                               user_parameters[i])
         if command_line:
-            result = device_provider.send_command(command_line)
+            result = device_provider.send_command(command_line.actual_command)
             print('set_user_configuration:', result)
         else:
             return False
@@ -124,7 +124,7 @@ def ethernet_command_send_receive(device_provider:EhternetProvider):
                                        list(INPUT_PACKETS[3]))
 
     if command_line:
-        result = device_provider.send_command(command_line)
+        result = device_provider.send_command(command_line.actual_command)
         print('save_user_configuration:', result)
     else:
         return False
@@ -137,7 +137,7 @@ def ethernet_command_send_receive(device_provider:EhternetProvider):
                                          vehicle_speed_value)
 
     if command_line:
-        device_provider.communicator.write(command_line)
+        device_provider.communicator.write(command_line.actual_command)
         print('set_vehicle_speed_data')
     else:
         return False

@@ -66,6 +66,9 @@ class Provider(RTKProviderBase):
                 time.sleep(0.001)
 
     def before_write_content(self, core, content_len):
+        self.communicator.serial_port.baudrate = self.bootloader_baudrate
+        self.communicator.serial_port.reset_input_buffer()
+
         message_bytes = [ord('C'), ord(core)]
         message_bytes.extend(struct.pack('>I', content_len))
 
@@ -83,11 +86,22 @@ class Provider(RTKProviderBase):
         # self.rtcm_serial_port.open()
         self.rtcm_serial_port.baudrate = 460800
 
+    def firmware_write_command_generator(self, data_len, current, data):
+        command_WA = 'WA'
+        message_bytes = []
+        message_bytes.extend(struct.pack('>I', current))
+        message_bytes.extend(struct.pack('B', data_len))
+        message_bytes.extend(data)
+        return helper.build_packet(command_WA, message_bytes)
+
     # override
     def build_worker(self, rule, content):
         if rule == 'rtk':
             rtk_upgrade_worker = FirmwareUpgradeWorker(
-                self.communicator, self.bootloader_baudrate, lambda: helper.format_firmware_content(content), 192)
+                self.communicator,
+                lambda: helper.format_firmware_content(content),
+                self.firmware_write_command_generator,
+                192)
             rtk_upgrade_worker.on(
                 UPGRADE_EVENT.FIRST_PACKET, lambda: time.sleep(15))
             rtk_upgrade_worker.on(UPGRADE_EVENT.BEFORE_WRITE,
@@ -96,7 +110,10 @@ class Provider(RTKProviderBase):
 
         if rule == 'ins':
             ins_upgrade_worker = FirmwareUpgradeWorker(
-                self.communicator, self.bootloader_baudrate, lambda: helper.format_firmware_content(content), 192)
+                self.communicator,
+                lambda: helper.format_firmware_content(content),
+                self.firmware_write_command_generator,
+                192)
             ins_upgrade_worker.on(
                 UPGRADE_EVENT.FIRST_PACKET, lambda: time.sleep(15))
             ins_upgrade_worker.on(UPGRADE_EVENT.BEFORE_WRITE,

@@ -2,6 +2,7 @@ import time
 import json
 import serial
 import serial.tools.list_ports
+import struct
 
 from ...framework.context import APP_CONTEXT
 from ..base.rtk_provider_base import RTKProviderBase
@@ -11,6 +12,7 @@ from ..upgrade_workers import (
     UPGRADE_EVENT,
     SDK8100UpgradeWorker
 )
+from ...framework.utils import helper
 from ...framework.utils.print import print_red
 
 
@@ -63,11 +65,27 @@ class Provider(RTKProviderBase):
             else:
                 time.sleep(0.001)
 
+    def before_write_content(self):
+        self.communicator.serial_port.baudrate = self.bootloader_baudrate
+        self.communicator.serial_port.reset_input_buffer()
+
+    def firmware_write_command_generator(self, data_len, current, data):
+        command_WA = 'WA'
+        message_bytes = []
+        message_bytes.extend(struct.pack('>I', current))
+        message_bytes.extend(struct.pack('B', data_len))
+        message_bytes.extend(data)
+        return helper.build_packet(command_WA, message_bytes)
+
     # override
+
     def build_worker(self, rule, content):
         if rule == 'rtk':
             firmware_worker = FirmwareUpgradeWorker(
-                self.communicator, self.bootloader_baudrate, content)
+                self.communicator, content,
+                self.firmware_write_command_generator)
+            firmware_worker.on(UPGRADE_EVENT.BEFORE_WRITE,
+                               lambda: self.before_write_content())
             firmware_worker.on(
                 UPGRADE_EVENT.FIRST_PACKET, lambda: time.sleep(8))
             return firmware_worker

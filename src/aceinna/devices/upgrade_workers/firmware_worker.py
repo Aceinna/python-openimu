@@ -1,20 +1,23 @@
 import time
 from ..base.upgrade_worker_base import UpgradeWorkerBase
 from ...framework.utils import helper
+from ...framework.command import Command
 from . import (UPGRADE_EVENT, UPGRADE_GROUP)
+
 
 class FirmwareUpgradeWorker(UpgradeWorkerBase):
     '''Firmware upgrade worker
     '''
 
-    def __init__(self, communicator, baudrate, file_content, block_size=240):
+    def __init__(self, communicator, file_content, command_generator, block_size=240):
         super(FirmwareUpgradeWorker, self).__init__()
         self._communicator = communicator
         self.current = 0
-        self._baudrate = baudrate
+        #self._baudrate = baudrate
         self.max_data_len = block_size  # custom
         self._group = UPGRADE_GROUP.FIRMWARE
 
+        self._command_generator = command_generator
         if not callable(file_content):
             self._file_content = file_content
         else:
@@ -31,11 +34,29 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
         '''
         Send block to bootloader
         '''
-        # print(data_len, addr, time.time())
-        command_line = helper.build_bootloader_input_packet(
-            'WA', data_len, current, data)
+        if not callable(self._command_generator):
+            self.emit(UPGRADE_EVENT.ERROR, self._key,
+                      'There is no command generator for Firmware upgrade worker.')
+            return False
+
+        command = self._command_generator(data_len, current, data)
+
+        actual_command = None
+        payload_length_format = 'B'
+        listen_packet = 'WA'
+
+        if isinstance(command, Command):
+            actual_command = command.actual_command
+            payload_length_format = command.payload_length_format
+            listen_packet = command.packet_type
+
+        if isinstance(command, list):
+            actual_command = command
+
+        # helper.build_bootloader_input_packet(
+        #     'WA', data_len, current, data)
         try:
-            self._communicator.write(command_line, True)
+            self._communicator.write(actual_command, True)
         except Exception as ex:  # pylint: disable=broad-except
             return False
 
@@ -49,10 +70,14 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
                 return False
 
         response = helper.read_untils_have_data(
-            self._communicator, 'WA', 12, 10)
+            self._communicator, listen_packet, 12, 200, payload_length_format)
+
+        # response = helper.read_untils_have_data(
+        #     self._communicator, 'WA', 12, 10)
         # wait WA end if cannot read response in defined retry times
         if response is None:
-            time.sleep(0.1)
+            self.emit(UPGRADE_EVENT.ERROR, self._key,
+                      'Fail in write block data')
         return True
 
     def work(self):
@@ -64,8 +89,9 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
             self.emit(UPGRADE_EVENT.ERROR, self._key, 'Invalid file content')
             return
 
-        self._communicator.serial_port.baudrate = self._baudrate
-        self._communicator.serial_port.reset_input_buffer()
+        # TODO: move to before write
+        # self._communicator.serial_port.baudrate = self._baudrate
+        # self._communicator.serial_port.reset_input_buffer()
         try:
             self.emit(UPGRADE_EVENT.BEFORE_WRITE)
         except Exception as ex:
@@ -89,7 +115,8 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
                 return
 
             self.current += packet_data_len
-            self.emit(UPGRADE_EVENT.PROGRESS, self._key, self.current, self.total)
+            self.emit(UPGRADE_EVENT.PROGRESS, self._key,
+                      self.current, self.total)
 
         try:
             self.emit(UPGRADE_EVENT.AFTER_WRITE)
