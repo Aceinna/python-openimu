@@ -509,8 +509,6 @@ class Provider(OpenDeviceBase):
             if isinstance(worker, FirmwareUpgradeWorker) and worker.name == 'MAIN_RTK':
                 start_index = i if start_index == -1 else start_index
                 end_index = i
-        dst_mac = self.communicator.get_dst_mac()
-        src_mac = self.communicator.get_src_mac()
 
         ins_jump_bootloader_worker = JumpBootloaderWorker(
             self.communicator,
@@ -627,15 +625,6 @@ class Provider(OpenDeviceBase):
         '''
         if not self.rtk_log_file_name or not self._device_info_string:
             return
-
-        # local_time = time.localtime()
-        # formatted_file_time = time.strftime("%Y_%m_%d_%H_%M_%S", local_time)
-        # file_path = os.path.join(
-        #     self.rtk_log_file_name,
-        #     'device_info_{0}.txt'.format(formatted_file_time)
-        # )
-        # with open(file_path, 'w') as outfile:
-        #     outfile.write(self._device_info_string)
 
         if self.is_in_bootloader:
             return
