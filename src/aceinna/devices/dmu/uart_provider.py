@@ -157,7 +157,8 @@ class Provider(OpenDeviceBase):
 
     def after_setup(self):
         self.is_conf_loaded = False
-        self.original_baudrate = self.communicator.serial_port.baudrate
+        if hasattr(self.communicator, 'serial_port'):
+            self.original_baudrate = self.communicator.serial_port.baudrate
 
     def on_read_raw(self, data):
         pass

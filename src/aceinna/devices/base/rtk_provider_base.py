@@ -251,7 +251,8 @@ class RTKProviderBase(OpenDeviceBase):
         set_user_para = self.cli_options and self.cli_options.set_user_para
 
         # save original baudrate
-        self.original_baudrate = self.communicator.serial_port.baudrate
+        if hasattr(self.communicator, 'serial_port'):
+            self.original_baudrate = self.communicator.serial_port.baudrate
 
         if self.data_folder is None:
             raise Exception(

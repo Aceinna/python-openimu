@@ -211,7 +211,8 @@ class Provider(OpenDeviceBase):
             self.properties = json.load(json_data)
 
     def after_setup(self):
-        self.original_baudrate = self.communicator.serial_port.baudrate
+        if hasattr(self.communicator, 'serial_port'):
+            self.original_baudrate = self.communicator.serial_port.baudrate
 
     def on_read_raw(self, data):
         pass

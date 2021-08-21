@@ -19,3 +19,4 @@ aceinna.ico
 .pytest_cache
 loggers/
 /backup
+libs

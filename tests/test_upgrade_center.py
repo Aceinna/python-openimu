@@ -81,10 +81,10 @@ class TestUpgradeCenter(unittest.TestCase):
     def test_before_after_workers(self):
         upgrade_center = UpgradeCenter()
         before_worker = NormalWorker()
-        before_worker.group = UPGRADE_GROUP.BEFORE_RUN
+        before_worker.group = UPGRADE_GROUP.BEFORE_ALL
         upgrade_center.register(before_worker)
         after_worker = NormalWorker()
-        after_worker.group = UPGRADE_GROUP.AFTER_RUN
+        after_worker.group = UPGRADE_GROUP.AFTER_ALL
         upgrade_center.register(after_worker)
 
         upgrade_center.register(NormalWorker())

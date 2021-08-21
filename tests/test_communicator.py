@@ -5,10 +5,10 @@ import time
 from websocket import create_connection
 
 try:
-    from aceinna.framework.communicator import SerialPort
+    from aceinna.framework.communicators import SerialPort
 except:  # pylint: disable=bare-except
     sys.path.append('./src')
-    from aceinna.framework.communicator import SerialPort
+    from aceinna.framework.communicators import SerialPort
 
 
 # pylint: disable=missing-class-docstring

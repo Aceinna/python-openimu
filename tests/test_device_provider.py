@@ -228,7 +228,7 @@ class TestOpenRTKProvider(unittest.TestCase):
         self.assertEqual(method_result, expect_result)
 
 
-#@unittest.skip
+# @unittest.skip
 class TestOpenDMUProvider(unittest.TestCase):
     def test_get_conf(self):
         provider = build_provider('DMU')
@@ -305,6 +305,7 @@ class TestOpenDMUProvider(unittest.TestCase):
         method_result = save_config_result['packetType']
         expect_result = 'success'
         self.assertEqual(method_result, expect_result)
+
 
 @unittest.skip
 class TestProviderSwitch(unittest.TestCase):

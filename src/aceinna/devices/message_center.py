@@ -4,6 +4,8 @@ import uuid
 import threading
 import datetime
 import time
+
+from aceinna.framework.context import APP_CONTEXT
 from .base import EventBase
 from ..framework.utils import helper
 from ..framework.constants import INTERFACES
@@ -218,8 +220,12 @@ class DeviceMessageCenter(EventBase):
             return when occur Exception or set as stop
         '''
         while True:
-            if self._has_exception or self._is_stop:
-                print('thread_receiver: exception')
+            if self._has_exception:
+                APP_CONTEXT.get_logger().error('Thread receiver exit with exception')
+                return
+
+            if self._is_stop:
+                APP_CONTEXT.get_logger().error('Thread receiver stopped')
                 return
 
             if self._is_pause:
