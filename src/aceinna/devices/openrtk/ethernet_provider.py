@@ -280,7 +280,7 @@ class Provider(OpenDeviceBase):
         return int(cksum, 16), calc_cksum
 
     def on_read_raw(self, data):
-        if data[0] == 0x24:
+        if data[0] != 0x24:
             return
 
         for bytedata in data:

@@ -246,8 +246,9 @@ class DeviceMessageCenter(EventBase):
             if data and len(data) > 0:
                 self.emit(EVENT_TYPE.READ_BLOCK, data)
                 self.data_lock.acquire()
-                for data_byte in data:
-                    self.data_queue.put(data_byte)
+                self.data_queue.put(data)
+                # for data_byte in data:
+                #     self.data_queue.put(data_byte)
                 self.data_lock.release()
             else:
                 time.sleep(0.01)
