@@ -416,7 +416,7 @@ def _parse_eth_100base_t1_buffer(data_buffer, payload_length_format='<I'):
             if len(packet_length) == payload_length_bytes_fmt:
                 try:
                     fmt_packet_length = struct.unpack(
-                        '<I', bytes(packet_length))[0]
+                        payload_length_format, bytes(packet_length))[0]
                 except Exception as ex:
                     fmt_packet_length = -1
 

@@ -244,12 +244,15 @@ class DeviceMessageCenter(EventBase):
                 return  # exit thread receiver
 
             if data and len(data) > 0:
+                #print('before read', time.time())
                 self.emit(EVENT_TYPE.READ_BLOCK, data)
+                #print('before queue', time.time())
                 self.data_lock.acquire()
-                # self.data_queue.put(data)
-                for data_byte in data:
-                    self.data_queue.put(data_byte)
+                self.data_queue.put(data)
+                # for data_byte in data:
+                #     self.data_queue.put(data_byte)
                 self.data_lock.release()
+                #print('after queue', time.time())
             else:
                 time.sleep(0.01)
 
