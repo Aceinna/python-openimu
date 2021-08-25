@@ -28,12 +28,11 @@ OUTPUT_PACKETS = [
 ]
 
 
-class ANALYSIS_STATUS:
-    INIT = 0
-    FOUND_HEADER = 1
-    FOUND_PAYLOAD_LENGTH = 2
-    FOUND_PACKET_TYPE = 3
-    CRC_PASSED = 4
+ANALYSIS_STATUS_INIT = 0
+ANALYSIS_STATUS_FOUND_HEADER = 1
+ANALYSIS_STATUS_FOUND_PACKET_TYPE = 2
+ANALYSIS_STATUS_FOUND_PAYLOAD_LENGTH = 3
+ANALYSIS_STATUS_CRC_PASSED = 4
 
 
 class EthernetPacket:
@@ -58,14 +57,14 @@ class EthernetPacket:
 
     @property
     def payload(self):
-        return self._raw_data_bytes[5: self._payload_length]
+        return self._raw_data_bytes[8: self._payload_length]
 
     @property
     def raw(self):
         return self._raw_data_bytes
 
     def accept_to_header(self, bytes_data):
-        self._raw_data_bytes.extend(bytes_data)
+        self._raw_data_bytes = bytes_data
 
     def accept_to_length(self, bytes_data):
         payload_len_byte = bytes(bytes_data)
@@ -82,12 +81,11 @@ class EthernetPacket:
 
     def check_crc(self):
         crc_calculate_value = helper.calc_crc(self._raw_data_bytes[2:-2])
-        crc_value = self._raw_data_bytes[-2:]
-        return crc_calculate_value == crc_value
+        return crc_calculate_value[0] == self._raw_data_bytes[-2] and crc_calculate_value[1] == self._raw_data_bytes[-1]
 
 
 # class EthernetMessageParser(MessageParserBase):
-#     _current_analysis_status = ANALYSIS_STATUS.INIT
+#     _current_analysis_status = ANALYSIS_STATUS_INIT
 #     _current_packet = None
 #     _read_index = 0
 #     _current_packet_type = []
@@ -95,74 +93,79 @@ class EthernetPacket:
 
 #     def __init__(self, configuration):
 #         super(EthernetMessageParser, self).__init__(configuration)
-#         self._current_analysis_status = ANALYSIS_STATUS.INIT
+#         self._current_analysis_status = ANALYSIS_STATUS_INIT
 #         self._sync_pattern = collections.deque(2*[0], 2)
 #         self._current_packet_type = []
 #         self._current_packet_payload_length = []
+#         self._handlers = self.build_handlers()
 
 #     def set_run_command(self, command):
 #         pass
 
+#     def build_handlers(self):
+#         return [
+#             self.step_analysis_status_init,
+#             self.step_analysis_status_found_header,
+#             self.step_analysis_status_found_packet_type,
+#             self.step_analysis_status_found_payload_length
+#         ]
+
+#     def step_analysis_status_init(self, value):
+#         self._sync_pattern.append(value)
+
+#         if self._sync_pattern[0] == MSG_HEADER[0] and self._sync_pattern[1] == MSG_HEADER[1]:
+#             #print('new object start', time.time())
+#             self._current_packet = EthernetPacket()
+#             #print('new object end', time.time())
+#             self._current_packet.accept_to_header(
+#                 [self._sync_pattern[0], self._sync_pattern[1]])
+#             self._current_analysis_status = ANALYSIS_STATUS_FOUND_HEADER
+#             self._read_index = 2
+
+#     def step_analysis_status_found_header(self, value):
+#         self._current_packet_type.append(value)
+
+#         current_len = len(self._current_packet_type)
+#         if current_len >= 2:
+#             self._current_packet.accept_to_packet_type(
+#                 self._current_packet_type)
+#             self._current_analysis_status = ANALYSIS_STATUS_FOUND_PACKET_TYPE
+#             self._read_index += 2
+
+#     def step_analysis_status_found_packet_type(self, value):
+#         self._current_packet_payload_length.append(value)
+
+#         current_len = len(self._current_packet_payload_length)
+#         if current_len >= 4:
+#             self._current_packet.accept_to_length(
+#                 self._current_packet_payload_length)
+#             self._current_analysis_status = ANALYSIS_STATUS_FOUND_PAYLOAD_LENGTH
+#             self._read_index += 4
+
+#     def step_analysis_status_found_payload_length(self, value):
+#         self._current_packet.accept_to_payload(value)
+#         self._read_index += 1
+
+#         if self._read_index == self._current_packet.payload_length + 2:
+#             # calculate crc
+#             crc_result = self._current_packet.check_crc()
+#             if not crc_result:
+#                 self.reset()
+#                 return
+
+#             # crc valid
+#             self._current_analysis_status = ANALYSIS_STATUS_CRC_PASSED
+
+#         if self._current_analysis_status == ANALYSIS_STATUS_CRC_PASSED:
+#             self._parse_message(self._current_packet)
+#             self.reset()
+
 #     def analyse(self, data):
 #         for value in data:
-#             if self._current_analysis_status == ANALYSIS_STATUS.INIT:
-#                 self._sync_pattern.append(value)
-
-#                 if self._sync_pattern[0] == MSG_HEADER[0] and self._sync_pattern[1] == MSG_HEADER[1]:
-#                     self._current_packet = EthernetPacket()
-#                     self._current_packet.accept_to_header(
-#                         list(self._sync_pattern))
-#                     self._current_analysis_status = ANALYSIS_STATUS.FOUND_HEADER
-#                     self._read_index = len(MSG_HEADER)
-
-#                 continue
-
-#             if self._current_analysis_status == ANALYSIS_STATUS.FOUND_HEADER:
-#                 if len(self._current_packet_type) < 2:
-#                     self._current_packet_type.append(value)
-
-#                 if len(self._current_packet_type) == 2:
-#                     self._current_packet.accept_to_packet_type(
-#                         self._current_packet_type)
-#                     self._current_analysis_status = ANALYSIS_STATUS.FOUND_PACKET_TYPE
-#                     self._read_index += 2
-
-#                 continue
-
-#             if self._current_analysis_status == ANALYSIS_STATUS.FOUND_PACKET_TYPE:
-#                 if len(self._current_packet_payload_length) < 4:
-#                     self._current_packet_payload_length.append(value)
-
-#                 if len(self._current_packet_payload_length) == 4:
-#                     self._current_packet.accept_to_length(
-#                         self._current_packet_payload_length)
-#                     self._current_analysis_status = ANALYSIS_STATUS.FOUND_PAYLOAD_LENGTH
-#                     self._read_index += 4
-#                 continue
-
-#             if self._current_analysis_status == ANALYSIS_STATUS.FOUND_PAYLOAD_LENGTH:
-#                 self._current_packet.accept_to_payload(value)
-#                 self._read_index += 1
-#                 if self._read_index == self._current_packet.payload_length + 2:
-#                     # calculate crc
-#                     crc_result = self._current_packet.check_crc()
-#                     if not crc_result:
-#                         self.reset()
-#                         continue
-
-#                     # crc valid
-#                     self._current_analysis_status = ANALYSIS_STATUS.CRC_PASSED
-
-#                 if self._current_analysis_status == ANALYSIS_STATUS.CRC_PASSED:
-#                     # self.crc_passed_count += 1
-#                     # packets.push(this._currentPacket);
-#                     self._parse_message(self._current_packet)
-#                     self.reset()
-
-#                 continue
+#             self._handlers[self._current_analysis_status](value)
 
 #     def reset(self):
-#         self._current_analysis_status = ANALYSIS_STATUS.INIT
+#         self._current_analysis_status = ANALYSIS_STATUS_INIT
 #         self._sync_pattern = collections.deque(2*[0], 2)
 #         self._current_packet_type = []
 #         self._current_packet_payload_length = []
@@ -299,4 +302,3 @@ class EthernetMessageParser(MessageParserBase):
                       event_time=time.time(),
                       raw=frame)
             return
-
