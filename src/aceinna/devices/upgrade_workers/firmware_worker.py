@@ -72,12 +72,8 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
         response = helper.read_untils_have_data(
             self._communicator, listen_packet, 12, 200, payload_length_format)
 
-        # response = helper.read_untils_have_data(
-        #     self._communicator, 'WA', 12, 10)
-        # wait WA end if cannot read response in defined retry times
         if response is None:
-            self.emit(UPGRADE_EVENT.ERROR, self._key,
-                      'Fail in write block data')
+            return False
         return True
 
     def work(self):
@@ -89,9 +85,6 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
             self.emit(UPGRADE_EVENT.ERROR, self._key, 'Invalid file content')
             return
 
-        # TODO: move to before write
-        # self._communicator.serial_port.baudrate = self._baudrate
-        # self._communicator.serial_port.reset_input_buffer()
         try:
             self.emit(UPGRADE_EVENT.BEFORE_WRITE)
         except Exception as ex:
@@ -106,8 +99,18 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
                 self.total - self.current) > self.max_data_len else (self.total - self.current)
             data = self._file_content[self.current: (
                 self.current + packet_data_len)]
-            write_result = self.write_block(
-                packet_data_len, self.current, data)
+            # write_result = self.write_block(
+            #     packet_data_len, self.current, data)
+            if self.current == 0:
+                 retry_cnt = 15
+            else:
+                retry_cnt = 3
+
+            for i in range(retry_cnt):
+                write_result = self.write_block(
+                    packet_data_len, self.current, data)
+                if write_result:
+                    break
 
             if not write_result:
                 self.emit(UPGRADE_EVENT.ERROR, self._key,

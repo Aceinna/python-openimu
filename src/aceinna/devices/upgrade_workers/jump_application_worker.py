@@ -2,25 +2,21 @@ import time
 from ..base.upgrade_worker_base import UpgradeWorkerBase
 from ...framework.utils import helper
 from ...framework.command import Command
-#from ..ping.open import ping
 from . import (UPGRADE_EVENT, UPGRADE_GROUP)
 
-#TODO may merge with jump bootloader worker
+
 class JumpApplicationWorker(UpgradeWorkerBase):
     '''Firmware upgrade worker
     '''
     _command = None
     _listen_packet = None
     _wait_timeout_after_command = 3
-    # bootloader_baudrate=115200
 
     def __init__(self, communicator, *args, **kwargs):
         super(JumpApplicationWorker, self).__init__()
         self._communicator = communicator
         self.current = 0
         self.total = 0
-        #self._original_baudrate = communicator.serial_port.baudrate
-        #self._bootloader_baudrate = bootloader_baudrate
         self._group = UPGRADE_GROUP.FIRMWARE
 
         if kwargs.get('command'):
@@ -42,9 +38,6 @@ class JumpApplicationWorker(UpgradeWorkerBase):
     def work(self):
         '''Send JA and ping device
         '''
-        # run command JA
-        # command_line = helper.build_bootloader_input_packet('JA')
-        # self._communicator.serial_port.baudrate = self._bootloader_baudrate
 
         if self._is_stopped:
             return
@@ -56,7 +49,7 @@ class JumpApplicationWorker(UpgradeWorkerBase):
             if callable(self._command):
                 self._command = self._command()
 
-            if  isinstance(self._command, Command):
+            if isinstance(self._command, Command):
                 actual_command = self._command.actual_command
                 payload_length_format = self._command.payload_length_format
 

@@ -50,7 +50,7 @@ class JumpBootloaderWorker(UpgradeWorkerBase):
             if callable(self._command):
                 self._command = self._command()
 
-            if  isinstance(self._command, Command):
+            if isinstance(self._command, Command):
                 actual_command = self._command.actual_command
                 payload_length_format = self._command.payload_length_format
 
@@ -64,23 +64,9 @@ class JumpBootloaderWorker(UpgradeWorkerBase):
 
             time.sleep(self._wait_timeout_after_command)
 
-            helper.read_untils_have_data(
+            response = helper.read_untils_have_data(
                 self._communicator, self._listen_packet, 1000, 50, payload_length_format)
 
             self.emit(UPGRADE_EVENT.AFTER_COMMAND)
-
-        # if self._communicator.type == INTERFACES.UART:
-        #     # run command JI
-        #     command_line = helper.build_bootloader_input_packet('JI')
-        #     self._communicator.reset_buffer()  # clear input and output buffer
-        #     self._communicator.write(command_line, True)
-        #     time.sleep(3)  # waiting switch to bootloader
-
-        #     # It is used to skip streaming data with size 1000 per read
-        #     helper.read_untils_have_data(self._communicator, 'JI', 1000, 50)
-
-        # if self._communicator.type == INTERFACES.ETH_100BASE_T1:
-
-        # time.sleep(6)
 
         self.emit(UPGRADE_EVENT.FINISH, self._key)
