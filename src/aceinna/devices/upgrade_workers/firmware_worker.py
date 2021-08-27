@@ -99,18 +99,8 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
                 self.total - self.current) > self.max_data_len else (self.total - self.current)
             data = self._file_content[self.current: (
                 self.current + packet_data_len)]
-            # write_result = self.write_block(
-            #     packet_data_len, self.current, data)
-            if self.current == 0:
-                 retry_cnt = 15
-            else:
-                retry_cnt = 3
-
-            for i in range(retry_cnt):
-                write_result = self.write_block(
-                    packet_data_len, self.current, data)
-                if write_result:
-                    break
+            write_result = self.write_block(
+                packet_data_len, self.current, data)
 
             if not write_result:
                 self.emit(UPGRADE_EVENT.ERROR, self._key,
