@@ -827,7 +827,7 @@ class Provider(OpenDeviceBase):
         command_line = helper.build_ethernet_packet(
             self.communicator.get_dst_mac(), self.communicator.get_src_mac(),
             uP, message_bytes)
-        result = yield self._message_center.build(command=command_line)
+        result = yield self._message_center.build(command=command_line.actual_command)
 
         error = result['error']
         data = result['data']
