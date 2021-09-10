@@ -165,8 +165,8 @@ class Ethernet(Communicator):
         if packet_type == b'\x01\xcc':
             self.dst_mac = packet.src
 
-        if packet_raw_length == b'\x00\x00':
-            self.use_length_as_protocol = False
+            if packet_raw_length == b'\x00\x00':
+                self.use_length_as_protocol = False
 
         self.receive_cache.append(packet_raw[2:])
 

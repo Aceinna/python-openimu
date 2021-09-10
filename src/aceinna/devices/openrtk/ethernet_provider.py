@@ -846,8 +846,6 @@ class Provider(OpenDeviceBase):
             self.communicator.get_dst_mac(), self.communicator.get_src_mac(),
             sC)
 
-        # self.communicator.write(command_line)
-        # result = self.get_input_result('sC', timeout=2)
         result = yield self._message_center.build(command=command_line.actual_command,
                                                   timeout=2)
 

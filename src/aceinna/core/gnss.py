@@ -118,6 +118,7 @@ class RTCMParser(EventBase):
     current_packet: RTCMPacket
     found_header_count = 0
     crc_passed_count = 0
+    crc_failed_count = 0
 
     def __init__(self):
         super(RTCMParser, self).__init__()
@@ -177,6 +178,7 @@ class RTCMParser(EventBase):
                         if not crc_result:
                             self.current_analysis_status = ANALYSIS_STATUS.INIT
                             self.read_index = 0
+                            self.crc_failed_count += 1
                             continue
 
                         # crc valid
