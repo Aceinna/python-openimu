@@ -88,3 +88,4 @@ class Communicator(object):
             self.device = device
             return True
         return False
+
