@@ -28,6 +28,7 @@ from ..upgrade_workers import (
     UPGRADE_GROUP
 )
 
+GPZDA_DATA_LEN = 39
 
 class Provider(OpenDeviceBase):
     '''
@@ -272,48 +273,40 @@ class Provider(OpenDeviceBase):
             return False
 
     def nmea_checksum(self, data):
-        data = data.replace("\r", "").replace("\n", "").replace("$", "")
-        nmeadata, cksum = re.split('\*', data)
+        nmea_str = data[1:len(data) - 2]
+        nmeadata = nmea_str[0:len(nmea_str)-3]
+        cksum = nmea_str[len(nmea_str)-2:len(nmea_str)]
+
         calc_cksum = 0
         for s in nmeadata:
             calc_cksum ^= ord(s)
         return int(cksum, 16), calc_cksum
 
     def on_read_raw(self, data):
-        if data[0] != 0x24:
+        if data[0] != 0x24 or data[1] != 0x47 or data[2] != 0x50:
             return
 
-        for bytedata in data:
-            if bytedata == 0x24:
-                self.nmea_buffer = []
-                self.nmea_sync = 0
-                self.nmea_buffer.append(chr(bytedata))
-            else:
-                self.nmea_buffer.append(chr(bytedata))
-                if self.nmea_sync == 0:
-                    if bytedata == 0x0D:
-                        self.nmea_sync = 1
-                elif self.nmea_sync == 1:
-                    if bytedata == 0x0A:
-                        try:
-                            str_nmea = ''.join(self.nmea_buffer)
-                            cksum, calc_cksum = self.nmea_checksum(str_nmea)
-                            if cksum == calc_cksum:
-                                if str_nmea.find("$GPGGA") != -1:
-                                    if self.ntrip_client:
-                                        self.ntrip_client.send(str_nmea)
-                                self.user_logf.write(str_nmea.encode())
-                            APP_CONTEXT.get_print_logger().info(
-                                str_nmea.replace('\r\n', ''))
-                        except Exception as e:
-                            # print('NMEA fault:{0}'.format(e))
-                            pass
-                    self.nmea_buffer = []
-                    self.nmea_sync = 0
+        utf8_str_nmea = data.decode('utf-8')
+        if (utf8_str_nmea.find("\r\n", len(utf8_str_nmea)-2, len(utf8_str_nmea)) != -1):
+            str_nmea = utf8_str_nmea
+        elif(utf8_str_nmea.find("\r\n", GPZDA_DATA_LEN-2, GPZDA_DATA_LEN) != -1):
+            str_nmea = utf8_str_nmea[0:GPZDA_DATA_LEN]
+        else:
+            return
 
-        # if self.user_logf is not None and data is not None:
-        #     self.user_logf.write(data)
-        #     self.user_logf.flush()
+        try:
+            cksum, calc_cksum = self.nmea_checksum(str_nmea)
+            if cksum == calc_cksum:
+                if str_nmea.find("$GPGGA", 0, 6) != -1:
+                    if self.ntrip_client:
+                        self.ntrip_client.send(str_nmea)
+                if self.user_logf:
+                    self.user_logf.write(data)
+
+            APP_CONTEXT.get_print_logger().info(str_nmea[0:len(str_nmea) - 2])
+        except Exception as e:
+            print('NMEA fault:{0}'.format(e))
+            pass
 
     def thread_data_log(self, *args, **kwargs):
         self.ethernet_data_logger = EthernetDataLogger(self.properties,
