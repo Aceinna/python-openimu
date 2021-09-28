@@ -1,11 +1,7 @@
 import re
 import traceback
 import time
-import profile
-
-def read_from_file():
-    return open('/Users/songyiwei/projects/ADCD/code/data/session_20210927_154506/Mock RTK Device_log_MockSN-rtk330la_1_20210927_154506/user_2021_09_27_15_45_20.bin', 'rb').read()
-
+import cProfile
 
 GPZDA_DATA_LEN = 39
 
@@ -62,7 +58,6 @@ def parse_nmea_v1(raw_data):
 
     print('end  ', time.time())
 
-
 def parse_nmea_v2(raw_data):
     print('v2')
     print('start', time.time())
@@ -87,10 +82,9 @@ def parse_nmea_v2(raw_data):
     print('end  ', time.time())
 
 if __name__ == '__main__':
-    data = read_from_file()
     data = '$GPGGA,042547.00,3129.6667218,N,12021.7694487,E,4,24,0.6,119.227,M,0.000,M,2.0,*7f\r\n'.encode()
-    profile.run("parse_nmea_v1(data)")
-    profile.run("parse_nmea_v2(data)")
+    cProfile.run("parse_nmea_v1(data)")
+    cProfile.run("parse_nmea_v2(data)")
     #parse_nmea_v1(data)
     #parse_nmea_v2(data)
 
