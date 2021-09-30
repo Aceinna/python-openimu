@@ -5,7 +5,7 @@ predefined params for openrtk
 
 def get_openrtk_products():
     return {
-        'OpenRTK330L': ['RTK_INS', 'RAWDATA', 'RTK'],
+        'OpenRTK330L': ['RTK_INS'],
         'RTK330L': ['RTK_INS'],
         'INS401':['RTK_INS']
     }
@@ -15,10 +15,7 @@ def get_app_names():
     '''
     define openimu app type
     '''
-    app_names = ['RTK_INS',
-                 'RAWDATA',
-                 'RTK',
-                 ]
+    app_names = ['RTK_INS']
     return app_names
 
 
@@ -30,4 +27,4 @@ def get_configuratin_file_mapping():
     }
 
 
-APP_STR = ['RAWDATA', 'RTK', 'RTK_INS']
+APP_STR = ['RTK_INS']

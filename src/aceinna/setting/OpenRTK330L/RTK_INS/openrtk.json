@@ -1,9 +1,9 @@
 {
-	"name": "OpenRTK330_INS",
-	"app_version": "23.00",
-	"appName": "OpenRTK330 INS",
+	"Product": "Aceinna OpenRTK330LI",
+	"app_version": "23.0x",
+	"appName": "RTK_INS",
 	"type": "openrtk",
-    "description": "6-axis OpenRTK with INS application",
+    "description": "High Precision GNSS/INS integrated Positioning Development Platform",
     "initial":{
         "useDefaultUart": 1,
         "uart":[
@@ -88,23 +88,23 @@
 		"ntrip":[
 			{
                 "name": "ip",
-                "value": "58.215.20.43"
+                "value": "192.168.137.1"
             },
             {
                 "name": "port",
-                "value": 2201
+                "value": 2101
 			},
 			{
                 "name": "mountPoint",
-                "value": "WX02"
+                "value": "RTK"
             },
             {
                 "name": "username",
-                "value": "ymj_123"
+                "value": "AceNav"
             },
             {
                 "name": "password",
-                "value": "SIGEMZOOMQ1JDJI3"
+                "value": "888888"
             }
 		]
     },
