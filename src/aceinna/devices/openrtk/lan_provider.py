@@ -98,7 +98,12 @@ class Provider(OpenDeviceBase):
         self._build_device_info(device_info)
         self._build_app_info(app_info)
         self.connected = True
-
+        try:
+            str_split = device_info.split()
+            str_split.pop(3)
+            device_info = ' '.join(str_split)
+        except Exception as e:
+            print(e)
         self._device_info_string = '# Connected {0} with LAN #\n\rDevice: {1} \n\rFirmware: {2}'\
             .format('OpenRTK', device_info, app_info)
 
