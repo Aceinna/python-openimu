@@ -141,7 +141,12 @@ class RTKProviderBase(OpenDeviceBase):
         self.connected = True
 
         port_name = device_access.port
-
+        try:
+            str_split = device_info.split()
+            str_split.pop(3)
+            device_info = ' '.join(str_split)
+        except Exception as e:
+            print(e)
         self._device_info_string = '# Connected {0} with UART on {1} #\nDevice: {2} \nFirmware: {3}'\
             .format(self.device_category, port_name, device_info, app_info)
 
