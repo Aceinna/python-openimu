@@ -8,12 +8,13 @@ from .rtkl.uart_provider import Provider as RTKLUartProvider
 from .openrtk.lan_provider import Provider as OpenRTKLANProvider
 from .dmu.uart_provider import Provider as DMUUartProvider
 from .ins2000.uart_provider import Provider as INS2000UartProvider
+from .openrtk.ethernet_provider import Provider as INS401EthernetProvider
 from ..framework.context import APP_CONTEXT
 from ..framework.utils.print import print_green
-
+from ..framework.constants import INTERFACES
 
 def create_provider(device_type, communicator):
-    if communicator.type == 'uart':
+    if communicator.type == INTERFACES.UART:
         if device_type == 'OpenIMU':
             return OpenIMUUartProvider(communicator)
         if device_type == 'OpenRTK':
@@ -25,9 +26,13 @@ def create_provider(device_type, communicator):
         if device_type == 'INS2000':
             return INS2000UartProvider(communicator)
 
-    if communicator.type == 'eth':
+    if communicator.type == INTERFACES.ETH:
         if device_type == 'OpenRTK':
             return OpenRTKLANProvider(communicator)
+
+    if communicator.type==INTERFACES.ETH_100BASE_T1:
+        if device_type == 'INS401':
+            return INS401EthernetProvider(communicator)
 
     return None
 
@@ -59,7 +64,6 @@ class DeviceManager:
 
         if provider is None:
             provider = create_provider(device_type, communicator)
-
             if provider is None:
                 return None
 
@@ -86,7 +90,7 @@ class DeviceManager:
             uart: communicator, device_type
             lan: communicator
         '''
-        if communicator.type == 'uart':
+        if communicator.type == INTERFACES.UART:
             device_access = args[0]
             filter_device_type = args[1]
 
@@ -115,7 +119,15 @@ class DeviceManager:
             #     if ping_result is not None:
             #         return DeviceManager.build_provider(communicator, device_access, ping_result)
 
-        if communicator.type == 'eth':
+        if communicator.type == INTERFACES.ETH:
+            device_access = args[0]
+
+            ping_result = ping_tool.do_ping(communicator.type, device_access,
+                                            None)
+            if ping_result is not None:
+                return DeviceManager.build_provider(communicator, device_access, ping_result)
+
+        if communicator.type == INTERFACES.ETH_100BASE_T1:
             device_access = args[0]
 
             ping_result = ping_tool.do_ping(communicator.type, device_access,

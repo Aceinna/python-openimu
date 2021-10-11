@@ -8,3 +8,12 @@ class APP_TYPE:
     CLI = 'cli'
     RECEIVER = 'receiver'
     LOG_PARSER = 'log-parser'
+
+
+class INTERFACES(object):
+    UART = 'uart'
+    ETH = 'eth'
+    ETH_100BASE_T1 = '100base-t1'
+
+    def list():
+        return [INTERFACES.UART, INTERFACES.ETH, INTERFACES.ETH_100BASE_T1]

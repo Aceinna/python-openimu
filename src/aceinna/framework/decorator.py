@@ -2,19 +2,20 @@ import os
 import sys
 import argparse
 import traceback
+import signal
 from datetime import datetime, timedelta
 from functools import wraps
 from typing import TypeVar
-from .constants import (DEVICE_TYPES, BAUDRATE_LIST)
+from .constants import (DEVICE_TYPES, BAUDRATE_LIST, INTERFACES)
 from .utils.print import print_red
 from .utils.resource import is_dev_mode
 
 
 T = TypeVar('T')
 
-INTERFACES = ['uart', 'eth']
+INTERFACE_LIST = INTERFACES.list()
 MODES = ['default', 'cli', 'receiver']
-TYPES_OF_LOG = ['openrtk', 'rtkl']
+TYPES_OF_LOG = ['openrtk', 'rtkl', 'ins401']
 KML_RATES = [1, 2, 5, 10]
 
 
@@ -25,7 +26,7 @@ def _build_args():
         description='Aceinna python driver input args command:', allow_abbrev=False)
 
     parser.add_argument("-i", "--interface", dest="interface",  metavar='',
-                        help="Interface. Allowed one of values: {0}".format(INTERFACES), default='uart', choices=INTERFACES)
+                        help="Interface. Allowed one of values: {0}".format(INTERFACE_LIST), default=INTERFACES.UART, choices=INTERFACE_LIST)
     parser.add_argument("-p", "--port", dest='port',  metavar='', type=int,
                         help="Webserver port")
     parser.add_argument("--device-type", dest="device_type", type=str,
@@ -55,8 +56,8 @@ def _build_args():
                                   default='openrtk',  dest="log_type", choices=TYPES_OF_LOG)
     parse_log_action.add_argument(
         "-p", type=str, help="The folder path of logs", default='./data', metavar='', dest="path")
-    parse_log_action.add_argument(
-        "-i", type=int, help="Ins kml rate(hz). Allowed one of values: {0}".format(KML_RATES), default=5, metavar='', dest="kml_rate", choices=KML_RATES)
+    # parse_log_action.add_argument(
+    #     "-i", type=int, help="Ins kml rate(hz). Allowed one of values: {0}".format(KML_RATES), default=5, metavar='', dest="kml_rate", choices=KML_RATES)
 
     return parser.parse_args()
 
@@ -84,7 +85,7 @@ def handle_application_exception(func):
         except KeyboardInterrupt:  # response for KeyboardInterrupt such as Ctrl+C
             print('User stop this program by KeyboardInterrupt! File:[{0}], Line:[{1}]'.format(
                 __file__, sys._getframe().f_lineno))
-            # APP.stop()
+            os.kill(os.getpid(), signal.SIGTERM)
             sys.exit()
         except Exception as ex:  # pylint: disable=bare-except
             if is_dev_mode():

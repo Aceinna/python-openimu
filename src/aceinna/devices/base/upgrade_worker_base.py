@@ -10,9 +10,18 @@ class UpgradeWorkerBase(EventBase):
 
     def __init__(self):
         super(UpgradeWorkerBase, self).__init__()
+        self._name = None
         self._key = None
         self._group = None
         self._is_stopped = False
+
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, value):
+        self._name = value
 
     @property
     def key(self):

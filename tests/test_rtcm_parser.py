@@ -28,11 +28,16 @@ rtcm_file_path = '/Users/songyiwei/projects/runtime-log/app/server/data/OpenRTK3
 with open(rtcm_file_path, 'rb') as buf_r:
     s = 0
     while True:
-        tmp_data = buf_r.read(256)
+        tmp_data = buf_r.read(1024)
         if tmp_data:
             s += 1
             rtcm_parser.receive(tmp_data)
         else:
             break
-    print('Found header count:{0}, Parsed parcket count:{1}, CRC passed count:{2}'.format(rtcm_parser.found_header_count, parsed_packet_count,rtcm_parser.crc_passed_count))
+    print('Found header count:{0}, Parsed parcket count:{1}, CRC passed count:{2}, CRC failed count:{3}'.format(
+        rtcm_parser.found_header_count,
+        parsed_packet_count,
+        rtcm_parser.crc_passed_count,
+        rtcm_parser.crc_failed_count
+    ))
     print('All is read, read times:', s)

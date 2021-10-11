@@ -21,7 +21,13 @@ from ..configs.openrtk_predefine import (
 )
 from ..decorator import with_device_message
 from ...models import InternalCombineAppParseRule
-from ..upgrade_center import UpgradeCenter
+from ..upgrade_workers import (
+    FirmwareUpgradeWorker,
+    JumpApplicationWorker,
+    JumpBootloaderWorker,
+    UPGRADE_EVENT,
+    UPGRADE_GROUP
+)
 from ..parsers.open_field_parser import encode_value
 from abc import ABCMeta, abstractmethod
 
@@ -135,7 +141,12 @@ class RTKProviderBase(OpenDeviceBase):
         self.connected = True
 
         port_name = device_access.port
-
+        try:
+            str_split = device_info.split()
+            str_split.pop(3)
+            device_info = ' '.join(str_split)
+        except Exception as e:
+            print(e)
         self._device_info_string = '# Connected {0} with UART on {1} #\nDevice: {2} \nFirmware: {3}'\
             .format(self.device_category, port_name, device_info, app_info)
 
@@ -210,6 +221,11 @@ class RTKProviderBase(OpenDeviceBase):
         # print('new ntrip client')
         self.ntrip_client = NTRIPClient(self.properties)
         self.ntrip_client.on('parsed', self.handle_rtcm_data_parsed)
+        if self.device_info.__contains__('sn') and self.device_info.__contains__('pn'):
+            self.ntrip_client.set_connect_headers({
+                'Ntrip-Sn': self.device_info['sn'],
+                'Ntrip-Pn': self.device_info['pn']
+            })
         self.ntrip_client.run()
 
     def handle_rtcm_data_parsed(self, data):
@@ -238,6 +254,10 @@ class RTKProviderBase(OpenDeviceBase):
         debug_port = ''
         rtcm_port = ''
         set_user_para = self.cli_options and self.cli_options.set_user_para
+
+        # save original baudrate
+        if hasattr(self.communicator, 'serial_port'):
+            self.original_baudrate = self.communicator.serial_port.baudrate
 
         if self.data_folder is None:
             raise Exception(
@@ -313,7 +333,7 @@ class RTKProviderBase(OpenDeviceBase):
                     thead.start()
 
             self.save_device_info()
-        except Exception:
+        except Exception as ex:
             if self.debug_serial_port is not None:
                 if self.debug_serial_port.isOpen():
                     self.debug_serial_port.close()
@@ -322,6 +342,7 @@ class RTKProviderBase(OpenDeviceBase):
                     self.rtcm_serial_port.close()
             self.debug_serial_port = None
             self.rtcm_serial_port = None
+            APP_CONTEXT.get_logger().logger.error(ex)
             print_red(
                 'Can not log GNSS UART or DEBUG UART, pls check uart driver and connection!')
             return False
@@ -377,7 +398,7 @@ class RTKProviderBase(OpenDeviceBase):
     def thread_rtcm_port_receiver(self, *args, **kwargs):
         pass
 
-    def on_receive_output_packet(self, packet_type, data, error=None):
+    def on_receive_output_packet(self, packet_type, data, *args, **kwargs):
         '''
         Listener for getting output packet
         '''
@@ -580,6 +601,12 @@ class RTKProviderBase(OpenDeviceBase):
         '''
         pass
 
+    def before_jump_app_command(self):
+        self.communicator.serial_port.baudrate = self.bootloader_baudrate
+
+    def after_jump_app_command(self):
+        self.communicator.serial_port.baudrate = self.original_baudrate
+
     def get_upgrade_workers(self, firmware_content):
         workers = []
         rules = [
@@ -589,7 +616,6 @@ class RTKProviderBase(OpenDeviceBase):
         ]
 
         parsed_content = firmware_content_parser(firmware_content, rules)
-
         # foreach parsed content, if empty, skip register into upgrade center
         for _, rule in enumerate(parsed_content):
             content = parsed_content[rule]
@@ -602,6 +628,43 @@ class RTKProviderBase(OpenDeviceBase):
 
             workers.append(worker)
 
+        # prepare jump bootloader worker and jump application workder
+        # append jump bootloader worker before the first firmware upgrade workder
+        # append jump application worker after the last firmware uprade worker
+        start_index = -1
+        end_index = -1
+        for i, worker in enumerate(workers):
+            if isinstance(worker, FirmwareUpgradeWorker):
+                start_index = i if start_index == -1 else start_index
+                end_index = i
+
+        jump_bootloader_command = helper.build_bootloader_input_packet(
+            'JI')
+        jumpBootloaderWorker = JumpBootloaderWorker(
+            self.communicator,
+            command=jump_bootloader_command,
+            listen_packet='JI',
+            wait_timeout_after_command=3)
+        jumpBootloaderWorker.group = UPGRADE_GROUP.BEFORE_ALL
+
+        jump_application_command = helper.build_bootloader_input_packet('JA')
+        jumpApplicationWorker = JumpApplicationWorker(
+            self.communicator,
+            command=jump_application_command,
+            listen_packet='JA',
+            wait_timeout_after_command=3)
+        jumpApplicationWorker.group = UPGRADE_GROUP.AFTER_ALL
+
+        jumpApplicationWorker.on(
+            UPGRADE_EVENT.BEFORE_COMMAND, self.before_jump_app_command)
+        jumpApplicationWorker.on(
+            UPGRADE_EVENT.AFTER_COMMAND, self.after_jump_app_command)
+
+        if start_index > -1 and end_index > -1:
+            workers.insert(
+                start_index, jumpBootloaderWorker)
+            workers.insert(
+                end_index+2, jumpApplicationWorker)
         return workers
 
     def get_device_connection_info(self):

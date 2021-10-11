@@ -14,9 +14,10 @@ from ...framework.utils import (helper, resource)
 from ...framework.file_storage import FileLoger
 from ...framework.configuration import get_config
 from ...framework.ans_platform_api import AnsPlatformAPI
+from ...framework.progress_bar import ProgressBar
+from ...framework.constants import INTERFACES
 from ..message_center import (DeviceMessageCenter, EVENT_TYPE)
 from ..parser_manager import ParserManager
-from ...framework.progress_bar import ProgressBar
 from ..upgrade_center import UpgradeCenter
 
 if sys.version_info[0] > 2:
@@ -55,6 +56,7 @@ class OpenDeviceBase(EventBase):
         self.ans_platform = AnsPlatformAPI()
         self._pbar = None
         self._device_info_string = ''
+        self.with_upgrade_error = False
 
     @property
     def is_in_bootloader(self):
@@ -73,7 +75,7 @@ class OpenDeviceBase(EventBase):
         '''
 
     @abstractmethod
-    def on_receive_output_packet(self, packet_type, data):
+    def on_receive_output_packet(self, packet_type, data, *args, **kwargs):
         '''
         Listener for receiving output packet
         '''
@@ -112,40 +114,6 @@ class OpenDeviceBase(EventBase):
     def get_operation_status(self):
         ''' Return current devcie operation status
         '''
-
-    def internal_input_command(self, command, read_length=500):
-        '''
-        Internal input command
-        '''
-        command_line = helper.build_input_packet(command)
-        self.communicator.write(command_line)
-        time.sleep(0.1)
-
-        data_buffer = self.read_untils_have_data(command, read_length, 20)
-        parsed = bytearray(data_buffer) if data_buffer and len(
-            data_buffer) > 0 else None
-
-        format_string = None
-        if parsed is not None:
-            try:
-                if sys.version_info < (3, 0):
-                    format_string = str(struct.pack(
-                        '{0}B'.format(len(parsed)), *parsed))
-                else:
-                    format_string = str(struct.pack(
-                        '{0}B'.format(len(parsed)), *parsed), 'utf-8')
-            except UnicodeDecodeError:
-                return ''
-
-        if format_string is not None:
-            return format_string
-        return ''
-
-    def read_untils_have_data(self, packet_type, read_length=200, retry_times=20):
-        '''
-        Get data from limit times of read
-        '''
-        return helper.read_untils_have_data(self.communicator, packet_type, read_length, retry_times)
 
     def _setup_message_center(self):
         if not self._message_center:
@@ -198,7 +166,7 @@ class OpenDeviceBase(EventBase):
         self.connected = False
         self.emit('exception', error_type, message)
 
-    def on_receive_continuous_messsage(self, packet_type, data, event_time):
+    def on_receive_continuous_messsage(self, packet_type, data, event_time, *args, **kwargs):
         '''
         event handler after got continuous message
         '''
@@ -211,7 +179,7 @@ class OpenDeviceBase(EventBase):
         else:
             self._logger.append(packet_type, data)
 
-        self.on_receive_output_packet(packet_type, data)
+        self.on_receive_output_packet(packet_type, data, *args, **kwargs)
 
     def on_crc_failure(self, packet_type, event_time):
         '''
@@ -258,6 +226,7 @@ class OpenDeviceBase(EventBase):
     def _reset_client(self):
         self.is_streaming = False
         self.is_upgrading = False
+        self.with_upgrade_error = False
 
         self._message_center.resume()
 
@@ -288,30 +257,8 @@ class OpenDeviceBase(EventBase):
         '''
         Restart device
         '''
-        # output firmware upgrade finished
-        time.sleep(1)
-        command_line = helper.build_bootloader_input_packet('JA')
-        self.communicator.write(command_line)
-        print('Restarting app ...')
-        time.sleep(5)
-
         if self.is_upgrading:
             self.emit('upgrade_restart')
-
-    def enter_bootloader(self, *args):
-        self._message_center.pause()
-
-        command_line = helper.build_bootloader_input_packet('JI')
-        self.communicator.write(command_line)
-        time.sleep(3)
-        helper.read_untils_have_data(
-            self.communicator, 'JI', 1000, 50)
-
-        # ping and update the device info
-        if self.communicator.type == 'uart':
-            self.communicator.serial_port.baudrate = self.bootloader_baudrate
-
-        # self._message_center.resume()
 
     def thread_do_upgrade_framework(self, file):
         '''
@@ -323,17 +270,6 @@ class OpenDeviceBase(EventBase):
             if not can_download:
                 self.handle_upgrade_error('cannot find firmware file')
                 return
-
-            # run command JI
-            if not self.is_in_bootloader:
-                command_line = helper.build_bootloader_input_packet('JI')
-                self.communicator.reset_buffer()  # clear input and output buffer
-                self.communicator.write(command_line, True)
-                time.sleep(3)
-
-                # It is used to skip streaming data with size 1000 per read
-                helper.read_untils_have_data(
-                    self.communicator, 'JI', 1000, 50)
 
             workers = self.get_upgrade_workers(firmware_content)
 
@@ -465,6 +401,7 @@ class OpenDeviceBase(EventBase):
         if self._pbar:
             self._pbar.close()
         self.is_upgrading = False
+        self.with_upgrade_error = True
         self._message_center.resume()
         self.emit('upgrade_failed', 'UPGRADE.FAILED.001', message)
         # self.add_output_packet('upgrade_complete', {
@@ -481,6 +418,7 @@ class OpenDeviceBase(EventBase):
     def handle_upgrade_complete(self):
         if self._pbar:
             self._pbar.close()
+        time.sleep(8)
         self.restart()
 
     def connect_log(self, params):

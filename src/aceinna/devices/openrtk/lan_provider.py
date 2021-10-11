@@ -68,7 +68,7 @@ class Provider(OpenDeviceBase):
 
         # copy contents of app_config under executor path
         self.setting_folder_path = os.path.join(
-            executor_path, setting_folder_name, 'openrtk')
+            executor_path, setting_folder_name)
 
         all_products = get_openrtk_products()
         config_file_mapping = get_configuratin_file_mapping()
@@ -98,7 +98,12 @@ class Provider(OpenDeviceBase):
         self._build_device_info(device_info)
         self._build_app_info(app_info)
         self.connected = True
-
+        try:
+            str_split = device_info.split()
+            str_split.pop(3)
+            device_info = ' '.join(str_split)
+        except Exception as e:
+            print(e)
         self._device_info_string = '# Connected {0} with LAN #\n\rDevice: {1} \n\rFirmware: {2}'\
             .format('OpenRTK', device_info, app_info)
 
@@ -203,9 +208,9 @@ class Provider(OpenDeviceBase):
                     file_name + '/' + 'rtcm_' + file_time + '.bin', "wb")
 
             # start a thread to log data
-            threading.Thread(target=self.thread_data_log).start()
-            threading.Thread(target=self.thread_debug_data_log).start()
-            threading.Thread(target=self.thread_rtcm_data_log).start()
+            # threading.Thread(target=self.thread_data_log).start()
+            # threading.Thread(target=self.thread_debug_data_log).start()
+            # threading.Thread(target=self.thread_rtcm_data_log).start()
 
             self.save_device_info()
 
@@ -266,10 +271,11 @@ class Provider(OpenDeviceBase):
             self.properties, self.communicator, self.rtcm_logf)
         self.lan_rtcm_data_logger.run()
 
-    def on_receive_output_packet(self, packet_type, data, error=None):
+    def on_receive_output_packet(self, packet_type, data, *args, **kwargs):
         '''
         Listener for getting output packet
         '''
+        print('on_receive_output_packet:', data)
         # $GPGGA,080319.00,3130.4858508,N,12024.0998832,E,4,25,0.5,12.459,M,0.000,M,2.0,*46
         if packet_type == 'gN':
             if self.ntrip_client_enable:

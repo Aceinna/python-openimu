@@ -99,10 +99,15 @@ class Driver(EventBase):
         self._communicator.find_device(self._device_discover_handler)
 
     def _handle_device_upgrade_restart(self):
-        self._communicator.set_find_options({
-            'com_port': self._communicator.serial_port.port,
+        find_options = {
             'device_type': self._device_provider.type
-        })
+        }
+        if hasattr(self._communicator, 'serial_port'):
+            find_options['com_port'] = self._communicator.serial_port.port
+
+        if hasattr(self._communicator, 'set_find_options'):
+            self._communicator.set_find_options(find_options)
+
         self._communicator.find_device(
             self._device_upgrade_restart_handler,
             retries=2,

@@ -9,15 +9,23 @@ A message communication tool for OpenIMU, OpenRTK and other devices of Aceinna
 ## Steps
 
 ### 1. Start the tool
-There are 2 ways to run the tool
+There are 3 ways to run the tool
 
 #### Prepare
-Install the dependency library. It is better to create a virtual environment before to do it.
+1. Install the dependency library. It is better to create a virtual environment before to do it.
 
-python 3.x
 ```bash
 $ pip install -r requirements.txt
 ```
+
+2. Install pcap api library(`optional`). Because we try to support INS401 a new device from Aceinna. It would use 100BASE-T1 ethernet, and the data transfer is in low-level of network, so we need help of pcap api. Actually, we integrated `scapy` in our project. The pcap api library is the dependency of `scapy`. If you are using a INS401 device, please also install the library based on your platform.
+
+| Platform | Libraray | Reference |
+| - | - | - |
+| Windows | `npcap` | https://scapy.readthedocs.io/en/latest/installation.html#windows |
+| Ubuntu | `tcpdump` | https://scapy.readthedocs.io/en/latest/installation.html#debian-ubuntu-fedora |
+| Mac | `libpcap` | https://scapy.readthedocs.io/en/latest/installation.html#mac-os-x |
+
 
 #### A. From source code
 
@@ -35,19 +43,31 @@ $ pyinstaller build.spec
 ```
 
 ##### Run
-```
+```bash
 $ cd dist
 $ ./ans-devices
 ```
 
-##### Startup Arguments
+#### C. From pip
+
+##### Install
+```bash
+$ pip install openimu
+```
+
+##### Run
+```
+$ openimu
+```
+
+#### Startup Arguments
 You can specify some arguments while run the tool
 
 Arguments:
 
 | Name | Type | Default | Description |
 | - | :-: | :-: | - |
-| -i, --interface | String | 'default' | Value should be `uart`, `eth` |
+| -i, --interface | String | 'default' | Value should be `uart`, `eth`, `100base-t1` |
 | -p, --port | Number | '8000' | Value should be an available port |
 | --device-type | String | 'auto' | Value should be one of `IMU`, `RTK`, `DMU` |
 | -b, --baudrate | String | None | Value should be a valid baudrate. The valid value should be one of `38400`, `57600`, `115200`, `230400`, `460800` |
@@ -141,23 +161,36 @@ Aceinna Device could be connected with your PC via UART or LAN. The supported in
 | OpenIMU | `uart` | |
 | OpenRTK | `uart`, `eth` | The startup argument `-i eth` is supported |
 | RTK330L | `uart` |  |
+| INS401 | `100base-t1` | The startup argument `-i 100base-t1` is supported |
 
 
 ## Parse Tool
-There is a log parse tool integrated in. It could parse OpenRTK and RTK330LA log from data folder. Assgin `parse` to start it.
+There is a log parse tool integrated in. It could parse `OpenRTK`, `RTK330LA`, `IN S401` raw data log from data folder. Assgin `parse` to start it.
 
-Example
+### Arguments:
+
+| Name | Type | Default | Description |
+| - | :-: | :-: | - |
+| -t | String | 'openrtk' | Switch work mode. Value should be one of `openrtk`,`rtkl`,`ins401` |
+| -p | String | '.' | Value should be a valid path. It could be the container folder of log files |
+| -i | Number | 5 | INS kml rate(hz) |
+
+### Example
+
+Run from source code
+```bash
+$ python main.py parse
+```
+
+Work as execution file
 ```bash
 $ ans-devices parse
 ```
 
-Arguments:
-
-| Name | Type | Default | Description |
-| - | :-: | :-: | - |
-| -t | String | 'openrtk' | Switch work mode. Value should be one of `openrtk`,`rtkl` |
-| -p | String | '.' | Value should be a valid path. It could be the container folder of log files |
-| -i | Number | 5 | INS kml rate(hz) |
+Run from pip
+```bash
+$ openimu parse
+```
 
 ## Changelogs and Release Notes
 

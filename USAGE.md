@@ -7,7 +7,7 @@ parameters:
 
 | Name | Type | Default | Description |
 | - | :-: | :-: | - |
-| -i, --interface | String | 'default' | Value should be `uart`, `eth`. Depends on device type |
+| -i, --interface | String | 'default' | Value should be `uart`, `eth`, `100base-t1`. Depends on device type |
 | -p, --port | Number | '8000' | Value should be an available port |
 | --device-type | String | 'auto' | Value should be `IMU`, `RTK`, `DMU` |
 | -b, --baudrate | String | None | Value should be a valid baudrate. The valid value should be one of `38400`, `57600`, `115200`, `230400`, `460800` |
