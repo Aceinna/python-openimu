@@ -1,8 +1,8 @@
 # History
 
 ---
-## 2.6.0 / TBD
-- [INS401] Support the new device.
+## 2.6.0 / 2021-10-11
+- [INS401] Support communication with ethernet 100base-t1 protocol.
 
 ## 2.5.0 / 2021-07-02
 - [DMU] Support firmware upgrade.

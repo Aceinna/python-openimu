@@ -21,14 +21,43 @@ def load_json_file_path_under_setting_folder():
     json_file_paths = []
     setting_root_path = os.path.join(os.getcwd(), 'src', 'aceinna', 'setting')
     for root, dirs, files in os.walk(setting_root_path):
-        json_file = next((item for item in files if item.__contains__('.json')), None)
+        json_file = next(
+            (item for item in files if item.__contains__('.json')), None)
         if not json_file:
             continue
 
-        json_file_path = os.path.join(root.replace(setting_root_path,'setting'), json_file)
+        json_file_path = os.path.join(root.replace(
+            setting_root_path, 'setting'), json_file)
         json_file_paths.append(json_file_path)
 
     return json_file_paths
+
+
+def load_libraries():
+    file_paths = []
+    setting_root_path = os.path.join(os.getcwd(), 'src', 'aceinna', 'libs')
+    for root, dirs, files in os.walk(setting_root_path):
+        for item in files:
+            lib_file = item if item.__contains__(
+                '.dll') or item.__contains__('.so') else None
+            if not lib_file:
+                continue
+
+            file_path = os.path.join(root.replace(
+                setting_root_path, 'libs'), lib_file)
+            file_paths.append(file_path)
+
+    return file_paths
+
+
+def load_resources():
+    resources = []
+    json_files = load_json_file_path_under_setting_folder()
+    lib_files = load_libraries()
+    resources.extend(json_files)
+    resources.extend(lib_files)
+    return resources
+
 
 PACKAGE_DESCRIPTION = "Aceinna Navigation System Open Devices Library"
 
@@ -55,7 +84,7 @@ setup(
     packages=find_packages("src", exclude=['test', 'tests']),
     package_dir={"": "src"},
     package_data={
-        'aceinna': load_json_file_path_under_setting_folder()
+        'aceinna': load_resources()
     },
     classifiers=[
         "Environment :: Console",

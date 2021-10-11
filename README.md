@@ -9,7 +9,7 @@ A message communication tool for OpenIMU, OpenRTK and other devices of Aceinna
 ## Steps
 
 ### 1. Start the tool
-There are 2 ways to run the tool
+There are 3 ways to run the tool
 
 #### Prepare
 1. Install the dependency library. It is better to create a virtual environment before to do it.
@@ -43,12 +43,24 @@ $ pyinstaller build.spec
 ```
 
 ##### Run
-```
+```bash
 $ cd dist
 $ ./ans-devices
 ```
 
-##### Startup Arguments
+#### C. From pip
+
+##### Install
+```bash
+$ pip install openimu
+```
+
+##### Run
+```
+$ openimu
+```
+
+#### Startup Arguments
 You can specify some arguments while run the tool
 
 Arguments:
@@ -153,20 +165,32 @@ Aceinna Device could be connected with your PC via UART or LAN. The supported in
 
 
 ## Parse Tool
-There is a log parse tool integrated in. It could parse OpenRTK and RTK330LA log from data folder. Assgin `parse` to start it.
+There is a log parse tool integrated in. It could parse `OpenRTK`, `RTK330LA`, `IN S401` raw data log from data folder. Assgin `parse` to start it.
 
-Example
-```bash
-$ ans-devices parse
-```
-
-Arguments:
+### Arguments:
 
 | Name | Type | Default | Description |
 | - | :-: | :-: | - |
 | -t | String | 'openrtk' | Switch work mode. Value should be one of `openrtk`,`rtkl`,`ins401` |
 | -p | String | '.' | Value should be a valid path. It could be the container folder of log files |
 | -i | Number | 5 | INS kml rate(hz) |
+
+### Example
+
+Run from source code
+```bash
+$ python main.py parse
+```
+
+Work as execution file
+```bash
+$ ans-devices parse
+```
+
+Run from pip
+```bash
+$ openimu parse
+```
 
 ## Changelogs and Release Notes
 
