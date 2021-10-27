@@ -56,8 +56,8 @@ def _build_args():
                                   default='openrtk',  dest="log_type", choices=TYPES_OF_LOG)
     parse_log_action.add_argument(
         "-p", type=str, help="The folder path of logs", default='./data', metavar='', dest="path")
-    # parse_log_action.add_argument(
-    #     "-i", type=int, help="Ins kml rate(hz). Allowed one of values: {0}".format(KML_RATES), default=5, metavar='', dest="kml_rate", choices=KML_RATES)
+    parse_log_action.add_argument(
+        "-i", type=int, help="Ins kml rate(hz). Allowed one of values: {0}".format(KML_RATES), default=5, metavar='', dest="kml_rate", choices=KML_RATES)
 
     return parser.parse_args()
 

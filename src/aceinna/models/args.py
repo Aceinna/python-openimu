@@ -62,5 +62,6 @@ class LogParserArgs(KeyValuesArgumentBase):
     default_values = {
         'log_type': 'openrtk',
         'path': '.',
-        'kml_rate': 5
+        'kml_rate': 5,
+        'powerdr': 'false'
     }
