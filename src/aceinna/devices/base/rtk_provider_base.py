@@ -364,7 +364,7 @@ class RTKProviderBase(OpenDeviceBase):
                             cksum, calc_cksum = self.nmea_checksum(
                                 str_nmea)
                             if cksum == calc_cksum:
-                                if str_nmea.find("$GPGGA") != -1:
+                                if str_nmea.find("$GPGGA") != -1 or str_nmea.find("$GNGGA") != -1:
                                     if self.ntrip_client:
                                         self.ntrip_client.send(str_nmea)
                                     #self.add_output_packet('gga', str_nmea)
@@ -397,7 +397,7 @@ class RTKProviderBase(OpenDeviceBase):
         if packet_type == 'gN':
             if self.ntrip_client:
                 # $GPGGA
-                gpgga = '$GPGGA'
+                gpgga = '$GNGGA' #'$GPGGA'
                 # time
                 timeOfWeek = float(data['GPS_TimeofWeek']) - 18
                 dsec = int(timeOfWeek)
