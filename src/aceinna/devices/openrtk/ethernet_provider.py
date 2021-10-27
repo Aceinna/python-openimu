@@ -297,7 +297,7 @@ class Provider(OpenDeviceBase):
         try:
             cksum, calc_cksum = self.nmea_checksum(str_nmea)
             if cksum == calc_cksum:
-                if str_nmea.find("$GPGGA", 0, 6) != -1:
+                if str_nmea.find("$GPGGA", 0, 6) != -1 or str_nmea.find("$GNGGA", 0, 6) != -1:
                     if self.ntrip_client:
                         self.ntrip_client.send(str_nmea)
                 if self.user_logf:
