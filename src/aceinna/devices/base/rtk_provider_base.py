@@ -603,6 +603,7 @@ class RTKProviderBase(OpenDeviceBase):
 
         parsed_content = firmware_content_parser(firmware_content, rules)
         # foreach parsed content, if empty, skip register into upgrade center
+        device_info = self.get_device_connection_info()
         for _, rule in enumerate(parsed_content):
             content = parsed_content[rule]
             if len(content) == 0:
@@ -611,9 +612,10 @@ class RTKProviderBase(OpenDeviceBase):
             worker = self.build_worker(rule, content)
             if not worker:
                 continue
-
-            workers.append(worker)
-
+            if (device_info['modelName'] == 'RTK330L') and (rule == 'sdk') and ((int(device_info['serialNumber']) <= 2178200080) and (int(device_info['serialNumber']) >= 2178200001)):
+                continue
+            else:
+                workers.append(worker)
         # prepare jump bootloader worker and jump application workder
         # append jump bootloader worker before the first firmware upgrade workder
         # append jump application worker after the last firmware uprade worker
