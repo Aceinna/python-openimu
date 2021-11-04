@@ -19,6 +19,7 @@ class NTRIPClient(EventBase):
         self.is_connected = 0
         self.tcp_client_socket = None
         self.is_close = False
+        self.append_header_string= None
 
         for x in properties["initial"]["ntrip"]:
             if x['name'] == 'ip':
@@ -62,6 +63,14 @@ class NTRIPClient(EventBase):
                 APP_CONTEXT.get_print_logger().info('NTRIP:[request] fail')
                 self.tcp_client_socket.close()
 
+    def set_connect_headers(self, headers:dict):
+        self.append_header_string = ''
+        for key in headers.keys():
+            self.append_header_string += '{0}: {1}\r\n'.format(key, headers[key])
+
+    def clear_connect_headers(self):
+        self.append_header_string = None
+
     def doConnect(self):
         self.is_connected = 0
         self.tcp_client_socket = socket(AF_INET, SOCK_STREAM)
@@ -85,6 +94,10 @@ class NTRIPClient(EventBase):
             # send ntrip request
             ntripRequestStr = 'GET /' + self.mountPoint + ' HTTP/1.1\r\n'
             ntripRequestStr = ntripRequestStr + 'User-Agent: NTRIP PythonDriver/0.1\r\n'
+
+            if self.append_header_string:
+                ntripRequestStr += self.append_header_string
+
             ntripRequestStr = ntripRequestStr + 'Authorization: Basic '
             apikey = self.username + ':' + self.password
             apikeyBytes = apikey.encode("utf-8")
@@ -151,6 +164,7 @@ class NTRIPClient(EventBase):
                 return None
 
     def close(self):
+        self.append_header_string = None
         self.is_close = True
 
     def handle_parsed_data(self, data):
