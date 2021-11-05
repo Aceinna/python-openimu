@@ -9,7 +9,7 @@ ID = [0x49, 0x44]
 VR = [0x56, 0x52]
 
 
-def _run_command(communicator, message_type, response_message_type, message_bytes=[], size=100, retry=5):
+def _run_command(communicator, message_type, response_message_type, message_bytes=[], size=1000, retry=10):
     command_line = dmu_helper.build_packet(message_type, message_bytes)
     communicator.write(command_line)
     time.sleep(0.1)
