@@ -148,6 +148,7 @@ class NTRIPClient(EventBase):
 
     def recvResponse(self):
         self.tcp_client_socket.settimeout(3)
+        data = ''
         while True:
             try:
                 data = self.tcp_client_socket.recv(1024)
