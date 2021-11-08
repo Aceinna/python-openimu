@@ -148,7 +148,6 @@ class NTRIPClient(EventBase):
 
     def recvResponse(self):
         self.tcp_client_socket.settimeout(3)
-        data = ''
         while True:
             try:
                 data = self.tcp_client_socket.recv(1024)
@@ -159,7 +158,6 @@ class NTRIPClient(EventBase):
                 return data
             except Exception as e:
                 print('NTRIP:[recvR] error occur {0}'.format(e))
-                print('NTRIP:[recvR] data:{0}'.format(data))
                 APP_CONTEXT.get_print_logger().info(
                     'NTRIP:[recvR] error occur {0}'.format(e))
                 return None
