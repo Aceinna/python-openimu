@@ -85,7 +85,8 @@
                 "value": 0.0
             }
 		],
-		"ntrip":[
+		"//Open the ntrip configuration if you donot have internet cable":"",
+		"//ntrip":[
 			{
                 "name": "ip",
                 "value": "192.168.137.1"
