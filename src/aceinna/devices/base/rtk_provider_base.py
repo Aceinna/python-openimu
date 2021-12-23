@@ -1064,6 +1064,9 @@ class RTKProviderBase(OpenDeviceBase):
             if self._logger is not None:
                 self._logger.stop_user_log()
 
+            while not self._message_center.paused:
+                time.sleep(0.1)
+
             thread = threading.Thread(
                 target=self.thread_do_upgrade_framework, args=(file,))
             thread.start()

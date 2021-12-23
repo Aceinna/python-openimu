@@ -110,7 +110,7 @@ class Driver(EventBase):
 
         self._communicator.find_device(
             self._device_upgrade_restart_handler,
-            retries=2,
+            retries=5,
             not_found_handler=self._device_not_found_handler)
 
     def _handle_receive_continous_data(self, packet_type, data):
