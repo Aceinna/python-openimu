@@ -616,13 +616,16 @@ class RTKProviderBase(OpenDeviceBase):
         ]
 
         parsed_content = firmware_content_parser(firmware_content, rules)
+        device_info = self.get_device_connection_info()
         # foreach parsed content, if empty, skip register into upgrade center
         for _, rule in enumerate(parsed_content):
             content = parsed_content[rule]
             if len(content) == 0:
                 continue
-
-            worker = self.build_worker(rule, content)
+            if (device_info['modelName'] == 'OpenRTK330L') and (int(device_info['serialNumber']) >= 2275000220):
+                worker = self.build_worker(rule, content, 'Bx')
+            else:
+                worker = self.build_worker(rule, content)
             if not worker:
                 continue
 
