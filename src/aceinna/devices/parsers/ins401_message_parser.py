@@ -76,7 +76,7 @@ class EthernetMessageParser(MessageParserBase):
                                 raw=data)
 
     def _parse_message(self, packet_type, payload_len, frame):
-        payload = frame[self.payload_len_idx:payload_len+self.payload_len_idx]
+        payload = frame[PAYLOAD_LEN_INDEX:payload_len+PAYLOAD_LEN_INDEX]
         # parse interactive commands
         is_interactive_cmd = INPUT_PACKETS.__contains__(packet_type)
 

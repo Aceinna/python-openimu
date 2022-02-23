@@ -133,11 +133,14 @@ class SerialPort(Communicator):
 
                 self._tried += 1
 
+                if self.device:
+                    break
+
                 if retries > 0 and self._tried >= retries:
                     if self._find_options:
                         self._find_options = None
 
-                    if not self.device and not_found_handler:
+                    if not_found_handler:
                         not_found_handler()
                     return
 

@@ -165,7 +165,7 @@ Aceinna Device could be connected with your PC via UART or LAN. The supported in
 
 
 ## Parse Tool
-There is a log parse tool integrated in. It could parse `OpenRTK`, `RTK330LA`, `IN S401` raw data log from data folder. Assgin `parse` to start it.
+There is a log parse tool integrated in. It could parse `OpenRTK`, `RTK330LA`, `INS401` raw data log from data folder. Assgin `parse` to start it.
 
 ### Arguments:
 

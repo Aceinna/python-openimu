@@ -76,6 +76,7 @@ class DeviceMessageCenter(EventBase):
         self._communicator = communicator
         self._is_stop = False
         self._is_pause = False
+        self._receiving = False
         self._has_exception = False
         self.data_queue = Queue()  # data container
         self.data_lock = threading.Lock()
@@ -89,6 +90,12 @@ class DeviceMessageCenter(EventBase):
         self._last_timeout_command = None
         self._run_id = None
         self.loop = None
+
+    @property
+    def paused(self):
+        ''' Check if the message center is paused
+        '''
+        return self._is_pause and not self._receiving
 
     def is_ready(self):
         '''Check if message center is setuped
@@ -141,10 +148,6 @@ class DeviceMessageCenter(EventBase):
             thread.start()
             self._has_running_checker = True
 
-        # setup receiver, parser
-        # if self._communicator.type == INTERFACES.ETH_100BASE_T1:
-        #     funcs = [self.thread_ethernet_receiver, self.thread_parser]
-        # else:
         funcs = [self.thread_receiver, self.thread_parser]
 
         for func in funcs:
@@ -234,9 +237,11 @@ class DeviceMessageCenter(EventBase):
 
             data = None
             try:
+                self._receiving = True
                 data = self._communicator.read(1000)
                 # print('thread_receiver:', data)
             except Exception as ex:  # pylint: disable=broad-except
+                self._receiving = False
                 print('Thread:receiver error:', ex)
                 self.exception_lock.acquire()
                 self._has_exception = True  # Notice thread paser to exit.
@@ -250,6 +255,8 @@ class DeviceMessageCenter(EventBase):
                 self.data_lock.release()
             else:
                 time.sleep(0.01)
+
+            self._receiving = False
 
     def thread_parser(self, *args, **kwargs):
         ''' get data from data_queue and parse data into one whole frame.

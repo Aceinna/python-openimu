@@ -373,7 +373,7 @@ class RTKProviderBase(OpenDeviceBase):
                             cksum, calc_cksum = self.nmea_checksum(
                                 str_nmea)
                             if cksum == calc_cksum:
-                                if str_nmea.find("$GPGGA") != -1:
+                                if str_nmea.find("$GPGGA") != -1 or str_nmea.find("$GNGGA") != -1:
                                     if self.ntrip_client:
                                         self.ntrip_client.send(str_nmea)
                                     #self.add_output_packet('gga', str_nmea)
@@ -406,7 +406,7 @@ class RTKProviderBase(OpenDeviceBase):
         if packet_type == 'gN':
             if self.ntrip_client:
                 # $GPGGA
-                gpgga = '$GPGGA'
+                gpgga = '$GNGGA' #'$GPGGA'
                 # time
                 timeOfWeek = float(data['GPS_TimeofWeek']) - 18
                 dsec = int(timeOfWeek)
@@ -616,13 +616,16 @@ class RTKProviderBase(OpenDeviceBase):
         ]
 
         parsed_content = firmware_content_parser(firmware_content, rules)
+        device_info = self.get_device_connection_info()
         # foreach parsed content, if empty, skip register into upgrade center
         for _, rule in enumerate(parsed_content):
             content = parsed_content[rule]
             if len(content) == 0:
                 continue
-
-            worker = self.build_worker(rule, content)
+            if (device_info['modelName'] == 'OpenRTK330L') and (int(device_info['serialNumber']) >= 2275000220):
+                worker = self.build_worker(rule, content, 'Bx')
+            else:
+                worker = self.build_worker(rule, content)
             if not worker:
                 continue
 
@@ -1063,6 +1066,9 @@ class RTKProviderBase(OpenDeviceBase):
 
             if self._logger is not None:
                 self._logger.stop_user_log()
+
+            while not self._message_center.paused:
+                time.sleep(0.1)
 
             thread = threading.Thread(
                 target=self.thread_do_upgrade_framework, args=(file,))

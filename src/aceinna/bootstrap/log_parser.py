@@ -41,20 +41,22 @@ def prepare_lib_folder():
     return lib_path
 
 
-def do_parse(log_type, folder_path):
+def do_parse(log_type, folder_path, kml_rate, dr_parse):
     lib_path = prepare_lib_folder()
 
     lib = CDLL(lib_path)
     for root, _, file_name in os.walk(folder_path):
         for fname in file_name:
-            if fname.startswith('user') and fname.endswith('.bin'):
+            if (fname.startswith('user') and fname.endswith('.bin')) or (fname.startswith('ins_save') and fname.endswith('.bin')):
                 file_path = os.path.join(folder_path, fname)
                 if log_type == 'openrtk':
                     lib.decode_openrtk_user(bytes(file_path, encoding='utf8'))
                 if log_type == 'rtkl':
-                    lib.decode_openrtk_inceptio(bytes(file_path, encoding='utf8'))
+                    lib.decode_openrtk_inceptio(
+                        bytes(file_path, encoding='utf8'))
                 if log_type == 'ins401':
-                    lib.decode_ins401(bytes(file_path, encoding='utf8'))
+                    lib.decode_ins401(bytes(file_path, encoding='utf8'), bytes(
+                        dr_parse, encoding='utf8'), kml_rate)
 
 
 class LogParser:
@@ -71,12 +73,15 @@ class LogParser:
         '''
         self._validate_params()
 
-        do_parse(self._options.log_type, self._options.path)
+        do_parse(self._options.log_type,
+                 self._options.path,
+                 self._options.kml_rate,
+                 self._options.powerdr)
 
         os._exit(1)
 
     def _validate_params(self):
-        for attr_name in ['log_type', 'path']:
+        for attr_name in ['log_type', 'path', 'kml_rate', 'powerdr']:
             attr_value = getattr(self._options, attr_name)
             if not attr_value:
                 raise ValueError(
