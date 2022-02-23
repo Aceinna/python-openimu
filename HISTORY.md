@@ -1,6 +1,13 @@
 # History
 
 ---
+## 2.6.1 / 2022-02-2
+- [OpenRTK] Support ST8100Bx chip upgrade.
+- [OpenRTK/RTK330LA] Resolve cannot ping device while upgrading.
+- [DMU] Resolve ping issue in baudrate 230400.
+- [Framework] Update native library dependency.
+
+
 ## 2.6.0 / 2021-10-11
 - [INS401] Support communication with ethernet 100base-t1 protocol.
 
