@@ -94,7 +94,10 @@ class RTKProviderBase(OpenDeviceBase):
             executor_path, setting_folder_name)
 
         all_products = get_openrtk_products()
-        config_file_mapping = get_configuratin_file_mapping()
+        if APP_CONTEXT.para_path != None:
+            config_file_mapping = APP_CONTEXT.para_path
+        else:
+            config_file_mapping = get_configuratin_file_mapping()
 
         for product in all_products:
             product_folder = os.path.join(self.setting_folder_path, product)
