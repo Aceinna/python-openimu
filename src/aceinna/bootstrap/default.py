@@ -28,7 +28,8 @@ class Default:
     def __init__(self, **kwargs):
         self._build_options(**kwargs)
         APP_CONTEXT.mode = APP_TYPE.DEFAULT
-
+        APP_CONTEXT.para_path = kwargs['para_path']
+        
     def listen(self):
         '''
         Prepare components, initialize the application

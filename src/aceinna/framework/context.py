@@ -69,5 +69,12 @@ class AppContext:
     def mode(self, value):
         self._mode = value
 
+    @property
+    def para_path(self):
+        return self._para_path
+
+    @para_path.setter
+    def para_path(self, value):
+        self._para_path = value
 
 APP_CONTEXT = AppContext()

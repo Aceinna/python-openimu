@@ -43,6 +43,8 @@ def _build_args():
                         help="Contains internal data log (OpenIMU only)", default=False)
     parser.add_argument("-s", "--set-user-para", dest='set_user_para', action='store_true',
                         help="Set user parameters (OpenRTK only)", default=False)
+    parser.add_argument("--para-path", dest="para_path", type=str,
+                        metavar='')
     parser.add_argument("--cli", dest='use_cli', action='store_true',
                         help="start as cli mode", default=False)
 
