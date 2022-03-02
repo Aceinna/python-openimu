@@ -755,6 +755,9 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
 
         sync = [0xfd, 0xc6, 0x49, 0x28]
         self._uart.write(sync)
+        self._uart.write(sync)
+        self._uart.write(sync)
+        self._uart.write(sync)
         time.sleep(0.2)
 
         return self.read_until([0x3A, 0x54, 0x2C, 0xA6], 100)
@@ -995,9 +998,6 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
 
         fs_len = len(self._file_content)
         bin_info_list = self.get_bin_info_list(fs_len, self._file_content)
-
-        # if not self.connect_serail_port():
-        #     return self._raise_error('Connect serial Port failed')
 
         if not self.send_sync():
             return self._raise_error('Sync failed')
