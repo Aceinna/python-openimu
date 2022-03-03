@@ -998,7 +998,7 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
 
         fs_len = len(self._file_content)
         bin_info_list = self.get_bin_info_list(fs_len, self._file_content)
-        
+
         if not self.send_sync():
             return self._raise_error('Sync failed')
 

@@ -94,10 +94,7 @@ class RTKProviderBase(OpenDeviceBase):
             executor_path, setting_folder_name)
 
         all_products = get_openrtk_products()
-        if APP_CONTEXT.para_path != None:
-            config_file_mapping = APP_CONTEXT.para_path
-        else:
-            config_file_mapping = get_configuratin_file_mapping()
+        config_file_mapping = get_configuratin_file_mapping()
 
         for product in all_products:
             product_folder = os.path.join(self.setting_folder_path, product)
@@ -207,9 +204,12 @@ class RTKProviderBase(OpenDeviceBase):
                 return
 
         # Load the openimu.json based on its app
-        app_file_path = os.path.join(
-            self.setting_folder_path, product_name, app_name, self.config_file_name)
-
+        if APP_CONTEXT.para_path == None:
+            app_file_path = os.path.join(
+                self.setting_folder_path, product_name, app_name, self.config_file_name)
+        else:
+            app_file_path = os.path.join(
+                self.setting_folder_path, product_name, app_name, APP_CONTEXT.para_path)
         if not self.is_app_matched:
             print_yellow(
                 'Failed to extract app version information from unit.' +
