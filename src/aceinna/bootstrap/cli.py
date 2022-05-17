@@ -35,7 +35,7 @@ class CommandLine:
     def __init__(self, **kwargs):
         self._build_options(**kwargs)
         APP_CONTEXT.mode = APP_TYPE.CLI
-        APP_CONTEXT.para_path = kwargs['para_path']
+        APP_CONTEXT.para_path = kwargs.get('para_path')
         # self.communication = 'uart'
         # self.device_provider = None
         # self.communicator = None

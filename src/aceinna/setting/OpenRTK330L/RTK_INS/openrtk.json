@@ -1295,11 +1295,6 @@
 			"name": "server_start",
 			"description": "start server thread and must use exit command to quit",
 			"function": "server_start_handler"
-		},
-		{
-			"name": "can_set",
-			"description": "set can cfg",
-			"function": "can_cfg_handle"
 		}
 	]
 }
