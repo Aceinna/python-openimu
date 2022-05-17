@@ -80,8 +80,9 @@ class Provider(RTKProviderBase):
 
     # override
 
-    def build_worker(self, rule, *args):
-        content = args[0]
+    def build_worker(self, rule, content):
+        device_info = self.get_device_connection_info()
+        openrtk_sn = int(device_info['serialNumber'])
         if rule == 'rtk':
             firmware_worker = FirmwareUpgradeWorker(
                 self.communicator, content,
@@ -107,10 +108,11 @@ class Provider(RTKProviderBase):
                 sdk_port, self.bootloader_baudrate, timeout=0.1)
             if not sdk_uart.isOpen():
                 raise Exception('Cannot open SDK upgrade port')
-            if (len(args) > 1) and (args[1] == 'Bx'):
-                return SDK8100BxUpgradeWorker(sdk_uart, content)
+            BA_sn = list(range(2275000161, 2275000170+1)) + list(range(2275000181, 2275000191+1)) + list(range(2275000193, 2275000220+1))
+            if (openrtk_sn in BA_sn) or (openrtk_sn < 2275000000):
+                return SDK8100UpgradeWorker(sdk_uart, content)
             else:
-                return SDK8100UpgradeWorker(sdk_uart, content)                
+                return SDK8100BxUpgradeWorker(sdk_uart, content)
 
     # command list
     # use base methods
