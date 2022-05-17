@@ -599,7 +599,7 @@ class RTKProviderBase(OpenDeviceBase):
                 self.add_output_packet('imu', data)
 
     @abstractmethod
-    def build_worker(self, rule, content):
+    def build_worker(self, rule, content, *args):
         ''' Build upgarde worker by rule and content
         '''
         pass
@@ -625,19 +625,7 @@ class RTKProviderBase(OpenDeviceBase):
             content = parsed_content[rule]
             if len(content) == 0:
                 continue
-            if (device_info['modelName'] == 'OpenRTK330L') and (int(device_info['serialNumber']) >= 2275000161) \
-                and (int(device_info['serialNumber']) <= 2275000170):    
-                worker = self.build_worker(rule, content)                      
-            elif (device_info['modelName'] == 'OpenRTK330L') and (int(device_info['serialNumber']) >= 2275000181) \
-                and (int(device_info['serialNumber']) <= 2275000191):   
-                worker = self.build_worker(rule, content)             
-            elif (device_info['modelName'] == 'OpenRTK330L') and (int(device_info['serialNumber']) >= 2275000193) \
-                and (int(device_info['serialNumber']) <= 2275000220):    
-                worker = self.build_worker(rule, content)   
-            elif (device_info['modelName'] == 'OpenRTK330L') and (int(device_info['serialNumber']) < 2275000000):
-                worker = self.build_worker(rule, content)                 
-            else:
-                worker = self.build_worker(rule, content, 'Bx')
+            worker = self.build_worker(rule, content)
             if not worker:
                 continue
 
