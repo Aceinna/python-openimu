@@ -625,10 +625,19 @@ class RTKProviderBase(OpenDeviceBase):
             content = parsed_content[rule]
             if len(content) == 0:
                 continue
-            if (device_info['modelName'] == 'OpenRTK330L') and (int(device_info['serialNumber']) >= 2275000220):
-                worker = self.build_worker(rule, content, 'Bx')
+            if (device_info['modelName'] == 'OpenRTK330L') and (int(device_info['serialNumber']) >= 2275000161) \
+                and (int(device_info['serialNumber']) <= 2275000170):    
+                worker = self.build_worker(rule, content)                      
+            elif (device_info['modelName'] == 'OpenRTK330L') and (int(device_info['serialNumber']) >= 2275000181) \
+                and (int(device_info['serialNumber']) <= 2275000191):   
+                worker = self.build_worker(rule, content)             
+            elif (device_info['modelName'] == 'OpenRTK330L') and (int(device_info['serialNumber']) >= 2275000193) \
+                and (int(device_info['serialNumber']) <= 2275000220):    
+                worker = self.build_worker(rule, content)   
+            elif (device_info['modelName'] == 'OpenRTK330L') and (int(device_info['serialNumber']) < 2275000000):
+                worker = self.build_worker(rule, content)                 
             else:
-                worker = self.build_worker(rule, content)
+                worker = self.build_worker(rule, content, 'Bx')
             if not worker:
                 continue
 
