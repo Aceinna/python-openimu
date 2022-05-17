@@ -19,7 +19,7 @@ from ..framework import AppLogger
 from ..framework.utils import resource
 from ..framework.constants import APP_TYPE
 from ..framework.context import APP_CONTEXT
-
+from ..tools import can_cfg_post
 
 class CommandLine:
     '''Command line entry class
@@ -372,3 +372,20 @@ class CommandLine:
         '''used by customers
         '''
         return True
+
+    def can_cfg_handle(self):
+        '''
+        set can cfg
+        '''
+        input_args = len(self.input_string)
+        if input_args == 1:
+            print("Usage:")
+            print("can_set config_path")
+        else:
+            file_name = self.input_string[1]
+        ret = can_cfg_post.can_cfg_set(file_name)
+        if ret == True:
+            print('set can cfg suc')
+        else:
+            print('set can cfg fail')
+        return ret

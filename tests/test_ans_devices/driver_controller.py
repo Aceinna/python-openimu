@@ -114,7 +114,7 @@ class ProcessController:
         raise_error_on_timeout: bool = True,
         read_response: bool = True,
     ):
-        print('cmd: ', mi_cmd_to_write)
+        # print('cmd: ', mi_cmd_to_write)
         """Write command to process. See IoManager.write() for details"""
         return self.io_manager.write(
             mi_cmd_to_write, timeout_sec, raise_error_on_timeout, read_response
@@ -156,13 +156,14 @@ if __name__ == '__main__':
             except Exception as e:
                 time.sleep(1)
                 print('wait to connect')
-        time.sleep(2)
+        time.sleep(3)
         while True:
             response = app_handle.write('upgrade {0}'.format(upgrade_file), 1, read_response = False)
             time_used = 0
             while True:
                 
                 try:
+                    app_handle.write('', 1, read_response = False)
                     response = app_handle.get_process_response()
                     try:
                         process_ret += process_parser.get_gdb_response_str(response)
@@ -180,7 +181,9 @@ if __name__ == '__main__':
                     time.sleep(1)
                     time_used+= 2
                     print("\rtime used: %ds" %(time_used), end="")
-                    if time_used > 600:
+                    if time_used % 10 == 10:
+                        app_handle.write('ls', 1, read_response = False)
+                    if time_used > 200:
                         print('time out')
                         time_used = 0
                         fail_count+= 1
