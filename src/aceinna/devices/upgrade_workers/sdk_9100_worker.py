@@ -983,9 +983,15 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
         super(SDKUpgradeWorker, self).__init__()
         self._uart = uart
         self._file_content = file_content
-        # self._key = None
-        # self._is_stopped = False
-        # self._uart = None
+        self.sync_repeat_count = 100
+        self.wait_sync = 100
+        self.wait_ack = 3500
+        self.wait_read_driver = 100
+        self.wait_short_ack = 1000
+        self.wait_erase_factor = 60000
+        self.erase_factors = 4
+        self.wait_erase_all = self.wait_erase_factor * self.erase_factors
+        self.wait_crc = 30000
 
     def _match(self, result, check_data):
         if isinstance(check_data, list):
@@ -1033,8 +1039,25 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
         value_list[3] = (value >> 24) & 0xff
         return value_list
 
-    def read_until(self, check_data, read_times, read_len=None):
+    # def read_until(self, check_data, read_times, read_len=None):
+    #     is_match = False
+    #     while read_times > 0:
+    #         if read_len:
+    #             result = self._uart.read(read_len)
+    #         else:
+    #             result = self._uart.read_all()
+    #         if len(result) > 0:
+    #             is_match = self._match(result, check_data)
+    #             break
+
+    #         time.sleep(0.01)
+    #         read_times -= 1
+
+    #     return is_match
+
+    def read_until(self, check_data, time_delay, read_len=None):
         is_match = False
+        read_times = int(time_delay/10)
         while read_times > 0:
             if read_len:
                 result = self._uart.read(read_len)
@@ -1054,44 +1077,67 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
             return False
 
         sync = [0xfd, 0xc6, 0x49, 0x28]
-        retry_times = 10
+        retry_times = self.sync_repeat_count
         is_matched = False
 
         for i in range(retry_times):
-            self._uart.write([0x00, 0x00, 0x00, 0x00])
+            # self._uart.write([0x00, 0x00, 0x00, 0x00])
             self._uart.write(sync)
-            self._uart.write(sync)
-            time.sleep(0.5)
-
-            is_matched = self.read_until([0x3A, 0x54, 0x2C, 0xA6], 100)
+            # self._uart.write(sync)
+            # time.sleep(0.5)
+            is_matched = self.read_until([0x3A, 0x54, 0x2C, 0xA6], self.wait_read_driver)
             if is_matched:
                 break
 
         return is_matched
 
-    def send_change_baud_cmd(self):
+    # def send_change_baud_cmd(self):
+    #     if self._is_stopped:
+    #         return False
+
+    #     change_baud_cmd = [0x71]
+
+    #     self._uart.write(change_baud_cmd)
+
+    #     return self.read_until(0xCC, 10, 1)
+
+    # def send_baud(self, baud_int):
+    #     if self._is_stopped:
+    #         return False
+
+    #     baud_list = []
+    #     baud_list = self.get_list_from_int(baud_int)
+
+    #     self._uart.write(baud_list)
+
+    #     has_read = self.read_until(0xCC, self.wait_ack, 1)
+
+    #     if has_read:
+    #         self._uart.baudrate = baud_int
+
+    #     return has_read
+
+    def reopen_uart_handle(self, new_baud):
+        self._uart.baudrate = new_baud
+        self._uart.close()
+        time.sleep(0.5)
+        self._uart.open()
+        self._uart.reset_input_buffer()
+        self._uart.reset_output_buffer()
+
+    def change_baud(self, baud_int):
         if self._is_stopped:
             return False
-
         change_baud_cmd = [0x71]
-
         self._uart.write(change_baud_cmd)
-
-        return self.read_until(0xCC, 10, 1)
-
-    def send_baud(self, baud_int):
-        if self._is_stopped:
-            return False
-
         baud_list = []
         baud_list = self.get_list_from_int(baud_int)
 
         self._uart.write(baud_list)
-
-        has_read = self.read_until(0xCC, 10)
+        has_read = self.read_until(0xCC, self.wait_ack, 1)
 
         if has_read:
-            self._uart.baudrate = baud_int
+            self.reopen_uart_handle(baud_int)
 
         return has_read
 
@@ -1100,10 +1146,9 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
             return False
 
         check_baud = [0x38]
-        time.sleep(0.01)
-        self._uart.write(check_baud)
 
-        return self.read_until(0xCC, 10, 1)
+        self._uart.write(check_baud)
+        return self.read_until(0xCC, self.wait_read_driver, 1)
 
     def is_host_ready(self):
         if self._is_stopped:
@@ -1112,8 +1157,7 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
         host = [0x5a]
         # fs.write(bytes(host))
         self._uart.write(host)
-
-        return self.read_until(0xCC, 10)
+        return self.read_until(0xCC, self.wait_short_ack)
 
     def send_boot(self):
         if self._is_stopped:
@@ -1155,7 +1199,7 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
         fs.write(bytes(boot_part2))
         '''
 
-        return self.read_until(0xCC, 100, 1)
+        return self.read_until(0xCC, self.wait_ack, 1)
 
     def send_write_flash_cmd(self):
         if self._is_stopped:
@@ -1164,19 +1208,19 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
 
         self._uart.write(write_cmd)
 
-        return self.read_until(0xCC, 10, 1)
+        return self.read_until(0xCC, self.wait_ack, 1)
 
     def send_bin_info(self, bin_info_list):
         if self._is_stopped:
             return False
         self._uart.write(bin_info_list)
 
-        return self.read_until(0xCC, 10, 1)
+        return self.read_until(0xCC, self.wait_short_ack, 1)
 
     def get_bin_info_list(self, fs_len, bin_data):
         bootMode = 0x01
         destinationAddress = 0x10000000
-        entryPoint = 0
+        entryPoint = 0x400
         erase_nvm_u8 = 3
         eraseOnly_u8 = 0
         programOnly_u8 = 0
@@ -1227,13 +1271,13 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
         if self._is_stopped:
             return False
 
-        return self.read_until(0xCC, 500, 1)
+        return self.read_until(0xCC, self.wait_short_ack, 1)
 
     def erase_wait(self):
         if self._is_stopped:
             return False
 
-        return self.read_until(0xCC, 500, 1)
+        return self.read_until(0xCC, self.wait_erase_all, 1)
 
     def flash_write(self, fs_len, bin_data):
         write_result = True
@@ -1252,7 +1296,7 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
             current += len(data_to_sdk)
             self._uart.write(data_to_sdk)
 
-            has_read = self.read_until(0xCC, 100)
+            has_read = self.read_until(0xCC, self.wait_ack, 1)
 
             if has_read:
                 self.emit(UPGRADE_EVENT.PROGRESS,
@@ -1267,7 +1311,7 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
         if self._is_stopped:
             return False
 
-        return self.read_until(0xCC, 2000)
+        return self.read_until(0xCC, self.wait_crc, 1)
 
     def _raise_error(self, message):
         # if self._uart.isOpen():
@@ -1306,10 +1350,12 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
         if not self.send_sync():
             return self._raise_error('Sync failed')
 
-        if not self.send_change_baud_cmd():
-            return self._raise_error('Prepare baudrate change command failed')
+        # if not self.send_change_baud_cmd():
+        #     return self._raise_error('Prepare baudrate change command failed')
 
-        if not self.send_baud(230400):
+        # if not self.send_baud(230400):
+        #     return self._raise_error('Send baudrate command failed')
+        if not self.change_baud(230400):
             return self._raise_error('Send baudrate command failed')
 
         if not self.baud_check():
