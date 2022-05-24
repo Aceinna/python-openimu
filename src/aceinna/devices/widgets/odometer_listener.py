@@ -27,22 +27,30 @@ def parse_wheel_speed(data):
         |16@0+ (0.01,-67.67) [0|250] "kph" XXX
     '''
     offset = -67.67
-    speed_fr = (data[0] * 256 + data[1]) * 0.01 + offset
-    speed_fl = (data[2] * 256 + data[3]) * 0.01 + offset
     speed_rr = (data[4] * 256 + data[5]) * 0.01 + offset
     speed_rl = (data[6] * 256 + data[7]) * 0.01 + offset
-    return (speed_fr, speed_fl, speed_rr, speed_rl)
+    return (speed_rr + speed_rl)/2*1000/3600
 
 
-def parse_msg(message_type, data):
-    parse_result = None
-    if message_type == 'WHEEL_SPEED':
-        parse_result = parse_wheel_speed(data)
+def parse_gear(data):
+    gear = data & 0x3F
+    # P = 32
+    if gear == 32:
+        return 0
 
-    if not parse_result:
-        return True, None
+    # R = 16
+    if gear == 16:
+        return -1
 
-    return False, parse_result
+    # N = 8
+    if gear == 8:
+        return 0
+
+    # D = 0
+    if gear == 0:
+        return 1
+
+    return 0
 
 
 class CanOptions:
@@ -78,51 +86,55 @@ def mock_speed_message():
     return msg
 
 
-is_linux = sys.platform == 'linux'
+class WindowsCANReceiver(EventBase):
+    def __init__(self, options: CanOptions) -> None:
+        super(WindowsCANReceiver, self).__init__()
+
+        self.can = can.interface.Bus(
+            channel=options.channel, bustype='canalystii', bitrate=options.bitrate)
+        # set up Notifier
+        simple_listener = SimpleListener(self)
+        self.notifier = can.Notifier(self.can, [simple_listener])
+
+
+class SimpleListener(can.Listener):
+    _receiver = None
+
+    def __init__(self, receiver: WindowsCANReceiver) -> None:
+        super().__init__()
+        self._receiver = receiver
+
+    def on_message_received(self, msg):
+        self._receiver.emit('data', msg)
+
+    def on_error(self, exc):
+        print(exc)
 
 
 class OdometerListener(EventBase):
+    _receiver = None
+    _wheel_speed: float = 0
+    _gear: int = 0
+    _received = False
+
     def __init__(self, options: CanOptions):
         super(OdometerListener, self).__init__()
+        self._receiver = WindowsCANReceiver(options)
+        self._receiver.on('data', self._msg_handler)
 
-        if not is_linux:
-            return
+        # start a thread to output data in a duration
+        threading.Thread(target=self._emit_data).start()
 
-        # close can0
-        os.system('sudo ifconfig {0} down'.format(options.channel))
-        # set bitrate of can0
-        os.system('sudo ip link set {0} type can bitrate {1}'.format(
-            options.channel, options.bitrate))
-        # open can0
-        os.system('sudo ifconfig {0} up'.format(options.channel))
-        # os.system('sudo /sbin/ip link set can0 up type can bitrate 250000')
-        # show details can0 for debug.
-        # os.system('sudo ip -details link show can0')
+    def _emit_data(self):
+        while True and self._received:
+            self.emit('data', self._wheel_speed * self._gear)
+            time.sleep(0.05)
 
-        # set up can interface.
-        # socketcan_native socketcan_ctypes
-        self.can0 = can.interface.Bus(
-            channel=options.channel, bustype='socketcan_ctypes')
-        # set up Notifier
-        self.notifier = can.Notifier(self.can0, [self.msg_handler])
-
-    def msg_handler(self, msg):
+    def _msg_handler(self, msg):
         if msg.arbitration_id == 0xAA:
-            parse_error, parse_result = parse_msg('WHEEL_SPEED', msg.data)
-            if parse_error:
-                return
-            self.emit('data', parse_result)
+            self._received = True
+            self._wheel_speed = parse_wheel_speed(msg.data)
 
-    # def __init__(self, options: CanOptions):
-    #     super(OdometerListener, self).__init__()
-    #     threading.Thread(target=self._receive).start()
-
-    # def _receive(self):
-    #     while True:
-    #         message = mock_speed_message()
-    #         if message.arbitration_id == 0xAA:
-    #             parse_error, parse_result = parse_msg('WHEEL_SPEED', message.data)
-    #             if parse_error:
-    #                 return
-    #             self.emit('data', parse_result)
-    #         time.sleep(0.001)
+        if msg.arbitration_id == 0x3BC:
+            self._received = True
+            self._gear = parse_gear(msg.data)

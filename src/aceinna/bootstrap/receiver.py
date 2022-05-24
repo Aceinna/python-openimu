@@ -42,8 +42,8 @@ class Receiver:
 
         self._driver.on(DriverEvents.Discovered,
                         self.handle_discovered)
-        self._driver.on(DriverEvents.Continous,
-                        self.handle_receive_continous_data)
+        # self._driver.on(DriverEvents.Continous,
+        #                 self.handle_receive_continous_data)
 
         self._driver.detect()
 
@@ -52,36 +52,36 @@ class Receiver:
         APP_CONTEXT.device_context = device_context
 
         # prepare ntrip client
-        if not self._ntrip_client:
-            threading.Thread(target=self._prepare_ntrip_client).start()
+        # if not self._ntrip_client:
+        #     threading.Thread(target=self._prepare_ntrip_client).start()
 
         # prepare odometer listener
         if not self._odometer_listener:
             threading.Thread(target=self._prepare_odometer_listener).start()
 
-    def handle_receive_continous_data(self, packet_type, data):
-        if packet_type == 'gga':
-            self._ntrip_client.send(data)
+    # def handle_receive_continous_data(self, packet_type, data):
+    #     if packet_type == 'gga':
+    #         self._ntrip_client.send(data)
 
-    def _prepare_ntrip_client(self):
-        self._ntrip_client = NTRIPClient(
-            APP_CONTEXT.device_context._provider.properties
-        )
-        self._ntrip_client.on('parsed', self._handle_data_parsed)
-        self._ntrip_client.run()
+    # def _prepare_ntrip_client(self):
+    #     self._ntrip_client = NTRIPClient(
+    #         APP_CONTEXT.device_context._provider.properties
+    #     )
+    #     self._ntrip_client.on('parsed', self._handle_data_parsed)
+    #     self._ntrip_client.run()
 
-    def _handle_data_parsed(self, data):
-        if self._driver._communicator.can_write():
-            self._driver._communicator.write(data)
+    # def _handle_data_parsed(self, data):
+    #     if self._driver._communicator.can_write():
+    #         self._driver._communicator.write(data)
 
     def _prepare_odometer_listener(self):
         self._odometer_listener = OdometerListener(CanOptions('can0', 500000))
         self._odometer_listener.on('data', self._handle_wheel_speed_data)
 
-    @throttle(seconds=0.01)
-    def _handle_wheel_speed_data(self, data):
-        avg_speed = (data[2]+data[3])/2
-        speed = avg_speed / 3600 * 1000
+    #@throttle(seconds=0.01)
+    def _handle_wheel_speed_data(self, speed):
         command = helper.build_packet('cA', list(
             struct.unpack("4B", struct.pack("<f", speed))))
-        self._driver._communicator.write(command)
+
+        if self._driver._communicator.can_write():
+            self._driver._communicator.write(command)

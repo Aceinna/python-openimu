@@ -44,6 +44,8 @@ def _build_args():
                         help="Set user parameters (OpenRTK only)", default=False)
     parser.add_argument("--cli", dest='use_cli', action='store_true',
                         help="start as cli mode", default=False)
+    parser.add_argument("--can", dest='use_can', action='store_true',
+                        help="Receive speed and gear", default=False)
 
     subparsers = parser.add_subparsers(
         title='Sub commands', help='use `<command> -h` to get sub command help', dest="sub_command")

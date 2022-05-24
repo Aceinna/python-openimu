@@ -48,6 +48,9 @@ def start_app(**kwargs):
     if kwargs['options'].use_cli:
         option_mode = 'cli'
 
+    if kwargs['options'].use_can:
+        option_mode = 'receiver'
+
     if sub_command == 'parse':
         option_mode = 'log-parser'
 
