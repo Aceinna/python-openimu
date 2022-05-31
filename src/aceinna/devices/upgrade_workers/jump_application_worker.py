@@ -41,11 +41,19 @@ class JumpApplicationWorker(UpgradeWorkerBase):
         can_ping = False
         self._communicator.serial_port.baudrate = self._original_baudrate
 
+        info = None
         while not can_ping:
             self._communicator.reset_buffer()  # clear input and output buffer
             info = ping(self._communicator, None)
             if info:
                 can_ping = True
             time.sleep(0.5)
+
+        try:
+            self.emit(UPGRADE_EVENT.BEFORE_FINISH, info)
+        except Exception as ex:
+            self.emit(UPGRADE_EVENT.ERROR, self._key,
+                      'Fail in before finish: {0}'.format(ex))
+            return
 
         self.emit(UPGRADE_EVENT.FINISH, self._key)

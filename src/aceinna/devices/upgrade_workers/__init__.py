@@ -5,6 +5,7 @@ class UPGRADE_EVENT:
     FIRST_PACKET = 'first_packet'
     BEFORE_WRITE = 'before_write'
     AFTER_WRITE = 'after_write'
+    BEFORE_FINISH = 'before_finish'
     FINISH = 'finish'
     ERROR = 'error'
     PROGRESS = 'progress'
