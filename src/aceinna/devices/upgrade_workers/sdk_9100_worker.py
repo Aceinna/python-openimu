@@ -2194,7 +2194,7 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
         formatted_app_version = '.'.join([x.zfill(2) for x in app_version.split('.')])
 
         use_newboot = False
-        use_change_baudrate = False
+        use_change_baudrate = True
 
         if formatted_app_version == "24.05.re":
             use_newboot = False
@@ -2208,11 +2208,11 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
         elif formatted_app_version <= "24.05.08":
             use_newboot = False
             use_change_baudrate = True
-        else:
+        # else:
             # 24.05.10 is testing version(1integrate INS optimization,2addbugfix like 24.05.11--default)
             # print(app_version, "use_newboot = True, use_change_baudrate = False used, may exist problem, pls check FW version of MCU")
-            use_newboot = True
-            use_change_baudrate = False
+            # use_newboot = True
+            # use_change_baudrate = False
 
         APP_CONTEXT.get_logger().logger.info('app version:{0}, new boot:{1}, change baudrate:{2}'.format(formatted_app_version,use_newboot,use_change_baudrate))
 
