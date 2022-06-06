@@ -68,7 +68,6 @@ class TestApp:
         self.driver = None
 
     def do_upgrade(self):
-        return
         firmware_file_path = gen_upgrade_file_name()
         print('Plan to upgrade:', firmware_file_path)
         if firmware_file_path:
