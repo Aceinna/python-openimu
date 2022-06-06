@@ -1,6 +1,9 @@
 # History
 # This is a special branch for INCEPTIO
 ---
+## 2.5.4a / 2022-06-08
+- [OpenRTK/RTK330LA] Fix issues on ST9100 chip firmware upgrade.
+
 ## 2.5.0 / 2021-07-02
 - [DMU] Support firmware upgrade.
 - [OpenRTK/RTK330LA] Support ST9100 chip upgrade.

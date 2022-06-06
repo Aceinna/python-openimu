@@ -4,13 +4,20 @@ import time
 try:
     from aceinna.models import WebserverArgs
     from aceinna.core.driver import (Driver, DriverEvents)
+    from aceinna.framework import AppLogger
+    from aceinna.framework.utils import resource
+    from aceinna.framework.context import APP_CONTEXT
 
 except:  # pylint: disable=bare-except
     print('load package from local')
     sys.path.append('./src')
     from aceinna.models import WebserverArgs
     from aceinna.core.driver import (Driver, DriverEvents)
+    from aceinna.framework import AppLogger
+    from aceinna.framework.utils import resource
+    from aceinna.framework.context import APP_CONTEXT
 
+setattr(sys, '__dev__', True)
 
 def build_firmware_list():
     files = []
@@ -61,6 +68,7 @@ class TestApp:
         self.driver = None
 
     def do_upgrade(self):
+        return
         firmware_file_path = gen_upgrade_file_name()
         print('Plan to upgrade:', firmware_file_path)
         if firmware_file_path:
@@ -96,6 +104,8 @@ class TestApp:
         print(message)
 
     def start(self):
+        self._prepare_logger()
+
         self.driver = Driver(WebserverArgs())
         self.driver.on(DriverEvents.Discovered, self.handle_discovered)
         self.driver.on(DriverEvents.Lost, self.handle_lost)
@@ -104,6 +114,21 @@ class TestApp:
         self.driver.on(DriverEvents.UpgradeFail, self.handle_upgrade_fail)
         self.driver.on(DriverEvents.Error, self.handle_error)
         self.driver.detect()
+
+    def _prepare_logger(self):
+        '''
+        Set default log handler: console logger, file logger
+        '''
+        executor_path = resource.get_executor_path()
+        log_level = 'info'
+
+        APP_CONTEXT.set_logger(
+            AppLogger(
+                filename=os.path.join(executor_path, 'loggers', 'test.log'),
+                gen_file=True,
+                level=log_level,
+                console_log=False
+            ))
 
 
 def print_path():
