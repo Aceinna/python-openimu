@@ -2196,14 +2196,11 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
         use_newboot = False
         use_change_baudrate = True
 
-        if formatted_app_version == "24.05.re":
+        if formatted_app_version in ["24.04.re","24.05.re","24.05.09"]:
             use_newboot = False
             use_change_baudrate = False
         elif formatted_app_version >= "24.05.11":
             use_newboot = True
-            use_change_baudrate = False
-        elif formatted_app_version == "24.05.09":
-            use_newboot = False
             use_change_baudrate = False
         elif formatted_app_version <= "24.05.08":
             use_newboot = False
