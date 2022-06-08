@@ -4,6 +4,12 @@
 ## 2.5.4a / 2022-06-08
 - [OpenRTK/RTK330LA] Fix issues on ST9100 chip firmware upgrade.
 
+## 2.5.2 / 2021-08-13
+- [OpenRTK/RTK330L] Add RTCM log that parsed by NTRIP Client.
+
+## 2.5.1 / 2021-08-11
+- [OpenRTK/RTK330L] Fix issues.
+
 ## 2.5.0 / 2021-07-02
 - [DMU] Support firmware upgrade.
 - [OpenRTK/RTK330LA] Support ST9100 chip upgrade.
