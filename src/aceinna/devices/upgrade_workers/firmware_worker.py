@@ -47,8 +47,8 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
         read_timeout = 1
 
         if current == 0:
-        	# estimate value, it takes 8s per 100Kb while erasing flash
-            read_timeout = math.ceil(self.total/1024100)*8
+            # estimate value, it takes 8s per 100Kb while erasing flash
+            read_timeout = math.ceil(self.total/102400)*8
 
         response = helper.read_untils_have_data(
             self._communicator, 'WA', 12, read_timeout=read_timeout)
