@@ -244,8 +244,8 @@ class Provider(OpenDeviceBase):
     def get_upgrade_workers(self, firmware_content):
         write_firmware_worker = FirmwareUpgradeWorker(
             self.communicator, self.bootloader_baudrate, firmware_content)
-        write_firmware_worker.on(
-            UPGRADE_EVENT.FIRST_PACKET, lambda: time.sleep(8))
+        # write_firmware_worker.on(
+        #     UPGRADE_EVENT.FIRST_PACKET, lambda: time.sleep(8))
 
         jump_bootloader_worker = JumpBootloaderWorker(self.communicator)
         jump_application_worker = JumpApplicationWorker(self.communicator,bootloader_baudrate=self.bootloader_baudrate)

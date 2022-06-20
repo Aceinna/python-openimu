@@ -1,4 +1,5 @@
 import time
+import math
 from ..base.upgrade_worker_base import UpgradeWorkerBase
 from ...framework.utils import helper
 from . import (UPGRADE_EVENT, UPGRADE_GROUP)
@@ -43,20 +44,17 @@ class FirmwareUpgradeWorker(UpgradeWorkerBase):
         except Exception as ex:  # pylint: disable=broad-except
             return False
 
-        # custom
+        read_timeout = 1
+
         if current == 0:
-            try:
-                self.emit(UPGRADE_EVENT.FIRST_PACKET)
-            except Exception as ex:
-                self.emit(UPGRADE_EVENT.ERROR, self._key,
-                          'Fail in first packet: {0}'.format(ex))
-                return False
+        	# estimate value, it takes 8s per 100Kb while erasing flash
+            read_timeout = math.ceil(self.total/1024100)*8
 
         response = helper.read_untils_have_data(
-            self._communicator, 'WA', 12, 10)
+            self._communicator, 'WA', 12, read_timeout=read_timeout)
         # wait WA end if cannot read response in defined retry times
         if response is None:
-            time.sleep(0.1)
+            return False
         return True
 
     def work(self):

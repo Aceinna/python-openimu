@@ -3,6 +3,7 @@ Helper
 """
 import struct
 import sys
+import time
 from .dict_extend import Dict
 
 if sys.version_info[0] > 2:
@@ -335,40 +336,59 @@ def _parse_buffer(data_buffer):
 
     return response
 
+def _read_once(communicator,data_buffer,packet_type,read_length):
+    result = None
+    read_data = communicator.read(read_length)
+        
+    if read_data is None:
+        return result
 
-def read_untils_have_data(communicator, packet_type, read_length=200, retry_times=20):
+    data_buffer_per_time = bytearray(read_data)
+    data_buffer.extend(data_buffer_per_time)
+
+    response = _parse_buffer(data_buffer)
+    if response['parsed']:
+        matched_packet = next(
+            (packet['data'] for packet in response['result']
+             if packet['type'] == packet_type), None)
+        if matched_packet is not None:
+            result = matched_packet
+        else:
+            # clear buffer to parsed index
+            data_buffer = data_buffer[response['parsed_end_index']:]
+
+    return result
+
+def read_untils_have_data(communicator, packet_type, read_length=200, retry_times=20, read_timeout=None):
     '''
     Get data from limit times of read
     '''
     result = None
-    trys = 0
     data_buffer = []
 
-    while trys < retry_times:
-        read_data = communicator.read(read_length)
-        # print(packet_type, read_data)
-        if read_data is None:
+    if read_timeout and read_timeout>0:
+        # end of read timeout
+        end_time = time.time()+read_timeout
+        remain = read_timeout
+
+        while remain>0:
+            result = _read_once(communicator, data_buffer,packet_type,read_length)
+
+            if result is not None:
+                break
+
+            remain = end_time - time.time()
+    else:
+        # end of retry times
+        trys = 0
+
+        while trys < retry_times:
+            result = _read_once(communicator, data_buffer,packet_type,read_length)
+
+            if result is not None:
+                break
+
             trys += 1
-            continue
-
-        data_buffer_per_time = bytearray(read_data)
-        data_buffer.extend(data_buffer_per_time)
-
-        response = _parse_buffer(data_buffer)
-        if response['parsed']:
-            matched_packet = next(
-                (packet['data'] for packet in response['result']
-                 if packet['type'] == packet_type), None)
-            if matched_packet is not None:
-                result = matched_packet
-            else:
-                # clear buffer to parsed index
-                data_buffer = data_buffer[response['parsed_end_index']:]
-
-        if result is not None:
-            break
-
-        trys += 1
 
     return result
 
