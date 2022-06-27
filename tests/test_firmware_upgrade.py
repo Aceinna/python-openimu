@@ -19,6 +19,7 @@ except:  # pylint: disable=bare-except
 
 setattr(sys, '__dev__', True)
 
+
 def build_firmware_list():
     files = []
     for item in os.scandir('./upgrade'):
@@ -34,20 +35,21 @@ def get_file(loop_times=1):
     current_loop = 0
 
     while current_loop < loop_times:
+        print('Loop time:{0}'.format(current_loop+1))
         item_index = 0
         while item_index < len(file_list):
             yield file_list[item_index]
             item_index += 1
 
-        item_index -= 1
+        # item_index -= 1
 
-        while item_index > 0:
-            yield file_list[item_index-1]
-            item_index -= 1
+        # while item_index > 0:
+        #     yield file_list[item_index-1]
+        #     item_index -= 1
         current_loop += 1
 
 
-generator = get_file(1)
+generator = get_file(100)
 
 
 def gen_upgrade_file_name():
@@ -96,7 +98,7 @@ class TestApp:
         print('Upgrade fail', code, message)
 
         # continue upgrade next firmeware
-        self.do_upgrade()
+        # self.do_upgrade()
 
     def handle_error(self, error, message):
         print('driver encounter error')

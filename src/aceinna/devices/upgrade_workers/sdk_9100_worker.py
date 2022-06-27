@@ -1915,9 +1915,8 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
         self.write_wrapper(command_line)
         time.sleep(0.5)
 
-        response = helper.read_untils_have_data(self._uart, 'JS')
-        # print(rev_data)
-        return True  # if response is not None else False
+        response = helper.read_untils_have_data(self._uart, 'JS', read_length=1000, read_timeout=5)
+        return True
 
     def send_sdk_cmd_JG(self):
         if self._is_stopped:
