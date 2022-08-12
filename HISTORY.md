@@ -1,6 +1,10 @@
 # History
 # This is a special branch for INCEPTIO
 ---
+## 2.5.5a / 2022-08-12
+- [OpenRTK/RTK330LA] Resolve app crash while erasing the flash.
+- [OpenRTK/RTK330LA] Improve firmware upgrade logic.
+
 ## 2.5.4a / 2022-06-08
 - [OpenRTK/RTK330LA] Fix issues on ST9100 chip firmware upgrade.
 
