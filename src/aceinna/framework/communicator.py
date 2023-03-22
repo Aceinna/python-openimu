@@ -74,6 +74,11 @@ class Communicator(object):
         read
         '''
 
+    def reset_buffer(self):
+        '''
+        reset data in buffer area
+        '''
+
     def confirm_device(self, *args):
         '''
         validate the connected device

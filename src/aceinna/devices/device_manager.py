@@ -57,7 +57,6 @@ class DeviceManager:
         for index in range(len(DeviceManager.device_list)):
             exist_device = DeviceManager.device_list[index]
             if exist_device['device_type'] == device_type and \
-                    exist_device['device_info'] == device_info and \
                     exist_device['communicator_type'] == communicator.type:
                 provider = exist_device['provider']
                 provider.communicator = communicator
