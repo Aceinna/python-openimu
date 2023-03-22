@@ -1,6 +1,11 @@
 # History
 
 ---
+## 2.7.0 / TBD
+- [OpenRTK] Add CAN port parameter config in command line mode.
+- [OpenRTK] Add SN check logic for different version of OpenRTK (BA or BX).
+- [RTK330LA] Update bootloader array of 8100 upgrade worker and 9100 upgrade worker.
+
 ## 2.6.1 / 2022-02-23
 - [OpenRTK] Support ST8100Bx chip upgrade.
 - [OpenRTK/RTK330LA] Resolve cannot ping device while upgrading.

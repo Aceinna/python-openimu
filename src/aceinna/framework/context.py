@@ -14,6 +14,7 @@ class AppContext:
     _device_context = None
     _statistics = None
     _mode = None
+    _para_path = None
 
     def __init__(self):
         pass
