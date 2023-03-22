@@ -14,6 +14,15 @@ from ...framework.utils import (
 from ...framework.utils.print import print_red
 
 
+def build_content(content):
+    len_mod = len(content) % 16
+    if len_mod == 0:
+        return content
+
+    fill_bytes = bytes(16-len_mod)
+    return content + fill_bytes
+
+
 class Provider(RTKProviderBase):
     '''
     RTK330LA UART provider
