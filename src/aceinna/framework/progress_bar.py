@@ -28,9 +28,9 @@ class ProgressBar():
         num_line = self.max_arrow - num_arrow  # caculate the number of '-'
         percent = self.i * 100.0 / self.max_steps  # caculate the percent
         process_bar = '[' + '>' * num_arrow + '-' * num_line + ']'\
-                      + '%.2f' % percent + '%' + '\r'
-        sys.stdout.write(process_bar)  # print info on terminal
-        sys.stdout.flush()
+                      + '%.2f' % percent + '%       ' + '\r'
+
+        print(process_bar,end='',flush=True)
         if self.i >= self.max_steps:
             self.close(True)
 

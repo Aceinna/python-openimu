@@ -163,6 +163,7 @@ class DeviceMessageCenter(EventBase):
     def resume(self):
         self._has_exception = False
         self._is_pause = False
+        self._communicator.reset_buffer()
         helper.clear_elements(self.threads)
 
     def stop(self):
