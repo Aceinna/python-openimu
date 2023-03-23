@@ -754,9 +754,12 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
 
         sync = [0xfd, 0xc6, 0x49, 0x28]
         self._uart.write(sync)
+        self._uart.write(sync)
+        self._uart.write(sync)
+        self._uart.write(sync)
         time.sleep(0.2)
 
-        return self.read_until([0x3A, 0x54, 0x2C, 0xA6], 100)
+        return self.read_until([0x3A, 0x54, 0x2C, 0xA6], 200)
 
     def send_change_baud_cmd(self):
         if self._is_stopped:
@@ -957,7 +960,7 @@ class SDKUpgradeWorker(UpgradeWorkerBase):
         if self._is_stopped:
             return False
 
-        return self.read_until(0xCC, 200)
+        return self.read_until(0xCC, 1000)
 
     def _raise_error(self, message):
         if self._uart.isOpen():
