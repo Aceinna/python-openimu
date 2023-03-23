@@ -1073,8 +1073,8 @@ class RTKProviderBase(OpenDeviceBase):
             thread = threading.Thread(
                 target=self.thread_do_upgrade_framework, args=(file,))
             thread.start()
-            # print("Upgrade OpenRTK firmware started at:[{0}].".format(
-            #     datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+            print("Upgrade firmware started at:[{0}].".format(
+                 datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 
         return {
             'packetType': 'success'
