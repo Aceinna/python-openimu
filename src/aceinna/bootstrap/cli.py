@@ -147,6 +147,9 @@ class CommandLine:
             token = input(">>")
             self.input_string = token.split(" ")
 
+            if self._driver._device_provider.is_upgrading:
+                continue
+
             if token.strip() == 'exit':
                 break
 
