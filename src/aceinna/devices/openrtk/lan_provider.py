@@ -209,8 +209,8 @@ class Provider(OpenDeviceBase):
 
             # start a thread to log data
             threading.Thread(target=self.thread_data_log).start()
-            # threading.Thread(target=self.thread_debug_data_log).start()
-            # threading.Thread(target=self.thread_rtcm_data_log).start()
+            threading.Thread(target=self.thread_debug_data_log).start()
+            threading.Thread(target=self.thread_rtcm_data_log).start()
 
             self.save_device_info()
 
