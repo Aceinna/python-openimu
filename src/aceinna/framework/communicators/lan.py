@@ -4,7 +4,7 @@ from ..constants import (BAUDRATE_LIST, INTERFACES)
 from ..utils.print import (print_red, print_yellow)
 from ..wrapper import SocketConnWrapper
 from ..communicator import Communicator
-
+from .netbios import netbios_query
 
 def get_network_interfaces():
     host = socket.gethostname()
@@ -79,7 +79,7 @@ class LAN(Communicator):
 
     def establish_host(self, host_ip):
         socket_host = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        socket_host.settimeout(3)
+        socket_host.settimeout(20)
         try:
             socket_host.bind((host_ip, self.port))
             socket_host.listen(5)
@@ -146,22 +146,13 @@ class LAN(Communicator):
             raise
 
     def find_client_by_hostname(self, name):
-        if self._find_client_retries > 50:
-            return False
-
+        
         is_find = False
         try:
-            socket.gethostbyname(name)
-            is_find = True
-        except Exception as ex:
+            nbns = netbios_query(name)
+            is_find = nbns.Query()
+        except Exception as e:
             is_find = False
-
-        # continue to find the client
-        if not is_find:
-            self._find_client_retries += 1
-            time.sleep(1)
-            self.find_client_by_hostname(name)
-
         return is_find
 
     def reset_buffer(self):

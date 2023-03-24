@@ -202,13 +202,13 @@ class Provider(OpenDeviceBase):
                 self.rtk_log_file_name = file_name
                 self.user_logf = open(
                     file_name + '/' + 'user_' + file_time + '.bin', "wb")
-                self.debug_logf = open(
-                    file_name + '/' + 'debug_' + file_time + '.bin', "wb")
-                self.rtcm_logf = open(
-                    file_name + '/' + 'rtcm_' + file_time + '.bin', "wb")
+                # self.debug_logf = open(
+                #     file_name + '/' + 'debug_' + file_time + '.bin', "wb")
+                # self.rtcm_logf = open(
+                #     file_name + '/' + 'rtcm_' + file_time + '.bin', "wb")
 
             # start a thread to log data
-            # threading.Thread(target=self.thread_data_log).start()
+            threading.Thread(target=self.thread_data_log).start()
             # threading.Thread(target=self.thread_debug_data_log).start()
             # threading.Thread(target=self.thread_rtcm_data_log).start()
 
