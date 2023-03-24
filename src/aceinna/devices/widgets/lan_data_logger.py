@@ -116,8 +116,6 @@ class LanRTCMDataLogger:
         #print('connect rtcm port')
 
     def _read_and_write(self):
-        # send get configuration
-        print('------------------------------------------------------------')
         if self.log_conn is None:
             return
         while True:
