@@ -6,6 +6,8 @@ from ..wrapper import SocketConnWrapper
 from ..communicator import Communicator
 from .netbios import netbios_query
 
+greeting = 'i am pc'
+
 def get_network_interfaces():
     host = socket.gethostname()
     _, _, ip_addr_list = socket.gethostbyname_ex(host)
@@ -32,21 +34,28 @@ class LAN(Communicator):
             self.filter_device_type_assigned = True
 
     def find_device(self, callback, retries=0, not_found_handler=None):
-        greeting = 'i am pc'
         self.device = None
 
+        # get avaliable network interface
+        ip_address_list = get_network_interfaces()
+
         # find client by hostname
-        can_find = self.find_client_by_hostname('OPENRTK')
+        can_find, ip_address = self.find_client_by_hostname('OPENRTK', ip_address_list)
 
         if not can_find:
             print_red(
                 '[Error] We detected the device for a long time, please make sure the device is connected with LAN port')
             return
 
-        # get avaliable network interface
-        ip_address_list = get_network_interfaces()
         conn = None
-        for ip_address in ip_address_list:
+        can_use_address_list=[]
+
+        if ip_address:
+            can_use_address_list = [ip_address]
+        else:
+            can_use_address_list = ip_address_list
+        
+        for ip_address in can_use_address_list:
             # establish TCP Server
             socket_host = self.establish_host(ip_address)
             # wait for client
@@ -145,15 +154,29 @@ class LAN(Communicator):
         except:
             raise
 
-    def find_client_by_hostname(self, name):
-        
+    def find_client_by_hostname(self, name, ip_address_list):
         is_find = False
+        ip_address = None
+
+        # 1st round, directly find by host name
         try:
-            nbns = netbios_query(name)
-            is_find = nbns.Query()
+            socket.gethostbyname(name)
+            is_find = True
+        except:
+            is_find = False
+
+        if is_find:
+            return True, None
+
+        # 2nd round find from netbios
+        try:
+            nbns = netbios_query(name, ip_address_list)
+            ip_address = nbns.query()
+            is_find = True
         except Exception as e:
             is_find = False
-        return is_find
+
+        return is_find,ip_address
 
     def reset_buffer(self):
         '''
