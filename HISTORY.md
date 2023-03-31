@@ -1,9 +1,10 @@
 # History
 
 ---
-## 2.7.0 / TBD
+## 2.7.0 / 2023-3-31
 - [OpenRTK] Add CAN port parameter config in command line mode.
 - [OpenRTK] Add SN check logic for different version of OpenRTK (BA or BX).
+- [OpenRTK] Optimize the connection under lan port.
 - [RTK330LA] Update bootloader array of 8100 upgrade worker and 9100 upgrade worker.
 
 ## 2.6.1 / 2022-02-23
