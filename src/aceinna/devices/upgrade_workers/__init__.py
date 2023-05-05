@@ -27,4 +27,4 @@ from .sdk_9100_worker import SDKUpgradeWorker as SDK9100UpgradeWorker
 from .sdk_8100Bx_worker import SDKUpgradeWorker as SDK8100BxUpgradeWorker
 from .jump_application_worker import JumpApplicationWorker
 from .jump_bootloader_worker import JumpBootloaderWorker
-
+from .lock_worker import LockWorker

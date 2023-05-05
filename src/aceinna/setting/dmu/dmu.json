@@ -50,7 +50,19 @@
 				{"key":"2","value":"2Hz"}
 			]
 		},	
-		{ "paramId": 7, "category": "General","paramType": "select", "type": "orientation", "name": "Orientation", "argument": "orien", "value_range":[-1,1],"value_accuracy":6,"options": ["+X+Y+Z"] }
+		{ "paramId": 7, "category": "General","paramType": "select", "type": "orientation", "name": "Orientation", "argument": "orien", "value_range":[-1,1],"value_accuracy":6,"options": ["+X+Y+Z"] },
+		{ "paramId": 33, "category": "General","paramType": "select", "type": "uint16", "name": "EEPROM Lock", "argument": "eeprom_lock", "options": [
+			{"key":"0","value":"Unlocked"},
+			{"key":"1","value":"Locked"}
+		] },
+		{ "paramId": 34, "category": "General","paramType": "select", "type": "uint16", "name": "App Lock", "argument": "app_lock", "options": [
+			{"key":"0","value":"Unlocked"},
+			{"key":"1","value":"Locked"}
+		] },
+		{ "paramId": 35, "category": "General","paramType": "select", "type": "uint16", "name": "Bootloader Lock", "argument": "bootloader_lock", "options": [
+			{"key":"0","value":"Unlocked"},
+			{"key":"1","value":"Locked"}
+		] }
     ],
     "scaling":{
         "accel":"20*9.80665/65536",
@@ -837,7 +849,7 @@
 		},
 		{
 			"name": "connect",
-			"description": "Find OpenIMU device",
+			"description": "Find DMU device",
 			"function": "connect_handler"
 		},
 		{
@@ -847,7 +859,7 @@
 		},
 		{
 			"name": "record",
-			"description": "Record output data of OpenIMU on local machine",
+			"description": "Record output data of DMU on local machine",
 			"function": "record_handler"
 		},
 		{
@@ -867,8 +879,18 @@
 		},
 		{
 			"name": "set",
-			"description": "Write parameters to OpenIMU",
+			"description": "Write parameters to DMU",
 			"function": "set_handler"
+		},
+		{
+			"name": "lock",
+			"description": "Lock write protect",
+			"function": "lock_handler"
+		},
+		{
+			"name": "unlock",
+			"description": "Unlock app write protect",
+			"function": "unlock_handler"
 		}
 	]
 }

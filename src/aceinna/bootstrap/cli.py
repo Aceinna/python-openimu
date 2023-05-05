@@ -392,3 +392,9 @@ class CommandLine:
         else:
             print('set can cfg fail')
         return ret
+
+    def lock_handler(self):
+        print(self._driver.execute('lock'))
+
+    def unlock_handler(self):
+        print(self._driver.execute('unlock'))

@@ -15,6 +15,7 @@ from ..upgrade_workers import (
     FirmwareUpgradeWorker,
     JumpBootloaderWorker,
     JumpApplicationWorker,
+    LockWorker,
     UPGRADE_EVENT
 )
 
@@ -198,6 +199,15 @@ class Provider(OpenDeviceBase):
             }
         }
 
+    def after_upgrade_completed(self):
+        self.lock()
+        # result = self.get_param({'paramId':0x21})
+        # print(result)
+        # result = self.get_param({'paramId':0x22})
+        # print(result)
+        # result = self.get_param({'paramId':0x23})
+        # print(result)
+
     def before_jump_app_command(self):
         self.communicator.serial_port.baudrate = self.bootloader_baudrate
 
@@ -208,6 +218,17 @@ class Provider(OpenDeviceBase):
     def before_write_content(self):
         self.communicator.serial_port.baudrate = self.bootloader_baudrate
         self.communicator.serial_port.reset_input_buffer()
+
+    def before_unlock_command(self):
+        time.sleep(4)
+        #self.communicator.serial_port.baudrate = self.bootloader_baudrate
+        self.communicator.serial_port.reset_input_buffer()
+
+        #set quiet
+        quiet_command = dmu_helper.build_packet('SF',[0x0,0x1,0x0,0x0])
+        self.communicator.write(quiet_command)
+        time.sleep(1)
+        self.communicator.reset_buffer()
 
     def firmware_write_command_generator(self, data_len, current, data):
         command_WA = 'WA'
@@ -243,7 +264,19 @@ class Provider(OpenDeviceBase):
         jump_application_worker.on(UPGRADE_EVENT.BEFORE_COMMAND, self.before_jump_app_command)
         jump_application_worker.on(UPGRADE_EVENT.AFTER_COMMAND, self.after_jump_app_command)
 
-        return [jump_bootloader_worker, firmware_worker, jump_application_worker]
+        unlock_application_command = helper.build_packet('UA', [0x92,0x33,0x62,0x19,0x64,0x27,0x42,0x85])
+        unlock_worker = LockWorker(provider=self, commands=[
+            {'command':unlock_application_command, 'check':{'field': 0x22, 'after_value': 0}}
+        ])
+        unlock_worker.on(UPGRADE_EVENT.BEFORE_COMMAND, self.before_unlock_command)
+
+        return [
+            unlock_worker,
+            jump_bootloader_worker,
+            firmware_worker,
+            jump_application_worker,
+            #lock_worker,
+        ]
 
     def get_device_connection_info(self):
         return {
@@ -513,3 +546,26 @@ class Provider(OpenDeviceBase):
         return {
             'packetType': 'success'
         }
+
+    def unlock(self,*args):
+        unlock_application_command = helper.build_packet('UA', [0x92,0x33,0x62,0x19,0x64,0x27,0x42,0x85])
+        self.communicator.write(unlock_application_command)
+        time.sleep(3)
+        get_result = self.get_param({'paramId': 0x22})
+
+        if get_result['packetType']=='inputParam' and get_result['data']['value'] == 0:
+            return 'Unlocked'
+
+        return 'Failed'
+
+
+    def lock(self,*args):
+        lock_commands = [{'paramId':0x21, 'command':'LE'}, {'paramId':0x22,'command':'LA'}, {'paramId':0x23,'command':'LB'}]
+        for lock_command in lock_commands:
+            result = self.get_param({'paramId': lock_command['paramId']})
+            if result['packetType']=='inputParam' and result['data']['value'] != 1:
+                command = helper.build_packet(lock_command['command'])
+                self.communicator.write(command)
+                time.sleep(1)
+
+        return 'Locked'
